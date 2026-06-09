@@ -1,0 +1,69 @@
+@if($render == 'formulario')
+
+  @php
+
+    $placeholder = $props['placeholder'] 
+      ?? $config['placeholder'] 
+      ?? $field_label;
+
+  @endphp
+
+  <div class="mb-3 {{ $props['wrapper_class'] ?? '' }}">
+
+    <div class="form-floating">
+
+      <textarea
+        id="{{ $field_id }}"
+        name="{{ $field_name }}"
+        class="form-control {{ $field_class }}"
+        placeholder="{!! $placeholder !!}"
+        data-automator-field="true"
+        data-automator-field-name="{{ $field_name }}"
+        data-automator-field-id="{{ $field_id }}"
+        {{ $field_required ? 'required' : '' }}
+        {!! ( (isset($props['rows'])) ? 'style="min-height: ' . ( $props['rows'] * 20) . 'px"' : '' ) !!}
+        {!! $field_attrs !!}>{{ $field_value }}</textarea>
+
+      @if($field_label != '')
+
+        <label for="{{ $field_id }}">
+
+          {{ $field_label }}
+
+          @if($field_required)
+            <span class="text-danger">*</span>
+          @endif
+
+        </label>
+
+      @endif
+
+      @if(isset($props['help']) && $props['help'] != '')
+
+        <div class="form-text">
+          {{ $props['help'] }}
+        </div>
+
+      @endif
+
+    </div>
+
+  </div>
+
+@elseif($render == 'paginacao')
+
+  @if($columnType == 'thead')
+
+    <!-- <th scope="col" class="{{ $column['header']['class'] ?? ($column['header']['classes'] ?? '') }}"> -->
+      {{ $column_label }}
+    <!-- </th> -->
+
+  @elseif($columnType == 'tbody')
+
+    <td class="{{ $column['body']['class'] ?? ($column['body']['classes'] ?? '') }}">
+      {!! $column_value !!}
+    </td>
+
+  @endif
+
+@endif

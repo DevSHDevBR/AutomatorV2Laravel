@@ -1,0 +1,911 @@
+#page-loader {
+
+  background-color: rgba(0, 0, 0, .8);
+  text-align:       center;
+  position:         fixed;
+  z-index:          9999;
+  display:          none;
+  height:           100%;
+  width:            100%;
+  color:            #FFFFFF;
+  left:             0;
+  top:              0;
+
+}
+
+
+
+.automator-tooltip-hover {
+  position: relative;
+}
+
+
+
+.automator-tooltip-hover:hover::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 120%;
+  left: 0%;
+  transform: translateX(-50%);
+  background-color: #1f2937;
+  color: white;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+
+
+.automator-tooltip-hover:hover::before {
+  content: '';
+  position: absolute;
+  bottom: calc(115% - 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1f2937;
+  z-index: 9999;
+  pointer-events: none;
+}
+
+
+
+.automator-input-password {
+
+  -webkit-text-security: disc;
+  text-security:         disc;
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Automator Toast - Container
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-container {
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.automator-toast-container .automator-toast-alert {
+  pointer-events: auto;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Centralização personalizada
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-container-center-x {
+  left: 50%;
+}
+
+.automator-toast-container-center-y {
+  top: 50%;
+}
+
+.automator-toast-container-center-x.automator-toast-container-center-y {
+  transform: translate(-50%, -50%);
+}
+
+.automator-toast-container-center-x:not(.automator-toast-container-center-y) {
+  transform: translateX(-50%);
+}
+
+.automator-toast-container-center-y:not(.automator-toast-container-center-x) {
+  transform: translateY(-50%);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Containers laterais/topo/bottom
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-container.top-0,
+.automator-toast-container.bottom-0 {
+  width: auto;
+  max-width: 100vw;
+}
+
+.automator-toast-container.start-0 {
+  align-items: flex-start;
+}
+
+.automator-toast-container.end-0 {
+  align-items: flex-end;
+}
+
+.automator-toast-container.top-0 {
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.automator-toast-container.bottom-0 {
+  max-height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Toast responsivo
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-alert {
+  display: block;
+  width: min(420px, calc(100vw - 2rem));
+  max-width: calc(100vw - 2rem);
+  max-height: calc(100vh - 2rem);
+  opacity: 0;
+  overflow: hidden;
+  transition: opacity .30s ease, transform .30s ease, margin .30s ease;
+  will-change: opacity, transform;
+  pointer-events: auto;
+}
+
+.automator-toast-alert.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0) scale(1);
+}
+
+.automator-toast-alert.automator-toast-hiding {
+  pointer-events: none;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Header / título centralizado
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-header {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) 2rem;
+  align-items: center;
+  gap: .5rem;
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.automator-toast-header .btn-close {
+  grid-column: 3;
+  justify-self: end;
+  margin: 0;
+}
+
+.automator-toast-header-spacer {
+  display: block;
+  width: 2rem;
+  height: 1rem;
+}
+
+.automator-toast-title {
+  grid-column: 2;
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Corpo do Toast com scroll vertical
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-body {
+  max-height: calc(100vh - 8rem);
+  overflow-y: auto;
+  overflow-x: hidden;
+  word-break: normal;
+  overflow-wrap: anywhere;
+}
+
+.automator-toast-message {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.automator-toast-message p:last-child {
+  margin-bottom: 0;
+}
+
+.automator-toast-footer {
+  position: sticky;
+  bottom: 0;
+  background: inherit;
+  padding-top: .75rem;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Backdrop
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-backdrop {
+  cursor: default;
+}
+
+.automator-toast-backdrop-transparent {
+  background-color: transparent;
+}
+
+.automator-toast-backdrop-hidden {
+  opacity: 0;
+  transition: opacity .30s ease;
+}
+
+.automator-toast-backdrop-show {
+  opacity: 1;
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Centro da tela: fadeIn / fadeOut
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-fade {
+  opacity: 0;
+  transform: scale(.96);
+}
+
+.automator-toast-animation-fade.automator-toast-show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.automator-toast-animation-fade.automator-toast-hiding {
+  opacity: 0;
+  transform: scale(.96);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Topo centro: slideDown / slideUp
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-top-center {
+  opacity: 0;
+  transform: translate3d(0, -20px, 0);
+}
+
+.automator-toast-animation-top-center.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-top-center.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(0, -20px, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Bottom centro: slideUp / slideDown
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-bottom-center,
+.automator-toast-animation-bottom {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+
+.automator-toast-animation-bottom-center.automator-toast-show,
+.automator-toast-animation-bottom.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-bottom-center.automator-toast-hiding,
+.automator-toast-animation-bottom.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(0, 20px, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Esquerda topo: slideRight / slideLeft
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-top-left {
+  opacity: 0;
+  transform: translate3d(-30px, 0, 0);
+}
+
+.automator-toast-animation-top-left.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-top-left.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(-30px, 0, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Direita topo: slideLeft / slideRight
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-top-right {
+  opacity: 0;
+  transform: translate3d(30px, 0, 0);
+}
+
+.automator-toast-animation-top-right.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-top-right.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(30px, 0, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Esquerda bottom: slideUp / slideDown
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-bottom-left {
+  opacity: 0;
+  transform: translate3d(-30px, 20px, 0);
+}
+
+.automator-toast-animation-bottom-left.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-bottom-left.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(-30px, 20px, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Direita bottom: slideUp / slideDown
+|--------------------------------------------------------------------------
+*/
+
+.automator-toast-animation-bottom-right {
+  opacity: 0;
+  transform: translate3d(30px, 20px, 0);
+}
+
+.automator-toast-animation-bottom-right.automator-toast-show {
+  opacity: 1;
+  transform: translate3d(0, 0, 0);
+}
+
+.automator-toast-animation-bottom-right.automator-toast-hiding {
+  opacity: 0;
+  transform: translate3d(30px, 20px, 0);
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Ajustes mobile
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 575.98px) {
+
+  .automator-toast-container {
+    width: 100vw;
+    max-width: 100vw;
+    padding-left: .75rem !important;
+    padding-right: .75rem !important;
+  }
+
+  .automator-toast-container.start-0,
+  .automator-toast-container.end-0,
+  .automator-toast-container-center-x {
+    left: 0;
+    right: 0;
+    transform: none;
+  }
+
+  .automator-toast-container-center-x.automator-toast-container-center-y {
+    left: 50%;
+    right: auto;
+    transform: translate(-50%, -50%);
+    width: calc(100vw - 1.5rem);
+  }
+
+  .automator-toast-container-center-x:not(.automator-toast-container-center-y) {
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 1.5rem);
+  }
+
+  .automator-toast-alert {
+    width: 100%;
+    max-width: 100%;
+    max-height: calc(100vh - 1.5rem);
+  }
+
+  .automator-toast-body {
+    max-height: calc(100vh - 7rem);
+  }
+
+}
+
+
+
+
+
+/* Disabled CHECKBOX AUTOMATOR*/
+
+
+.automator-disabled-selection-label {
+  opacity: 0.65;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.automator-disabled-selection {
+  pointer-events: none;
+}
+
+.automator-disabled-selection-label.btn {
+  color: #6c757d;
+  background-color: #e9ecef;
+  border-color: #ced4da;
+}
+
+.automator-disabled-selection-label.btn:hover,
+.automator-disabled-selection-label.btn:focus,
+.automator-disabled-selection-label.btn:active {
+  color: #6c757d;
+  background-color: #e9ecef;
+  border-color: #ced4da;
+  box-shadow: none;
+}
+
+
+
+
+
+/* ==========================================================================
+   AUTOMATOR EDITOR
+   ========================================================================== */
+
+.automator-editor-wrapper {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    border-radius: .5rem;
+    transition: all .2s ease;
+}
+
+/* ==========================================================================
+   TOOLBAR
+   ========================================================================== */
+
+.automator-editor-toolbar {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: .5rem;
+    padding: .75rem;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.automator-editor-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+}
+
+/* ==========================================================================
+   BUTTONS
+   ========================================================================== */
+
+.automator-editor-btn {
+    min-width: 38px;
+    height: 38px;
+    border-radius: .375rem !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all .15s ease;
+}
+
+.automator-editor-btn i {
+    font-size: 15px;
+}
+
+/* hover */
+
+.automator-editor-btn:hover {
+    transform: translateY(-1px);
+}
+
+/* active */
+
+.automator-editor-btn.active,
+.automator-editor-btn.is-active,
+.automator-editor-btn.btn-primary {
+    background: var(--bs-primary) !important;
+    color: #fff !important;
+    border-color: var(--bs-primary) !important;
+}
+
+.automator-editor-btn.active i,
+.automator-editor-btn.is-active i {
+    color: #fff;
+}
+
+/* ==========================================================================
+   SELECTS
+   ========================================================================== */
+
+.automator-editor-select {
+    width: auto;
+    min-width: 130px;
+    height: 38px;
+    border-radius: .375rem;
+    font-size: .875rem;
+}
+
+/* ==========================================================================
+   BODY
+   ========================================================================== */
+
+.automator-editor-body {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    background: #fff;
+}
+
+/* ==========================================================================
+   VISUAL MODE
+   ========================================================================== */
+
+.automator-editor-visual {
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    padding: 1rem;
+    overflow-y: auto;
+    overflow-x: hidden;
+    outline: none;
+    word-break: break-word;
+    line-height: 1.7;
+    font-size: 15px;
+}
+
+/* focus */
+
+.automator-editor-visual:focus {
+    outline: none;
+}
+
+/* empty placeholder */
+
+.automator-editor-visual:empty:before {
+    content: attr(data-placeholder);
+    color: #adb5bd;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   CODE MODE
+   ========================================================================== */
+
+.automator-editor-code {
+    resize: none !important;
+    width: 100%;
+    height: 100%;
+    min-height: inherit;
+    border: 0 !important;
+    outline: none !important;
+    border-radius: 0 !important;
+    padding: 1rem !important;
+    font-family:
+        Consolas,
+        Monaco,
+        monospace;
+    font-size: 14px;
+    line-height: 1.7;
+    background: #fff;
+    box-shadow: none !important;
+}
+
+.automator-editor-code:focus {
+    box-shadow: none !important;
+    outline: none !important;
+}
+
+/* ==========================================================================
+   CONTENT STYLE
+   ========================================================================== */
+
+.automator-editor-visual h1,
+.automator-editor-visual h2,
+.automator-editor-visual h3,
+.automator-editor-visual h4,
+.automator-editor-visual h5,
+.automator-editor-visual h6 {
+    margin-top: 1rem;
+    margin-bottom: .75rem;
+}
+
+.automator-editor-visual p {
+    margin-bottom: 1rem;
+}
+
+.automator-editor-visual ul,
+.automator-editor-visual ol {
+    padding-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+.automator-editor-visual blockquote {
+    border-left: 4px solid #dee2e6;
+    padding-left: 1rem;
+    margin-left: 0;
+    color: #6c757d;
+}
+
+.automator-editor-visual img {
+    max-width: 100%;
+    height: auto;
+}
+
+.automator-editor-visual table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.automator-editor-visual table td,
+.automator-editor-visual table th {
+    border: 1px solid #dee2e6;
+    padding: .5rem;
+}
+
+/* ==========================================================================
+   SCROLLBAR
+   ========================================================================== */
+
+.automator-editor-visual::-webkit-scrollbar,
+.automator-editor-code::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+.automator-editor-visual::-webkit-scrollbar-thumb,
+.automator-editor-code::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,.18);
+    border-radius: 20px;
+}
+
+.automator-editor-visual::-webkit-scrollbar-track,
+.automator-editor-code::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+/* ==========================================================================
+   FULLSCREEN
+   ========================================================================== */
+
+.automator-editor-wrapper.is-fullscreen {
+    position: fixed !important;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 99999;
+    border-radius: 0;
+    margin: 0 !important;
+}
+
+.automator-editor-wrapper.is-fullscreen
+.automator-editor-body {
+    height: calc(100vh - 72px) !important;
+}
+
+.automator-editor-wrapper.is-fullscreen
+.automator-editor-toolbar {
+    border-radius: 0;
+}
+
+/* ==========================================================================
+   MODAL SUPPORT
+   ========================================================================== */
+
+.modal .automator-editor-wrapper {
+    width: 100%;
+}
+
+.modal .automator-editor-body {
+    overflow: hidden;
+}
+
+/* ==========================================================================
+   DROPDOWNS
+   ========================================================================== */
+
+.automator-editor-toolbar .dropdown-menu {
+    z-index: 999999;
+}
+
+/* ==========================================================================
+   STATES
+   ========================================================================== */
+
+.automator-editor-wrapper.is-code-mode
+.automator-editor-toolbar {
+    background: #f1f3f5;
+}
+
+.automator-editor-wrapper.is-visual-mode
+.automator-editor-toolbar {
+    background: #f8f9fa;
+}
+
+/* ==========================================================================
+   DISABLED
+   ========================================================================== */
+
+.automator-editor-wrapper.is-disabled {
+    opacity: .7;
+    pointer-events: none;
+}
+
+/* ==========================================================================
+   RESPONSIVE
+   ========================================================================== */
+
+@media (max-width: 768px) {
+
+    .automator-editor-toolbar {
+        gap: .35rem;
+        padding: .5rem;
+    }
+
+    .automator-editor-btn {
+        min-width: 34px;
+        height: 34px;
+    }
+
+    .automator-editor-select {
+        min-width: 110px;
+        height: 34px;
+        font-size: .8rem;
+    }
+
+    .automator-editor-visual,
+    .automator-editor-code {
+        padding: .75rem !important;
+    }
+}
+
+/* ==========================================================================
+   SMALL MOBILE
+   ========================================================================== */
+
+@media (max-width: 480px) {
+
+    .automator-editor-toolbar {
+        justify-content: flex-start;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+    }
+
+    .automator-editor-group {
+        flex-wrap: nowrap;
+    }
+
+    .automator-editor-toolbar::-webkit-scrollbar {
+        height: 6px;
+    }
+}
+
+/* ==========================================================================
+   ANIMATION
+   ========================================================================== */
+
+.automator-editor-wrapper,
+.automator-editor-btn,
+.automator-editor-select {
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        box-shadow .2s ease,
+        opacity .2s ease,
+        transform .2s ease;
+}
+
+/* ==========================================================================
+   FOCUS STATE
+   ========================================================================== */
+
+.automator-editor-wrapper:focus-within {
+    box-shadow:
+        0 0 0 .15rem
+        rgba(
+            var(--bs-primary-rgb),
+            .15
+        );
+}
+
+/* ==========================================================================
+   CODE COLORS
+   ========================================================================== */
+
+.automator-editor-wrapper.is-code-mode
+.automator-editor-code {
+    background: #fcfcfc;
+}
+
+/* ==========================================================================
+   PREVENT BOOTSTRAP OVERFLOW ISSUES
+   ========================================================================== */
+
+.card .automator-editor-toolbar {
+    overflow: visible;
+}
+
+/* ==========================================================================
+   HIDDEN
+   ========================================================================== */
+
+.automator-hidden {
+    display: none !important;
+}

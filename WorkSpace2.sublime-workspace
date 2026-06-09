@@ -1,0 +1,1027 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"text",
+				"text-align"
+			],
+			[
+				"child",
+				"automator-editor-block-child-area"
+			],
+			[
+				"block",
+				"blockConfigs"
+			],
+			[
+				"automa",
+				"automator-editor-"
+			],
+			[
+				"back",
+				"background-color"
+			],
+			[
+				"chil",
+				"automator-editor-block-child-area"
+			],
+			[
+				"em",
+				"empty"
+			],
+			[
+				"defa",
+				"defaultBlock"
+			],
+			[
+				"defua",
+				"defaultTab"
+			],
+			[
+				"pad",
+				"padding-top"
+			],
+			[
+				"paddint",
+				"padding-bottom"
+			],
+			[
+				"wa",
+				"wrapperElement"
+			],
+			[
+				"data-blo",
+				"data-block-id"
+			],
+			[
+				"activ",
+				"activeConfig"
+			],
+			[
+				"data-bloc",
+				"data-block-id"
+			],
+			[
+				"selec",
+				"selects"
+			],
+			[
+				"addBlo",
+				"addBlockBTN"
+			],
+			[
+				"titl",
+				"tbl_sys_route_title"
+			],
+			[
+				"che",
+				"checked"
+			],
+			[
+				"col",
+				"collapsed"
+			],
+			[
+				"settin",
+				"settingsBlock"
+			],
+			[
+				"tbl_sys_route_",
+				"tbl_sys_route_title"
+			],
+			[
+				"tbl_sys_route",
+				"tbl_sys_route_ID"
+			],
+			[
+				"page",
+				"pageID"
+			],
+			[
+				"defau",
+				"defaultBlock"
+			],
+			[
+				"select",
+				"selectors"
+			],
+			[
+				"fun",
+				"function"
+			],
+			[
+				"cofg",
+				"configsC"
+			],
+			[
+				"conf",
+				"configsT"
+			],
+			[
+				"con",
+				"configsT"
+			],
+			[
+				"te",
+				"text/css"
+			],
+			[
+				"fiel",
+				"field"
+			],
+			[
+				"to",
+				"toggle"
+			],
+			[
+				"modalC",
+				"modalClasses"
+			],
+			[
+				"tbl_users",
+				"tbl_users_type_ID"
+			],
+			[
+				"tbl_users_type_",
+				"tbl_users_type_name"
+			],
+			[
+				"tbl_users_",
+				"tbl_users_type_name"
+			],
+			[
+				"array_key",
+				"array_key_exists()"
+			],
+			[
+				"for",
+				"foreach\tforeach …"
+			],
+			[
+				"is_arra",
+				"is_array()"
+			],
+			[
+				"tbl_user",
+				"tbl_user_ID"
+			],
+			[
+				"use",
+				"usersTypes"
+			],
+			[
+				"array_ke",
+				"array_keys()"
+			],
+			[
+				"in_a",
+				"in_array()"
+			],
+			[
+				"tbl_",
+				"tbl_users_type_ID"
+			],
+			[
+				"Sys",
+				"SysRoutesAccess"
+			],
+			[
+				"uset",
+				"usersTypes"
+			],
+			[
+				"tbl_use",
+				"tbl_users_type_ID"
+			],
+			[
+				"tbl_sys_rou",
+				"tbl_sys_route_ID"
+			],
+			[
+				"req",
+				"request"
+			],
+			[
+				"automat",
+				"automatorFormID"
+			],
+			[
+				"colum",
+				"column_value"
+			],
+			[
+				"colu",
+				"column_value"
+			],
+			[
+				"var",
+				"var_dump()"
+			],
+			[
+				"nul",
+				"nullable"
+			],
+			[
+				"menuP",
+				"menuPorpsCount"
+			],
+			[
+				"S",
+				"SysAutomatorGetTranslateWord"
+			],
+			[
+				"mProp",
+				"mPropCount"
+			],
+			[
+				"tbl_sys_",
+				"tbl_sys_route_ID"
+			],
+			[
+				"tbl",
+				"tbl_sys_nav_ID"
+			],
+			[
+				"curre",
+				"currentMenuData"
+			],
+			[
+				"reso",
+				"resolvedVars"
+			],
+			[
+				"Con",
+				"Configurações"
+			],
+			[
+				"Admin",
+				"Administração"
+			],
+			[
+				"pagin",
+				"paginationCol"
+			],
+			[
+				"drop",
+				"dropdown-item"
+			],
+			[
+				"ret",
+				"retorno"
+			],
+			[
+				"notifi",
+				"notificacao"
+			],
+			[
+				"field",
+				"field_access"
+			],
+			[
+				"ovr",
+				"overflow-y"
+			],
+			[
+				"max",
+				"max-height"
+			],
+			[
+				"var_d",
+				"var_dump()"
+			],
+			[
+				"var_",
+				"var_dump()"
+			],
+			[
+				"U",
+				"UserUpdate"
+			],
+			[
+				"H",
+				"Hash"
+			],
+			[
+				"strle",
+				"strlen()"
+			],
+			[
+				"var_dum",
+				"var_dump()"
+			],
+			[
+				"respos",
+				"response"
+			],
+			[
+				"route",
+				"routeName"
+			],
+			[
+				"in_",
+				"in_array()"
+			],
+			[
+				"sele",
+				"select"
+			],
+			[
+				"cout",
+				"count()"
+			],
+			[
+				"isse",
+				"isset()"
+			],
+			[
+				"dyn",
+				"dynamic-list"
+			],
+			[
+				"rel",
+				"relation"
+			],
+			[
+				"json",
+				"json_encode()"
+			],
+			[
+				"pagina",
+				"paginationCol"
+			],
+			[
+				"pagination",
+				"paginationID"
+			],
+			[
+				"fo",
+				"foreach\tforeach …"
+			],
+			[
+				"shor",
+				"shortcodes"
+			],
+			[
+				"json_e",
+				"json_encode()"
+			],
+			[
+				"Administra",
+				"Administração"
+			],
+			[
+				"border-ra",
+				"border-top-left-radius"
+			],
+			[
+				"backgrou",
+				"background-color"
+			],
+			[
+				"formI",
+				"formItemID"
+			],
+			[
+				"formIt",
+				"formItemID"
+			],
+			[
+				"jsn",
+				"json_encode"
+			],
+			[
+				"jso",
+				"json_encode()"
+			],
+			[
+				"forea",
+				"foreach\tforeach …"
+			],
+			[
+				"userTyp",
+				"userTypeID"
+			],
+			[
+				"_ac",
+				"_actionKey"
+			],
+			[
+				"list",
+				"listAction"
+			],
+			[
+				"heade",
+				"headerAdd"
+			],
+			[
+				"array_key_ex",
+				"array_key_exists()"
+			],
+			[
+				"Sy",
+				"SysAutomatorGetTranslateWord"
+			],
+			[
+				"regra",
+				"regraKey"
+			],
+			[
+				"array_key_e",
+				"array_key_exists()"
+			],
+			[
+				"is_arr",
+				"is_array()"
+			],
+			[
+				"hea",
+				"header_acts"
+			],
+			[
+				"header_acti",
+				"header_actionC"
+			],
+			[
+				"margin-b",
+				"margin-bottom"
+			],
+			[
+				"str_repl",
+				"str_replace()"
+			],
+			[
+				"is_str",
+				"is_string()"
+			],
+			[
+				"str_repla",
+				"str_replace()"
+			],
+			[
+				"tbl_rou",
+				"tbl_sys_route_name"
+			],
+			[
+				"rot",
+				"rota"
+			],
+			[
+				"_clas",
+				"tbl_sys_menu_item_class"
+			],
+			[
+				"prop",
+				"propKey"
+			],
+			[
+				"valu",
+				"values"
+			],
+			[
+				"rg",
+				"rgba()"
+			],
+			[
+				"rout",
+				"routeName"
+			],
+			[
+				"str_re",
+				"str_replace()"
+			],
+			[
+				"strcon",
+				"str_contains()"
+			],
+			[
+				"font-",
+				"font-weight"
+			],
+			[
+				"d",
+				"display"
+			],
+			[
+				"formulario-",
+				"formulario-6"
+			],
+			[
+				"f",
+				"function"
+			],
+			[
+				"min-",
+				"min-height"
+			]
+		]
+	},
+	"buffers":
+	[
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"Bookmarks: Clear All"
+			],
+			[
+				"Package Control: ins",
+				"Package Control: Install Package"
+			],
+			[
+				"insta",
+				"Install Package Control"
+			]
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 130.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"expanded_folders":
+	[
+		"/C/laragon/www/automatorV2"
+	],
+	"file_history":
+	[
+		"/C/laragon/www/game/resources/views/panel/pages/gerenciar-menu.blade.php",
+		"/C/laragon/www/game/resources/views/layouts/panel.blade.php",
+		"/C/laragon/www/game/app/Http/Controllers/MenuController.php",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-restrict-scripts.js",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-scripts.js",
+		"/C/laragon/www/automatorV2/public/assets/system/automator-page-editor-script.js",
+		"/C/laragon/www/automatorV2/resources/views/system/components/system-automator-editor.blade.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/SystemController.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysPaginationsSeeder.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysFieldTypesSeeder.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFields.php",
+		"/C/laragon/www/automatorV2/resources/views/system/modals/system-page-editor.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/layouts/painel-restrict.blade.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysRoutesSeeder.php",
+		"/C/laragon/www/automatorV2/backups/2026-05-26-pagination.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/relation.blade.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/MenusController.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/AutomatorController.php",
+		"/C/laragon/www/automatorV2/resources/views/system/pages/pagination.blade.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172334_create_sys_field_types_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysFieldType.php",
+		"/C/laragon/www/automatorV2/app/Models/UsersType.php",
+		"/C/laragon/www/automatorV2/app/Models/SysRoute.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/RoutesController.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysFormsSeeder.php",
+		"/C/laragon/www/automatorV2/resources/views/system/pages/gerenciar-menu.blade.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldRelation.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/UsersTypesController.php",
+		"/C/laragon/www/automatorV2/app/Helpers/SysAutomator.php",
+		"/C/laragon/www/automatorV2/app/Models/SysRoutesAccess.php",
+		"/C/laragon/www/automatorV2/app/Http/Middleware/CheckRouteAccess.php",
+		"/C/laragon/www/automatorV2/routes/web.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysMenusItemsSeeder.php",
+		"/C/laragon/www/automatorV2/app/Http/Controllers/FormsController.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/number.blade.php",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-style.css",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/textarea.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/editor.blade.php",
+		"/C/laragon/www/automatorV2/backups/2026-05-27-painel-scripts.js",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldEditor.php",
+		"/C/laragon/www/automatorV2/resources/views/vendor/pagination/bootstrap-5.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/vendor/pagination/tailwind.blade.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysMenusSeeder.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/text.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/password.blade.php",
+		"/C/laragon/www/automatorV2/backups/2026-05-26-gerenciar-menu.blade.php",
+		"/C/laragon/www/automatorV2/node_modules/@emnapi/runtime/dist/emnapi.d.mts",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/email.blade.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldBreakLine.php",
+		"/C/laragon/www/automatorV2/app/Models/SysFormsAccess.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/breakline.blade.php",
+		"/C/laragon/www/automatorV2/resources/views/system/pages/dashboard.blade.php",
+		"/C/laragon/www/automatorV2/app/Models/SysMenusItemAccess.php",
+		"/C/laragon/www/automatorV2/app/Models/User.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_27_182520_create_sys_menus_item_access_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysMenusItemsAccess.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_27_182519_create_sys_menus_access_table.php",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-login.js",
+		"/C/laragon/www/automatorV2/app/Models/SysMenusItem.php",
+		"/C/laragon/www/automatorV2/app/Models/SysMenu.php",
+		"/C/laragon/www/automatorV2/app/Models/SysNav.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysShortcodesSeeder.php",
+		"/C/laragon/www/automatorV2/resources/views/system/pages/minha-conta.blade.php",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-restrict-style.css",
+		"/C/laragon/www/automatorV2/database/seeders/SysFieldTypesGroupsSeeder.php",
+		"/C/laragon/www/automatorV2/database/seeders/SysFormsFieldsSeeder.php",
+		"/C/laragon/www/automatorV2/database/migrations/0001_01_01_000000_create_users_table.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldPassword.php",
+		"/C/laragon/www/automatorV2/resources/views/system/forms/login-form.blade.php",
+		"/C/laragon/www/automatorV2/app/Models/SysPaginationsCol.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_05_17_114134_create_sys_modulos_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172341_create_sys_paginations_cols_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172342_create_sys_paginations_cols_access_table.php",
+		"/C/laragon/www/automatorV2/database/seeders/UsersSeeder.php",
+		"/C/laragon/www/automatorV2/app/Models/SysModulo.php",
+		"/C/laragon/www/automatorV2/app/Models/SysPaginationsColsAccess.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_05_17_114134_create_sys_modules_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_121434_create_users_types_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysFormsFieldsAccess.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172335_create_sys_forms_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysNotification.php",
+		"/C/laragon/www/automatorV2/resources/views/system/pages/form.blade.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172337_create_sys_forms_fields_access_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_05_17_025857_create_sys_notifications_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysForm.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172336_create_sys_forms_fields_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172338_create_sys_forms_access_table.php",
+		"/C/laragon/www/automatorV2/backups/2026-05-16-painel-scripts.js",
+		"/C/laragon/www/automatorV2/public/assets/system/painel-public-style.css",
+		"/C/laragon/www/automatorV2/resources/views/pages/minha-conta.blade.php",
+		"/C/laragon/www/automatorV2/backups/automator-relation-updates/painel-scripts.js",
+		"/C/laragon/www/automatorV2/backups/automator-relation-updates/relation.blade.php",
+		"/C/laragon/www/automatorV2/backups/automator-relation-updates/UsersTypesController.php",
+		"/C/laragon/www/automatorV2/backups/automator-relation-filters-update/AutomatorFields.php",
+		"/C/laragon/www/automatorV2/backups/automator-relation-filters-update/relation.blade.php",
+		"/C/laragon/www/automatorV2/backups/AutomatorFields.php",
+		"/C/laragon/www/automatorV2/backups/relation.blade.php",
+		"/C/laragon/www/automatorV2/routes/api.php",
+		"/C/laragon/www/game/app/Http/Controllers/LojaController.php",
+		"/C/laragon/www/game/resources/views/components/dynamic-pagination.blade.php",
+		"/C/laragon/www/game/app/Traits/DynamicPagination.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/select.blade.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldSelect.php",
+		"/C/laragon/www/automatorV2/backups/pagination.updated.blade.php",
+		"/C/laragon/www/automatorV2/app/Models/UsersSession.php",
+		"/C/laragon/www/automatorV2/[ PESSOAL ] AutomatorV2.sublime-project",
+		"/C/laragon/www/automatorV2/backups/automator_pagination_update_with_view/app/Automator/AutomatorFields.php",
+		"/C/laragon/www/automatorV2/backups/automator_pagination_update_with_view/app/Helpers/SysAutomator.php",
+		"/C/laragon/www/automatorV2/backups/automator_pagination_update_with_view/app/Http/Controllers/AutomatorController.php",
+		"/C/laragon/www/automatorV2/backups/automator_pagination_update_with_view/resources/views/system/pages/pagination.blade.php",
+		"/C/laragon/www/automatorV2/database/seeders/UsersTypesSeeder.php",
+		"/C/laragon/www/automatorV2/backups/pagination.blade.php",
+		"/C/laragon/www/game/app/Http/Controllers/UserTypeController.php",
+		"/C/laragon/www/automatorV2/database/seeders/DatabaseSeeder.php",
+		"/C/laragon/www/automatorV2/app/Models/SysPagination.php",
+		"/C/laragon/www/automatorV2/app/Models/SysPaginationsArg.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172340_create_sys_paginations_cols_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysShortcode.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_05_08_030403_create_sys_shortcodes_table.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_27_182438_create_sys_menus_table.php",
+		"/C/laragon/www/automatorV2/app/Models/SysTranslation.php",
+		"/C/laragon/www/automatorV2/resources/views/system/login.blade.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldTextArea.php",
+		"/C/laragon/www/automatorV2/resources/views/system/fields/hidden.blade.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldHidden.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldNumber.php",
+		"/C/laragon/www/automatorV2/app/Automator/AutomatorFieldText.php",
+		"/C/laragon/www/automatorV2/database/migrations/2026_04_24_172339_create_sys_paginations_args_table.php"
+	],
+	"find":
+	{
+		"height": 27.0
+	},
+	"find_in_files":
+	{
+		"height": 254.0,
+		"where_history":
+		[
+			"C:\\laragon\\www\\automatorV2\\database\\seeders,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\public\\assets,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Helpers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Http,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Automator,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Http\\Controllers,<project filters>",
+			"C:\\laragon\\www\\automatorV2,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\resources\\views,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app,<project filters>",
+			"C:\\laragon\\www\\game\\app\\Http\\Controllers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app,<project filters>",
+			"C:\\laragon\\www\\game,<project filters>",
+			"C:\\laragon\\www\\game\\app\\Http\\Controllers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Helpers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Http\\Controllers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\public,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\public\\assets\\system,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Http,<project filters>",
+			"C:\\laragon\\www\\automatorV2,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app\\Http\\Controllers,<project filters>",
+			"C:\\laragon\\www\\automatorV2\\app,<project filters>"
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			".automator-editor-block[data-automator-default=\"true\"]:hover {",
+			"n injectBlo",
+			"initSor",
+			"toggleLo",
+			"injectBlock(",
+			"function initSortable(el) {",
+			".automator-editor-block.is-locked {",
+			".automator-editor-sortable-placeholder {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child:hover::after {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child::after {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block:hover > .automator-editor-block-handle {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block > .automator-editor-block-handle {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block:has(.automator-editor-block:hover) {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block:hover {",
+			"#automator-editor-body-canvas-content-container .automator-editor-block {",
+			"automator-editor-body-aside-left-structure-list",
+			"const order = Array.from(list[0].children)",
+			"const childArea = $(this)",
+			"updateStructureList",
+			"targetContainer.append(wrapper);",
+			"syncCanvasOrder",
+			"$(container).children('.automator-editor-block').each(",
+			"initSort",
+			"sortable-initialized",
+			"updateStructureList",
+			"injectBloc",
+			"inject",
+			"nested-blocks",
+			"initSor",
+			"initSorta",
+			"handle",
+			"data-empty",
+			"is-active",
+			"handle",
+			"selectBlock",
+			"scrollToBlock",
+			"toggleLock",
+			"automator-editor-lock",
+			"syncCanvasOrder",
+			"automator-editor-body-aside-left-structure-item",
+			"structure-item",
+			"updateStructureList",
+			"defalutEmpty",
+			"defalutEmpty.editor",
+			"renderB",
+			"render",
+			"toolbar",
+			"plus",
+			"add",
+			"can-have",
+			"renderBlockSettings",
+			"toggleSidebar",
+			"switch",
+			"data-block-name",
+			"renderFieldElement",
+			"automator-editor-block-render-area",
+			"have-child",
+			"automator-editor-block-can-have-childs",
+			"activeBlock",
+			"inject",
+			"selectBlock",
+			"deselectAll",
+			"selectBlock",
+			"selectB",
+			"select",
+			"wp-block-child-area",
+			"empty",
+			"child",
+			"toggleInterface",
+			"init",
+			"initSortable",
+			"nested-blocks",
+			"child",
+			"childs",
+			"has-c",
+			"has",
+			"can=",
+			"can",
+			"automator-editor-block",
+			"automator-editor-body-canvas-content-container-render-area",
+			"automator-editor-body-canvas-content-container",
+			"automator-editor-body-aside-right.collapsed",
+			"automator-editor-body-canvas-content",
+			"automator-editor-body-canvas",
+			"automator-editor-body-canvas-content",
+			"automator-editor-body-canvas-content-container",
+			"automator-editor-body-canvas-content-container-render-area",
+			"updateTabVisibility",
+			"switchLeftTab",
+			"init",
+			"toggleSidebar",
+			"initSortable",
+			"initSo",
+			".automator-editor-block-render-area {",
+			"transparent",
+			"toggleL",
+			"toggle",
+			"inject",
+			"injectc",
+			"lock-btn",
+			"deleteBlock",
+			"times",
+			"NOVO",
+			".automator-editor-block:has(.automator-editor-block:hover)",
+			".automator-editor-block.is-active",
+			"#automator-editor-body-canvas-content-container-render-area > .automator-editor-block.is-active",
+			"#automator-editor-body-canvas-content-container-render-area > .automator-editor-block.is-active, #automator-editor-body-canvas-content-container-render-area > .automator-editor-block.is-active:hover",
+			".automator-editor-block",
+			"defalutEmpty",
+			"renderFieldElement",
+			"inject",
+			".automator-editor-block {",
+			".automator-editor-block",
+			"attr",
+			"cross",
+			"hav",
+			"has-c",
+			".automator-editor-block-is-empty > .automator-editor-block-render-area:before",
+			"-42",
+			"#automator-editor-body-canvas-content-container-render-area > .automator-editor-block.is-active:hover {",
+			"collapsed",
+			"automator-editor-body-aside-right-tabs-container-items d-none collapsed",
+			"desele",
+			"delese",
+			"#automator-editor-body-canvas-content-container-render-area > .automator-editor-block.is-active:hover {",
+			"on renderBlockSettings(block,",
+			"init(",
+			"init"
+		],
+		"highlight": false,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"SysAutomatorEditor",
+			"$texts",
+			"$textos",
+			"d-none",
+			"'route'",
+			"$submenu['tbl_sys_menu_item_",
+			"$submenu['",
+			"tbl_sys_menu_",
+			"data-bs-title=",
+			"\" data-bs-toogle=\"tooltip\"",
+			">",
+			"<",
+			"",
+			"modulo",
+			"tbl_sys_module",
+			"POST",
+			"                'tbl_sys_paginations_col_sort'   => true,\n                'cols_access'                    => []",
+			",\n                'cols_access'                    => []",
+			"'POST'",
+			"modal-md",
+			"'admin-users-types'",
+			"tbl_sys_field_type_group_ID'",
+			"tbl_sys_field_type_group_ID",
+			"tbl_sys_forms_field_",
+			"tbl_sys_paginations_arg",
+			"tbl_sys_pagination_col",
+			"tbl_sys_pagination",
+			"tbl_sys_forms_field_",
+			"RoutesController",
+			"      ]);",
+			"SysConfig::Create([",
+			"'tbl",
+			"Create",
+			"\"sysDateFormat\"",
+			"sysDateFormat",
+			"return=",
+			"sysfunction"
+		],
+		"reverse": false,
+		"scrollbar_highlights": true,
+		"show_context": true,
+		"use_buffer2": true,
+		"use_gitignore": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"sheets":
+			[
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 27.0
+	},
+	"input":
+	{
+		"height": 78.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.SFTP":
+	{
+		"height": 126.0,
+		"history":
+		[
+		]
+	},
+	"output.find_results":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"pinned_build_system": "",
+	"project": "[ PESSOAL ] AutomatorV2.sublime-project",
+	"replace":
+	{
+		"height": 50.0
+	},
+	"save_all_on_build": false,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"",
+				"C:\\laragon\\www\\Patrao\\[ LzO ] Patrão.sublime-project"
+			],
+			[
+				"ede",
+				"C:\\laragon\\www\\Eder\\SuiteCred\\[ EDER ] SuiteCred.sublime-project"
+			]
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 283.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}
