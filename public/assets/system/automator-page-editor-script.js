@@ -5,7 +5,9 @@ window.SysAutomatorEditor = (function () {
     hasChanges: false,
     initialized: false,
     componentsLoaded: false,
-    componentsLoading: false
+    componentsLoading: false,
+    previewMode: false,
+    viewportMode: 'auto'
   };
 
   const defaultEditor = {
@@ -32,7 +34,12 @@ window.SysAutomatorEditor = (function () {
     structureBlock: '#automator-editor-aside-left-structure',
     structureList: '#automator-editor-aside-left-structure-list',
     rightContent: '#automator-editor-aside-right-content',
-    saveBtn: '#automator-editor-header-save-btn'
+    saveBtn: '#automator-editor-header-save-btn',
+    previewBtn: '#automator-editor-header-preview-btn',
+    previewTooltip: '#automator-editor-header-preview-btn',
+    viewportBtn: '#automator-editor-header-viewport-btn',
+    viewportLabel: '#automator-editor-header-viewport-label',
+    canvasContainer: '#automator-editor-canvas-container'
   };
 
   function config(data = {}, callback = null) {
@@ -87,6 +94,27 @@ window.SysAutomatorEditor = (function () {
         devices: []
       }
     });
+
+    if (grapesEditor.RichTextEditor) {
+
+      if (typeof grapesEditor.RichTextEditor.remove === 'function') {
+      
+        grapesEditor.RichTextEditor.remove('link');
+      
+      }
+
+      if (
+      
+        typeof grapesEditor.RichTextEditor.getAll === 'function' &&
+        grapesEditor.RichTextEditor.getAll().remove
+      
+      ) {
+
+        grapesEditor.RichTextEditor.getAll().remove('link');
+      
+      }
+
+    }
 
     loadInitialContent();
     bindInterfaceBlocks();
@@ -145,6 +173,136 @@ window.SysAutomatorEditor = (function () {
       item.css('opacity', '1');
 
     });
+
+  }
+
+  function getViewportModes() {
+
+    return {
+      auto: {
+        label: 'Auto',
+        width: null
+      },
+      xs: {
+        label: 'XS',
+        width: 375
+      },
+      sm: {
+        label: 'SM',
+        width: 576
+      },
+      md: {
+        label: 'MD',
+        width: 768
+      },
+      lg: {
+        label: 'LG',
+        width: 992
+      },
+      xl: {
+        label: 'XL',
+        width: 1200
+      },
+      xxl: {
+        label: 'XXL',
+        width: 1400
+      }
+    };
+
+  }
+
+  function setViewportMode(mode) {
+
+    const modes = getViewportModes();
+
+    if (!modes[mode]) {
+      mode = 'auto';
+    }
+
+    state.viewportMode = mode;
+
+    updateViewportButton();
+    syncCanvasDeviceViewport();
+    syncCanvasHeight();
+
+  }
+
+  function updateViewportButton() {
+
+    const modes = getViewportModes();
+    const current = modes[state.viewportMode] || modes.auto;
+
+    $(selectors.viewportLabel).text(current.label);
+
+  }
+
+  function syncCanvasDeviceViewport() {
+
+    const modes = getViewportModes();
+    const current = modes[state.viewportMode] || modes.auto;
+    const container = $(selectors.canvasContainer);
+
+    if (!container.length) {
+      return;
+    }
+
+    if (!current.width) {
+
+      container.css({
+        width: '',
+        maxWidth: state.previewMode ? 'none' : ''
+      });
+
+    } else {
+
+      container.css({
+        width: current.width + 'px',
+        maxWidth: current.width + 'px'
+      });
+
+    }
+
+    if (grapesEditor) {
+
+      const frameEl = grapesEditor.Canvas.getFrameEl();
+
+      if (frameEl && current.width) {
+        frameEl.style.width = current.width + 'px';
+        frameEl.style.maxWidth = current.width + 'px';
+      }
+
+      if (frameEl && !current.width) {
+        frameEl.style.width = '';
+        frameEl.style.maxWidth = '';
+      }
+
+      if (typeof grapesEditor.refresh === 'function') {
+        grapesEditor.refresh();
+      }
+
+    }
+
+  }
+
+  function syncEditorLayoutState() {
+
+    const modal = $('#automator-editor-modal');
+
+    const leftHidden =
+      $(selectors.leftAside).hasClass('is-collapsed') ||
+      !$(selectors.leftAside).is(':visible');
+
+    const rightHidden =
+      $(selectors.rightAside).hasClass('is-collapsed') ||
+      !$(selectors.rightAside).is(':visible');
+
+    if (state.previewMode || (leftHidden && rightHidden)) {
+      modal.addClass('is-sidebars-hidden');
+    } else {
+      modal.removeClass('is-sidebars-hidden');
+    }
+
+    syncCanvasDeviceViewport();
 
   }
 
@@ -318,6 +476,8 @@ window.SysAutomatorEditor = (function () {
     }
 
     initBootstrapHelpers();
+    updateViewportButton();
+    syncEditorLayoutState();
 
     if (typeof callback === 'function') {
       callback({ state, editor, selectors, grapesEditor });
@@ -393,6 +553,8 @@ window.SysAutomatorEditor = (function () {
     if (grapesEditor) {
         grapesEditor.refresh();
     }
+
+    syncCanvasDeviceViewport();
 
   }
 
@@ -719,6 +881,251 @@ window.SysAutomatorEditor = (function () {
       prefix.indexOf('<code') !== -1 ||
       sufix.indexOf('</code>') !== -1
     );
+
+  }
+
+  function togglePreviewMode() {
+
+    setPreviewMode(!state.previewMode);
+
+  }
+
+  function setPreviewMode(enabled) {
+
+    state.previewMode = enabled === true;
+
+    const modal = $('#automator-editor-modal');
+
+    if (state.previewMode) {
+
+      hideBootstrapFloatingElements();
+
+      modal.addClass('is-preview-mode');
+
+      setLeftSidebarOpen(false);
+
+      $(selectors.rightAside)
+        .addClass('is-collapsed')
+        .removeClass('show');
+
+      updateLeftTabButtons('');
+
+      clearEditorSelection();
+
+      setCanvasPreviewMode(true);
+
+    } else {
+
+      modal.removeClass('is-preview-mode');
+
+      setCanvasPreviewMode(false);
+
+      if (grapesEditor && typeof grapesEditor.refresh === 'function') {
+        grapesEditor.refresh();
+      }
+
+    }
+
+    updatePreviewButton();
+    updatePreviewLockedButtons();
+    syncEditorLayoutState();
+
+    syncCanvasHeight();
+    syncEditorViewportSpacing();
+
+  }
+
+  function clearEditorSelection() {
+
+    if (!grapesEditor) {
+      return;
+    }
+
+    try {
+
+      const selected = grapesEditor.getSelected();
+
+      if (selected) {
+        grapesEditor.selectRemove(selected);
+      }
+
+    } catch (e) {
+      console.warn('Não foi possível limpar a seleção do editor:', e);
+    }
+
+  }
+
+  function updatePreviewButton() {
+
+    const button = $(selectors.previewBtn);
+    const icon = button.find('i');
+
+    if (!button.length) {
+      return;
+    }
+
+    const tooltipEl = button.closest('[data-bs-toggle="tooltip"]');
+
+    if (state.previewMode) {
+      icon.removeClass('fa-eye').addClass('fa-edit');
+      tooltipEl.attr('data-bs-title', 'Editar');
+      tooltipEl.attr('title', 'Editar');
+    } else {
+      icon.removeClass('fa-edit').addClass('fa-eye');
+      tooltipEl.attr('data-bs-title', 'Pré Visualizar');
+      tooltipEl.attr('title', 'Pré Visualizar');
+    }
+
+  }
+
+  function updatePreviewLockedButtons() {
+
+    const lockedButtons = $(
+      '[data-automator-left-tab], ' +
+      '#automator-editor-header-configs-btn, ' +
+      selectors.saveBtn
+    );
+
+    if (state.previewMode) {
+      lockedButtons.addClass('automator-editor-preview-disabled').prop('disabled', true);
+    } else {
+      lockedButtons.removeClass('automator-editor-preview-disabled').prop('disabled', false);
+      setSaveState(state.hasChanges);
+    }
+
+  }
+
+  function setCanvasPreviewMode(enabled) {
+
+    if (!grapesEditor) {
+      return;
+    }
+
+    const doc = grapesEditor.Canvas.getDocument();
+    const body = grapesEditor.Canvas.getBody();
+
+    if (!doc || !body) {
+      return;
+    }
+
+    injectCanvasPreviewStyles();
+
+    const oldPreview = body.querySelector('#automator-editor-render-preview');
+
+    if (oldPreview) {
+      oldPreview.remove();
+    }
+
+    if (enabled) {
+
+      const preview = doc.createElement('div');
+
+      preview.id = 'automator-editor-render-preview';
+      preview.innerHTML = normalizeFinalHtml(cleanEditorHtml(''));
+
+      body.classList.add('automator-editor-canvas-preview-mode');
+
+      Array.from(body.children).forEach(function (child) {
+
+        if (
+          child.id === 'automator-editor-render-preview' ||
+          child.tagName === 'STYLE' ||
+          child.tagName === 'SCRIPT'
+        ) {
+          return;
+        }
+
+        child.setAttribute('data-automator-preview-hidden', 'true');
+        child.style.display = 'none';
+
+      });
+
+      body.appendChild(preview);
+
+    } else {
+
+      body.classList.remove('automator-editor-canvas-preview-mode');
+
+      const preview = body.querySelector('#automator-editor-render-preview');
+
+      if (preview) {
+        preview.remove();
+      }
+
+      Array.from(body.children).forEach(function (child) {
+
+        if (child.getAttribute('data-automator-preview-hidden') === 'true') {
+          child.style.display = '';
+          child.removeAttribute('data-automator-preview-hidden');
+        }
+
+      });
+
+    }
+
+  }
+
+  function injectCanvasPreviewStyles() {
+
+    if (!grapesEditor) {
+      return;
+    }
+
+    const doc = grapesEditor.Canvas.getDocument();
+
+    if (!doc || doc.getElementById('automator-editor-preview-styles')) {
+      return;
+    }
+
+    const style = doc.createElement('style');
+    style.id = 'automator-editor-preview-styles';
+
+    style.innerHTML = `
+      body.automator-editor-canvas-preview-mode {
+        background: #ffffff !important;
+      }
+
+      #automator-editor-render-preview {
+        position: relative !important;
+        z-index: 999999 !important;
+        width: 100% !important;
+        min-height: 100% !important;
+        background: #ffffff !important;
+        pointer-events: auto !important;
+      }
+
+      #automator-editor-render-preview * {
+        pointer-events: auto !important;
+      }
+
+      #automator-editor-render-preview [data-automator-field-type-title] {
+        outline: none !important;
+      }
+
+      #automator-editor-render-preview [data-automator-field-type-title]::before {
+        display: none !important;
+        content: none !important;
+      }
+
+      #automator-editor-render-preview .automator-editor-visual-space {
+        padding: initial !important;
+        margin-top: initial !important;
+        margin-bottom: initial !important;
+        background: initial !important;
+        border: none !important;
+      }
+
+      #automator-editor-render-preview .automator-editor-child-placeholder {
+        display: none !important;
+      }
+
+      #automator-editor-render-preview .automator-editor-shortcode-preview {
+        border: none !important;
+        background: transparent !important;
+      }
+    `;
+
+    doc.head.appendChild(style);
 
   }
 
@@ -1623,8 +2030,12 @@ window.SysAutomatorEditor = (function () {
     }
 
     const attributes = component.getAttributes() || {};
+
     attributes['data-automator-property-' + propertyName] = value;
+
     component.setAttributes(attributes);
+
+    syncFinalAttributePropertyToComponent(component, propertyName, value);
 
     if (isShortcodeComponent(component)) {
 
@@ -1682,6 +2093,52 @@ window.SysAutomatorEditor = (function () {
     state.hasChanges = true;
     setSaveState(true);
     updateStructureList();
+
+  }
+
+  function syncFinalAttributePropertyToComponent(component, propertyName, value) {
+
+    if (!component || !component.getAttributes) {
+      return;
+    }
+
+    propertyName = String(propertyName || '');
+
+    if (isIgnoredFinalProperty(propertyName)) {
+      return;
+    }
+
+    const realAttrName = getRealAttributeNameFromProperty(propertyName);
+
+    if (!realAttrName) {
+      return;
+    }
+
+    const attrs = component.getAttributes() || {};
+
+    value = value === null || typeof value === 'undefined'
+      ? ''
+      : String(value);
+
+    if (value === '') {
+      delete attrs[realAttrName];
+    } else {
+      attrs[realAttrName] = value;
+    }
+
+    component.setAttributes(attrs);
+
+    const viewEl = component.getEl ? component.getEl() : null;
+
+    if (viewEl) {
+
+      if (value === '') {
+        viewEl.removeAttribute(realAttrName);
+      } else {
+        viewEl.setAttribute(realAttrName, value);
+      }
+
+    }
 
   }
 
@@ -2487,7 +2944,7 @@ window.SysAutomatorEditor = (function () {
 
   function getStoredPropertyValue(component, propertyName, defaultValue) {
 
-    const attrs = component.getAttributes ? component.getAttributes() : {};
+    const attrs = component && component.getAttributes ? component.getAttributes() : {};
     const key = 'data-automator-property-' + propertyName;
 
     if (typeof attrs[key] !== 'undefined') {
@@ -2503,10 +2960,8 @@ window.SysAutomatorEditor = (function () {
     }
 
     if (propertyName === 'advanced.style') {
-      const style = component.getStyle ? component.getStyle() : {};
-      return Object.entries(style).map(function (item) {
-        return item[0] + ':' + item[1];
-      }).join(';');
+      const style = component && component.getStyle ? component.getStyle() : {};
+      return objectToStyleString(style);
     }
 
     return defaultValue;
@@ -3471,6 +3926,10 @@ window.SysAutomatorEditor = (function () {
 
   function saveContent() {
 
+    if (state.previewMode) {
+      return null;
+    }
+
     if (!grapesEditor) {
       const emptyData = {
         html: '',
@@ -3484,7 +3943,7 @@ window.SysAutomatorEditor = (function () {
     }
 
     const data = {
-      html: cleanEditorHtml(grapesEditor.getHtml()),
+      html: normalizeFinalHtml(cleanEditorHtml('')),
       css: grapesEditor.getCss(),
       components: grapesEditor.getComponents().toJSON()
     };
@@ -3506,19 +3965,19 @@ window.SysAutomatorEditor = (function () {
       return html || '';
     }
 
-    const wrapperComponent = grapesEditor.DomComponents.getWrapper();
+    const wrapper = grapesEditor.DomComponents.getWrapper();
 
-    if (!wrapperComponent) {
+    if (!wrapper || !wrapper.components) {
       return html || '';
     }
 
-    const htmlParts = [];
+    let finalHtml = '';
 
-    wrapperComponent.components().each(function (component) {
-      htmlParts.push(getCleanComponentHtml(component));
+    wrapper.components().each(function (component) {
+      finalHtml += getCleanComponentHtml(component);
     });
 
-    return htmlParts.join('');
+    return finalHtml;
 
   }
 
@@ -3536,30 +3995,344 @@ window.SysAutomatorEditor = (function () {
       return cleanShortcodeWrapperHtml(component);
     }
 
-    const clonedHtml = component.toHTML ? component.toHTML() : '';
+    const type = component.get ? component.get('type') : '';
 
-    const wrapper = document.createElement('div');
-    wrapper.innerHTML = clonedHtml || '';
+    if (type === 'textnode') {
+      return component.get('content') || '';
+    }
 
-    $(wrapper).find('[data-automator-placeholder="true"]').remove();
-    $(wrapper).find('[data-automator-shortcode-preview="true"]').remove();
+    const tagName = component.get ? component.get('tagName') || 'div' : 'div';
+    const el = document.createElement(tagName);
 
-    $(wrapper).find('[class]').each(function () {
+    applyCleanComponentAttributes(component, el);
 
-      const el = $(this);
-      const classes = sanitizeEditorClasses(el.attr('class'));
+    const children = component.components ? component.components() : null;
 
-      if (classes.length) {
-        el.attr('class', classes.join(' '));
-      } else {
-        el.removeAttr('class');
+    if (children && children.length) {
+
+      let childrenHtml = '';
+
+      children.each(function (child) {
+        childrenHtml += getCleanComponentHtml(child);
+      });
+
+      el.innerHTML = childrenHtml;
+
+    } else {
+
+      el.innerHTML = component.getInnerHTML
+        ? component.getInnerHTML()
+        : '';
+
+    }
+
+    applyFinalComponentPropertiesToElement(component, el);
+    removeEditorOnlyElements(el);
+    removeEditorOnlyAttributes(el);
+
+    return el.outerHTML;
+
+  }
+
+  function applyCleanComponentAttributes(component, el) {
+
+    const attrs = component && component.getAttributes ? component.getAttributes() : {};
+    const classes = component && component.getClasses ? component.getClasses() : [];
+    const style = component && component.getStyle ? component.getStyle() : {};
+
+    const finalClasses = sanitizeEditorClasses(classes);
+
+    $.each(attrs || {}, function (key, value) {
+
+      if (!key || key === 'class' || key === 'style') {
+        return;
+      }
+
+      if (key.indexOf('data-automator-') === 0) {
+        return;
+      }
+
+      if (key.indexOf('data-gjs-') === 0) {
+        return;
+      }
+
+      if (value === null || typeof value === 'undefined') {
+        return;
+      }
+
+      el.setAttribute(key, value);
+
+    });
+
+    if (finalClasses.length) {
+      el.setAttribute('class', finalClasses.join(' '));
+    }
+
+    const styleString = objectToStyleString(style);
+
+    if (styleString) {
+      el.setAttribute('style', styleString);
+    }
+
+  }
+
+  function applyFinalComponentPropertiesToElement(component, el) {
+
+    if (!component || !el) {
+      return;
+    }
+
+    const attrs = component.getAttributes ? component.getAttributes() : {};
+
+    $.each(attrs, function (attrName, attrValue) {
+
+      attrName = String(attrName || '');
+
+      if (attrName.indexOf('data-automator-property-') !== 0) {
+        return;
+      }
+
+      const propertyName = attrName.replace('data-automator-property-', '');
+
+      if (isIgnoredFinalProperty(propertyName)) {
+        return;
+      }
+
+      const realAttrName = getRealAttributeNameFromProperty(propertyName);
+
+      if (!realAttrName) {
+        return;
+      }
+
+      const value = attrValue === null || typeof attrValue === 'undefined'
+        ? ''
+        : String(attrValue);
+
+      if (value === '') {
+        el.removeAttribute(realAttrName);
+        return;
+      }
+
+      el.setAttribute(realAttrName, value);
+
+      if (realAttrName === 'target' && value === '_blank') {
+        el.setAttribute('rel', 'noopener noreferrer');
       }
 
     });
 
-    $(wrapper).find('[data-automator-base-classes]').removeAttr('data-automator-base-classes');
-    $(wrapper).find('[data-automator-can-have-child]').removeAttr('data-automator-can-have-child');
-    $(wrapper).find('[data-automator-shortcode-component]').removeAttr('data-automator-shortcode-component');
+  }
+
+  function getRealAttributeNameFromRawProperty(component, propertyName) {
+
+    const raw = getRawDataFromComponent(component);
+
+    if (!raw || !raw.properties) {
+      return '';
+    }
+
+    const parts = String(propertyName || '').split('.');
+    const groupKey = parts[0] || '';
+    const fieldKey = parts[1] || '';
+
+    if (!groupKey || !fieldKey) {
+      return '';
+    }
+
+    const group = raw.properties[groupKey];
+
+    if (!group || !group.fields || !group.fields[fieldKey]) {
+      return '';
+    }
+
+    const field = group.fields[fieldKey];
+
+    if (field.attribute) {
+      return String(field.attribute).toLowerCase();
+    }
+
+    if (field.attr) {
+      return String(field.attr).toLowerCase();
+    }
+
+    if (field.html_attr) {
+      return String(field.html_attr).toLowerCase();
+    }
+
+    const key = String(fieldKey || '').toLowerCase();
+    const label = String(field.label || '').toLowerCase();
+
+    if (
+      key === 'href' ||
+      key === 'url' ||
+      key === 'link' ||
+      key === 'link_url' ||
+      key === 'link-url' ||
+      label.indexOf('url') !== -1 ||
+      label.indexOf('link') !== -1 ||
+      label.indexOf('href') !== -1
+    ) {
+      return 'href';
+    }
+
+    if (
+      key === 'src' ||
+      key === 'image' ||
+      key === 'imagem' ||
+      label.indexOf('imagem') !== -1 ||
+      label.indexOf('image') !== -1
+    ) {
+      return 'src';
+    }
+
+    return getRealAttributeNameFromProperty(propertyName);
+
+  }
+
+  function getRawDataFromComponent(component) {
+
+    if (!component || !component.getAttributes) {
+      return null;
+    }
+
+    const attrs = component.getAttributes();
+    const fieldTypeID = attrs['data-automator-field-type-id'] || '';
+
+    if (!fieldTypeID) {
+      return null;
+    }
+
+    const componentData = getComponent(fieldTypeID);
+
+    return componentData && componentData.raw
+      ? componentData.raw
+      : null;
+
+  }
+
+  function getRealAttributeNameFromProperty(propertyName) {
+
+    const clean = String(propertyName || '').toLowerCase();
+    const parts = clean.split('.');
+    const last = parts[parts.length - 1];
+
+    const map = {
+      href: 'href',
+      url: 'href',
+      link: 'href',
+      src: 'src',
+      image: 'src',
+      imagem: 'src',
+      alt: 'alt',
+      title: 'title',
+      target: 'target',
+      rel: 'rel',
+      name: 'name',
+      value: 'value',
+      placeholder: 'placeholder',
+      type: 'type',
+      role: 'role',
+      download: 'download',
+      width: 'width',
+      height: 'height',
+      action: 'action',
+      method: 'method',
+      for: 'for'
+    };
+
+    return map[last] || '';
+
+  }
+
+  function removeEditorOnlyElements(el) {
+
+    $(el).find('[data-automator-placeholder="true"]').remove();
+    $(el).find('[data-automator-shortcode-preview="true"]').remove();
+
+  }
+
+  function removeEditorOnlyAttributes(el) {
+
+    $(el).add($(el).find('*')).each(function () {
+
+      const element = this;
+      const attributes = Array.from(element.attributes || []);
+
+      attributes.forEach(function (attr) {
+
+        const name = attr.name;
+        const value = attr.value;
+
+        if (name.indexOf('data-automator-property-') === 0) {
+
+          const propertyName = name.replace('data-automator-property-', '');
+
+          if (!isIgnoredFinalProperty(propertyName)) {
+
+            const realAttrName = getRealAttributeNameFromProperty(propertyName);
+
+            if (realAttrName && String(value || '') !== '') {
+              element.setAttribute(realAttrName, value);
+            }
+
+          }
+
+          element.removeAttribute(name);
+
+          return;
+
+        }
+
+        if (
+          name.indexOf('data-gjs-') === 0 ||
+          name.indexOf('data-automator-') === 0 ||
+          name === 'contenteditable' ||
+          name === 'draggable'
+        ) {
+          element.removeAttribute(name);
+        }
+
+      });
+
+      if (element.hasAttribute('class')) {
+
+        const classes = sanitizeEditorClasses(element.getAttribute('class'));
+
+        if (classes.length) {
+          element.setAttribute('class', classes.join(' '));
+        } else {
+          element.removeAttribute('class');
+        }
+
+      }
+
+    });
+
+  }
+
+  function isIgnoredFinalProperty(propertyName) {
+
+    propertyName = String(propertyName || '');
+
+    return (
+      propertyName === 'advanced.id' ||
+      propertyName === 'advanced.class' ||
+      propertyName === 'advanced.style' ||
+      propertyName.indexOf('shortcode_params.') === 0 ||
+      propertyName.indexOf('config.shortcode') === 0 ||
+      propertyName.indexOf('config.pagination') === 0
+    );
+
+  }
+
+  function normalizeFinalHtml(html) {
+
+    const wrapper = document.createElement('div');
+
+    wrapper.innerHTML = html || '';
+
+    removeEditorOnlyElements(wrapper);
+    removeEditorOnlyAttributes(wrapper);
 
     return wrapper.innerHTML;
 
@@ -3635,9 +4408,14 @@ window.SysAutomatorEditor = (function () {
       return '';
     }
 
-    return Object.entries(style).map(function (item) {
-      return item[0] + ':' + item[1];
-    }).join(';');
+    return Object.entries(style)
+      .filter(function (item) {
+        return item && item[0] && item[1] !== null && typeof item[1] !== 'undefined' && String(item[1]) !== '';
+      })
+      .map(function (item) {
+        return item[0] + ':' + item[1];
+      })
+      .join(';');
 
   }
 
@@ -3654,6 +4432,10 @@ window.SysAutomatorEditor = (function () {
   }
 
   function switchLeftTab(tab) {
+
+    if (state.previewMode) {
+      return;
+    }
 
     const sidebar = $(selectors.leftAside);
     const currentTab = sidebar.attr('data-active-tab') || '';
@@ -3685,6 +4467,10 @@ window.SysAutomatorEditor = (function () {
 
   function toggleSidebar(side) {
 
+    if (state.previewMode) {
+      return;
+    }
+
     if (side === 'left') {
 
       if (isLeftSidebarOpen()) {
@@ -3710,6 +4496,8 @@ window.SysAutomatorEditor = (function () {
     }
 
     el.toggleClass('is-collapsed');
+
+    syncEditorLayoutState();
 
   }
 
@@ -3751,6 +4539,8 @@ window.SysAutomatorEditor = (function () {
       sidebar.addClass('is-collapsed');
     }
 
+    syncEditorLayoutState();
+
   }
 
   function updateLeftTabButtons(activeTab) {
@@ -3766,7 +4556,14 @@ window.SysAutomatorEditor = (function () {
   }
 
   function setSaveState(enabled) {
+
+    if (state.previewMode) {
+      $(selectors.saveBtn).prop('disabled', true);
+      return;
+    }
+
     $(selectors.saveBtn).prop('disabled', !enabled);
+
   }
 
   function hideBootstrapFloatingElements() {
@@ -4074,6 +4871,12 @@ window.SysAutomatorEditor = (function () {
 
     insertField: injectBlock,
     injectBlock,
+
+    togglePreviewMode,
+    setPreviewMode,
+
+    setViewportMode,
+    syncCanvasDeviceViewport,
 
     switchLeftTab,
     updateLeftTabVisibility,

@@ -127,7 +127,7 @@
   #automator-editor-canvas {
     background-color: #f0f0f0;
     overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow-x: auto !important;
     padding: 40px 20px;
     flex: 1;
     min-width: 0;
@@ -142,6 +142,17 @@
     max-width: 850px;
     margin: 0 auto 20px auto;
     padding: 0 10px;
+  }
+
+  #automator-editor-modal.is-preview-mode #automator-editor-canvas-container,
+  #automator-editor-modal.is-sidebars-hidden #automator-editor-canvas-container {
+    max-width: none !important;
+  }
+
+  #automator-editor-header-viewport-label {
+    min-width: 34px;
+    display: inline-block;
+    text-align: center;
   }
 
   #automator-editor-canvas-container > .container-fluid {
@@ -292,7 +303,7 @@
   }
 
   .automator-editor-api-property-editor {
-     display: flex;
+    display: flex;
     width: 100%;
     max-height: 260px;
     overflow: hidden;
@@ -356,6 +367,21 @@
     outline: none !important;
   }
 
+  #automator-editor-modal.is-preview-mode .automator-editor-aside {
+    display: none !important;
+    width: 0 !important;
+  }
+
+  #automator-editor-modal.is-preview-mode #automator-editor-canvas {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  #automator-editor-modal.is-preview-mode .automator-editor-preview-disabled {
+    opacity: .45;
+    pointer-events: none;
+  }
+
 </style>
 
 <div id="extracted-json" class="d-none"></div>
@@ -376,13 +402,87 @@
       </button>
     </span>
 
+    <span class="dropdown me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="Resolução" data-bs-trigger="hover">
+      <button id="automator-editor-header-viewport-btn" type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="fas fa-desktop me-1"></i>
+        <span id="automator-editor-header-viewport-label">Auto</span>
+      </button>
+
+      <ul class="dropdown-menu">
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('auto')">Auto</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xs')">XS - 375px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('sm')">SM - 576px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('md')">MD - 768px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('lg')">LG - 992px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xl')">XL - 1200px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xxl')">XXL - 1400px</button></li>
+      </ul>
+    </span>
+
   </div>
 
-  <div id="automator-editor-header-center" class="text-center">
-    <span class="small fw-bold text-muted">Editor de Conteúdo</span>
-  </div>
+  @if(isset($header['content']))
+
+    <div id="automator-editor-header-center" class="text-center">
+
+      @if($header['type'] == 'form-input')
+
+        @php
+
+          $haveSlug = ( (isset($header['content']['have-slug'])) ? ( (is_array($header['content']['have-slug'])) ? ( (count($header['content']['have-slug']) >= 1) ? ( (isset($header['content']['have-slug']['enabled'])) ? $header['content']['have-slug']['enabled'] : false ) : false ) : false ) : false );
+
+        @endphp
+
+        @if($haveSlug == true)
+
+          <div class="input-group">
+        
+            <div class="form-floating">
+              
+              <input type="{!! $header['content']['type'] !!}" value="{!! $header['content']['value'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" onkeyup="SysAutomatorEditor.syncHeaderInputSlug(this)" data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] !!}"{!! ( ($header['content']['required'] == true) ? ' required' : '' ) !!} />
+              
+              <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
+            
+            </div>
+            
+            <span class="input-group-text p-0 d-inline-block" style="border-top: 0px; border-bottom: 0px;">
+            
+              <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] !!}-sync" autocomplete="off" />
+              <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">{!! $header['content']['have-slug']['label'] !!}</label>
+            
+            </span>
+
+          </div>
+
+        @else
+
+          <div class="form-floating">
+              
+            <input type="{!! $header['content']['type'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" value="{!! $header['content']['label'] !!}" />
+            <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
+          
+          </div>
+
+        @endif
+
+      @else
+
+        {!! $header['content'] !!}
+
+      @endif
+      <!-- <span class="small fw-bold text-muted">Editor de Conteúdo</span> -->
+      
+    </div>
+
+  @endif
 
   <div class="d-flex align-items-center">
+
+    <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="Pré Visualizar">
+      <button id="automator-editor-header-preview-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.togglePreviewMode()">
+        <i class="fas fa-eye"></i>
+      </button>
+    </span>
 
     <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="{!! $texts['proprieties'] ?? 'Propriedades' !!}">
       <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.toggleSidebar('right')">
