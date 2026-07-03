@@ -2088,6 +2088,8 @@ function AutomatorCreateViewModal(payload, options) {
   var beforeShow  = (typeof options.beforeShow === 'function') ? options.beforeShow : null;
   var afterHideOn = (typeof options.afterHideOn === 'function') ? options.afterHideOn : null;
 
+  var keepLoaderUntilCallback = options.keepLoaderUntilCallback === true;
+
 
   /*
   |--------------------------------------------------------------------------
@@ -2638,11 +2640,29 @@ function AutomatorCreateViewModal(payload, options) {
     var hasAction = (acao !== null && acao !== undefined && acao !== '');
     var hasID     = (id   !== null && id   !== undefined && id   !== '');
 
+    // if(!hasAction || !hasID) {
+
+    //   AutomatorPageLoader('hide', function() {
+    //     _createModal(response, {});
+    //   });
+
+    //   return;
+
+    // }
+
     if(!hasAction || !hasID) {
 
-      AutomatorPageLoader('hide', function() {
+      if(keepLoaderUntilCallback) {
+
         _createModal(response, {});
-      });
+
+      } else {
+
+        AutomatorPageLoader('hide', function() {
+          _createModal(response, {});
+        });
+
+      }
 
       return;
 
@@ -2679,9 +2699,20 @@ function AutomatorCreateViewModal(payload, options) {
             recordData = recordResponse.values;
           }
 
-          AutomatorPageLoader('hide', function() {
+          if(keepLoaderUntilCallback) {
+
             _createModal(response, recordData);
-          });
+
+          } else {
+
+            AutomatorPageLoader('hide', function() {
+              _createModal(response, recordData);
+            });
+
+          }
+          // AutomatorPageLoader('hide', function() {
+          //   _createModal(response, recordData);
+          // });
 
         } else {
 
@@ -2963,82 +2994,168 @@ document.addEventListener('click', function(e) {
 
 // }
 
-function SysAutomatorConfigPageEditor(
-    response,
-    modalEl,
-    modal,
-    recordData
+// function SysAutomatorConfigPageEditor(
+//     response,
+//     modalEl,
+//     modal,
+//     recordData
+// ) {
+
+
+//     // SysAutomatorEditor.config({
+
+//     //     isNew:
+//     //         (
+//     //             response.acao === 'store'
+//     //         ),
+
+//     //     editor: {
+
+//     //         settingsBlock: {
+
+//     //             collapsed: false,
+//     //             tab: 'page-settings'
+
+//     //         },
+
+//     //         content:
+//     //             (
+//     //                 response.acao === 'store'
+//     //             )
+//     //             ? ''
+//     //             : (
+//     //                 response.dados['page']
+//     //                 ?.tbl_sys_route_content
+//     //                 || ''
+//     //             ),
+//     //         blocks: (response.dados['blocks'] ? response.dados['blocks'] : {})
+
+//     //     }
+
+//     // });
+
+//     // /**
+//     //  * Aplica configuração
+//     //  */
+//     // SysAutomatorEditor.init(function(retorno) {
+
+//     //   if(response.acao === 'store') {
+
+//     //     $('#tbl_sys_route_title-sync').prop('checked', true);
+
+//     //   }
+
+//     //   return retorno;
+
+//     // });
+
+//   SysAutomatorEditor.config({
+//     isNew: response.acao === 'store',
+//     editor: {
+//       content: response.acao === 'store'
+//         ? ''
+//         : (response.dados['page']?.tbl_sys_route_content || ''),
+//       css: response.dados['page']?.tbl_sys_route_css || '',
+//       blocks: response.dados['blocks'] || {}
+//     }
+//   }, function () {
+
+//     SysAutomatorEditor.init(function () {
+
+//       if (response.acao === 'store') {
+//         $('#tbl_sys_route_title-sync').prop('checked', true);
+//       }
+
+//     });
+
+//   });
+
+
+// }
+
+
+function getSysAutomatorPageEditorData(
+  response,
+  recordData
 ) {
 
+  const dados =
+    response && response.dados
+      ? response.dados
+      : {};
 
-    // SysAutomatorEditor.config({
+  const page =
+    recordData && Object.keys(recordData).length
+      ? recordData
+      : (
+          dados.page
+            ? dados.page
+            : dados
+        );
 
-    //     isNew:
-    //         (
-    //             response.acao === 'store'
-    //         ),
+  return {
+    content:
+      page.tbl_sys_route_content ||
+      page.content ||
+      '',
+    css:
+      page.tbl_sys_route_css ||
+      page.css ||
+      '',
+    blocks:
+      dados.blocks ||
+      response.blocks ||
+      {}
+  };
 
-    //     editor: {
+}
 
-    //         settingsBlock: {
+function SysAutomatorConfigPageEditor(
+  response,
+  modalEl,
+  modal,
+  recordData
+) {
 
-    //             collapsed: false,
-    //             tab: 'page-settings'
+  AutomatorPageLoader('show');
 
-    //         },
-
-    //         content:
-    //             (
-    //                 response.acao === 'store'
-    //             )
-    //             ? ''
-    //             : (
-    //                 response.dados['page']
-    //                 ?.tbl_sys_route_content
-    //                 || ''
-    //             ),
-    //         blocks: (response.dados['blocks'] ? response.dados['blocks'] : {})
-
-    //     }
-
-    // });
-
-    // /**
-    //  * Aplica configuração
-    //  */
-    // SysAutomatorEditor.init(function(retorno) {
-
-    //   if(response.acao === 'store') {
-
-    //     $('#tbl_sys_route_title-sync').prop('checked', true);
-
-    //   }
-
-    //   return retorno;
-
-    // });
+  const pageData = getSysAutomatorPageEditorData(
+    response,
+    recordData
+  );
 
   SysAutomatorEditor.config({
     isNew: response.acao === 'store',
     editor: {
+      settingsBlock: {
+        collapsed: false,
+        tab: 'page-settings'
+      },
       content: response.acao === 'store'
         ? ''
-        : (response.dados['page']?.tbl_sys_route_content || ''),
-      css: response.dados['page']?.tbl_sys_route_css || '',
-      blocks: response.dados['blocks'] || {}
+        : pageData.content,
+      css: response.acao === 'store'
+        ? ''
+        : pageData.css,
+      blocks: pageData.blocks
     }
   }, function () {
 
     SysAutomatorEditor.init(function () {
 
-      if (response.acao === 'store') {
-        $('#tbl_sys_route_title-sync').prop('checked', true);
-      }
+      setSysAutomatorPageEditorInitialHeaderState(response);
+
+      setTimeout(function () {
+
+        AutomatorPageLoader('hide', function () {
+          AutomatorSetActionStatus(false);
+        });
+
+      }, 350);
 
     });
 
   });
-
 
 }
 
@@ -3083,7 +3200,7 @@ function SysAutomatorInitPageEditor(
     //   $('#tbl_sys_route_title').focus()
 
     // });
-  
+  return true;
 
 }
 
@@ -3096,5 +3213,38 @@ function SysAutomatorDestroyPageEditor(
 ) {
 
     SysAutomatorEditor.destroy();
+
+}
+
+
+function setSysAutomatorPageEditorInitialHeaderState(response) {
+
+  const isStore =
+    response &&
+    response.acao === 'store';
+
+  const titleInput =
+    $('#tbl_sys_route_title');
+
+  const syncCheckbox =
+    $('#tbl_sys_route_title-sync');
+
+  if (syncCheckbox.length) {
+
+    syncCheckbox.prop('checked', isStore === true);
+
+    if (isStore === true && titleInput.length && window.SysAutomatorEditor) {
+      SysAutomatorEditor.syncHeaderInputSlug(titleInput[0]);
+    }
+
+  }
+
+  if (titleInput.length) {
+
+    setTimeout(function () {
+      titleInput.trigger('focus');
+    }, 100);
+
+  }
 
 }

@@ -32,6 +32,10 @@
     flex: 1;
   }
 
+  #automator-editor-header-center input[type='text']:focus {
+    box-shadow: unset !important;
+  }
+
   #automator-editor-body {
     overflow: hidden !important;
     position: relative;
@@ -211,6 +215,36 @@
 
   .automator-editor-structure-children {
     min-height: 3px;
+  }
+
+  #automator-editor-aside-right-tabs {
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    flex-shrink: 0;
+  }
+
+  .automator-editor-aside-right-tabs-button {
+    border: 0;
+    border-bottom: 2px solid transparent;
+    background: #ffffff;
+    color: #757575;
+    flex: 1;
+    padding: 12px 8px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .automator-editor-aside-right-tabs-button.active {
+    border-bottom-color: #0d6efd;
+    color: #1e1e1e;
+  }
+
+  .automator-editor-aside-right-tabs-container-item {
+    display: none;
+  }
+
+  .automator-editor-aside-right-tabs-container-item.active {
+    display: block;
   }
 
   #automator-editor-aside-right-content {
@@ -423,33 +457,50 @@
 
   @if(isset($header['content']))
 
-    <div id="automator-editor-header-center" class="text-center">
+    <div id="automator-editor-header-center" class="text-center my-2">
 
-      @if($header['type'] == 'form-input')
+      @if(($header['type'] ?? '') == 'form-input')
 
         @php
-
-          $haveSlug = ( (isset($header['content']['have-slug'])) ? ( (is_array($header['content']['have-slug'])) ? ( (count($header['content']['have-slug']) >= 1) ? ( (isset($header['content']['have-slug']['enabled'])) ? $header['content']['have-slug']['enabled'] : false ) : false ) : false ) : false );
-
+          $haveSlug = (
+            isset($header['content']['have-slug']) &&
+            is_array($header['content']['have-slug']) &&
+            count($header['content']['have-slug']) >= 1 &&
+            isset($header['content']['have-slug']['enabled']) &&
+            $header['content']['have-slug']['enabled'] == true
+          );
         @endphp
 
         @if($haveSlug == true)
 
           <div class="input-group">
-        
+
             <div class="form-floating">
-              
-              <input type="{!! $header['content']['type'] !!}" value="{!! $header['content']['value'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" onkeyup="SysAutomatorEditor.syncHeaderInputSlug(this)" data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] !!}"{!! ( ($header['content']['required'] == true) ? ' required' : '' ) !!} />
-              
-              <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
-            
+
+              <input
+                type="{!! $header['content']['type'] ?? 'text' !!}"
+                value="{!! $header['content']['value'] ?? '' !!}"
+                class="form-control border border-secondary border-end-0 bg-light"
+                id="{!! $header['content']['id'] ?? '' !!}"
+                name="{!! $header['content']['name'] ?? '' !!}"
+                placeholder="{!! $header['content']['label'] ?? '' !!}"
+                autocomplete="off"
+                onkeyup="if(SysAutomatorEditor.syncHeaderInputSlug){ SysAutomatorEditor.syncHeaderInputSlug(this); }"
+                data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] ?? '' !!}"
+                {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
+              />
+
+              <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
+
             </div>
-            
+
             <span class="input-group-text p-0 d-inline-block" style="border-top: 0px; border-bottom: 0px;">
-            
-              <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] !!}-sync" autocomplete="off" />
-              <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">{!! $header['content']['have-slug']['label'] !!}</label>
-            
+
+              <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] ?? '' !!}-sync" autocomplete="off" />
+              <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] ?? '' !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">
+                {!! $header['content']['have-slug']['label'] ?? 'Sincronizar' !!}
+              </label>
+
             </span>
 
           </div>
@@ -457,10 +508,20 @@
         @else
 
           <div class="form-floating">
-              
-            <input type="{!! $header['content']['type'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" value="{!! $header['content']['label'] !!}" />
-            <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
-          
+
+            <input
+              type="{!! $header['content']['type'] ?? 'text' !!}"
+              class="form-control border border-secondary bg-light"
+              id="{!! $header['content']['id'] ?? '' !!}"
+              name="{!! $header['content']['name'] ?? '' !!}"
+              placeholder="{!! $header['content']['label'] ?? '' !!}"
+              autocomplete="off"
+              value="{!! $header['content']['value'] ?? '' !!}"
+              {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
+            />
+
+            <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
+
           </div>
 
         @endif
@@ -470,8 +531,13 @@
         {!! $header['content'] !!}
 
       @endif
-      <!-- <span class="small fw-bold text-muted">Editor de Conteúdo</span> -->
-      
+
+    </div>
+
+  @else
+
+    <div id="automator-editor-header-center" class="text-center">
+      <span class="small fw-bold text-muted">{!! $texts['editor'] ?? 'Editor de Conteúdo' !!}</span>
     </div>
 
   @endif
@@ -514,7 +580,6 @@
       <div class="p-3 pt-0 g-3 row row-cols-2" id="automator-editor-aside-left-inserter-list">
 
         @php
-
           $grupos = SysAutomator::SysAutomatorRenderPageBuilderFields();
 
           foreach($grupos as $grupo) {
@@ -525,11 +590,11 @@
 
               echo '<div class="col">';
 
-                echo '<div 
-                  data-block-type="' . $field['tbl_sys_field_type_name'] . '" 
-                  data-block-icon="' . $field['tbl_sys_field_type_icon'] . '" 
-                  data-block-type-id="' . $field['tbl_sys_field_type_ID'] . '" 
-                  data-bs-title="' . $field['tbl_sys_field_type_title'] . '" 
+                echo '<div
+                  data-block-type="' . $field['tbl_sys_field_type_name'] . '"
+                  data-block-icon="' . $field['tbl_sys_field_type_icon'] . '"
+                  data-block-type-id="' . $field['tbl_sys_field_type_ID'] . '"
+                  data-bs-title="' . $field['tbl_sys_field_type_title'] . '"
                   data-bs-content="' . $field['tbl_sys_field_type_description'] . '"
                   class="automator-editor-aside-left-inserter-list-item border p-3 text-center rounded mb-2">';
 
@@ -543,7 +608,6 @@
             }
 
           }
-
         @endphp
 
       </div>
@@ -579,13 +643,204 @@
 
   <aside id="automator-editor-aside-right" class="automator-editor-aside">
 
-    <div class="p-3 border-bottom bg-light">
-      <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['proprieties'] ?? 'Propriedades' !!}</h6>
-    </div>
+    @php
+      $configs = $configs ?? [];
+      $configsT = is_array($configs) ? count($configs) : 0;
+    @endphp
 
-    <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
-      <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
-    </div>
+    @if($configsT >= 1)
+
+      <div id="automator-editor-aside-right-tabs">
+
+        @foreach($configs as $configIndex => $configContent)
+
+          <button
+            type="button"
+            id="automator-editor-aside-right-tabs-button-{!! $configIndex !!}"
+            class="automator-editor-aside-right-tabs-button{!! (($loop->first) ? ' active' : '') !!}"
+            onclick="
+              $('.automator-editor-aside-right-tabs-button').removeClass('active');
+              $(this).addClass('active');
+              $('.automator-editor-aside-right-tabs-container-item').removeClass('active');
+              $('#automator-editor-aside-right-tabs-container-{!! $configIndex !!}').addClass('active');
+            "
+          >
+            {!! $configContent['label'] ?? $configIndex !!}
+          </button>
+
+        @endforeach
+
+        <button
+          type="button"
+          id="automator-editor-aside-right-tabs-button-block"
+          class="automator-editor-aside-right-tabs-button"
+          onclick="
+            $('.automator-editor-aside-right-tabs-button').removeClass('active');
+            $(this).addClass('active');
+            $('.automator-editor-aside-right-tabs-container-item').removeClass('active');
+            $('#automator-editor-aside-right-tabs-container-block').addClass('active');
+          "
+        >
+          {!! $texts['block'] ?? 'Bloco' !!}
+        </button>
+
+      </div>
+
+      <div id="automator-editor-aside-right-tabs-container">
+
+        @foreach($configs as $configIndex => $configContent)
+
+          <div
+            id="automator-editor-aside-right-tabs-container-{!! $configIndex !!}"
+            class="automator-editor-aside-right-tabs-container-item p-3{!! (($loop->first) ? ' active' : '') !!}"
+            {!! ((isset($configContent['default']) && $configContent['default'] == true) ? ' data-automator-default="true"' : '') !!}
+          >
+
+            @if(isset($configContent['description']))
+
+              @php
+                $description = [
+                  'class' => (
+                    is_array($configContent['description'])
+                      ? ($configContent['description']['class'] ?? 'mb-4 pb-3 border-bottom border-secondary')
+                      : 'mb-4 pb-3 border-bottom border-secondary'
+                  ),
+                  'content' => (
+                    is_array($configContent['description'])
+                      ? ($configContent['description']['content'] ?? '')
+                      : $configContent['description']
+                  )
+                ];
+              @endphp
+
+              <div class="d-table w-100 {!! $description['class'] !!}">
+                {!! $description['content'] !!}
+              </div>
+
+            @endif
+
+            @foreach(($configContent['fields'] ?? []) as $configContentFieldKey => $configContentFieldArgs)
+
+              @php
+                $fieldType = $configContentFieldArgs['type'] ?? 'text';
+                $fieldClass = $configContentFieldArgs['class'] ?? 'form-floating mb-3';
+                $fieldLabel = $configContentFieldArgs['label'] ?? $configContentFieldKey;
+                $fieldName = $configContentFieldArgs['name'] ?? $configContentFieldKey;
+                $fieldValue = $configContentFieldArgs['value'] ?? '';
+                $fieldRequired = (isset($configContentFieldArgs['required']) && $configContentFieldArgs['required'] == true);
+              @endphp
+
+              @if($fieldType == 'radio')
+
+                <div class="{!! $fieldClass !!}">
+                  <label class="form-label small fw-bold">
+                    {!! $fieldLabel !!}{!! ($fieldRequired ? ' <span class="text-danger">*</span>' : '') !!}
+                  </label>
+
+                  @foreach(($configContentFieldArgs['choices'] ?? []) as $choiceKey => $choiceLabel)
+                    <div class="form-check">
+                      <input
+                        type="radio"
+                        class="form-check-input"
+                        id="{!! $configContentFieldKey !!}-{!! $choiceKey !!}"
+                        name="{!! $fieldName !!}"
+                        value="{!! $choiceKey !!}"
+                        {!! ((string)$fieldValue === (string)$choiceKey ? ' checked' : '') !!}
+                        {!! ($fieldRequired ? ' required' : '') !!}
+                      />
+                      <label class="form-check-label" for="{!! $configContentFieldKey !!}-{!! $choiceKey !!}">
+                        {!! $choiceLabel !!}
+                      </label>
+                    </div>
+                  @endforeach
+                </div>
+
+              @elseif($fieldType == 'select')
+
+                <div class="{!! $fieldClass !!}">
+                  <select
+                    class="form-select"
+                    id="{!! $configContentFieldKey !!}"
+                    name="{!! $fieldName !!}"
+                    {!! ($fieldRequired ? ' required' : '') !!}
+                  >
+                    @foreach(($configContentFieldArgs['choices'] ?? []) as $choiceKey => $choiceLabel)
+                      <option value="{!! $choiceKey !!}" {!! ((string)$fieldValue === (string)$choiceKey ? ' selected' : '') !!}>
+                        {!! $choiceLabel !!}
+                      </option>
+                    @endforeach
+                  </select>
+                  <label for="{!! $configContentFieldKey !!}">
+                    {!! $fieldLabel !!}{!! ($fieldRequired ? ' <span class="text-danger">*</span>' : '') !!}
+                  </label>
+                </div>
+
+              @elseif($fieldType == 'textarea')
+
+                <div class="{!! $fieldClass !!}">
+                  <textarea
+                    class="form-control"
+                    id="{!! $configContentFieldKey !!}"
+                    name="{!! $fieldName !!}"
+                    placeholder="{!! $fieldLabel !!}"
+                    rows="{!! $configContentFieldArgs['rows'] ?? 4 !!}"
+                    {!! ($fieldRequired ? ' required' : '') !!}
+                  >{!! $fieldValue !!}</textarea>
+                  <label for="{!! $configContentFieldKey !!}">
+                    {!! $fieldLabel !!}{!! ($fieldRequired ? ' <span class="text-danger">*</span>' : '') !!}
+                  </label>
+                </div>
+
+              @else
+
+                <div class="{!! $fieldClass !!}">
+                  <input
+                    type="{!! $fieldType !!}"
+                    class="form-control"
+                    id="{!! $configContentFieldKey !!}"
+                    name="{!! $fieldName !!}"
+                    placeholder="{!! $fieldLabel !!}"
+                    value="{!! $fieldValue !!}"
+                    {!! ($fieldRequired ? ' required' : '') !!}
+                  />
+                  <label for="{!! $configContentFieldKey !!}">
+                    {!! $fieldLabel !!}{!! ($fieldRequired ? ' <span class="text-danger">*</span>' : '') !!}
+                  </label>
+                </div>
+
+              @endif
+
+            @endforeach
+
+          </div>
+
+        @endforeach
+
+        <div id="automator-editor-aside-right-tabs-container-block" class="automator-editor-aside-right-tabs-container-item">
+
+          <div class="p-3 border-bottom bg-light">
+            <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['proprieties'] ?? 'Propriedades' !!}</h6>
+          </div>
+
+          <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
+            <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
+          </div>
+
+        </div>
+
+      </div>
+
+    @else
+
+      <div class="p-3 border-bottom bg-light">
+        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['proprieties'] ?? 'Propriedades' !!}</h6>
+      </div>
+
+      <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
+        <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
+      </div>
+
+    @endif
 
   </aside>
 

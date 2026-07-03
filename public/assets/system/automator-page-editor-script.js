@@ -65,6 +65,99 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+  function waitEditorReady(callback = null) {
+
+    let attempts = 0;
+    const maxAttempts = 120;
+
+    function check() {
+
+      attempts++;
+
+      const frameEl =
+        grapesEditor &&
+        grapesEditor.Canvas &&
+        grapesEditor.Canvas.getFrameEl
+          ? grapesEditor.Canvas.getFrameEl()
+          : null;
+
+      const frameDoc =
+        grapesEditor &&
+        grapesEditor.Canvas &&
+        grapesEditor.Canvas.getDocument
+          ? grapesEditor.Canvas.getDocument()
+          : null;
+
+      const frameBody =
+        grapesEditor &&
+        grapesEditor.Canvas &&
+        grapesEditor.Canvas.getBody
+          ? grapesEditor.Canvas.getBody()
+          : null;
+
+      const wrapper =
+        grapesEditor &&
+        grapesEditor.DomComponents &&
+        grapesEditor.DomComponents.getWrapper
+          ? grapesEditor.DomComponents.getWrapper()
+          : null;
+
+      const frameReady =
+        frameEl &&
+        frameDoc &&
+        frameBody &&
+        wrapper &&
+        $(selectors.canvas).find('.gjs-editor').length &&
+        $(selectors.canvas).find('.gjs-frame').length;
+
+      if (frameReady) {
+
+        setTimeout(function () {
+
+          syncCanvasHeight();
+          syncEditorViewportSpacing();
+
+          if (typeof grapesEditor.refresh === 'function') {
+            grapesEditor.refresh();
+          }
+
+          setTimeout(function () {
+
+            syncCanvasHeight();
+            syncEditorViewportSpacing();
+
+            if (typeof callback === 'function') {
+              callback();
+            }
+
+          }, 250);
+
+        }, 250);
+
+        return;
+
+      }
+
+      if (attempts >= maxAttempts) {
+
+        console.warn('Editor carregado parcialmente. Continuando inicialização.');
+
+        if (typeof callback === 'function') {
+          callback();
+        }
+
+        return;
+
+      }
+
+      setTimeout(check, 100);
+
+    }
+
+    check();
+
+  }
+
   function init(callback = null) {
 
     if (!$(selectors.canvas).length) {
@@ -98,38 +191,47 @@ window.SysAutomatorEditor = (function () {
     if (grapesEditor.RichTextEditor) {
 
       if (typeof grapesEditor.RichTextEditor.remove === 'function') {
-      
         grapesEditor.RichTextEditor.remove('link');
-      
       }
 
       if (
-      
         typeof grapesEditor.RichTextEditor.getAll === 'function' &&
         grapesEditor.RichTextEditor.getAll().remove
-      
       ) {
-
         grapesEditor.RichTextEditor.getAll().remove('link');
-      
       }
 
     }
 
-    loadInitialContent();
-    bindInterfaceBlocks();
     bindEditorEvents();
+    bindInterfaceBlocks();
     initInterface();
 
-    state.initialized = true;
-    state.hasChanges = false;
+    grapesEditor.once('load', function () {
 
-    setSaveState(false);
-    updateStructureList();
+      loadInitialContent();
 
-    if (typeof callback === 'function') {
-      callback({ state, editor, selectors, grapesEditor });
-    }
+      waitEditorReady(function () {
+
+        injectCanvasEditorStyles();
+        normalizeAllCardChildrenOrder();
+        updateEmptyContainers();
+        updateStructureList();
+        syncCanvasHeight();
+        syncEditorViewportSpacing();
+
+        state.initialized = true;
+        state.hasChanges = false;
+
+        setSaveState(false);
+
+        if (typeof callback === 'function') {
+          callback({ state, editor, selectors, grapesEditor });
+        }
+
+      });
+
+    });
 
   }
 
@@ -452,14 +554,15 @@ window.SysAutomatorEditor = (function () {
       return;
     }
 
-    if (editor.content) {
-      grapesEditor.setComponents(editor.content);
-    } else {
-      grapesEditor.setComponents('');
-    }
+    const content = String(editor.content || '');
+    const css = String(editor.css || '');
 
-    if (editor.css) {
-      grapesEditor.setStyle(editor.css);
+    grapesEditor.setComponents(content);
+
+    if (css) {
+      grapesEditor.setStyle(css);
+    } else {
+      grapesEditor.setStyle('');
     }
 
   }
@@ -476,6 +579,7 @@ window.SysAutomatorEditor = (function () {
     }
 
     initBootstrapHelpers();
+    bindHeaderSlugSync();
     updateViewportButton();
     syncEditorLayoutState();
 
@@ -4861,11 +4965,97 @@ window.SysAutomatorEditor = (function () {
 
   });
 
+  function stringToSlug(value) {
+
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+
+  }
+
+  function syncHeaderInputSlug(input) {
+
+      const source = $(input);
+
+      let targetSelector = source.attr('data-automator-sync-slug-field');
+
+      if (!targetSelector) {
+          return;
+      }
+
+      const checkbox = $('#' + source.attr('id') + '-sync');
+
+      if (!checkbox.length || !checkbox.prop('checked')) {
+          return;
+      }
+
+      let target;
+
+      // foi informado um seletor CSS (#id, .classe, etc)
+      if (
+          targetSelector.startsWith('#') ||
+          targetSelector.startsWith('.') ||
+          targetSelector.startsWith('[')
+      ) {
+
+          target = $(targetSelector).first();
+
+      } else {
+
+          // foi informado apenas o name/id
+          target = $('[name="' + targetSelector + '"], #' + targetSelector).first();
+
+      }
+
+      if (!target.length) {
+          return;
+      }
+
+      target
+          .val(stringToSlug(source.val()))
+          .trigger('input')
+          .trigger('change');
+
+  }
+
+  function bindHeaderSlugSync() {
+
+    $('[data-automator-sync-slug-field]').each(function () {
+
+      const input = $(this);
+      const checkbox = $('#' + input.attr('id') + '-sync');
+
+      input.off('.automator-header-slug-sync');
+      checkbox.off('.automator-header-slug-sync');
+
+      input.on('input.automator-header-slug-sync keyup.automator-header-slug-sync change.automator-header-slug-sync', function () {
+        syncHeaderInputSlug(this);
+      });
+
+      checkbox.on('change.automator-header-slug-sync', function () {
+        if ($(this).prop('checked')) {
+          syncHeaderInputSlug(input[0]);
+        }
+      });
+
+    });
+
+  }
+
   return {
     config,
     init,
     destroy,
     initInterface,
+
+    waitEditorReady,
+
+    stringToSlug,
+    syncHeaderInputSlug,
+    bindHeaderSlugSync,
 
     loadSidebarComponents,
 
