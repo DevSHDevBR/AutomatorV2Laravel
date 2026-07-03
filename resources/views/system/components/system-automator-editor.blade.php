@@ -1,871 +1,492 @@
-@php
-  
-  
-
-@endphp
-
-
 <style type="text/css">
-  
 
+  .automator-view-modal .modal-body {
+    overflow: hidden !important;
+  }
+
+  #automator-editor-modal {
+    flex-direction: column;
+    background: #FFFFFF;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    height: 100vh;
+    color: #1E1E1E;
+  }
 
   #automator-editor-header {
-
     justify-content: space-between;
-    border-bottom:   1px solid #e0e0e0;
-    align-items:     center;
-    flex-shrink:     0;
-    background:      #FFFFFF;
-    min-height:      65px;
-    padding:         0 15px;
-    z-index:         1060;
-    display:         flex;
-
+    border-bottom: 1px solid #e0e0e0;
+    align-items: center;
+    flex-shrink: 0;
+    background: #ffffff;
+    min-height: 65px;
+    padding: 0 15px;
+    z-index: 1080;
+    display: flex;
   }
-
-
 
   #automator-editor-header-center {
-    
     max-width: 500px;
-    margin:    0 20px;
-    flex:      1;
-
+    margin: 0 20px;
+    flex: 1;
   }
-
-
-
-  #automator-editor-header-center input[type='text']:focus { box-shadow: unset !important; }
-
-
-
-  #automator-editor-header-configs-button {
-    
-    min-height: 38px;
-    font-size:  16px;
-
-  }
-
-
-
-  #automator-editor-header-resolutions-dropdown .dropdown-menu {
-
-    transform: translate(0px, 54px);
-    position:  absolute;
-    margin:    0px;
-    inset:     0px 0px auto auto;
-
-  }
-
-
-
-  #automator-editor-header-resolutions-dropdown ul.dropdown-menu { padding-top: 0px; padding-bottom: 0px; }
-  #automator-editor-header-resolutions-dropdown ul.dropdown-menu > li:first-child > button {
-  
-    border-top-right-radius: 0.375rem;
-    border-top-left-radius:  0.375rem;
-  
-  }
-
-
-
-  #automator-editor-header-resolutions-dropdown ul.dropdown-menu > li:last-child > button {
-
-    border-bottom-right-radius: 0.375rem;
-    border-bottom-left-radius:  0.375rem;
-
-  }
-
-
 
   #automator-editor-body {
-
-    overflow: hidden;
+    overflow: hidden !important;
     position: relative;
-    display:  flex;
-    flex:     1;
-
+    display: flex;
+    flex: 1;
+    min-height: 0;
   }
 
-
-
-  .automator-editor-body-aside { 
-    
+  .automator-editor-aside {
     flex-direction: column;
-    border-right:   1px solid #e0e0e0; 
-    transition:     all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
-    background:     #FFFFFF; 
-    overflow-y:     auto; 
-    overflow-x:     hidden;
-    z-index:        1030;
-    display:        flex; 
-    width:          320px; 
-
+    border-right: 1px solid #e0e0e0;
+    transition: width .3s ease, transform .3s ease, opacity .3s ease, visibility .3s ease;
+    background: #ffffff;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 1030;
+    display: flex;
+    width: 320px;
+    flex-shrink: 0;
+    height: 100%;
+    max-height: 100%;
   }
 
+  #automator-editor-aside-left {
+    position: relative;
+  }
 
-
-  .automator-editor-body-aside.collapsed {
-    
+  #automator-editor-aside-left.is-collapsed {
     visibility: hidden;
-    transform:  translateX(-20px);
-    opacity:    0; 
-    width:      0;
-
+    transform: translateX(-20px);
+    opacity: 0;
+    width: 0;
   }
 
-
-  .automator-editor-body-aside-left-inserter-list-item:hover,
-  .automator-editor-body-aside-left-inserter-list-item:active,
-  .automator-editor-body-aside-left-inserter-list-item:focus {
-
-    background-color: #007cba !important;
-    cursor:           pointer !important;
-    color:            #FFFFFF !important;
-
+  #automator-editor-aside-left-inserter,
+  #automator-editor-aside-left-structure {
+    position: absolute;
+    inset: 0;
+    background: #ffffff;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    z-index: 1031;
+    display: block;
+    height: 100%;
+    width: 100%;
+    transition: transform .28s ease, opacity .28s ease;
   }
 
-  .automator-editor-body-aside-left-inserter-list-item:hover > i,
-  .automator-editor-body-aside-left-inserter-list-item:active > i,
-  .automator-editor-body-aside-left-inserter-list-item:focus > i { color: #FFFFFF !important; }
+  .automator-editor-aside-left-collapsed {
+    display: block !important;
+  }
 
+  #automator-editor-aside-left[data-active-tab="inserter"] #automator-editor-aside-left-inserter {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
 
-  .automator-editor-body-aside-left-structure-item { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:6px; cursor:pointer; }
-  .automator-editor-body-aside-left-structure-item:hover { background:#f8f9fa; }
+  #automator-editor-aside-left[data-active-tab="inserter"] #automator-editor-aside-left-structure {
+    transform: translateX(100%);
+    opacity: 0;
+    pointer-events: none;
+  }
 
+  #automator-editor-aside-left[data-active-tab="structure"] #automator-editor-aside-left-inserter {
+    transform: translateX(-100%);
+    opacity: 0;
+    pointer-events: none;
+  }
 
+  #automator-editor-aside-left[data-active-tab="structure"] #automator-editor-aside-left-structure {
+    transform: translateX(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
 
-  #automator-editor-body-aside-right {
+  .automator-editor-actions-btn.is-active {
+    box-shadow: 0 0 0 .25rem rgba(13, 110, 253, .25);
+  }
 
+  #automator-editor-aside-right {
     border-right: none;
-    border-left:  1px solid #E0E0E0;
-
+    border-left: 1px solid #e0e0e0;
   }
 
-
-
-  #automator-editor-body-aside-right.collapsed { transform: translateX(20px); }
-
-
-
-  /* AREA CENTRAL CONTEUDO - START */
-
-
-    #automator-editor-body-canvas-content {
-
-      background-color: #F0F0F0;
-      overflow-y:       auto;
-      padding:          40px 20px;
-      flex:             1;
-
-    }
-
-
-
-    #automator-editor-body-canvas-content-container {
-    
-      box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
-      background: #FFFFFF;
-      min-height: 100%;
-      max-width:  850px;
-      margin:     0 auto;
-      padding:    20px;
-
-    }
-    
-
-
-    #automator-editor-body-canvas-content-container .automator-editor-block::before {
-      
-      content: attr(data-block-name);
-      position: absolute;
-      top: 5px;
-      left: 15px;
-      font-size: 10px;
-      text-transform: uppercase;
-      color: #aaa;
-      font-weight: bold;
-    
-    }
-    
-
-    /* MANUS */
-
-      #automator-editor-body-canvas-content-container .automator-editor-block {
-        margin-bottom: 15px;
-        transition:    border 0.2s, background 0.2s;
-        background:    #CACAD9;
-        position:      relative;
-        padding:       10px;
-        cursor:        crosshair;
-        border:        2px dashed #999999;
-        width:         100%;
-        /* Garante que o conteúdo fique afastado da borda/handle */
-        padding-left: 35px !important; 
-      }
-
-      #automator-editor-body-canvas-content-container .automator-editor-block:hover {
-        background: #E0E0E9;
-        border: 2px dashed #666666;
-        z-index: 50;
-      }
-
-      #automator-editor-body-canvas-content-container .automator-editor-block:has(.automator-editor-block:hover) {
-        background: #CACAD9 !important;
-        border: 2px dashed #999999 !important;
-      }
-
-       /* Handle posicionado dentro da área parent, mas fixo à esquerda do bloco */
-      #automator-editor-body-canvas-content-container .automator-editor-block > .automator-editor-block-handle {
-        cursor: move;
-        color: #999;
-        position: absolute;
-        left: 5px; /* Dentro da área do bloco */
-        top: 15px;
-        padding: 5px;
-        opacity: 0.3;
-        transition: opacity 0.2s;
-        z-index: 200;
-      }
-
-      #automator-editor-body-canvas-content-container .automator-editor-block:hover > .automator-editor-block-handle {
-        opacity: 1;
-      }
-
-      /* Estilo do Inserter (:after) */
-      #automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child::after {
-        text-align: center;
-        background: #f8f9fa;
-        margin-top: 15px;
-        font-size:  14px;
-        position:   relative;
-        display:    block;
-        padding:    15px;
-        opacity:    .5;
-        content:    attr(data-block-add);
-        border:     2px dashed #ddd;
-        cursor:     pointer;
-        width:      100%;
-        color:      #666666;
-        transition: all 0.2s;
-        pointer-events: auto; /* Garante clique */
-      }
-
-      #automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child:hover::after {
-        opacity: 1;
-        background: #e9ecef;
-        border-color: #0d6efd;
-        color: #0d6efd;
-      }
-
-      /* Classe de visualização do Sortable (Placeholder) */
-      .automator-editor-sortable-placeholder {
-        background-color: rgba(13, 110, 253, 0.1) !important;
-        border: 2px dashed #0d6efd !important;
-        height: 50px;
-        margin-bottom: 15px;
-        visibility: visible !important;
-      }
-
-      /* Estilo para blocos bloqueados */
-      .automator-editor-block.is-locked {
-        opacity: 0.7;
-        cursor: not-allowed !important;
-        border-style: solid !important;
-        border-color: #ffc107 !important;
-      }
-
-      .automator-editor-block.is-locked .automator-editor-block-handle {
-        display: none !important;
-      }
-
-      .automator-editor-block.is-locked .btn:not(.lock-btn) {
-        display: none !important;
-      }
-
-
-      .automator-editor-block[data-automator-default="true"] {
-    cursor: default !important;
-    border: 2px solid #eee !important;
-    background: #fff !important;
-    padding-left: 15px !important;
-    min-height: 200px;
+  #automator-editor-aside-right.is-collapsed {
+    visibility: hidden;
+    transform: translateX(20px);
+    opacity: 0;
+    width: 0;
   }
 
-  /* Esconde apenas o handle e botões de excluir/mover do ROOT, mantendo a toolbar para outras ações se necessário */
-  .automator-editor-block[data-automator-default="true"] > .automator-editor-block-handle,
-  .automator-editor-block[data-automator-default="true"] > .automator-editor-block-toolbar .btn-danger,
-  .automator-editor-block[data-automator-default="true"] > .automator-editor-block-toolbar .fa-chevron-up,
-  .automator-editor-block[data-automator-default="true"] > .automator-editor-block-toolbar .fa-chevron-down {
+  #automator-editor-canvas {
+    background-color: #f0f0f0;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 40px 20px;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    box-sizing: border-box;
+  }
+
+  #automator-editor-canvas-container {
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.18);
+    background: #ffffff;
+    min-height: 500px;
+    max-width: 850px;
+    margin: 0 auto 20px auto;
+    padding: 0 10px;
+  }
+
+  #automator-editor-canvas-container > .container-fluid {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
+
+  #automator-editor-canvas-container-content {
+    min-height: 500px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    height: auto;
+    width: 100%;
+  }
+
+  #automator-editor-canvas-container-content .gjs-editor {
+    min-height: 500px;
+  }
+
+  .gjs-cv-canvas {
+    width: 100% !important;
+    min-height: 500px !important;
+    top: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .gjs-pn-panel {
     display: none !important;
   }
 
-    /* MANUS */
-    /*#automator-editor-body-canvas-content-container .automator-editor-block {
+  .automator-editor-aside-left-inserter-list-item {
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background: #ffffff;
+    user-select: none;
+    opacity: 1 !important;
+  }
 
-      margin-bottom: 15px;
-      transition:    border 0.2s;
-      background:    #CACAD9;
-      position:      relative;
-      padding:       10px;
-      cursor:        crosshair;
-      border:        2px dashed #999999;
-      width:         100%;
+  .automator-editor-aside-left-inserter-list-item:hover {
+    border-color: #0d6efd !important;
+    color: #0d6efd;
+  }
 
-    }
-    
+  .automator-editor-body-aside-left-structure-item {
+    cursor: pointer;
+    background: #ffffff;
+  }
 
+  .automator-editor-body-aside-left-structure-item:hover {
+    background: #f8f9fa;
+  }
 
-    #automator-editor-body-canvas-content-container .automator-editor-block:hover {
+  .automator-editor-structure-handle {
+    cursor: grab;
+  }
 
-      background: #E0E0E9;
-      border:     2px dashed #666666;
+  .automator-editor-structure-children {
+    min-height: 3px;
+  }
 
-    }
+  #automator-editor-aside-right-content {
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+  }
 
-    */
+  #automator-editor-aside-right-content .accordion {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
 
+  #automator-editor-aside-right-content .accordion-item {
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-radius: 0 !important;
+  }
 
+  #automator-editor-aside-right-content .accordion-button {
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
 
-    #automator-editor-body-canvas-content-container .automator-editor-block.is-active,
-    #automator-editor-body-canvas-content-container .automator-editor-block.is-active:hover {
+  #automator-editor-aside-right-content > .mb-3,
+  #automator-editor-aside-right-content > .text-muted {
+    padding-left: 15px;
+    padding-right: 15px;
+  }
 
-      background:    #CACAD9;
-      border:        2px dashed #0d6efd;
-      cursor:        default;
+  .automator-editor-structure-item-wrapper.is-selected > .automator-editor-body-aside-left-structure-item {
+    background: #e7f1ff;
+    border-left: 4px solid #0d6efd;
+    color: #0d6efd;
+  }
 
-    }
+  .automator-editor-structure-item-wrapper.is-selected > .automator-editor-body-aside-left-structure-item .fa-cube,
+  .automator-editor-structure-item-wrapper.is-selected > .automator-editor-body-aside-left-structure-item .automator-editor-structure-handle {
+    color: #0d6efd !important;
+  }
 
+  @media (max-width: 991.98px) {
 
-
-    #automator-editor-body-canvas-content-container .automator-editor-block .automator-editor-block-toolbar {
-
-      border-radius: 4px;
-      align-items:   center;
-      box-shadow:    0 2px 10px rgba(0,0,0,0.15);
-      background:    #FFFFFF;
-      position:      absolute;
-      display:       none;
-      padding:       5px;
-      z-index:       1050;
-      border:        1px solid #CCCCCC;
-      left:          0px;
-      top:           -45px;
-      gap:           5px;
-
-    }
-
-
-
-    #automator-editor-body-canvas-content-container .automator-editor-block.is-active > .automator-editor-block-toolbar {
-      
-      display: flex;
-
-    }
-
-
-
-    /*#automator-editor-body-canvas-content-container .automator-editor-block:hover > .automator-editor-block-handle {*/
-      
-      /*opacity: 1;*/
-
-    /*}*/
-
-
-
-    /*#automator-editor-body-canvas-content-container .automator-editor-block:has(.automator-editor-block:hover) {*/
-
-      /*border-color: transparent;*/
-
-    /*}*/
-
-
-
-    #automator-editor-body-canvas-content-container .automator-editor-block:hover {
-
-      z-index: 50;
-
+    #automator-editor-body {
+      position: relative;
     }
 
-    
-
-    #automator-editor-body-canvas-content-container .automator-editor-block:hover > .automator-editor-block-handle {
-
-      z-index: 200;
-
-    }
-
-
-    /*#automator-editor-body-canvas-content-container .automator-editor-block > .automator-editor-block-handle {
-      cursor: move;
-      color: #ccc;
+    #automator-editor-aside-left,
+    #automator-editor-aside-right {
       position: absolute;
-      left: -32px;
-      top: 15px;
-      padding: 5px;
-      opacity: 1;
-      transition: opacity 0.2s;
-    }*/
-
-
-
-    /*#automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child::after {
-
-      text-align: center;
-      background: yellow;
-      margin-top: 15px;
-      font-size:  14px;
-      position:   relative;
-      display:    table;
-      padding:    10px;
-      opacity:    .5;
-      content:    attr(data-block-add);
-      border:     2px dashed #999999;
-      cursor:     default;
-      width:      100%;
-      color:      #666666;
-
-    }*/
-
-
-
-    /*#automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-can-have-child:hover::after {
-
-      opacity: 1;
-      border:  2px dashed #999999;
-      color:   #0d6efd;
-      cursor:  pointer;
-
-    }*/
-
-
-
-    #automator-editor-body-canvas-content-container .automator-editor-block.automator-editor-block-is-empty > .automator-editor-block-child-area::before {
-
-      background-color: #FFFFFF;
-      text-align:       center;
-      font-size:        12px;
-      position:         relative;
-      display:          table;
-      opacity:          .6;
-      content:          attr(data-block-empty);
-      padding:          10px;
-      color:            #999999;
-      width:            100%;
-
+      top: 0;
+      bottom: 0;
+      height: auto;
+      max-height: none;
+      width: min(320px, 88vw);
+      z-index: 1070;
+      box-shadow: 0 0 25px rgba(0, 0, 0, .18);
     }
 
-    #automator-editor-body-canvas-content-container .automator-editor-block-child-area {
-
-
+    #automator-editor-aside-left {
+      left: 0;
+      transform: translateX(-105%);
+      opacity: 0;
+      visibility: hidden;
     }
-    
 
+    #automator-editor-aside-left.show {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+    }
 
-    
+    #automator-editor-aside-right {
+      right: 0;
+      transform: translateX(105%);
+      opacity: 0;
+      visibility: hidden;
+    }
 
+    #automator-editor-aside-right.show {
+      transform: translateX(0);
+      opacity: 1;
+      visibility: visible;
+    }
 
-
-  /* AREA CENTRAL CONTEUDO - END */
-
-
-
-  #automator-editor-body-aside-right-tabs {
-
-    border-bottom: 1px solid #E0E0E0;
-    display:       flex;
-
-  }
-
-
-
-  .automator-editor-body-aside-right-tabs-button {
-
-    border-bottom: 2px solid transparent !important;
-    font-weight:   600;
-    background:    none;
-    font-size:     13px;
-    padding:       12px;
-    border:        none;
-    color:         #757575;
-    flex:          1;
+    #automator-editor-aside-left.is-collapsed,
+    #automator-editor-aside-right.is-collapsed {
+      width: min(320px, 88vw);
+    }
 
   }
 
-
-
-  .automator-editor-body-aside-right-tabs-button.active {
-
-    border-bottom-color: #007CBA;
-    color:               #1E1E1E;
-
+  .automator-editor-api-property-editor {
+     display: flex;
+    width: 100%;
+    max-height: 260px;
+    overflow: hidden;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    background: #ffffff;
   }
 
-
-
-  .automator-editor-body-aside-right-tabs-button:disabled {
-  
-    opacity: 0.5;
-    cursor:  not-allowed;
-
+  .automator-editor-api-property-editor-count {
+    width: 42px;
+    min-width: 42px;
+    max-height: 260px;
+    padding: 6px 6px;
+    background: #f8f9fa;
+    color: #999;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: right;
+    overflow: hidden;
+    user-select: none;
+    border-right: 1px solid #dee2e6;
   }
 
-
-
-  /* Color Picker Circular */
-  .automator-editor-custom-color-picker {
-    
-    border-radius: 50%;
-    position:      relative;
-    overflow:      hidden;
-    cursor:        pointer;
-    border:        1px solid #ced4da;
-    height:        28px;
-    width:         28px;
-  
+  .automator-editor-api-property-editor-count span {
+    display: block;
+    height: 20px;
+    line-height: 20px;
   }
 
-
-
-  .automator-editor-custom-color-picker > input {
-    
-    background: none;
-    position:   absolute;
-    padding:    0;
-    border:     none !important;
-    cursor:     pointer;
-    height:     40px;
-    width:      40px;
-    left:       -6px;
-    top:        -6px;
-
+  .automator-editor-api-property-editor-count span.is-active {
+    color: #0d6efd;
+    font-weight: 700;
   }
 
+  .automator-editor-api-property-editor textarea[data-field-type="editor-css"] {
+    border: 0 !important;
+    border-radius: 0 !important;
+    resize: none;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 6px 8px;
+    min-height: 140px;
+    max-height: 260px;
+    height: 260px;
+    white-space: pre;
+    overflow: auto !important;
+    background-image: linear-gradient(
+      to bottom,
+      transparent var(--editor-css-active-line-top, 0px),
+      rgba(13, 110, 253, .08) var(--editor-css-active-line-top, 0px),
+      rgba(13, 110, 253, .08) calc(var(--editor-css-active-line-top, 0px) + 20px),
+      transparent calc(var(--editor-css-active-line-top, 0px) + 20px)
+    );
+    background-attachment: local;
+  }
 
-
+  .automator-editor-api-property-editor textarea[data-field-type="editor-css"]:focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
 
 </style>
 
+<div id="extracted-json" class="d-none"></div>
 
 <header id="automator-editor-header">
 
+  <div class="d-flex align-items-center">
+
+    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] ?? 'Adicionar bloco' !!}" data-bs-trigger="hover">
+      <button type="button" class="btn btn-primary automator-editor-actions-btn" data-automator-left-tab="inserter" onclick="SysAutomatorEditor.switchLeftTab('inserter')">
+        <i class="fas fa-plus"></i>
+      </button>
+    </span>
+
+    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['structure'] ?? 'Estrutura' !!}" data-bs-trigger="hover">
+      <button type="button" class="btn btn-secondary automator-editor-actions-btn" data-automator-left-tab="structure" onclick="SysAutomatorEditor.switchLeftTab('structure')">
+        <i class="fas fa-list"></i>
+      </button>
+    </span>
+
+  </div>
+
+  <div id="automator-editor-header-center" class="text-center">
+    <span class="small fw-bold text-muted">Editor de Conteúdo</span>
+  </div>
 
   <div class="d-flex align-items-center">
 
-    <span class="me-2" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] !!}" data-bs-trigger="hover">
-      
-      <button type="button" class="btn btn-sm btn-primary automator-editor-actions-button" onclick="SysAutomatorEditor.switchLeftTab('inserter')">
-        
-        <i class="fas fa-plus"></i>
-      
+    <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="{!! $texts['proprieties'] ?? 'Propriedades' !!}">
+      <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.toggleSidebar('right')">
+        <i class="fas fa-sitemap"></i>
       </button>
-    
-    </span>
-    
-    <span class="me-2" data-bs-toggle="tooltip" data-bs-title="{!! $texts['structure'] !!}" data-bs-trigger="hover">
-      
-      <button type="button" class="btn btn-sm btn-secondary automator-editor-actions-button" onclick="SysAutomatorEditor.switchLeftTab('structure')">
-        
-        <i class="fas fa-list-ol"></i>
-
-      </button>
-
     </span>
 
-    <div id="automator-editor-header-resolutions-dropdown" class="dropdown mx-2" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] !!}">
-
-      <button id="automator-editor-header-resolutions-dropdown-button" class="dropdown-toggle btn btn-outline-secondary" type="button" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
-
-        <i class="fa-regular fa-window-maximize me-2"></i>
-        <span class="small">{!! $texts['computer']!!} XXL</span>
-
-      </button>
-
-      <ul class="dropdown-menu dropdown-menu-end shadow" data-popper-placement="bottom-end">
-        
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item active" data-value="col-xxl-"><i class="fa-regular fa-window-maximize"></i> <span class="small">{!! $texts['computer'] !!} XXL</span></span></button></li>
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item" data-value="col-xl-"><i class="fa-solid fa-window-maximize"></i> <span class="small">{!! $texts['computer'] !!} XL</span></button></li>
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item" data-value="col-lg-"><i class="fa-solid fa-laptop"></i> <span class="small">{!! $texts['computer'] !!}</span></button></li>
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item" data-value="col-md-"><i class="fa-solid fa-tablet"></i> <span class="small">{!! $texts['large-tablet'] !!}</span></button></li>
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item" data-value="col-sm-"><i class="fa-solid fa-tablet-screen-button"></i> <span class="small">{!! $texts['tablet'] !!}</span></button></li>
-        <li><button type="button" onclick="SysAutomatorEditor.updateCurrentResolutionSize(this)" class="dropdown-item" data-value="col-"><i class="fa-solid fa-mobile-screen"></i> <span class="small">{!! $texts['cellphone'] !!}</span></button></li>
-                    
-      </ul>
-
-    </div>
-    
-  </div>
-
-
-  @if(isset($header['content']))
-
-
-    <div id="automator-editor-header-center">
-
-      @if($header['type'] == 'form-input')
-
-        @php
-
-          $haveSlug = ( (isset($header['content']['have-slug'])) ? ( (is_array($header['content']['have-slug'])) ? ( (count($header['content']['have-slug']) >= 1) ? ( (isset($header['content']['have-slug']['enabled'])) ? $header['content']['have-slug']['enabled'] : false ) : false ) : false ) : false );
-
-        @endphp
-
-        @if($haveSlug == true)
-
-          <div class="input-group">
-        
-            <div class="form-floating">
-              
-              <input type="{!! $header['content']['type'] !!}" value="{!! $header['content']['value'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" onkeyup="SysAutomatorEditor.syncHeaderInputSlug(this)" data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] !!}"{!! ( ($header['content']['required'] == true) ? ' required' : '' ) !!} />
-              
-              <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
-            
-            </div>
-            
-            <span class="input-group-text p-0 d-inline-block" style="border-top: 0px; border-bottom: 0px;">
-            
-              <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] !!}-sync" autocomplete="off" />
-              <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">{!! $header['content']['have-slug']['label'] !!}</label>
-            
-            </span>
-
-          </div>
-
-        @else
-
-          <div class="form-floating">
-              
-            <input type="{!! $header['content']['type'] !!}" class="form-control border border-secondary border-end-0 bg-light" id="{!! $header['content']['id'] !!}" name="{!! $header['content']['name'] !!}" placeholder="{!! $header['content']['label'] !!}" autocomplete="off" value="{!! $header['content']['label'] !!}" />
-            <label for="{!! $header['content']['id'] !!}">{!! $header['content']['label'] !!}</label>
-          
-          </div>
-
-        @endif
-
-      @else
-
-        {!! $header['content'] !!}
-
-      @endif
-
-    </div>
-
-
-  @endif
-
-
-  <div class="d-flex align-items-center">  
-
-    <span class="d-inline-block me-2">
-      
-      <button id="automator-editor-header-configs-button+" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.toggleSidebar('right')">{!! $texts['configs'] !!}</button>
-
-    </span>
     <span class="d-inline-block">
-
-      <button id="automator-editor-header-save-button" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorEditor.saveContent()" disabled>{!! $texts['save'] !!}</button>
-
+      <button id="automator-editor-header-save-btn" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorEditor.saveContent()">
+        {!! $texts['save'] ?? 'Salvar' !!}
+      </button>
     </span>
 
   </div>
 
 </header>
 
-
 <div id="automator-editor-body">
 
+  <aside id="automator-editor-aside-left" class="automator-editor-aside bg-white" data-active-tab="inserter">
 
-  <aside id="automator-editor-body-aside-left" class="automator-editor-body-aside collapsed">
-      
-    <div id="automator-editor-body-aside-left-inserter">
+    <div id="automator-editor-aside-left-inserter">
 
       <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-
-        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['blocks'] !!}</h6>
+        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['blocks'] ?? 'Blocos' !!}</h6>
         <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorEditor.toggleSidebar('left')"></button>
-
       </div>
-      
-      <div class="row p-3 g-2">
 
-        <div class="col-12">
+      <div class="p-3 pt-0 g-3 row row-cols-2" id="automator-editor-aside-left-inserter-list">
 
-          <div class="input-group">
-
-            <div class="form-floating">
-
-              <input type="text" class="form-control" id="automator-editor-body-aside-left-inserter-list-search" value="" placeholder="Procurar Campo" />
-              <label for="automator-editor-body-aside-left-inserter-list-search">Procurar Campo</label>
-
-            </div>
-
-            <span class="input-group-text"><i class="fa fa-search"></i></span>
-
-          </div>
-
-        </div>
-
-      </div>
-      
-      <div class="p-3 pt-0 g-3 row row-cols-2" id="automator-editor-body-aside-left-inserter-list">
-        
         @php
 
           $grupos = SysAutomator::SysAutomatorRenderPageBuilderFields();
+
           foreach($grupos as $grupo) {
+
             echo '<div class="col col-sm-12 mt-4 fw-bold small text-muted text-uppercase">' . $grupo['tbl_sys_field_type_group_title'] . '</div>';
+
             foreach($grupo['tbl_sys_field_type_group_fields'] as $field) {
+
               echo '<div class="col">';
-                echo '<div class="automator-editor-body-aside-left-inserter-list-item border p-3 text-center rounded mb-2" onclick="SysAutomatorEditor.insertField(' . $field['tbl_sys_field_type_ID'] . ')" data-bs-toggle="popover" data-bs-trigger="hover focus" data-bs-custom-class="automator-editor-custom-popover" data-bs-title="' . $field['tbl_sys_field_type_title'] . '" data-bs-content="' . $field['tbl_sys_field_type_description'] . '">';
-                  echo '<i class="fa fa-' . $field['tbl_sys_field_type_icon'] . ' d-block mb-2 text-primary fs-5"></i> <span class="small d-block text-truncate">' . $field['tbl_sys_field_type_title'] . '</span>';
+
+                echo '<div 
+                  data-block-type="' . $field['tbl_sys_field_type_name'] . '" 
+                  data-block-icon="' . $field['tbl_sys_field_type_icon'] . '" 
+                  data-block-type-id="' . $field['tbl_sys_field_type_ID'] . '" 
+                  data-bs-title="' . $field['tbl_sys_field_type_title'] . '" 
+                  data-bs-content="' . $field['tbl_sys_field_type_description'] . '"
+                  class="automator-editor-aside-left-inserter-list-item border p-3 text-center rounded mb-2">';
+
+                    echo '<i class="fa fa-' . $field['tbl_sys_field_type_icon'] . ' d-block mb-2 text-primary fs-5"></i>';
+                    echo '<span class="small d-block text-truncate">' . $field['tbl_sys_field_type_title'] . '</span>';
+
                 echo '</div>';
+
               echo '</div>';
+
             }
+
           }
-        
+
         @endphp
 
       </div>
 
     </div>
 
-    <div id="automator-editor-body-aside-left-structure" class="d-none">
-      
+    <div id="automator-editor-aside-left-structure" class="automator-editor-aside-left-collapsed">
+
       <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-        
-        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['structure'] !!}</h6>
+        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['structure'] ?? 'Estrutura' !!}</h6>
         <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorEditor.toggleSidebar('left')"></button>
-      
       </div>
-      <div id="automator-editor-body-aside-left-structure-list">
-        <div class="w-100 text text-muted p-2">{!! $texts['no-blocks-added'] !!}</div>
-      </div>
+
+      <div id="automator-editor-aside-left-structure-list" data-empty="{!! $texts['no-blocks-added'] ?? 'Nenhum bloco adicionado.' !!}"></div>
 
     </div>
 
   </aside>
 
+  <main id="automator-editor-canvas">
 
-  <main id="automator-editor-body-canvas-content" onclick="SysAutomatorEditor.deselectAll(event)">
-      
-    <div id="automator-editor-body-canvas-content-container">
-      
+    <div id="automator-editor-canvas-container">
+
       <div class="container-fluid">
-        
-        <div id="automator-editor-body-canvas-content-container-render-area" class="row"></div>
+
+        <div id="automator-editor-canvas-container-content"></div>
 
       </div>
-    
+
     </div>
-  
+
   </main>
-  
 
-  <aside id="automator-editor-body-aside-right" class="automator-editor-body-aside collapsed">
+  <aside id="automator-editor-aside-right" class="automator-editor-aside">
 
-    <div id="automator-editor-body-aside-right-tabs">
-
-      @php
-
-        $configsT = count($configs);
-        $configsC = 0;
-
-      @endphp
-      @if($configsT >= 1)
-
-        @foreach($configs as $configIndex => $configContent)
-
-          <button type="button" id="automator-editor-body-aside-right-tabs-button-{!! $configIndex !!}" onclick="SysAutomatorEditor.switchTab('{!! $configIndex !!}')"{!! ( (isset($configContent['default'])) ? ( ($configContent['default'] == true) ? ' data-automator-default="true"' : '' ) : '' ) !!} class="automator-editor-body-aside-right-tabs-button{!! ( ($configsC == 0) ? ' active"' : '" disabled' ) !!}>{!! $configContent['label'] !!}</button>
-          @php
-
-            $configsC++;
-
-          @endphp
-
-        @endforeach
-
-      @endif
-
-      <button type="button" id="automator-editor-body-aside-right-tabs-button-block" onclick="SysAutomatorEditor.switchTab('block')" class="automator-editor-body-aside-right-tabs-button{!! ( ($configsT == 0) ? ' active"' : '" disabled' ) !!}>{!! $texts['block'] !!}</button>
-
-
+    <div class="p-3 border-bottom bg-light">
+      <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['proprieties'] ?? 'Propriedades' !!}</h6>
     </div>
 
-    <div id="automator-editor-body-aside-right-tabs-container">
-
-      @php
-
-        $configsC = 0;
-
-      @endphp
-      @if($configsT >= 1)
-
-        @foreach($configs as $configIndex => $configContent)
-
-          <div id="automator-editor-body-aside-right-tabs-container-{!! $configIndex !!}"{!! ( (isset($configContent['default'])) ? ( ($configContent['default'] == true) ? ' data-automator-default="true"' : '' ) : '' ) !!} class="p-3 automator-editor-body-aside-right-tabs-container-items {!! ( ($configsC == 0) ? 'active' : 'd-none' ) !!}">
-
-            @if(isset($configContent['description']))
-
-              @php
-
-                $description = [
-
-                  'class'   => ( (is_array($configContent['description'])) ? ( (isset($configContent['description']['class'])) ? $configContent['description']['class'] : 'mb-4 pb-3 border-bottom border-secondary' ) : 'mb-4 pb-3 border-bottom border-secondary' ),
-                  'content' => ( (is_array($configContent['description'])) ? $configContent['description']['content'] : $configContent['description'] )
-                ];
-
-              @endphp
-              
-              <div class="d-table w-100 {!! $description['class'] !!}">{!! $description['content'] !!}</div>
-
-            @endif
-            @foreach($configContent['fields'] as $configContentFieldKey => $configContentFieldArgs)
-
-              @if($configContentFieldArgs['type'] == 'radio')
-
-              @else
-
-                <div class="{!! $configContentFieldArgs['class'] !!}">
-
-                  @if($configContentFieldArgs['type'] == 'select')
-                  @else
-
-                    <input type="{!! $configContentFieldArgs['type'] !!}" class="form-control" placeholder="{!! $configContentFieldArgs['label'] !!}" name="{!! $configContentFieldArgs['name'] !!}" value="{!! $configContentFieldArgs['value'] !!}" id="{!! $configContentFieldKey !!}"{!! ( ($configContentFieldArgs['required'] == true) ? ' required' : '' ) !!} />
-                    <label for="{!! $configContentFieldKey !!}">{!! $configContentFieldArgs['label'] !!}{!! ( (isset($configContentFieldArgs['required']) && ($configContentFieldArgs['required'] == true)) ? ' <span class="text-danger">*</span>' : '' ) !!}</label>
-
-                  @endif
-                  
-                </div>
-
-              @endif
-
-            @endforeach
-
-          </div>
-
-          @php
-
-            $configsC++;
-
-          @endphp
-
-        @endforeach
-
-      @endif
-
-      <div id="automator-editor-body-aside-right-tabs-container-block" class="automator-editor-body-aside-right-tabs-container-items{!! ( ($configsT >= 1) ? ' d-none' : '' ) !!}">
-
-        <div id="automator-editor-body-aside-right-tabs-container-block-render" data-default="{!! $texts['select-block'] !!}">
-
-          <p class="text-muted text-center py-5 small">{!! $texts['select-block'] !!}</p>
-
-        </div>
-
-      </div>
-      
+    <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
+      <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
     </div>
-    
+
   </aside>
-
 
 </div>

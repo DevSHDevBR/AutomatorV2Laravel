@@ -2970,51 +2970,75 @@ function SysAutomatorConfigPageEditor(
     recordData
 ) {
 
-    SysAutomatorEditor.config({
 
-        isNew:
-            (
-                response.acao === 'store'
-            ),
+    // SysAutomatorEditor.config({
 
-        editor: {
+    //     isNew:
+    //         (
+    //             response.acao === 'store'
+    //         ),
 
-            settingsBlock: {
+    //     editor: {
 
-                collapsed: false,
-                tab: 'page-settings'
+    //         settingsBlock: {
 
-            },
+    //             collapsed: false,
+    //             tab: 'page-settings'
 
-            content:
-                (
-                    response.acao === 'store'
-                )
-                ? ''
-                : (
-                    response.dados
-                    ?.tbl_sys_route_content
-                    || ''
-                )
+    //         },
 
-        }
+    //         content:
+    //             (
+    //                 response.acao === 'store'
+    //             )
+    //             ? ''
+    //             : (
+    //                 response.dados['page']
+    //                 ?.tbl_sys_route_content
+    //                 || ''
+    //             ),
+    //         blocks: (response.dados['blocks'] ? response.dados['blocks'] : {})
 
-    });
+    //     }
 
-    /**
-     * Aplica configuração
-     */
-    SysAutomatorEditor.init(function(retorno) {
+    // });
 
-      if(response.acao === 'store') {
+    // /**
+    //  * Aplica configuração
+    //  */
+    // SysAutomatorEditor.init(function(retorno) {
 
+    //   if(response.acao === 'store') {
+
+    //     $('#tbl_sys_route_title-sync').prop('checked', true);
+
+    //   }
+
+    //   return retorno;
+
+    // });
+
+  SysAutomatorEditor.config({
+    isNew: response.acao === 'store',
+    editor: {
+      content: response.acao === 'store'
+        ? ''
+        : (response.dados['page']?.tbl_sys_route_content || ''),
+      css: response.dados['page']?.tbl_sys_route_css || '',
+      blocks: response.dados['blocks'] || {}
+    }
+  }, function () {
+
+    SysAutomatorEditor.init(function () {
+
+      if (response.acao === 'store') {
         $('#tbl_sys_route_title-sync').prop('checked', true);
-
       }
 
-      return retorno;
-
     });
+
+  });
+
 
 }
 
@@ -3025,15 +3049,41 @@ function SysAutomatorInitPageEditor(
     recordData
 ) {
 
+  //   const editor = grapesjs.init({
+
+  //       container:'#gjs',
+
+  //       height:'100%',
+
+  //       storageManager:false,
+
+  //       fromElement:false
+
+  //   });
+
+  //   editor.BlockManager.add('titulo',{
+
+  //     label:'Título',
+
+  //     category:'Texto',
+
+  //     content:`
+  //         <h2>
+  //             Novo título
+  //         </h2>
+  //     `
+
+  // });
     // console.trace(
     //     'SysAutomatorInitPageEditor'
     // );
 
-    SysAutomatorEditor.initInterface(function() {
+    // SysAutomatorEditor.initInterface(function() {
 
-      $('#tbl_sys_route_title').focus()
+    //   $('#tbl_sys_route_title').focus()
 
-    });
+    // });
+  
 
 }
 

@@ -70,8 +70,24 @@
           'tbl_sys_shortcode_method'      => 'SysAutomatorRenderFormByID',
           'tbl_sys_shortcode_params'      => json_encode([
 
-            "form" => true,
-            "vars" => false,
+            'form' => [
+              'label' => 'Formulário',
+              'field' => 'select',
+              'default' => '',
+              'required' => true,
+              'relation' => [
+                'table' => 'tbl_sys_forms',
+                'index' => 'tbl_sys_form_name',
+                'label' => 'tbl_sys_form_title'
+              ]
+            ],
+
+            'vars' => [
+              'label' => 'Variáveis',
+              'field' => 'textarea',
+              'default' => '',
+              'required' => false
+            ]
 
           ]),
           'tbl_sys_shortcode_locked'      => true,

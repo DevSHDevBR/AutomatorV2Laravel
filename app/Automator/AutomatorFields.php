@@ -4,6 +4,7 @@
   namespace App\Automator;
 
   use Illuminate\Support\Facades\View;
+  use Illuminate\Support\Facades\DB;
 
 
   use App\Helpers\SysAutomator;
@@ -617,45 +618,166 @@
 
     public static function renderViewEditorField($field, $data = []) {
 
+      $type = SysFieldType::where('tbl_sys_field_type_layout', true)
+        ->where('tbl_sys_field_type_ID', $field)
+        ->first();
 
-      $type = SysFieldType::where('tbl_sys_field_type_layout', true)->where('tbl_sys_field_type_ID', $field)->first();
-      if($type) {
+      if(!$type) {
+        return '';
+      }
 
-        $fieldType = $type->toArray();
+      $fieldType = $type->toArray();
 
-        $dados          = $fieldType;
-        $dados['value'] = $data;
+      $dados = $fieldType;
+      $dados['value'] = $data;
 
+      $configs = (
+        isset($dados['tbl_sys_field_type_configs']) &&
+        $dados['tbl_sys_field_type_configs'] !== null &&
+        $dados['tbl_sys_field_type_configs'] != ''
+      )
+        ? (array) json_decode($dados['tbl_sys_field_type_configs'], true)
+        : [];
 
-        $configs = ( ($dados['tbl_sys_field_type_configs'] !== null) ? ( ($dados['tbl_sys_field_type_configs'] != '') ? ( (array) json_decode($dados['tbl_sys_field_type_configs'], true) ) : [] ) : [] );
+      $code = (
+        isset($configs['code']) &&
+        is_array($configs['code']) &&
+        count($configs['code']) >= 1
+      )
+        ? $configs['code']
+        : [];
 
-        $code = ( ($configs['code'] !== null) ? ( (is_array($configs['code'])) ? ( (count($configs['code']) >= 1) ? $configs['code'] : [] ) : [] ) : [] );
+      $blocks = (
+        isset($configs['block']) &&
+        is_array($configs['block'])
+      )
+        ? $configs['block']
+        : [];
 
-        $blocks = ( (isset($configs['block'])) ? ( (is_array($configs['block'])) ? $configs['block'] : [] ) : [] );
-        $props  = [];
+      $vars = (
+        isset($code['vars'])
+      )
+        ? (
+          is_array($code['vars'])
+            ? $code['vars']
+            : (
+              is_object($code['vars'])
+                ? (array) $code['vars']
+                : []
+            )
+        )
+        : false;
 
-        foreach ($blocks as $blockKey => $blockArgs) {
-          
-          $fields = [];
-          foreach ($blockArgs['fields'] as $blockFieldsKey => $blockFieldsArgs) {
-            
-            // $props[] = [$blockFieldsKey, $blockFieldsArgs];
-            if(array_key_exists('onload', $blockFieldsArgs)) {
+      $props = [];
+      $existe = [];
+      $relationItems = [];
 
-              if(is_array($blockFieldsArgs['onload'])) {
+      foreach ($blocks as $blockKey => $blockArgs) {
 
-                if(array_key_exists('add-prop', $blockFieldsArgs['onload'])) {
+        if(!isset($blockArgs['fields']) || !is_array($blockArgs['fields'])) {
+          continue;
+        }
 
-                  foreach ($blockFieldsArgs['onload']['add-prop'] as $propItem) {
-                    
-                    // $props[] = array_values($propItem)[0];
-                    // $props[] = array_keys($propItem)[0];
-                    if(!array_key_exists(array_keys($propItem)[0], $props)) {
+        foreach ($blockArgs['fields'] as $blockFieldsKey => $blockFieldsArgs) {
 
-                      $props[array_keys($propItem)[0]] = array_values($propItem)[0];
+          if(is_array($vars) && count($vars) >= 1 && array_key_exists($blockFieldsKey, $vars)) {
+
+            if(isset($vars[$blockFieldsKey]['type']) && $vars[$blockFieldsKey]['type'] == 'relation') {
+
+              $varsQuery = DB::table($vars[$blockFieldsKey]['table'])->get()->toArray();
+
+              if(is_array($varsQuery) && count($varsQuery) >= 1) {
+
+                $varsData = [];
+                $varsItems = [];
+
+                foreach ($varsQuery as $varKey => $varValue) {
+
+                  $varValue = (array) $varValue;
+
+                  $indexColumn = $vars[$blockFieldsKey]['index'];
+                  $labelColumn = $vars[$blockFieldsKey]['label'];
+
+                  $indexValue = $varValue[$indexColumn] ?? '';
+                  $labelValue = $varValue[$labelColumn] ?? $indexValue;
+
+                  if($indexValue == '') {
+                    continue;
+                  }
+
+                  $varsData[$indexValue] = $labelValue;
+
+                  $item = [
+                    'value' => $indexValue,
+                    'code'  => $indexValue,
+                    'label' => $labelValue,
+                    'title' => $labelValue,
+                  ];
+
+                  if(isset($vars[$blockFieldsKey]['description'])) {
+
+                    $descriptionColumn = $vars[$blockFieldsKey]['description'];
+
+                    $item['description'] = $varValue[$descriptionColumn] ?? '';
+
+                    if(isset($varValue[$descriptionColumn])) {
+                      $item[$descriptionColumn] = $varValue[$descriptionColumn];
+                    }
+
+                  }
+
+                  if(isset($vars[$blockFieldsKey]['params'])) {
+
+                    $paramsColumn = $vars[$blockFieldsKey]['params'];
+                    $paramsValue = $varValue[$paramsColumn] ?? [];
+
+                    if(is_string($paramsValue) && $paramsValue != '') {
+
+                      $decodedParams = json_decode($paramsValue, true);
+
+                      $paramsValue = is_array($decodedParams)
+                        ? $decodedParams
+                        : [];
 
                     }
 
+                    $paramsValue = self::resolveEditorShortcodeParamsRelations($paramsValue);
+
+                    $item['params'] = $paramsValue;
+
+                    if(isset($varValue[$paramsColumn])) {
+                      $item[$paramsColumn] = $paramsValue;
+                    }
+
+                  }
+
+                  $varsItems[$indexValue] = $item;
+
+                }
+
+                $blocks[$blockKey]['fields'][$blockFieldsKey]['choices'] = $varsData;
+
+                $vars[$blockFieldsKey]['choices'] = $varsData;
+                $vars[$blockFieldsKey]['items'] = $varsItems;
+
+                $relationItems[$blockFieldsKey] = $varsItems;
+
+              }
+
+            }
+
+          }
+
+          if(array_key_exists('onload', $blockFieldsArgs)) {
+
+            if(is_array($blockFieldsArgs['onload'])) {
+
+              if(array_key_exists('add-prop', $blockFieldsArgs['onload'])) {
+
+                foreach ($blockFieldsArgs['onload']['add-prop'] as $propItem) {
+
+                  if(!array_key_exists(array_keys($propItem)[0], $props)) {
+                    $props[array_keys($propItem)[0]] = array_values($propItem)[0];
                   }
 
                 }
@@ -668,76 +790,297 @@
 
         }
 
-        $rendered = ( (isset($code['rendered'])) ? $code['rendered']  : false );
-        $prefix   = ( (isset($code['prefix']))   ? $code['prefix']  : false );
-        $sufix    = ( (isset($code['sufix']))    ? $code['sufix']  : false );
+      }
 
-        $editor = ( (isset($code['editor'])) ? $code['editor'] : false );
+      $rendered = isset($code['rendered']) ? $code['rendered'] : false;
+      $prefix   = isset($code['prefix']) ? $code['prefix'] : false;
+      $sufix    = isset($code['sufix']) ? $code['sufix'] : false;
+      $editor   = isset($code['editor']) ? $code['editor'] : false;
 
-        if($rendered == true) {
+      if($rendered == true) {
 
-          $tag = ( (isset($code['default'])) ? $code['default'] : false );
-          if($tag != false) {
+        $tag = isset($code['default']) ? $code['default'] : false;
 
-            $tag = str_replace(['<', '>'], '', $tag);
-            $prefix = str_replace('[$tag$]', '<' . $tag, $prefix);
-            $sufix  = str_replace('[$tag$]', $tag, $sufix);
+        if($tag != false) {
+          $tag = str_replace(['<', '>'], '', $tag);
+          $prefix = str_replace('[$tag$]', '<' . $tag, $prefix);
+          $sufix  = str_replace('[$tag$]', $tag, $sufix);
+        }
 
+      } else {
+
+        $tag = isset($code['tag']) ? $code['tag'] : false;
+
+        if($tag != false) {
+
+          if(is_array($tag)) {
+            $tag = $code['default'];
           }
 
-        } else {
-
-          $tag = ( (isset($code['tag'])) ? $code['tag'] : false );
-          if($tag != false) {
-
-            if(is_array($tag)) {
-              $tag = $code['default'];
-            }
-            $tag = str_replace(['<', '>'], '', $tag);
-            $prefix = str_replace('[$tag$]', $tag, $prefix);
-            $sufix  = str_replace('[$tag$]', $tag, $sufix);
-
-          }
-          
-          if($editor == true) {
-
-            $prefix = substr($prefix, 0, -1) . ' contenteditable="true"' . ">";
-
-          }
+          $tag = str_replace(['<', '>'], '', $tag);
+          $prefix = str_replace('[$tag$]', $tag, $prefix);
+          $sufix  = str_replace('[$tag$]', $tag, $sufix);
 
         }
 
-
-        $retorno = [
-
-          'id'             => $dados['tbl_sys_field_type_ID'],
-          'type'           => $dados['tbl_sys_field_type_name'],
-          'icon'           => $dados['tbl_sys_field_type_icon'],
-          'title'          => $dados['tbl_sys_field_type_title'],
-          'description'    => $dados['tbl_sys_field_type_description'],
-          'code'           => '',
-          // 'code'           => $configs['code']['prefix'] . $configs['code']['sufix'],
-          'class'          => ( (isset($code['class']))  ? $code['class']  : '' ),
-          'tag'            => ( (isset($code['tag']))    ? $code['tag']    : '' ),
-          'prefix'         => $prefix,
-          'sufix'          => $sufix,
-          'toolbar'        => ( (isset($configs['toolbar'])) ? $configs['toolbar'] : [] ),
-          'rendered'       => $rendered,
-          // 'default'        => ( (isset($code['default']))    ? $code['default']   : false ),
-          'can_have_child' => ( (isset($code['has_child']))  ? $code['has_child'] : false ),
-          'props'          => $props,
-          'editor'         => $editor,
-          'properties'     => $blocks,
-
-        ];
-
-
-        return $retorno;
+        if($editor == true) {
+          $prefix = substr($prefix, 0, -1) . ' contenteditable="true"' . ">";
+        }
 
       }
 
-      return '';
+      $retorno = [
 
+        'id'             => $dados['tbl_sys_field_type_ID'],
+        'type'           => $dados['tbl_sys_field_type_name'],
+        'icon'           => $dados['tbl_sys_field_type_icon'],
+        'title'          => $dados['tbl_sys_field_type_title'],
+        'description'    => $dados['tbl_sys_field_type_description'],
+        'code'           => '',
+        'class'          => isset($code['class']) ? $code['class'] : '',
+        'tag'            => isset($code['tag']) ? $code['tag'] : '',
+        'prefix'         => $prefix,
+        'sufix'          => $sufix,
+        'toolbar'        => isset($configs['toolbar']) ? $configs['toolbar'] : [],
+        'rendered'       => $rendered,
+        'can_have_child' => isset($code['has_child']) ? $code['has_child'] : false,
+        'props'          => $props,
+        'editor'         => $editor,
+        'properties'     => $blocks,
+        'existe'         => $existe,
+        'vars'           => $vars,
+
+      ];
+
+      if($dados['tbl_sys_field_type_name'] === 'shortcode') {
+        $retorno['shortcodes'] = $relationItems['shortcode'] ?? [];
+      }
+
+      return $retorno;
+
+    }
+
+    // Funcionava
+    // public static function renderViewEditorField($field, $data = []) {
+
+
+    //   $type = SysFieldType::where('tbl_sys_field_type_layout', true)->where('tbl_sys_field_type_ID', $field)->first();
+    //   if($type) {
+
+    //     $fieldType = $type->toArray();
+
+    //     $dados          = $fieldType;
+    //     $dados['value'] = $data;
+
+
+    //     $configs = ( ($dados['tbl_sys_field_type_configs'] !== null) ? ( ($dados['tbl_sys_field_type_configs'] != '') ? ( (array) json_decode($dados['tbl_sys_field_type_configs'], true) ) : [] ) : [] );
+
+    //     $code = ( ($configs['code'] !== null) ? ( (is_array($configs['code'])) ? ( (count($configs['code']) >= 1) ? $configs['code'] : [] ) : [] ) : [] );
+
+    //     $blocks = ( (isset($configs['block'])) ? ( (is_array($configs['block'])) ? $configs['block'] : [] ) : [] );
+    //     $vars   = ( (isset($code['vars'])) ? ( (is_array($code['vars'])) ? $code['vars'] : ( (is_object($code['vars'])) ? ( (array) $code['vars'] ) : [] ) )  : false );
+    //     $props  = [];
+    //     $existe = [];
+
+    //     foreach ($blocks as $blockKey => $blockArgs) {
+          
+    //       $fields = [];
+    //       foreach ($blockArgs['fields'] as $blockFieldsKey => $blockFieldsArgs) {
+            
+    //         // $props[] = [$blockFieldsKey, $blockFieldsArgs];
+
+    //         if(is_array($vars)) {
+
+    //           if(count($vars) >= 1) {
+
+    //             if(array_key_exists($blockFieldsKey, $vars)) {
+
+    //               if($vars[$blockFieldsKey]['type'] == 'relation') {
+
+    //                 $varsQuery = DB::table($vars[$blockFieldsKey]['table'])->get()->toArray();
+    //                 if(is_array($varsQuery)) {
+
+    //                   if(count($varsQuery) >= 1) {
+
+    //                     $varsData = [];
+    //                     foreach ($varsQuery as $varKey => $varValue) {
+    //                       $varValue = ( (array) $varValue );
+    //                       // $existe[] = $varValue[$vars[$blockFieldsKey]['label']];
+    //                       $varsData[$varValue[$vars[$blockFieldsKey]['index']]] = $varValue[$vars[$blockFieldsKey]['label']];
+
+    //                     }
+
+    //                     // $existe[] = $blockArgs['fields'][$blockFieldsKey]['choices'];
+    //                     // $existe[] = $varsData;
+
+
+    //                     $blocks[$blockKey]['fields'][$blockFieldsKey]['choices'] = $varsData;
+
+    //                   }
+
+    //                 }
+
+    //               }
+
+    //             }
+
+    //           }
+
+    //         }
+
+    //         if(array_key_exists('onload', $blockFieldsArgs)) {
+
+    //           if(is_array($blockFieldsArgs['onload'])) {
+
+    //             if(array_key_exists('add-prop', $blockFieldsArgs['onload'])) {
+
+    //               foreach ($blockFieldsArgs['onload']['add-prop'] as $propItem) {
+                    
+    //                 // $props[] = array_values($propItem)[0];
+    //                 // $props[] = array_keys($propItem)[0];
+    //                 if(!array_key_exists(array_keys($propItem)[0], $props)) {
+
+    //                   $props[array_keys($propItem)[0]] = array_values($propItem)[0];
+
+    //                 }
+
+    //               }
+
+    //             }
+
+    //           }
+
+    //         }
+
+    //       }
+
+    //     }
+
+    //     $rendered = ( (isset($code['rendered'])) ? $code['rendered']  : false );
+    //     $prefix   = ( (isset($code['prefix']))   ? $code['prefix']  : false );
+    //     $sufix    = ( (isset($code['sufix']))    ? $code['sufix']  : false );
+
+    //     $editor = ( (isset($code['editor'])) ? $code['editor'] : false );
+
+    //     if($rendered == true) {
+
+    //       $tag = ( (isset($code['default'])) ? $code['default'] : false );
+    //       if($tag != false) {
+
+    //         $tag = str_replace(['<', '>'], '', $tag);
+    //         $prefix = str_replace('[$tag$]', '<' . $tag, $prefix);
+    //         $sufix  = str_replace('[$tag$]', $tag, $sufix);
+
+    //       }
+
+    //     } else {
+
+    //       $tag = ( (isset($code['tag'])) ? $code['tag'] : false );
+    //       if($tag != false) {
+
+    //         if(is_array($tag)) {
+    //           $tag = $code['default'];
+    //         }
+    //         $tag = str_replace(['<', '>'], '', $tag);
+    //         $prefix = str_replace('[$tag$]', $tag, $prefix);
+    //         $sufix  = str_replace('[$tag$]', $tag, $sufix);
+
+    //       }
+          
+    //       if($editor == true) {
+
+    //         $prefix = substr($prefix, 0, -1) . ' contenteditable="true"' . ">";
+
+    //       }
+
+    //     }
+
+
+    //     $retorno = [
+
+    //       'id'             => $dados['tbl_sys_field_type_ID'],
+    //       'type'           => $dados['tbl_sys_field_type_name'],
+    //       'icon'           => $dados['tbl_sys_field_type_icon'],
+    //       'title'          => $dados['tbl_sys_field_type_title'],
+    //       'description'    => $dados['tbl_sys_field_type_description'],
+    //       'code'           => '',
+    //       // 'code'           => $configs['code']['prefix'] . $configs['code']['sufix'],
+    //       'class'          => ( (isset($code['class']))  ? $code['class']  : '' ),
+    //       'tag'            => ( (isset($code['tag']))    ? $code['tag']    : '' ),
+    //       'prefix'         => $prefix,
+    //       'sufix'          => $sufix,
+    //       'toolbar'        => ( (isset($configs['toolbar'])) ? $configs['toolbar'] : [] ),
+    //       'rendered'       => $rendered,
+    //       // 'default'        => ( (isset($code['default']))    ? $code['default']   : false ),
+    //       'can_have_child' => ( (isset($code['has_child']))  ? $code['has_child'] : false ),
+    //       'props'          => $props,
+    //       'editor'         => $editor,
+    //       'properties'     => $blocks,
+    //       'existe'     => $existe,
+    //       'vars'     => $vars,
+
+    //     ];
+
+
+    //     return $retorno;
+
+    //   }
+
+    //   return '';
+
+
+    // }
+
+
+    private static function resolveEditorShortcodeParamsRelations(array $params): array {
+
+      foreach($params as $paramKey => $paramConfig) {
+
+        if(
+          !is_array($paramConfig) ||
+          !isset($paramConfig['relation']) ||
+          !is_array($paramConfig['relation'])
+        ) {
+          continue;
+        }
+
+        $relation = $paramConfig['relation'];
+
+        if(
+          !isset($relation['table']) ||
+          !isset($relation['index']) ||
+          !isset($relation['label'])
+        ) {
+          continue;
+        }
+
+        $choices = [];
+
+        $items = DB::table($relation['table'])
+          ->orderBy($relation['label'], 'asc')
+          ->get()
+          ->toArray();
+
+        foreach($items as $item) {
+
+          $item = (array) $item;
+
+          $index = $item[$relation['index']] ?? '';
+          $label = $item[$relation['label']] ?? $index;
+
+          if($index == '') {
+            continue;
+          }
+
+          $choices[$index] = $label;
+
+        }
+
+        $params[$paramKey]['choices'] = $choices;
+
+      }
+
+      return $params;
 
     }
 

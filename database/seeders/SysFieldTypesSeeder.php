@@ -366,7 +366,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -431,6 +431,546 @@
               ],
 
             ])
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 2,
+            'tbl_sys_field_type_name'        => 'link',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldLink',
+            'tbl_sys_field_type_icon'        => 'link',
+            'tbl_sys_field_type_title'       => 'Link',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar links.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code'  => [
+
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'has_child' => false,
+                'editor'    => true,
+                'tag'       => 'a',
+              
+              ],
+
+              'block' => [
+
+                'configs'  => [
+
+                  'label'   => 'Configurações',
+                  'fields'  => [
+                    
+                    'href' => [
+                      
+                      'label'   => 'URL do link',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+                    'target' => [
+                      
+                      'label'   => 'Target do link',
+                      'field'   => 'select',
+                      'default' => '_self',
+                      'choices' => [
+
+                        '_self'   => '_self',
+                        '_blank'  => '_blank',
+                        '_parent' => '_parent',
+                        '_top'    => '_top',
+
+                      ]
+
+                    ],
+
+                  ],
+
+                ],
+                'colors' => [
+
+                  'label'  => "Cores",
+                  'fields' => [
+
+                    'background' => [
+
+                      'label'   => 'Cor de fundo',
+                      'field'   => 'color-picker',
+                      'default' => 'none',
+
+                    ],
+
+                    'color' => [
+
+                      'label'   => 'Cor do texto',
+                      'field'   => 'color-picker',
+                      'default' => '#000000',
+
+                    ],
+
+                  ]
+
+                ],
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do link',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                    'onclick'  => [
+
+                      'label'   => 'ON CLICK',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+
+              'toolbar' => []
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 2,
+            'tbl_sys_field_type_name'        => 'button',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldButton',
+            'tbl_sys_field_type_icon'        => 'square-check',
+            'tbl_sys_field_type_title'       => 'Botão',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um botão.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code'  => [
+
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'has_child' => false,
+                'editor'    => true,
+                'tag'       => 'button',
+              
+              ],
+
+              'block' => [
+
+                'configs'  => [
+
+                  'label'   => 'Configurações',
+                  'fields'  => [
+                    
+                    'type' => [
+                      
+                      'label'   => 'Tipo',
+                      'field'   => 'select',
+                      'default' => 'button',
+                      'choices' => [
+
+                        'button' => 'Botão',
+                        'submit' => 'Submit',
+                        'reset'  => 'Reset',
+
+                      ]
+
+                    ],
+
+                  ],
+
+                ],
+                'colors' => [
+
+                  'label'  => "Cores",
+                  'fields' => [
+
+                    'background' => [
+
+                      'label'   => 'Cor de fundo',
+                      'field'   => 'color-picker',
+                      'default' => 'none',
+
+                    ],
+
+                    'color' => [
+
+                      'label'   => 'Cor do texto',
+                      'field'   => 'color-picker',
+                      'default' => '#000000',
+
+                    ],
+
+                  ]
+
+                ],
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do botão',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                    'onclick'  => [
+
+                      'label'   => 'ON CLICK',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+
+              'toolbar' => []
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 2,
+            'tbl_sys_field_type_name'        => 'title',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldTitle',
+            'tbl_sys_field_type_icon'        => 'heading',
+            'tbl_sys_field_type_title'       => 'Titulo',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um titulo.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code'  => [
+
+                'default'   => 'h1',
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'has_child' => false,
+                'editor'    => true,
+                'tag'       => [
+
+                  'h1',
+                  'h2',
+                  'h3',
+                  'h4',
+                  'h5',
+                  'h6',
+
+                ],
+              
+              ],
+
+              'block' => [
+
+                'tipograph' => [
+
+                  'label'  => 'Tipografia',
+                  'fields' => [
+
+                    'type' => [
+
+                      'label'   => 'Tipo do titulo',
+                      'field'   => 'radio-buttons',
+                      'default' => 'h1',
+                      'choices' => [
+
+                        'h1' => 'H1',
+                        'h2' => 'H2',
+                        'h3' => 'H3',
+                        'h4' => 'H4',
+                        'h5' => 'H5',
+                        'h6' => 'H6',
+
+                      ]
+
+                    ],
+
+                    'size' => [
+
+                      'label'   => 'Tamanho da fonte',
+                      'field'   => 'radio-buttons',
+                      'default' => 'medium',
+                      'custom'  => true,
+                      'choices' => [
+
+                        'small'       => 'P',
+                        'medium'      => 'M',
+                        'large'       => 'G',
+                        'extra-large' => 'GG',
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+                'colors' => [
+
+                  'label'  => "Cores",
+                  'fields' => [
+
+                    'background' => [
+
+                      'label'   => 'Cor de fundo',
+                      'field'   => 'color-picker',
+                      'default' => 'none',
+
+                    ],
+
+                    'color' => [
+
+                      'label'   => 'Cor do texto',
+                      'field'   => 'color-picker',
+                      'default' => '#000000',
+
+                    ],
+
+                  ]
+
+                ],
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do Título',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+
+              'toolbar' => []
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 2,
+            'tbl_sys_field_type_name'        => 'paragraph',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldParagraph',
+            'tbl_sys_field_type_icon'        => 'font',
+            'tbl_sys_field_type_title'       => 'Paragrafo',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um paragrafo.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code'  => [
+
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'tag'       => 'p',
+                'editor'    => true,
+                'has_child' => false
+              
+              ],
+
+              'block' => [
+
+                'tipograph' => [
+
+                  'label'  => 'Tipografia',
+                  'fields' => [
+
+                    'size' => [
+
+                      'label'   => 'Tamanho da fonte',
+                      'field'   => 'radio-buttons',
+                      'default' => 'medium',
+                      'custom'  => true,
+                      'choices' => [
+
+                        'small'       => 'P',
+                        'medium'      => 'M',
+                        'large'       => 'G',
+                        'extra-large' => 'GG',
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+                'colors' => [
+
+                  'label'  => "Cores",
+                  'fields' => [
+
+                    'background' => [
+
+                      'label'   => 'Cor de fundo',
+                      'field'   => 'color-picker',
+                      'default' => 'none',
+
+                    ],
+
+                    'color' => [
+
+                      'label'   => 'Cor do texto',
+                      'field'    => 'color-picker',
+                      'default' => '#000000',
+
+                    ],
+
+                  ]
+
+                ],
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do Paragrafo',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+
+              'toolbar' => [
+                
+                [
+
+                  'type'    => 'button',
+                  'class'   => 'btn btn-xs btn-light border',
+                  'title'   => 'Negrito',
+                  'onclick' => "SysAutomatorEditor.formatButton(this, 'bold')",
+                  'label'   => '<i class="fa fa-bold"></i>'
+                
+                ],
+                [
+
+                  'type'    => 'button',
+                  'class'   => 'btn btn-xs btn-light border',
+                  'title'   => 'Italico',
+                  'onclick' => "SysAutomatorEditor.formatButton(this, 'italic')",
+                  'label'   => '<i class="fa fa-italic"></i>'
+                
+                ],
+
+
+              ],
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
 
           ],
 
@@ -655,6 +1195,88 @@
 
           ],
 
+          [
+
+            'tbl_sys_field_type_group_ID'    => 5,
+            'tbl_sys_field_type_name'        => 'block',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldBlock',
+            'tbl_sys_field_type_icon'        => 'th-large',
+            'tbl_sys_field_type_title'       => 'Bloco',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um bloco na tela.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code' => [
+
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'tag'       => 'div',
+                'has_child' => true,
+              
+              ],
+
+              'block' => [
+
+                'margin' => [
+                  
+                  'label'  => 'Margens',
+                  'fields' => [
+
+                    'margin'  => [
+
+                      'label'   => 'Margem',
+                      'field'   => 'select',
+                      'default' => 'mb-2',
+                      'choices' => [
+
+                        'mb-0' => 'Nenhuma',
+                        'mb-2' => 'Pequena',
+                        'mb-4' => 'Média',
+                        'mb-5' => 'Grande',
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+                'advanced' => [
+                  
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'class'  => [
+
+                      'label'   => 'Classes Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ]
+
+                  ]
+
+                ]
+              ],
+              'toolbar' => [],
+
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
+
+          ],
+
 
           [
 
@@ -732,6 +1354,14 @@
                   'label'  => 'Avançado',
                   'fields' => [
 
+                    'id'  => [
+
+                      'label'   => 'ID do Container',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
                     'class'  => [
 
                       'label'   => 'Classes Adicionais',
@@ -743,7 +1373,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -848,7 +1478,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo CSS adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -1057,7 +1687,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo CSS adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -1075,107 +1705,35 @@
 
           ],
 
+
+        // Layout - END
+
+
+
+        // Card - START
+
           [
 
-            'tbl_sys_field_type_group_ID'    => 5,
-            'tbl_sys_field_type_name'        => 'title',
-            'tbl_sys_field_type_class'       => 'AutomatorFieldTitle',
-            'tbl_sys_field_type_icon'        => 'heading',
-            'tbl_sys_field_type_title'       => 'Titulo',
-            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um titulo.',
+            'tbl_sys_field_type_group_ID'    => 8,
+            'tbl_sys_field_type_name'        => 'card',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldCard',
+            'tbl_sys_field_type_icon'        => 'window-maximize',
+            'tbl_sys_field_type_title'       => 'Card',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar card com titulo e conteudo personalizável.',
             'tbl_sys_field_type_layout'      => true,
             'tbl_sys_field_type_configs'     => json_encode([
 
               'code'  => [
 
-                'default'   => 'h1',
-                'prefix'    => '<[$tag$]>',
+                'prefix'    => '<[$tag$] class="[$class$]">',
                 'sufix'     => '</[$tag$]>',
-                'has_child' => false,
-                'editor'    => true,
-                'tag'       => [
+                'tag'       => 'div',
+                'class'     => 'card',
+                'has_child' => true
 
-                  'h1',
-                  'h2',
-                  'h3',
-                  'h4',
-                  'h5',
-                  'h6',
-
-                ],
-              
               ],
 
               'block' => [
-
-                'tipograph' => [
-
-                  'label'  => 'Tipografia',
-                  'fields' => [
-
-                    'type' => [
-
-                      'label'   => 'Tipo do titulo',
-                      'field'   => 'radio-buttons',
-                      'default' => 'h1',
-                      'choices' => [
-
-                        'h1' => 'H1',
-                        'h2' => 'H2',
-                        'h3' => 'H3',
-                        'h4' => 'H4',
-                        'h5' => 'H5',
-                        'h6' => 'H6',
-
-                      ]
-
-                    ],
-
-                    'size' => [
-
-                      'label'   => 'Tamanho da fonte',
-                      'field'   => 'radio-buttons',
-                      'default' => 'medium',
-                      'custom'  => true,
-                      'choices' => [
-
-                        'small'       => 'P',
-                        'medium'      => 'M',
-                        'large'       => 'G',
-                        'extra-large' => 'GG',
-
-                      ]
-
-                    ],
-
-                  ]
-
-                ],
-
-                'colors' => [
-
-                  'label'  => "Cores",
-                  'fields' => [
-
-                    'background' => [
-
-                      'label'   => 'Cor de fundo',
-                      'field'   => 'color-picker',
-                      'default' => 'none',
-
-                    ],
-
-                    'color' => [
-
-                      'label'   => 'Cor do texto',
-                      'field'   => 'color-picker',
-                      'default' => '#000000',
-
-                    ],
-
-                  ]
-
-                ],
 
                 'advanced' => [
 
@@ -1184,7 +1742,7 @@
 
                     'id'  => [
 
-                      'label'   => 'ID da coluna',
+                      'label'   => 'ID do card',
                       'field'   => 'text',
                       'default' => ''
 
@@ -1201,7 +1759,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo CSS adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -1223,77 +1781,25 @@
 
           [
 
-            'tbl_sys_field_type_group_ID'    => 5,
-            'tbl_sys_field_type_name'        => 'paragraph',
-            'tbl_sys_field_type_class'       => 'AutomatorFieldParagraph',
-            'tbl_sys_field_type_icon'        => 'font',
-            'tbl_sys_field_type_title'       => 'Paragrafo',
-            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar um paragrafo.',
+            'tbl_sys_field_type_group_ID'    => 8,
+            'tbl_sys_field_type_name'        => 'card-header',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldCardHeader',
+            'tbl_sys_field_type_icon'        => 'minus',
+            'tbl_sys_field_type_title'       => 'Card Header',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar card com titulo e conteudo personalizável.',
             'tbl_sys_field_type_layout'      => true,
             'tbl_sys_field_type_configs'     => json_encode([
 
-              'code'  => [
+              'code' => [
 
-                'prefix'    => '<[$tag$]>',
-                'sufix'     => '</[$tag$]>',
-                'tag'       => 'p',
-                'editor'    => true,
-                'has_child' => false
-              
+                'prefix'    => '<div class="[$class$]">',
+                'sufix'     => '</div>',
+                'tag'       => 'div',
+                'class'     => 'card-header',
+                'has_child' => true
+
               ],
-
               'block' => [
-
-                'tipograph' => [
-
-                  'label'  => 'Tipografia',
-                  'fields' => [
-
-                    'size' => [
-
-                      'label'   => 'Tamanho da fonte',
-                      'field'   => 'radio-buttons',
-                      'default' => 'medium',
-                      'custom'  => true,
-                      'choices' => [
-
-                        'small'       => 'P',
-                        'medium'      => 'M',
-                        'large'       => 'G',
-                        'extra-large' => 'GG',
-
-                      ]
-
-                    ],
-
-                  ]
-
-                ],
-
-                'colors' => [
-
-                  'label'  => "Cores",
-                  'fields' => [
-
-                    'background' => [
-
-                      'label'   => 'Cor de fundo',
-                      'field'   => 'color-picker',
-                      'default' => 'none',
-
-                    ],
-
-                    'color' => [
-
-                      'label'   => 'Cor do texto',
-                      'field'    => 'color-picker',
-                      'default' => '#000000',
-
-                    ],
-
-                  ]
-
-                ],
 
                 'advanced' => [
 
@@ -1302,7 +1808,7 @@
 
                     'id'  => [
 
-                      'label'   => 'ID da coluna',
+                      'label'   => 'ID do Header',
                       'field'   => 'text',
                       'default' => ''
 
@@ -1319,7 +1825,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo CSS adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -1330,39 +1836,139 @@
                 ]
 
               ],
+              'toolbar' => []
 
-              'toolbar' => [
-                
-                [
-
-                  'type'    => 'button',
-                  'class'   => 'btn btn-xs btn-light border',
-                  'title'   => 'Negrito',
-                  'onclick' => "SysAutomatorEditor.formatButton(this, 'bold')",
-                  'label'   => '<i class="fa fa-bold"></i>'
-                
-                ],
-                [
-
-                  'type'    => 'button',
-                  'class'   => 'btn btn-xs btn-light border',
-                  'title'   => 'Italico',
-                  'onclick' => "SysAutomatorEditor.formatButton(this, 'italic')",
-                  'label'   => '<i class="fa fa-italic"></i>'
-                
-                ],
-
-
-              ],
-
-            ]),
-            'tbl_sys_field_type_locked'      => true,
-            'tbl_sys_field_type_params'      => ''
+            ])
 
           ],
 
+          [
 
-        // Layout - END
+            'tbl_sys_field_type_group_ID'    => 8,
+            'tbl_sys_field_type_name'        => 'card-body',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldCardBody',
+            'tbl_sys_field_type_icon'        => 'square',
+            'tbl_sys_field_type_title'       => 'Card Body',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar o conteudo a um card personalizável.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code' => [
+
+                'prefix'    => '<div class="[$class$]">',
+                'sufix'     => '</div>',
+                'tag'       => 'div',
+                'class'     => 'card-body',
+                'has_child' => true
+
+              ],
+              'block' => [
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do Body',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+              'toolbar' => []
+
+            ])
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 8,
+            'tbl_sys_field_type_name'        => 'card-footer',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldCardFooter',
+            'tbl_sys_field_type_icon'        => 'window-minimize',
+            'tbl_sys_field_type_title'       => 'Card Footer',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar o conteudo do footer a um card personalizável.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code' => [
+
+                'prefix'    => '<div class="[$class$]">',
+                'sufix'     => '</div>',
+                'tag'       => 'div',
+                'class'     => 'card-footer',
+                'has_child' => true
+
+              ],
+              'block' => [
+
+                'advanced' => [
+
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do Footer',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'class'  => [
+
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ],
+
+                  ]
+
+                ]
+
+              ],
+              'toolbar' => []
+
+            ])
+
+          ],
+
+        // Card - END
 
 
 
@@ -1435,17 +2041,17 @@
 
                 // 'prefix' => '[automator function="pagination" name="${name}"',
                 // 'sufix'  => ']',
-                'prefix'    => '<div><code>[automator function="pagination" name="${name}"',
+                'prefix'    => '<div style="width: 100%;"><code>[automator function="pagination" name="${pagination}"',
                 'sufix'     => ']</code></div>',
                 'tag'       => '<code>',
                 'has_child' => false,
                 'vars'      => [
                   
-                  'name' => [
+                  'pagination' => [
 
                     'type'  => 'relation',
                     'table' => 'tbl_sys_paginations',
-                    'index' => 'tbl_sys_pagination_ID',
+                    'index' => 'tbl_sys_pagination_name',
                     'label' => 'tbl_sys_pagination_title'
 
                   ]
@@ -1461,7 +2067,7 @@
                   'label'  => 'Configurações',
                   'fields' => [
 
-                    'type'  => [
+                    'pagination'  => [
 
                       'label'   => 'Paginação',
                       'field'   => 'select',
@@ -1481,7 +2087,7 @@
 
                     'id'  => [
 
-                      'label'   => 'ID da coluna',
+                      'label'   => 'ID da paginação',
                       'field'   => 'text',
                       'default' => ''
 
@@ -1498,7 +2104,7 @@
                     'style'  => [
 
                       'label'   => 'Estilo CSS adicional',
-                      'field'   => 'textarea',
+                      'field'   => 'editor-css',
                       'class'   => 'textarea-css-editor',
                       'default' => ''
 
@@ -1514,6 +2120,76 @@
             'tbl_sys_field_type_locked'      => true,
             'tbl_sys_field_type_params'      => ''
 
+          ],
+
+          [
+            'tbl_sys_field_type_group_ID'    => 7,
+            'tbl_sys_field_type_name'        => 'shortcode',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldShortcode',
+            'tbl_sys_field_type_icon'        => 'code',
+            'tbl_sys_field_type_title'       => 'Shortcode',
+            'tbl_sys_field_type_description' => 'Um elemento para executar um comando registrado no sistema através de um código específico.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code' => [
+                'prefix'    => '<div style="width: 100%;"><code>[${shortcode}',
+                'sufix'     => ']</code></div>',
+                'tag'       => '<code>',
+                'has_child' => false,
+                'vars'      => [
+                  'shortcode' => [
+                    'type'        => 'relation',
+                    'table'       => 'tbl_sys_shortcodes',
+                    'index'       => 'tbl_sys_shortcode_code',
+                    'label'       => 'tbl_sys_shortcode_title',
+                    'description' => 'tbl_sys_shortcode_description',
+                    'params'      => 'tbl_sys_shortcode_params'
+                  ]
+                ]
+              ],
+
+              'block' => [
+                'config' => [
+                  'label'  => 'Configurações',
+                  'fields' => [
+                    'shortcode' => [
+                      'label'   => 'Shortcode',
+                      'field'   => 'select',
+                      'default' => '',
+                      'choices' => []
+                    ]
+                  ]
+                ],
+
+                'advanced' => [
+                  'label'  => 'Avançado',
+                  'fields' => [
+                    'id' => [
+                      'label'   => 'ID do shortcode',
+                      'field'   => 'text',
+                      'default' => ''
+                    ],
+
+                    'class' => [
+                      'label'   => 'Classes CSS Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+                    ],
+
+                    'style' => [
+                      'label'   => 'Estilo CSS adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+                    ]
+                  ]
+                ]
+              ]
+
+            ]),
+            'tbl_sys_field_type_locked' => true,
+            'tbl_sys_field_type_params' => ''
           ],
 
 

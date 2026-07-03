@@ -11,6 +11,7 @@
       'configs'         => SysAutomator::SysAutomatorGetTranslateWord('Configurações'),
       'resolutions'     => SysAutomator::SysAutomatorGetTranslateWord('Resoluções'),
       'select-block'    => SysAutomator::SysAutomatorGetTranslateWord('Selecione um bloco para editar.'),
+      'proprieties'     => SysAutomator::SysAutomatorGetTranslateWord('Propriedades'),
       'blocks'          => SysAutomator::SysAutomatorGetTranslateWord('Blocos'),
       'block'           => SysAutomator::SysAutomatorGetTranslateWord('Bloco'),
       'no-blocks-added' => SysAutomator::SysAutomatorGetTranslateWord('Nenhum bloco adicionado'),

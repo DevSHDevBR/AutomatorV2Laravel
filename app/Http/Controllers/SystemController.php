@@ -787,12 +787,31 @@
 
         }
 
+
+
+        $blocks = [];
+
+        $grupos = SysAutomator::SysAutomatorRenderPageBuilderFields();
+        foreach($grupos as $grupo) {
+
+          foreach($grupo['tbl_sys_field_type_group_fields'] as $field) {
+
+            $blocks[] = SysAutomator::SysAutomatorRenderPageBuilderField($field);
+
+          }
+
+        }
+
+
         $views['system-page-editor'] = [
 
           'view'    => 'system.modals.system-page-editor',
           'title'   => $modal['title'],
           'acao'    => ( (isset($data['pageID'])) ? 'update' : 'store' ),
-          'dados'   => $page,
+          'dados'   => [
+            'page'    => $page,
+            'blocks'  => $blocks,
+          ],
           'classes' => [
 
             'modal-body' => 'p-0'

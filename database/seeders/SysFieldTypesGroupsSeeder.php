@@ -72,7 +72,7 @@
           'tbl_sys_field_type_group_name'   => 'advanced',
           'tbl_sys_field_type_group_title'  => 'Avançado',
           'tbl_sys_field_type_group_locked' => true,
-          'tbl_sys_field_type_group_ordem'  => 6,
+          'tbl_sys_field_type_group_ordem'  => 7,
         
         ],
 
@@ -81,7 +81,16 @@
           'tbl_sys_field_type_group_name'   => 'automator',
           'tbl_sys_field_type_group_title'  => 'Automator',
           'tbl_sys_field_type_group_locked' => true,
-          'tbl_sys_field_type_group_ordem'  => 7,
+          'tbl_sys_field_type_group_ordem'  => 8,
+        
+        ],
+
+        [
+
+          'tbl_sys_field_type_group_name'   => 'card',
+          'tbl_sys_field_type_group_title'  => 'Card',
+          'tbl_sys_field_type_group_locked' => true,
+          'tbl_sys_field_type_group_ordem'  => 6,
         
         ],
 

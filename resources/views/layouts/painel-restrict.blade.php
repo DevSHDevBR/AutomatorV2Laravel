@@ -17,7 +17,7 @@
     <script src="{{ asset('assets/vendor/jquery-inputmask/jquery.inputmask.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery-validate/jquery.validate.min.js') }}"></script>
     <script src="{{ asset('assets/vendor/jquery/Sortable.min.js') }}"></script>
-    <script src="{{ asset('assets/system/painel-scripts.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('assets/system/painel-scripts.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
 
     <script>
 
