@@ -1,3 +1,12 @@
+@php
+
+  $texts  = $texts ?? [];
+  $header = $header ?? [];
+  $fields = $fields ?? [];
+  $configs = $configs ?? [];
+
+@endphp
+
 <style type="text/css">
 
   .automator-view-modal .modal-body {
@@ -146,11 +155,17 @@
     max-width: 850px;
     margin: 0 auto 20px auto;
     padding: 0 10px;
+    box-sizing: border-box;
+    flex-shrink: 0;
   }
 
-  #automator-editor-modal.is-preview-mode #automator-editor-canvas-container,
   #automator-editor-modal.is-sidebars-hidden #automator-editor-canvas-container {
     max-width: none !important;
+  }
+
+  #automator-editor-modal.is-preview-mode #automator-editor-canvas {
+    overflow-x: auto !important;
+    overflow-y: auto !important;
   }
 
   #automator-editor-header-viewport-label {
@@ -203,9 +218,6 @@
   .automator-editor-body-aside-left-structure-item {
     cursor: pointer;
     background: #ffffff;
-    min-height: 42px;
-    padding-top: 10px !important;
-    padding-bottom: 10px !important;
   }
 
   .automator-editor-body-aside-left-structure-item:hover {
@@ -217,31 +229,7 @@
   }
 
   .automator-editor-structure-children {
-    min-height: 18px;
-    padding-top: 4px;
-    padding-bottom: 4px;
-  }
-
-  .automator-editor-structure-children:empty {
-    min-height: 42px;
-    border: 1px dashed rgba(13, 110, 253, .28);
-    background: rgba(13, 110, 253, .04);
-    margin: 6px 10px;
-    border-radius: 6px;
-  }
-
-  .automator-editor-structure-sortable-ghost {
-    min-height: 44px;
-    opacity: .45;
-    background: rgba(13, 110, 253, .08) !important;
-    border: 2px dashed rgba(13, 110, 253, .65) !important;
-    border-radius: 6px;
-  }
-
-  .automator-editor-structure-sortable-chosen > .automator-editor-body-aside-left-structure-item,
-  .automator-editor-structure-sortable-drag > .automator-editor-body-aside-left-structure-item {
-    background: #e7f1ff !important;
-    border: 1px solid rgba(13, 110, 253, .35);
+    min-height: 3px;
   }
 
   #automator-editor-aside-right-tabs {
@@ -312,6 +300,78 @@
     color: #0d6efd !important;
   }
 
+  .automator-editor-api-property-editor {
+    display: flex;
+    width: 100%;
+    max-height: 260px;
+    overflow: hidden;
+    border: 1px solid #ced4da;
+    border-radius: .25rem;
+    background: #ffffff;
+  }
+
+  .automator-editor-api-property-editor-count {
+    width: 42px;
+    min-width: 42px;
+    max-height: 260px;
+    padding: 6px 6px;
+    background: #f8f9fa;
+    color: #999;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 20px;
+    text-align: right;
+    overflow: hidden;
+    user-select: none;
+    border-right: 1px solid #dee2e6;
+  }
+
+  .automator-editor-api-property-editor-count span {
+    display: block;
+    height: 20px;
+    line-height: 20px;
+  }
+
+  .automator-editor-api-property-editor-count span.is-active {
+    color: #0d6efd;
+    font-weight: 700;
+  }
+
+  .automator-editor-api-property-editor textarea[data-field-type="editor-css"] {
+    border: 0 !important;
+    border-radius: 0 !important;
+    resize: none;
+    font-family: monospace;
+    font-size: 12px;
+    line-height: 20px;
+    padding: 6px 8px;
+    min-height: 140px;
+    max-height: 260px;
+    height: 260px;
+    white-space: pre;
+    overflow: auto !important;
+  }
+
+  .automator-editor-api-property-editor textarea[data-field-type="editor-css"]:focus {
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  #automator-editor-modal.is-preview-mode .automator-editor-aside {
+    display: none !important;
+    width: 0 !important;
+  }
+
+  #automator-editor-modal.is-preview-mode #automator-editor-canvas {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+
+  #automator-editor-modal.is-preview-mode .automator-editor-preview-disabled {
+    opacity: .45;
+    pointer-events: none;
+  }
+
   @media (max-width: 991.98px) {
 
     #automator-editor-body {
@@ -363,84 +423,19 @@
 
   }
 
-  .automator-editor-api-property-editor {
-    display: flex;
-    width: 100%;
-    max-height: 260px;
-    overflow: hidden;
-    border: 1px solid #ced4da;
-    border-radius: .25rem;
-    background: #ffffff;
+  /*.automator-form-editor-static-preview {
+    flex-shrink: 0 !important;
+  }*/
+
+  #automator-editor-modal.is-preview-mode .automator-form-editor-static-preview form.row {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
-  .automator-editor-api-property-editor-count {
-    width: 42px;
-    min-width: 42px;
-    max-height: 260px;
-    padding: 6px 6px;
-    background: #f8f9fa;
-    color: #999;
-    font-family: monospace;
-    font-size: 12px;
-    line-height: 20px;
-    text-align: right;
-    overflow: hidden;
-    user-select: none;
-    border-right: 1px solid #dee2e6;
-  }
-
-  .automator-editor-api-property-editor-count span {
-    display: block;
-    height: 20px;
-    line-height: 20px;
-  }
-
-  .automator-editor-api-property-editor-count span.is-active {
-    color: #0d6efd;
-    font-weight: 700;
-  }
-
-  .automator-editor-api-property-editor textarea[data-field-type="editor-css"] {
-    border: 0 !important;
-    border-radius: 0 !important;
-    resize: none;
-    font-family: monospace;
-    font-size: 12px;
-    line-height: 20px;
-    padding: 6px 8px;
-    min-height: 140px;
-    max-height: 260px;
-    height: 260px;
-    white-space: pre;
-    overflow: auto !important;
-    background-image: linear-gradient(
-      to bottom,
-      transparent var(--editor-css-active-line-top, 0px),
-      rgba(13, 110, 253, .08) var(--editor-css-active-line-top, 0px),
-      rgba(13, 110, 253, .08) calc(var(--editor-css-active-line-top, 0px) + 20px),
-      transparent calc(var(--editor-css-active-line-top, 0px) + 20px)
-    );
-    background-attachment: local;
-  }
-
-  .automator-editor-api-property-editor textarea[data-field-type="editor-css"]:focus {
-    box-shadow: none !important;
-    outline: none !important;
-  }
-
-  #automator-editor-modal.is-preview-mode .automator-editor-aside {
-    display: none !important;
-    width: 0 !important;
-  }
-
-  #automator-editor-modal.is-preview-mode #automator-editor-canvas {
-    padding-left: 20px;
-    padding-right: 20px;
-  }
-
-  #automator-editor-modal.is-preview-mode .automator-editor-preview-disabled {
-    opacity: .45;
-    pointer-events: none;
+  #automator-editor-modal.is-preview-mode .automator-form-editor-static-preview [data-preview-column-size] {
+    box-sizing: border-box !important;
   }
 
 </style>
@@ -451,32 +446,32 @@
 
   <div class="d-flex align-items-center">
 
-    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] ?? 'Adicionar bloco' !!}" data-bs-trigger="hover">
-      <button type="button" class="btn btn-primary automator-editor-actions-btn" data-automator-left-tab="inserter" onclick="SysAutomatorEditor.switchLeftTab('inserter')">
+    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] ?? 'Adicionar campo' !!}" data-bs-trigger="hover">
+      <button type="button" class="btn btn-primary automator-editor-actions-btn" data-automator-left-tab="inserter" onclick="SysAutomatorFormEditor.switchLeftTab('inserter')">
         <i class="fas fa-plus"></i>
       </button>
     </span>
 
     <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['structure'] ?? 'Estrutura' !!}" data-bs-trigger="hover">
-      <button type="button" class="btn btn-secondary automator-editor-actions-btn" data-automator-left-tab="structure" onclick="SysAutomatorEditor.switchLeftTab('structure')">
+      <button type="button" class="btn btn-secondary automator-editor-actions-btn" data-automator-left-tab="structure" onclick="SysAutomatorFormEditor.switchLeftTab('structure')">
         <i class="fas fa-list"></i>
       </button>
     </span>
 
-    <span class="dropdown me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="Resolução" data-bs-trigger="hover">
+    <span class="dropdown me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] ?? 'Resolução' !!}" data-bs-trigger="hover">
       <button id="automator-editor-header-viewport-btn" type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fas fa-desktop me-1"></i>
         <span id="automator-editor-header-viewport-label">Auto</span>
       </button>
 
       <ul class="dropdown-menu">
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('auto')">Auto</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xs')">XS - 375px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('sm')">SM - 576px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('md')">MD - 768px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('lg')">LG - 992px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xl')">XL - 1200px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorEditor.setViewportMode('xxl')">XXL - 1400px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('auto')">Auto</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xs')">XS - 375px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('sm')">SM - 576px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('md')">MD - 768px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('lg')">LG - 992px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xl')">XL - 1200px</button></li>
+        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xxl')">XXL - 1400px</button></li>
       </ul>
     </span>
 
@@ -492,7 +487,6 @@
           $haveSlug = (
             isset($header['content']['have-slug']) &&
             is_array($header['content']['have-slug']) &&
-            count($header['content']['have-slug']) >= 1 &&
             isset($header['content']['have-slug']['enabled']) &&
             $header['content']['have-slug']['enabled'] == true
           );
@@ -512,7 +506,7 @@
                 name="{!! $header['content']['name'] ?? '' !!}"
                 placeholder="{!! $header['content']['label'] ?? '' !!}"
                 autocomplete="off"
-                onkeyup="if(SysAutomatorEditor.syncHeaderInputSlug){ SysAutomatorEditor.syncHeaderInputSlug(this); }"
+                onkeyup="if(SysAutomatorFormEditor.syncHeaderInputSlug){ SysAutomatorFormEditor.syncHeaderInputSlug(this); }"
                 data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] ?? '' !!}"
                 {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
               />
@@ -564,7 +558,7 @@
   @else
 
     <div id="automator-editor-header-center" class="text-center">
-      <span class="small fw-bold text-muted">{!! $texts['editor'] ?? 'Editor de Conteúdo' !!}</span>
+      <span class="small fw-bold text-muted">{!! $texts['editor'] ?? 'Editor de Formulários' !!}</span>
     </div>
 
   @endif
@@ -572,19 +566,19 @@
   <div class="d-flex align-items-center">
 
     <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="Pré Visualizar">
-      <button id="automator-editor-header-preview-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.togglePreviewMode()">
+      <button id="automator-editor-header-preview-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.togglePreviewMode()">
         <i class="fas fa-eye"></i>
       </button>
     </span>
 
     <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="{!! $texts['proprieties'] ?? 'Propriedades' !!}">
-      <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorEditor.toggleSidebar('right')">
+      <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.toggleSidebar('right')">
         <i class="fas fa-sitemap"></i>
       </button>
     </span>
 
     <span class="d-inline-block">
-      <button id="automator-editor-header-save-btn" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorEditor.saveContent()">
+      <button id="automator-editor-header-save-btn" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorSaveFormEditor()">
         {!! $texts['save'] ?? 'Salvar' !!}
       </button>
     </span>
@@ -600,42 +594,54 @@
     <div id="automator-editor-aside-left-inserter">
 
       <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
-        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['blocks'] ?? 'Blocos' !!}</h6>
-        <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorEditor.toggleSidebar('left')"></button>
+        <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['blocks'] ?? 'Campos' !!}</h6>
+        <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorFormEditor.toggleSidebar('left')"></button>
       </div>
 
       <div class="p-3 pt-0 g-3 row row-cols-2" id="automator-editor-aside-left-inserter-list">
 
-        @php
-          $grupos = SysAutomator::SysAutomatorRenderPageBuilderFields();
+        @foreach($fields as $grupo)
 
-          foreach($grupos as $grupo) {
+          @php
+            $groupTitle = $grupo['tbl_sys_field_type_group_title'] ?? $grupo['title'] ?? $grupo['titulo'] ?? 'Grupo';
+            $groupFields = $grupo['tbl_sys_field_type_group_fields'] ?? $grupo['fields'] ?? [];
+          @endphp
 
-            echo '<div class="col col-sm-12 mt-4 fw-bold small text-muted text-uppercase">' . $grupo['tbl_sys_field_type_group_title'] . '</div>';
+          <div class="col col-sm-12 mt-4 fw-bold small text-muted text-uppercase">
+            {!! $groupTitle !!}
+          </div>
 
-            foreach($grupo['tbl_sys_field_type_group_fields'] as $field) {
+          @foreach($groupFields as $field)
 
-              echo '<div class="col">';
+            @php
+              $fieldId = $field['tbl_sys_field_type_ID'] ?? $field['id'] ?? '';
+              $fieldName = $field['tbl_sys_field_type_name'] ?? $field['name'] ?? '';
+              $fieldTitle = $field['tbl_sys_field_type_title'] ?? $field['title'] ?? $field['titulo'] ?? $fieldName;
+              $fieldIcon = $field['tbl_sys_field_type_icon'] ?? $field['icon'] ?? 'square';
+              $fieldDescription = $field['tbl_sys_field_type_description'] ?? $field['description'] ?? '';
+            @endphp
 
-                echo '<div
-                  data-block-type="' . $field['tbl_sys_field_type_name'] . '"
-                  data-block-icon="' . $field['tbl_sys_field_type_icon'] . '"
-                  data-block-type-id="' . $field['tbl_sys_field_type_ID'] . '"
-                  data-bs-title="' . $field['tbl_sys_field_type_title'] . '"
-                  data-bs-content="' . $field['tbl_sys_field_type_description'] . '"
-                  class="automator-editor-aside-left-inserter-list-item border p-3 text-center rounded mb-2">';
+            <div class="col">
 
-                    echo '<i class="fa fa-' . $field['tbl_sys_field_type_icon'] . ' d-block mb-2 text-primary fs-5"></i>';
-                    echo '<span class="small d-block text-truncate">' . $field['tbl_sys_field_type_title'] . '</span>';
+              <div
+                data-block-type="{!! $fieldName !!}"
+                data-block-icon="{!! $fieldIcon !!}"
+                data-block-type-id="{!! $fieldId !!}"
+                data-bs-title="{!! $fieldTitle !!}"
+                data-bs-content="{!! $fieldDescription !!}"
+                class="automator-editor-aside-left-inserter-list-item border p-3 text-center rounded mb-2"
+              >
 
-                echo '</div>';
+                <i class="fa fa-{!! $fieldIcon !!} d-block mb-2 text-primary fs-5"></i>
+                <span class="small d-block text-truncate">{!! $fieldTitle !!}</span>
 
-              echo '</div>';
+              </div>
 
-            }
+            </div>
 
-          }
-        @endphp
+          @endforeach
+
+        @endforeach
 
       </div>
 
@@ -645,10 +651,10 @@
 
       <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light">
         <h6 class="small fw-bold mb-0 text-uppercase">{!! $texts['structure'] ?? 'Estrutura' !!}</h6>
-        <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorEditor.toggleSidebar('left')"></button>
+        <button type="button" class="btn-close d-lg-none" onclick="SysAutomatorFormEditor.toggleSidebar('left')"></button>
       </div>
 
-      <div id="automator-editor-aside-left-structure-list" data-empty="{!! $texts['no-blocks-added'] ?? 'Nenhum bloco adicionado.' !!}"></div>
+      <div id="automator-editor-aside-left-structure-list" data-empty="{!! $texts['no-blocks-added'] ?? 'Nenhum campo adicionado.' !!}"></div>
 
     </div>
 
@@ -658,11 +664,7 @@
 
     <div id="automator-editor-canvas-container">
 
-      <div class="container-fluid">
-
-        <div id="automator-editor-canvas-container-content"></div>
-
-      </div>
+      <div id="automator-editor-canvas-container-content" class="container-fluid"></div>
 
     </div>
 
@@ -671,7 +673,6 @@
   <aside id="automator-editor-aside-right" class="automator-editor-aside">
 
     @php
-      $configs = $configs ?? [];
       $configsT = is_array($configs) ? count($configs) : 0;
     @endphp
 
@@ -708,7 +709,7 @@
             $('#automator-editor-aside-right-tabs-container-block').addClass('active');
           "
         >
-          {!! $texts['block'] ?? 'Bloco' !!}
+          {!! $texts['block'] ?? 'Campo' !!}
         </button>
 
       </div>
@@ -755,6 +756,7 @@
                 $fieldName = $configContentFieldArgs['name'] ?? $configContentFieldKey;
                 $fieldValue = $configContentFieldArgs['value'] ?? '';
                 $fieldRequired = (isset($configContentFieldArgs['required']) && $configContentFieldArgs['required'] == true);
+                $choices = $configContentFieldArgs['choices'] ?? ($configContentFieldArgs['options'] ?? []);
               @endphp
 
               @if($fieldType == 'radio')
@@ -764,11 +766,11 @@
                     {!! $fieldLabel !!}{!! ($fieldRequired ? ' <span class="text-danger">*</span>' : '') !!}
                   </label>
 
-                  @foreach(($configContentFieldArgs['choices'] ?? []) as $choiceKey => $choiceLabel)
+                  @foreach($choices as $choiceKey => $choiceLabel)
                     <div class="form-check">
                       <input
                         type="radio"
-                        class="form-check-input"
+                        class="form-check-input automator-form-editor-setting"
                         id="{!! $configContentFieldKey !!}-{!! $choiceKey !!}"
                         name="{!! $fieldName !!}"
                         value="{!! $choiceKey !!}"
@@ -786,12 +788,12 @@
 
                 <div class="{!! $fieldClass !!}">
                   <select
-                    class="form-select"
+                    class="form-select automator-form-editor-setting"
                     id="{!! $configContentFieldKey !!}"
                     name="{!! $fieldName !!}"
                     {!! ($fieldRequired ? ' required' : '') !!}
                   >
-                    @foreach(($configContentFieldArgs['choices'] ?? []) as $choiceKey => $choiceLabel)
+                    @foreach($choices as $choiceKey => $choiceLabel)
                       <option value="{!! $choiceKey !!}" {!! ((string)$fieldValue === (string)$choiceKey ? ' selected' : '') !!}>
                         {!! $choiceLabel !!}
                       </option>
@@ -806,7 +808,7 @@
 
                 <div class="{!! $fieldClass !!}">
                   <textarea
-                    class="form-control"
+                    class="form-control automator-form-editor-setting"
                     id="{!! $configContentFieldKey !!}"
                     name="{!! $fieldName !!}"
                     placeholder="{!! $fieldLabel !!}"
@@ -823,7 +825,7 @@
                 <div class="{!! $fieldClass !!}">
                   <input
                     type="{!! $fieldType !!}"
-                    class="form-control"
+                    class="form-control automator-form-editor-setting"
                     id="{!! $configContentFieldKey !!}"
                     name="{!! $fieldName !!}"
                     placeholder="{!! $fieldLabel !!}"
@@ -850,7 +852,7 @@
           </div>
 
           <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
-            <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
+            <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um campo para editar.' !!}</div>
           </div>
 
         </div>
@@ -864,7 +866,7 @@
       </div>
 
       <div id="automator-editor-aside-right-content" class="p-0 small text-muted">
-        <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um bloco para editar.' !!}</div>
+        <div class="text-center p-3">{!! $texts['select-block'] ?? 'Selecione um campo para editar.' !!}</div>
       </div>
 
     @endif

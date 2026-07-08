@@ -130,7 +130,8 @@
                   "wrapper_class" => 'col-12 col-md-6',
                   "maxlenght"     => 255,
                   "minlenght"     => 8,
-                  "hasButton"     => true
+                  "hasButton"     => true,
+                  "cast"          => "hash"
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -154,7 +155,8 @@
                   "wrapper_class" => 'col-12 col-md-6',
                   "maxlenght"     => 255,
                   "minlenght"     => 8,
-                  "hasButton"     => true
+                  "hasButton"     => true,
+                  "cast"          => "hash"
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -1079,6 +1081,138 @@
 
 
 
+        // ROUTES / PAGE's ACCESS - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-routes-access',
+            'tbl_sys_form_title'    => 'Permissões das Rotas de Páginas',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID da Rota',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_route_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => '',
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Nome da rota',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_route_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12",
+                  "readonly"      => true,
+                  "disabled"      => true
+                  
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Permissões da Rota',
+                'tbl_sys_forms_field_name'     => 'tbl_users_type_ID',
+                'tbl_sys_forms_field_index'    => 'access',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12",
+                  "type"          => "checkbox",
+                  "container"     => [
+
+                    "element" => "div",
+                    "class"   => ""
+
+                  ],
+                  "relation"      => [
+
+                    "table"   => "tbl_users_types",
+                    "value"   => "tbl_users_type_ID",
+
+                    /*
+                    |----------------------------------------------------------
+                    | label como array: faz query secundária para buscar o
+                    | display pelo value.
+                    |
+                    | Estrutura:
+                    |   "table"   => tabela onde buscar o label
+                    |   "value"   => coluna de chave/FK para fazer o match
+                    |   "display" => coluna cujo valor será exibido como label
+                    |----------------------------------------------------------
+                    */
+                    "label"   => [
+
+                      "table"   => "tbl_users_types",
+                      "value"   => "tbl_users_type_ID",
+                      "display" => "tbl_users_type_name"
+
+                    ],
+
+                    "filters" => [
+
+                      "tbl_users_type_status" => [
+
+                        "inativo" => [
+
+                          "class"   => "disabled",
+                          "tooltip" => "Tipo de usuário inativo"
+
+                        ]
+
+                      ]
+
+                    ]
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+            ]
+
+          ],
+
+
+        // ROUTES / PAGE's ACCESS - END
+
+
+
+
         // NAVS - START
 
           [
@@ -1508,6 +1642,7 @@
 
         // USERS - START
 
+
           [
 
             'tbl_sys_form_name'     => 'admin-users',
@@ -1631,11 +1766,12 @@
                   "wrapper_class" => 'col-12 col-md-6',
                   "maxlenght"     => 255,
                   "minlenght"     => 8,
-                  "hasButton"     => true
+                  "hasButton"     => true,
+                  "cast"          => "hash"
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
-                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_required' => true,
                 'tbl_sys_forms_field_locked'   => true,
                 'tbl_sys_forms_field_ordem'    => 5,
                 'field_access'                 => [1, 2, 3, 4]
@@ -1649,14 +1785,14 @@
                 'tbl_sys_forms_field_name'     => 'tbl_user_blocked',
                 'tbl_sys_forms_field_index'    => 'blocked',
                 'tbl_sys_forms_field_class'    => '',
-                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_default'  => 0,
                 'tbl_sys_forms_field_props'    => json_encode([
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "choices"       => [
 
-                    "true"  => "Sim",
-                    "false" => "Não"
+                    1 => "Sim",
+                    0 => "Não"
                   
                   ]
 
@@ -1671,7 +1807,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('breakline', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('breakpoint', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Quebra de linha',
                 'tbl_sys_forms_field_name'     => 'quebra',
                 'tbl_sys_forms_field_index'    => '',
@@ -1679,7 +1815,7 @@
                 'tbl_sys_forms_field_default'  => false,
                 'tbl_sys_forms_field_props'    => "",
                 'tbl_sys_forms_field_attrs'    => '',
-                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_required' => false,
                 'tbl_sys_forms_field_locked'   => true,
                 'tbl_sys_forms_field_ordem'    => 7,
                 'field_access'                 => [1, 2]
@@ -1693,14 +1829,14 @@
                 'tbl_sys_forms_field_name'     => 'tbl_user_actived',
                 'tbl_sys_forms_field_index'    => 'actived',
                 'tbl_sys_forms_field_class'    => '',
-                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_default'  => 1,
                 'tbl_sys_forms_field_props'    => json_encode([
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "choices"       => [
 
-                    "true"  => "Sim",
-                    "false" => "Não"
+                    1 => "Sim",
+                    0 => "Não"
                   
                   ]
 
@@ -1740,9 +1876,318 @@
               
               ],
 
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Tipo de usuário',
+                'tbl_sys_forms_field_name'     => 'UserGetTypesIDs',
+                'tbl_sys_forms_field_index'    => 'userTypes',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12",
+                  "type"          => "checkbox",
+                  "container"     => [
+
+                    "element" => "div",
+                    "class"   => ""
+
+                  ],
+                  "relation"      => [
+
+                    "table"   => "tbl_users_types",
+                    "value"   => "tbl_users_type_ID",
+                    "label"   => "tbl_users_type_name",
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 9,
+                'field_access'                 => [1, 2]
+              
+              ],
+
             ]
 
           ],
+
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-users-edit',
+            'tbl_sys_form_title'    => 'Usuários',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID',
+                'tbl_sys_forms_field_name'     => 'tbl_user_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode(["type" => "int"]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Usuário',
+                'tbl_sys_forms_field_name'     => 'tbl_user_login',
+                'tbl_sys_forms_field_index'    => 'login',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "maxlenght"     => 255,
+                  "minlenght"     => 12,
+                  "unique"        => [
+
+                    "table"  => "tbl_users",
+                    "column" => "tbl_user_login"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('email', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'E-mail',
+                'tbl_sys_forms_field_name'     => 'tbl_user_email',
+                'tbl_sys_forms_field_index'    => 'email',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "maxlenght"     => 255,
+                  "minlenght"     => 12,
+                  "unique"        => [
+
+                    "table"  => "tbl_users",
+                    "column" => "tbl_user_email"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Nome',
+                'tbl_sys_forms_field_name'     => 'tbl_user_name',
+                'tbl_sys_forms_field_index'    => 'name',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12",
+                  "maxlenght"     => 255,
+                  "minlenght"     => 12
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('password', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Senha',
+                'tbl_sys_forms_field_name'     => 'tbl_user_password',
+                'tbl_sys_forms_field_index'    => 'password',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => 'col-12 col-md-6',
+                  "maxlenght"     => 255,
+                  "minlenght"     => 8,
+                  "hasButton"     => true,
+                  "cast"          => "hash"
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Bloqueado',
+                'tbl_sys_forms_field_name'     => 'tbl_user_blocked',
+                'tbl_sys_forms_field_index'    => 'blocked',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 0,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    1 => "Sim",
+                    0 => "Não"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('breakpoint', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Quebra de linha',
+                'tbl_sys_forms_field_name'     => 'quebra',
+                'tbl_sys_forms_field_index'    => '',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => "",
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Cadastro ativo',
+                'tbl_sys_forms_field_name'     => 'tbl_user_actived',
+                'tbl_sys_forms_field_index'    => 'actived',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 1,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    1 => "Sim",
+                    0 => "Não"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 8,
+                'field_access'                 => [1]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Status',
+                'tbl_sys_forms_field_name'     => 'tbl_user_status',
+                'tbl_sys_forms_field_index'    => 'status',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "ativo",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    "ativo"   => "Ativo",
+                    "inativo" => "Inativo"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 9,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Tipo de usuário',
+                'tbl_sys_forms_field_name'     => 'UserGetTypesIDs',
+                'tbl_sys_forms_field_index'    => 'userTypes',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12",
+                  "type"          => "checkbox",
+                  "container"     => [
+
+                    "element" => "div",
+                    "class"   => ""
+
+                  ],
+                  "relation"      => [
+
+                    "table"   => "tbl_users_types",
+                    "value"   => "tbl_users_type_ID",
+                    "label"   => "tbl_users_type_name",
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 9,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+            ]
+
+          ],
+
 
         // USERS - END
 

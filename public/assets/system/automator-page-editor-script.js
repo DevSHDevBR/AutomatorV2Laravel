@@ -7,7 +7,8 @@ window.SysAutomatorEditor = (function () {
     componentsLoaded: false,
     componentsLoading: false,
     previewMode: false,
-    viewportMode: 'auto'
+    viewportMode: 'auto',
+    previewRestoreState: null
   };
 
   const defaultEditor = {
@@ -158,6 +159,7 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+
   function init(callback = null) {
 
     if (!$(selectors.canvas).length) {
@@ -214,6 +216,7 @@ window.SysAutomatorEditor = (function () {
       waitEditorReady(function () {
 
         injectCanvasEditorStyles();
+        ensureStructureDropStyles();
         normalizeAllCardChildrenOrder();
         updateEmptyContainers();
         updateStructureList();
@@ -224,6 +227,7 @@ window.SysAutomatorEditor = (function () {
         state.hasChanges = false;
 
         setSaveState(false);
+        resetEditorChangeObserverState();
 
         if (typeof callback === 'function') {
           callback({ state, editor, selectors, grapesEditor });
@@ -237,18 +241,26 @@ window.SysAutomatorEditor = (function () {
 
   function destroy(resetConfig = true) {
 
-    if (grapesEditor) {
-      try {
-        grapesEditor.destroy();
-      } catch (e) {
-        console.warn('Erro ao destruir GrapesJS:', e);
-      }
-    }
+    discardEditorUnsavedChanges();
+
+    const currentEditor = grapesEditor;
 
     grapesEditor = null;
 
-    $(selectors.canvas).empty();
-    $(selectors.structureList).empty();
+    if (currentEditor) {
+
+      try {
+        currentEditor.destroy();
+      } catch (e) {
+        console.warn('GrapesJS do editor de páginas já estava destruído.', e);
+      }
+
+    }
+
+    try {
+      $(selectors.canvas).empty();
+      $(selectors.structureList).empty();
+    } catch (e) {}
 
     if ($(selectors.rightContent).length) {
       $(selectors.rightContent).html('<div class="text-center p-3">Selecione um bloco para editar.</div>');
@@ -258,6 +270,42 @@ window.SysAutomatorEditor = (function () {
       state = $.extend(true, {}, defaultState);
       editor = $.extend(true, {}, defaultEditor);
     }
+
+  }
+
+  function discardEditorUnsavedChanges() {
+
+    state.hasChanges = false;
+
+    setSaveState(false);
+
+    const formEl = document.getElementById('automator-editor-change-observer-form');
+
+    if (formEl) {
+
+      const field = formEl.querySelector('#automator-editor-change-observer-state');
+
+      if (field) {
+        field.value = serializeEditorCurrentState();
+      }
+
+      if (typeof AutomatorFormSerializeCurrentState === 'function') {
+        formEl.setAttribute('data-automator-initial-state', AutomatorFormSerializeCurrentState(formEl));
+      } else if (field) {
+        formEl.setAttribute('data-automator-initial-state', field.value);
+      }
+
+      formEl.setAttribute('data-automator-form-changed', 'false');
+
+    }
+
+    $('#automator-editor-modal')
+      .find('form')
+      .attr('data-automator-form-changed', 'false');
+
+    $(window).off('beforeunload.AutomatorModalFormChanged');
+
+    return true;
 
   }
 
@@ -580,7 +628,9 @@ window.SysAutomatorEditor = (function () {
 
     initBootstrapHelpers();
     bindHeaderSlugSync();
+    bindEditorGlobalTabFocus();
     updateViewportButton();
+    focusRightSidebarTab('page');
     syncEditorLayoutState();
 
     if (typeof callback === 'function') {
@@ -662,6 +712,7 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+
   function bindEditorEvents() {
 
     if (!grapesEditor) {
@@ -670,14 +721,16 @@ window.SysAutomatorEditor = (function () {
 
     grapesEditor.on('load', function () {
       injectCanvasEditorStyles();
+      ensureStructureDropStyles();
       normalizeAllCardChildrenOrder();
       syncCanvasHeight();
       syncEditorViewportSpacing();
     });
 
     grapesEditor.on('update', function () {
-      state.hasChanges = true;
-      setSaveState(true);
+
+      markEditorAsChanged();
+
       normalizeAllCardChildrenOrder();
       updateStructureList();
       updateEmptyContainers();
@@ -686,9 +739,11 @@ window.SysAutomatorEditor = (function () {
         syncCanvasHeight();
         syncEditorViewportSpacing();
       }
+
     });
 
     grapesEditor.on('component:selected', function (component) {
+      focusRightSidebarTab('block');
       renderComponentSettings(component);
       updateStructureActiveItem(component);
       updateEmptyContainers();
@@ -711,15 +766,22 @@ window.SysAutomatorEditor = (function () {
     });
 
     grapesEditor.on('component:add component:remove component:drag:end', function () {
+
+      markEditorAsChanged();
+
       normalizeAllCardChildrenOrder();
       updateStructureList();
       updateEmptyContainers();
 
       syncCanvasHeight();
       syncEditorViewportSpacing();
+
     });
 
     grapesEditor.on('component:update', function () {
+
+      markEditorAsChanged();
+
       normalizeAllCardChildrenOrder();
       updateStructureList();
       updateEmptyContainers();
@@ -728,6 +790,7 @@ window.SysAutomatorEditor = (function () {
         syncCanvasHeight();
         syncEditorViewportSpacing();
       }
+
     });
 
   }
@@ -996,11 +1059,18 @@ window.SysAutomatorEditor = (function () {
 
   function setPreviewMode(enabled) {
 
-    state.previewMode = enabled === true;
+    const enablePreview = enabled === true;
+
+    if (enablePreview === state.previewMode) {
+      return;
+    }
 
     const modal = $('#automator-editor-modal');
 
-    if (state.previewMode) {
+    if (enablePreview) {
+
+      state.previewRestoreState = getCurrentEditorViewState();
+      state.previewMode = true;
 
       hideBootstrapFloatingElements();
 
@@ -1020,9 +1090,15 @@ window.SysAutomatorEditor = (function () {
 
     } else {
 
+      state.previewMode = false;
+
       modal.removeClass('is-preview-mode');
 
       setCanvasPreviewMode(false);
+
+      restoreEditorViewState(state.previewRestoreState);
+
+      state.previewRestoreState = null;
 
       if (grapesEditor && typeof grapesEditor.refresh === 'function') {
         grapesEditor.refresh();
@@ -2162,11 +2238,13 @@ window.SysAutomatorEditor = (function () {
 
     if (isTagProperty(propertyName, component)) {
       syncComponentTag(component, value, propertyName);
+      markEditorAsChanged();
       return;
     }
 
     if (isColumnSizeProperty(propertyName, component)) {
       syncBootstrapColumnClass(component, value, propertyName);
+      markEditorAsChanged();
       return;
     }
 
@@ -2194,8 +2272,7 @@ window.SysAutomatorEditor = (function () {
       syncBootstrapMarginClass(component, value);
     }
 
-    state.hasChanges = true;
-    setSaveState(true);
+    markEditorAsChanged();
     updateStructureList();
 
   }
@@ -3352,6 +3429,7 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+
   function renderStructureItems(components, container, level) {
 
     components.each(function (component) {
@@ -3374,7 +3452,7 @@ window.SysAutomatorEditor = (function () {
       const wrapper = $('<div class="automator-editor-structure-item-wrapper" data-cid="' + escapeHtml(cid) + '"></div>');
 
       const item = $(`
-        <div class="automator-editor-body-aside-left-structure-item d-flex align-items-center p-2 border-bottom" style="padding-left: ${(level * 20) + 10}px !important;">
+        <div class="automator-editor-body-aside-left-structure-item d-flex align-items-center border-bottom" style="padding-left: ${(level * 20) + 10}px !important;">
           <i class="fas fa-grip-vertical automator-editor-structure-handle me-2 text-muted"></i>
           <i class="fa fa-cube me-2 small text-primary"></i>
           <span class="small flex-grow-1 text-truncate cursor-pointer">${escapeHtml(name)}</span>
@@ -3385,6 +3463,7 @@ window.SysAutomatorEditor = (function () {
       `);
 
       item.on('click', function () {
+        focusRightSidebarTab('block');
         grapesEditor.select(component);
       });
 
@@ -3407,15 +3486,24 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+
   function initStructureSortable() {
 
     if (typeof Sortable === 'undefined') {
       return;
     }
 
+    ensureStructureDropStyles();
+
     $('.automator-editor-structure-children').each(function () {
 
       const el = this;
+
+      $(el).css({
+        minHeight: '44px',
+        paddingTop: '6px',
+        paddingBottom: '6px'
+      });
 
       if ($(el).data('sortable')) {
         return;
@@ -3426,6 +3514,12 @@ window.SysAutomatorEditor = (function () {
         animation: 150,
         handle: '.automator-editor-structure-handle',
         draggable: '> .automator-editor-structure-item-wrapper',
+        ghostClass: 'automator-editor-structure-sortable-ghost',
+        chosenClass: 'automator-editor-structure-sortable-chosen',
+        dragClass: 'automator-editor-structure-sortable-drag',
+        emptyInsertThreshold: 48,
+        swapThreshold: 0.65,
+        invertSwap: true,
 
         onMove: function (evt) {
           return canMoveStructureItem(evt);
@@ -3440,6 +3534,7 @@ window.SysAutomatorEditor = (function () {
 
           setTimeout(function () {
             syncStructureContainer(evt.to);
+            markEditorAsChanged();
           }, 0);
 
         }
@@ -4058,6 +4153,7 @@ window.SysAutomatorEditor = (function () {
 
     state.hasChanges = false;
     setSaveState(false);
+    resetEditorChangeObserverState();
 
     return data;
 
@@ -4706,6 +4802,7 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+
   function injectCanvasEditorStyles() {
 
     const doc = grapesEditor.Canvas.getDocument();
@@ -4787,19 +4884,22 @@ window.SysAutomatorEditor = (function () {
       }
 
       [data-automator-can-have-child="true"] {
-        min-height: 42px !important;
+        min-height: 72px !important;
       }
 
       .automator-editor-child-placeholder {
         width: 100%;
-        min-height: 42px;
-        border: 1px dashed #0d6efd;
-        background: rgba(13, 110, 253, .06);
+        min-height: 78px;
+        border: 2px dashed #0d6efd;
+        background: rgba(13, 110, 253, .075);
         color: #0d6efd;
-        font-size: 22px;
+        font-size: 26px;
         font-weight: 700;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       }
 
       p[data-automator-field-type-title],
@@ -4817,7 +4917,7 @@ window.SysAutomatorEditor = (function () {
       .container,
       .container-fluid,
       .row {
-        min-height: 35px;
+        min-height: 58px;
       }
 
       .row {
@@ -4827,7 +4927,7 @@ window.SysAutomatorEditor = (function () {
 
       .automator-editor-shortcode-preview {
         width: 100%;
-        min-height: 42px;
+        min-height: 54px;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -4843,23 +4943,150 @@ window.SysAutomatorEditor = (function () {
         pointer-events: none;
       }
 
-      body > div[data-gjs-type="wrapper"] { background: #ECECEC; padding: 24px !important; }
+      .gjs-placeholder {
+        min-height: 74px !important;
+        height: 74px !important;
+        background: rgba(25, 135, 84, .16) !important;
+        border: 3px dashed rgba(25, 135, 84, .85) !important;
+        border-radius: 8px !important;
+        box-sizing: border-box !important;
+      }
+
+      .gjs-placeholder-int {
+        min-height: 68px !important;
+        height: 68px !important;
+        background: transparent !important;
+      }
+
+      .gjs-com-badge,
+      .gjs-badge {
+        z-index: 99999 !important;
+      }
+
+      body > div[data-gjs-type="wrapper"] {
+        background: #ECECEC;
+        padding: 24px !important;
+        min-height: 520px !important;
+      }
     `;
 
     doc.head.appendChild(style);
 
   }
 
+
+  function focusRightSidebarTab(tabKey) {
+
+    const tabs = $('#automator-editor-aside-right-tabs');
+
+    if (!tabs.length) {
+      return false;
+    }
+
+    let targetButton = null;
+    let targetContainer = null;
+
+    if (tabKey === 'block') {
+
+      targetButton = $('#automator-editor-aside-right-tabs-button-block');
+      targetContainer = $('#automator-editor-aside-right-tabs-container-block');
+
+    } else {
+
+      targetContainer = $('.automator-editor-aside-right-tabs-container-item[data-automator-default="true"]').first();
+
+      if (!targetContainer.length) {
+        targetContainer = $('.automator-editor-aside-right-tabs-container-item')
+          .not('#automator-editor-aside-right-tabs-container-block')
+          .first();
+      }
+
+      if (targetContainer.length) {
+
+        const containerID = targetContainer.attr('id') || '';
+        const tabID = containerID.replace(
+          'automator-editor-aside-right-tabs-container-',
+          ''
+        );
+
+        targetButton = $('#automator-editor-aside-right-tabs-button-' + tabID);
+
+      }
+
+    }
+
+    if (!targetButton || !targetButton.length || !targetContainer || !targetContainer.length) {
+      return false;
+    }
+
+    $('.automator-editor-aside-right-tabs-button').removeClass('active');
+    $('.automator-editor-aside-right-tabs-container-item').removeClass('active');
+
+    targetButton.addClass('active');
+    targetContainer.addClass('active');
+
+    return true;
+
+  }
+
+  function bindEditorGlobalTabFocus() {
+
+    $(document)
+      .off('mousedown.automator-editor-right-tab-focus')
+      .on('mousedown.automator-editor-right-tab-focus', function (event) {
+
+        if (state.previewMode) {
+          return;
+        }
+
+        const target = $(event.target);
+
+        if (!$('#automator-editor-modal').length) {
+          return;
+        }
+
+        if (
+          target.closest('#automator-editor-header').length ||
+          target.closest(selectors.leftAside).length ||
+          target.closest(selectors.rightAside).length ||
+          target.closest(selectors.canvasContainer).length
+        ) {
+          return;
+        }
+
+        focusRightSidebarTab('page');
+
+      });
+
+  }
+
   function syncCanvasHeight() {
 
-    if (!grapesEditor) {
+    const currentEditor = grapesEditor;
+
+    if (
+      !currentEditor ||
+      !currentEditor.Canvas ||
+      typeof currentEditor.Canvas.getFrameEl !== 'function' ||
+      typeof currentEditor.Canvas.getBody !== 'function'
+    ) {
       return;
     }
 
     setTimeout(function () {
 
-      const frameEl = grapesEditor.Canvas.getFrameEl();
-      const frameBody = grapesEditor.Canvas.getBody();
+      if (
+        !currentEditor ||
+        currentEditor !== grapesEditor ||
+        !currentEditor.Canvas ||
+        typeof currentEditor.Canvas.getFrameEl !== 'function' ||
+        typeof currentEditor.Canvas.getBody !== 'function'
+      ) {
+        return;
+      }
+
+      const frameEl = currentEditor.Canvas.getFrameEl();
+      const frameBody = currentEditor.Canvas.getBody();
 
       if (!frameEl || !frameBody) {
         return;
@@ -4918,8 +5145,11 @@ window.SysAutomatorEditor = (function () {
         overflow: 'hidden'
       });
 
-      if (typeof grapesEditor.refresh === 'function') {
-        grapesEditor.refresh();
+      if (
+        currentEditor === grapesEditor &&
+        typeof currentEditor.refresh === 'function'
+      ) {
+        currentEditor.refresh();
       }
 
     }, 80);
@@ -5045,11 +5275,329 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+  function ensureStructureDropStyles() {
+
+    if (document.getElementById('automator-editor-structure-drop-styles')) {
+      return;
+    }
+
+    const style = document.createElement('style');
+    style.id = 'automator-editor-structure-drop-styles';
+
+    style.innerHTML = `
+      .automator-editor-structure-children {
+        min-height: 44px !important;
+        padding-top: 6px !important;
+        padding-bottom: 6px !important;
+        box-sizing: border-box !important;
+      }
+
+      .automator-editor-structure-children:empty {
+        min-height: 54px !important;
+        border: 1px dashed rgba(13, 110, 253, .35);
+        background: rgba(13, 110, 253, .035);
+      }
+
+      .automator-editor-structure-sortable-ghost {
+        min-height: 54px !important;
+        border: 2px dashed rgba(25, 135, 84, .85) !important;
+        background: rgba(25, 135, 84, .14) !important;
+        opacity: 1 !important;
+        border-radius: 6px !important;
+      }
+
+      .automator-editor-structure-sortable-chosen {
+        background: rgba(13, 110, 253, .08) !important;
+      }
+
+      .automator-editor-structure-sortable-drag {
+        min-height: 54px !important;
+        opacity: .85 !important;
+      }
+
+      .automator-editor-body-aside-left-structure-item {
+        min-height: 50px !important;
+        padding-top: 12px !important;
+        padding-bottom: 12px !important;
+      }
+    `;
+
+    document.head.appendChild(style);
+
+  }
+
+
+  function getCurrentEditorViewState() {
+
+    const selected = grapesEditor ? grapesEditor.getSelected() : null;
+
+    return {
+      leftActiveTab: $(selectors.leftAside).attr('data-active-tab') || 'inserter',
+      leftCollapsed: $(selectors.leftAside).hasClass('is-collapsed'),
+      leftShow: $(selectors.leftAside).hasClass('show'),
+      rightCollapsed: $(selectors.rightAside).hasClass('is-collapsed'),
+      rightShow: $(selectors.rightAside).hasClass('show'),
+      rightActiveTabButton: $('.automator-editor-aside-right-tabs-button.active').attr('id') || '',
+      rightActiveTabContainer: $('.automator-editor-aside-right-tabs-container-item.active').attr('id') || '',
+      selectedCid: selected ? selected.cid : null
+    };
+
+  }
+
+  function restoreEditorViewState(restoreState = null) {
+
+    if (!restoreState) {
+      return;
+    }
+
+    updateLeftTabVisibility(restoreState.leftActiveTab || 'inserter');
+
+    if (window.innerWidth <= 991.98) {
+
+      $(selectors.leftAside)
+        .toggleClass('show', restoreState.leftShow === true)
+        .removeClass('is-collapsed');
+
+      $(selectors.rightAside)
+        .toggleClass('show', restoreState.rightShow === true)
+        .toggleClass('is-collapsed', restoreState.rightCollapsed === true);
+
+    } else {
+
+      $(selectors.leftAside)
+        .removeClass('show')
+        .toggleClass('is-collapsed', restoreState.leftCollapsed === true);
+
+      $(selectors.rightAside)
+        .removeClass('show')
+        .toggleClass('is-collapsed', restoreState.rightCollapsed === true);
+
+    }
+
+    if (restoreState.rightActiveTabButton && restoreState.rightActiveTabContainer) {
+
+      $('.automator-editor-aside-right-tabs-button').removeClass('active');
+      $('.automator-editor-aside-right-tabs-container-item').removeClass('active');
+
+      $('#' + restoreState.rightActiveTabButton).addClass('active');
+      $('#' + restoreState.rightActiveTabContainer).addClass('active');
+
+    }
+
+    if (grapesEditor && restoreState.selectedCid) {
+
+      const component = findComponentByCid(restoreState.selectedCid);
+
+      if (component) {
+
+        setTimeout(function () {
+
+          grapesEditor.select(component);
+          renderComponentSettings(component);
+          updateStructureActiveItem(component);
+
+        }, 50);
+
+      }
+
+    }
+
+    syncEditorLayoutState();
+
+  }
+
+
+  function getEditorChangeObserverForm() {
+
+    const modalEl = document.getElementById('automator-editor-modal');
+
+    if (!modalEl) {
+      return null;
+    }
+
+    let formEl = document.getElementById('automator-editor-change-observer-form');
+
+    if (!formEl) {
+
+      formEl = document.createElement('form');
+
+      formEl.id = 'automator-editor-change-observer-form';
+      formEl.setAttribute('data-submit', 'false');
+      formEl.setAttribute('autocomplete', 'off');
+      formEl.style.display = 'none';
+
+      const textarea = document.createElement('textarea');
+
+      textarea.name = 'automator_editor_state';
+      textarea.id = 'automator-editor-change-observer-state';
+
+      formEl.appendChild(textarea);
+      modalEl.appendChild(formEl);
+
+    }
+
+    return formEl;
+
+  }
+
+
+  function serializeEditorCurrentState() {
+
+    const response = {
+      html: '',
+      css: '',
+      components: [],
+      fields: []
+    };
+
+    if (grapesEditor) {
+
+      response.html = normalizeFinalHtml(cleanEditorHtml(''));
+      response.css = grapesEditor.getCss();
+      response.components = grapesEditor.getComponents().toJSON();
+
+    }
+
+    $('#automator-editor-modal')
+      .find('input, textarea, select')
+      .not('#automator-editor-change-observer-form input, #automator-editor-change-observer-form textarea, #automator-editor-change-observer-form select')
+      .each(function () {
+
+        const field = this;
+        const name = field.getAttribute('name') || field.getAttribute('id') || '';
+
+        if (!name || field.disabled) {
+          return;
+        }
+
+        const type = String(field.getAttribute('type') || '').toLowerCase();
+
+        if (type === 'checkbox' || type === 'radio') {
+
+          response.fields.push({
+            name: name,
+            value: field.value,
+            checked: field.checked ? 1 : 0
+          });
+
+        } else {
+
+          response.fields.push({
+            name: name,
+            value: field.value
+          });
+
+        }
+
+      });
+
+    return JSON.stringify(response);
+
+  }
+
+
+  function syncEditorChangeObserverState(updateInitialState = false) {
+
+    const formEl = getEditorChangeObserverForm();
+
+    if (!formEl) {
+      return false;
+    }
+
+    const field = formEl.querySelector('#automator-editor-change-observer-state');
+
+    if (!field) {
+      return false;
+    }
+
+    field.value = serializeEditorCurrentState();
+
+    if (updateInitialState === true) {
+
+      if (typeof AutomatorInitModalFormChangeObserver === 'function') {
+
+        AutomatorInitModalFormChangeObserver(
+          document.getElementById('automator-editor-modal'),
+          formEl,
+          null
+        );
+
+      } else {
+
+        formEl.setAttribute(
+          'data-automator-initial-state',
+          typeof AutomatorFormSerializeCurrentState === 'function'
+            ? AutomatorFormSerializeCurrentState(formEl)
+            : field.value
+        );
+
+        formEl.setAttribute('data-automator-form-changed', 'false');
+
+      }
+
+    } else {
+
+      field.dispatchEvent(new Event('input', { bubbles: true }));
+      field.dispatchEvent(new Event('change', { bubbles: true }));
+
+      if (typeof AutomatorUpdateModalFormChangedStatus === 'function') {
+        AutomatorUpdateModalFormChangedStatus(formEl, null);
+      } else {
+        formEl.setAttribute('data-automator-form-changed', 'true');
+      }
+
+    }
+
+    return true;
+
+  }
+
+
+  function resetEditorChangeObserverState() {
+
+    const formEl = getEditorChangeObserverForm();
+
+    if (!formEl) {
+      return false;
+    }
+
+    syncEditorChangeObserverState(true);
+
+    formEl.setAttribute('data-automator-form-changed', 'false');
+
+    return true;
+
+  }
+
+  function markEditorAsChanged() {
+
+    if (!state.initialized) {
+      return;
+    }
+
+    state.hasChanges = true;
+
+    setSaveState(true);
+    syncEditorChangeObserverState(false);
+
+  }
+
+
   return {
     config,
     init,
     destroy,
     initInterface,
+
+    focusRightSidebarTab,
+    bindEditorGlobalTabFocus,
+
+    markEditorAsChanged,
+    resetEditorChangeObserverState,
+    syncEditorChangeObserverState,
+    getCurrentEditorViewState,
+    restoreEditorViewState,
+    ensureStructureDropStyles,
 
     waitEditorReady,
 
@@ -5077,6 +5625,8 @@ window.SysAutomatorEditor = (function () {
 
     applySelectedComponentSettings,
     deleteSelectedComponent,
+
+    discardEditorUnsavedChanges,
 
     getEditor,
     getComponent,

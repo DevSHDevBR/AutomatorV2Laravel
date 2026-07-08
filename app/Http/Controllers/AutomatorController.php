@@ -4,6 +4,7 @@
   namespace App\Http\Controllers;
 
   use Illuminate\Http\Request;
+  use Illuminate\Support\Facades\Hash;
   use Illuminate\Validation\ValidationException;
   use Illuminate\Support\Facades\View;
   use Illuminate\Support\Facades\Cache;
@@ -390,7 +391,6 @@
     }
 
 
-
     public function getDataByModel(Request $request, $shortcodeParams = []) {
 
 
@@ -453,10 +453,130 @@
 
       $id = $this->getAutomatorRequestID($request, $shortcodeParams, $index);
 
+      $query = $modelClass::query();
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Relacionamentos via shortcode
+      |--------------------------------------------------------------------------
+      |
+      | Exemplos:
+      |
+      | [automator function="getDataByModel" model="User" with="UserGetTypes"]
+      | [automator function="getDataByModel" model="User" with="UserGetTypes:ids"]
+      | [automator function="getDataByModel" model="User" with="UserGetTypes,OutroRelacionamento"]
+      | [automator function="getDataByModel" model="User" with="UserGetTypes:ids,OutroRelacionamento:ids"]
+      |
+      */
+
+      $with = $attributes['with'] ?? null;
+
+      $relationships = [];
+      $relationshipsIDs = [];
+
+
+      if($with !== null && $with !== '') {
+
+        if(is_string($with)) {
+
+          $with = explode(',', $with);
+
+        }
+
+
+        if(is_array($with) && count($with) >= 1) {
+
+          foreach($with as $relationshipConfig) {
+
+            $relationshipConfig = trim($relationshipConfig);
+
+            if($relationshipConfig === '') {
+
+              continue;
+
+            }
+
+
+            $relationshipName = $relationshipConfig;
+            $relationshipMode = null;
+
+
+            if(strpos($relationshipConfig, ':') !== false) {
+
+              $relationshipParts = explode(':', $relationshipConfig);
+
+              $relationshipName = trim($relationshipParts[0] ?? '');
+              $relationshipMode = trim($relationshipParts[1] ?? '');
+
+            }
+
+
+            if($relationshipName === '') {
+
+              continue;
+
+            }
+
+
+            if(!method_exists($modelInstance, $relationshipName)) {
+
+              continue;
+
+            }
+
+
+            if(!in_array($relationshipName, $relationships)) {
+
+              $relationships[] = $relationshipName;
+
+            }
+
+
+            if($relationshipMode === 'ids') {
+
+              $relationshipsIDs[] = $relationshipName;
+
+            }
+
+          }
+
+
+          if(count($relationships) >= 1) {
+
+            $query->with($relationships);
+
+          }
+
+        }
+
+      }
+
 
       if($id !== null && $id !== '') {
 
-        $item = $modelClass::where($index, $id)->first();
+        $item = $query->where($index, $id)->first();
+
+        if($item !== null && count($relationshipsIDs) >= 1) {
+
+          $itemArray = $this->prepareAutomatorModelDataForResponse($item);
+
+          foreach($relationshipsIDs as $relationshipName) {
+
+            $idsMethod = $relationshipName . 'IDs';
+
+            if(method_exists($item, $idsMethod)) {
+
+              $itemArray[$idsMethod] = $item->{$idsMethod}();
+
+            }
+
+          }
+
+          $item = $itemArray;
+
+        }
+
 
         return response()->json([
 
@@ -468,7 +588,32 @@
       }
 
 
-      $items = $modelClass::get();
+      $items = $this->prepareAutomatorModelDataForResponse($query->get());
+
+
+      if(count($relationshipsIDs) >= 1) {
+
+        $items = $items->map(function($item) use ($relationshipsIDs) {
+
+          $itemArray = $this->prepareAutomatorModelDataForResponse($item);
+
+          foreach($relationshipsIDs as $relationshipName) {
+
+            $idsMethod = $relationshipName . 'IDs';
+
+            if(method_exists($item, $idsMethod)) {
+
+              $itemArray[$idsMethod] = $item->{$idsMethod}();
+
+            }
+
+          }
+
+          return $itemArray;
+
+        });
+
+      }
 
 
       return response()->json([
@@ -480,6 +625,97 @@
 
 
     }
+
+
+    // public function getDataByModel(Request $request, $shortcodeParams = []) {
+
+
+    //   $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
+
+    //   $model = $attributes['model'] ?? null;
+
+    //   $modelClass = $this->getAutomatorModelClassByName($model);
+
+
+    //   if($modelClass === null) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Model inválida.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $modelInstance = new $modelClass;
+
+    //   $table = $modelInstance->getTable();
+
+    //   $index = $attributes['index'] ?? null;
+
+
+    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Tabela da Model inválida.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   if($index === null || $index === '') {
+
+    //     $index = $modelInstance->getKeyName();
+
+    //   }
+
+
+    //   if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Índice inválido.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $id = $this->getAutomatorRequestID($request, $shortcodeParams, $index);
+
+
+    //   if($id !== null && $id !== '') {
+
+    //     $item = $modelClass::where($index, $id)->first();
+
+    //     return response()->json([
+
+    //       'status' => ($item !== null),
+    //       'data'   => $item
+
+    //     ]);
+
+    //   }
+
+
+    //   $items = $modelClass::get();
+
+
+    //   return response()->json([
+
+    //     'status' => true,
+    //     'data'   => $items
+
+    //   ]);
+
+
+    // }
 
 
     public function getAutomatorFormFieldNameByFormID($formID, $column) {
@@ -777,28 +1013,271 @@
     }
 
 
+    private function validateAutomatorFormData(array $data, array $formRules, string $table, $currentID = null, $index = null) {
+
+
+      foreach($formRules as $fieldName => $fieldRules) {
+
+        $fieldTitle = $fieldRules['title'] ?? $fieldName;
+        $required   = $fieldRules['required'] ?? false;
+        $props      = $fieldRules['props'] ?? [];
+
+        $valueExists = array_key_exists($fieldName, $data);
+        $value       = $valueExists ? $data[$fieldName] : null;
+
+
+        if($required) {
+
+          if(
+            !$valueExists ||
+            $value === null ||
+            $value === '' ||
+            (is_array($value) && count($value) <= 0)
+          ) {
+
+            return response()->json([
+
+              'status'  => false,
+              'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+              'message' => "O campo '{$fieldTitle}' é obrigatório."
+
+            ], 400);
+
+          }
+
+        }
+
+
+        if(!$valueExists || $value === null || $value === '' || is_array($value)) {
+
+          continue;
+
+        }
+
+
+        $valueLength = mb_strlen((string) $value);
+
+
+        $minLength = $props['minlenght'] ?? $props['minlength'] ?? null;
+
+        if($minLength !== null && $valueLength < (int) $minLength) {
+
+          return response()->json([
+
+            'status'  => false,
+            'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+            'message' => "O campo '{$fieldTitle}' deve ter no mínimo {$minLength} caracteres."
+
+          ], 400);
+
+        }
+
+
+        $maxLength = $props['maxlenght'] ?? $props['maxlength'] ?? null;
+
+        if($maxLength !== null && $valueLength > (int) $maxLength) {
+
+          return response()->json([
+
+            'status'  => false,
+            'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+            'message' => "O campo '{$fieldTitle}' deve ter no máximo {$maxLength} caracteres."
+
+          ], 400);
+
+        }
+
+
+        if(isset($props['unique']) && is_array($props['unique'])) {
+
+          $uniqueTable  = $props['unique']['table'] ?? $table;
+          $uniqueColumn = $props['unique']['column'] ?? $fieldName;
+
+
+          if(
+            $uniqueTable !== null &&
+            $uniqueTable !== '' &&
+            $uniqueColumn !== null &&
+            $uniqueColumn !== '' &&
+            Schema::hasTable($uniqueTable) &&
+            Schema::hasColumn($uniqueTable, $uniqueColumn)
+          ) {
+
+            $uniqueQuery = DB::table($uniqueTable)->where($uniqueColumn, $value);
+
+
+            if($currentID !== null && $currentID !== '' && $index !== null && $index !== '') {
+
+              if($uniqueTable === $table && Schema::hasColumn($uniqueTable, $index)) {
+
+                $currentValue = DB::table($table)
+                                  ->where($index, $currentID)
+                                  ->value($uniqueColumn);
+
+
+                if((string) $currentValue === (string) $value) {
+
+                  continue;
+
+                }
+
+
+                $uniqueQuery->where($index, '!=', $currentID);
+
+              }
+
+            }
+
+
+            if($uniqueQuery->exists()) {
+
+              return response()->json([
+
+                'status'  => false,
+                'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+                'message' => "O valor para o campo '{$fieldTitle}' já existe."
+
+              ], 400);
+
+            }
+
+          }
+
+        }
+
+      }
+
+
+      return null;
+
+
+    }
+
+
+    private function prepareAutomatorModelDataForResponse($data) {
+
+
+      if($data === null) {
+
+        return null;
+
+      }
+
+
+      if($data instanceof \Illuminate\Database\Eloquent\Collection || $data instanceof \Illuminate\Support\Collection) {
+
+        return $data->map(function($item) {
+
+          return $this->prepareAutomatorModelDataForResponse($item);
+
+        });
+
+      }
+
+
+      if($data instanceof Model) {
+
+        $itemArray = $data->toArray();
+
+        foreach($data->getAttributes() as $field => $value) {
+
+          if(array_key_exists($field, $itemArray)) {
+
+            $itemArray[$field] = $data->getRawOriginal($field);
+
+          }
+
+        }
+
+        return $itemArray;
+
+      }
+
+
+      return $data;
+
+
+    }
+
+
+    private function getAutomatorFormFieldsRules($formID): array {
+
+
+      $rules = [];
+
+
+      if($formID === null || $formID === '') {
+
+        return $rules;
+
+      }
+
+
+      if(!Schema::hasTable('tbl_sys_forms_fields')) {
+
+        return $rules;
+
+      }
+
+
+      $formFields = DB::table('tbl_sys_forms_fields')
+                      ->where('tbl_sys_form_ID', $formID)
+                      ->get();
+
+
+      foreach($formFields as $formField) {
+
+        $formField = (array) $formField;
+
+        $fieldName = $formField['tbl_sys_forms_field_name'] ?? null;
+
+
+        if($fieldName === null || $fieldName === '') {
+
+          continue;
+
+        }
+
+
+        $props = [];
+
+        if(isset($formField['tbl_sys_forms_field_props']) && $formField['tbl_sys_forms_field_props'] !== '') {
+
+          $decodedProps = json_decode($formField['tbl_sys_forms_field_props'], true);
+
+          if(is_array($decodedProps)) {
+
+            $props = $decodedProps;
+
+          }
+
+        }
+
+
+        $rules[$fieldName] = [
+
+          'title'    => $formField['tbl_sys_forms_field_title'] ?? $fieldName,
+          'required' => (bool) ($formField['tbl_sys_forms_field_required'] ?? false),
+          'props'    => $props
+
+        ];
+
+      }
+
+
+      return $rules;
+
+
+    }
+
 
 
     public function storeData(Request $request, $shortcodeParams = []) {
 
 
-      $slug = $request->route('pageSlug');
+      $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
-      $routeName = str_replace('page-', '', $slug);
-
-      $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-      $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
-
-      if(!is_array($shortcodeParams)) {
-
-        $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
-
-      }
-
-
-      $table = ( ( isset($shortcodeParams['table']) ) ? $shortcodeParams['table'] : ( ($atributes['table']) ? $atributes['table'] : null ) );
-      // $form  = ( ( isset($shortcodeParams['form']) )  ? $shortcodeParams['form']  : ( ($atributes['form'])  ? $atributes['form']  : null ) );
+      $table = $attributes['table'] ?? null;
 
 
       if($table === null || $table === '' || !Schema::hasTable($table)) {
@@ -814,7 +1293,11 @@
 
 
       $formID = $request->input('automatorFormID');
-      $data   = $request->except([
+
+      $formRules = $this->getAutomatorFormFieldsRules($formID);
+
+
+      $data = $request->except([
 
         '_token',
         '_method',
@@ -824,21 +1307,150 @@
       ]);
 
 
-      $insertData = [];
+      $validationResponse = $this->validateAutomatorFormData($data, $formRules, $table);
+
+      if($validationResponse !== null) {
+
+        return $validationResponse;
+
+      }
 
 
-      foreach($data as $field => $value) {
+      $modelClass = null;
+      $modelInstance = null;
 
-        if(Schema::hasColumn($table, $field)) {
 
-          $insertData[$field] = $value;
+      if(isset($attributes['model']) && $attributes['model'] !== '') {
+
+        $modelClass = $this->getAutomatorModelClassByName($attributes['model']);
+
+      }
+
+
+      if($modelClass === null) {
+
+        $modelClass = $this->getAutomatorModelClassByTable($table);
+
+      }
+
+
+      if($modelClass !== null) {
+
+        $modelInstance = new $modelClass;
+
+      }
+
+
+      $with = $attributes['with'] ?? null;
+
+      $syncRelationships = [];
+
+
+      if($with !== null && $with !== '') {
+
+        if(is_string($with)) {
+
+          $with = explode(',', $with);
+
+        }
+
+
+        if(is_array($with)) {
+
+          foreach($with as $relationshipConfig) {
+
+            $relationshipConfig = trim($relationshipConfig);
+
+            if($relationshipConfig === '') {
+
+              continue;
+
+            }
+
+
+            $relationshipName = $relationshipConfig;
+            $relationshipMode = null;
+
+
+            if(strpos($relationshipConfig, ':') !== false) {
+
+              $relationshipParts = explode(':', $relationshipConfig);
+
+              $relationshipName = trim($relationshipParts[0] ?? '');
+              $relationshipMode = trim($relationshipParts[1] ?? '');
+
+            }
+
+
+            if($relationshipName === '' || $relationshipMode !== 'ids') {
+
+              continue;
+
+            }
+
+
+            $syncRelationships[] = [
+
+              'relationship' => $relationshipName,
+              'field'        => $relationshipName . 'IDs'
+
+            ];
+
+          }
 
         }
 
       }
 
 
-      if(count($insertData) <= 0) {
+      $insertData = [];
+
+
+      foreach($data as $field => $value) {
+
+        if(!Schema::hasColumn($table, $field)) {
+
+          continue;
+
+        }
+
+
+        $fieldRules = $formRules[$field] ?? [];
+        $props      = $fieldRules['props'] ?? [];
+        $required   = $fieldRules['required'] ?? false;
+
+
+        if(($value === null || $value === '') && !$required) {
+
+          continue;
+
+        }
+
+
+        if(is_array($value)) {
+
+          continue;
+
+        }
+
+
+        if(isset($props['cast']) && $props['cast'] === 'hash') {
+
+          if($value !== null && $value !== '') {
+
+            $value = Hash::make($value);
+
+          }
+
+        }
+
+
+        $insertData[$field] = $value;
+
+      }
+
+
+      if(count($insertData) <= 0 && count($syncRelationships) <= 0) {
 
         return response()->json([
 
@@ -850,70 +1462,291 @@
       }
 
 
-      // Validação de colunas únicas para storeData
-      $uniqueColumns = $this->getUniqueColumns($table);
-      foreach ($uniqueColumns as $column) {
-        if (isset($insertData[$column])) {
-          if (DB::table($table)->where($column, $insertData[$column])->exists()) {
+      try {
+
+        DB::beginTransaction();
+
+
+        $id = DB::table($table)->insertGetId($insertData);
+
+
+        if(count($syncRelationships) >= 1) {
+
+          if($modelClass === null || $modelInstance === null) {
+
+            DB::rollBack();
+
             return response()->json([
+
               'status'  => false,
-              'message' => 'O valor para o campo \'' . self::getAutomatorFormFieldNameByFormID($formID, $column) . '\' já existe.'
+              'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+              'message' => 'Nenhuma Model foi encontrada para sincronizar os relacionamentos.'
+
             ], 400);
+
           }
+
+
+          $index = $modelInstance->getKeyName();
+
+          $modelItem = $modelClass::where($index, $id)->first();
+
+
+          if(!$modelItem) {
+
+            DB::rollBack();
+
+            return response()->json([
+
+              'status'  => false,
+              'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+              'message' => 'Registro criado, mas não encontrado para sincronizar os relacionamentos.'
+
+            ], 404);
+
+          }
+
+
+          foreach($syncRelationships as $syncRelationship) {
+
+            $relationshipName = $syncRelationship['relationship'];
+            $fieldName        = $syncRelationship['field'];
+
+
+            if(!method_exists($modelItem, $relationshipName)) {
+
+              continue;
+
+            }
+
+
+            $fieldWasSent = $request->has($fieldName);
+            $fieldRequired = isset($formRules[$fieldName]) && ($formRules[$fieldName]['required'] ?? false);
+
+
+            if(!$fieldWasSent && !$fieldRequired) {
+
+              continue;
+
+            }
+
+
+            $ids = $request->input($fieldName, []);
+
+
+            if($ids === null || $ids === '') {
+
+              $ids = [];
+
+            }
+
+
+            if(!is_array($ids)) {
+
+              $ids = [$ids];
+
+            }
+
+
+            $ids = array_values(array_filter($ids, function($value) {
+
+              return $value !== null && $value !== '';
+
+            }));
+
+
+            $ids = array_map(function($value) {
+
+              return (int) $value;
+
+            }, $ids);
+
+
+            $ids = array_values(array_unique($ids));
+
+
+            $modelItem->{$relationshipName}()->sync($ids);
+
+          }
+
         }
+
+
+        DB::commit();
+
+
+        return response()->json([
+
+          'status'  => true,
+          'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro cadastrado com sucesso.'),
+          'id'      => $id
+
+        ]);
+
+
+      } catch(\Throwable $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+
+          'status'  => false,
+          'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+          'message' => $e->getMessage()
+
+        ], 500);
+
       }
-
-      $id = DB::table($table)->insertGetId($insertData);
-
-
-      return response()->json([
-
-        'status'  => true,
-        'message' => 'Registro cadastrado com sucesso.',
-        'id'      => $id
-
-      ]);
 
 
     }
+    // public function storeData(Request $request, $shortcodeParams = []) {
 
+
+    //   $slug = $request->route('pageSlug');
+
+    //   $routeName = str_replace('page-', '', $slug);
+
+    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+
+    //   $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
+
+    //   if(!is_array($shortcodeParams)) {
+
+    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+
+    //   }
+
+
+    //   $table = ( ( isset($shortcodeParams['table']) ) ? $shortcodeParams['table'] : ( ($atributes['table']) ? $atributes['table'] : null ) );
+    //   // $form  = ( ( isset($shortcodeParams['form']) )  ? $shortcodeParams['form']  : ( ($atributes['form'])  ? $atributes['form']  : null ) );
+
+
+    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Tabela inválida.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $formID = $request->input('automatorFormID');
+    //   $data   = $request->except([
+
+    //     '_token',
+    //     '_method',
+    //     'automatorFormID',
+    //     'id'
+
+    //   ]);
+
+
+    //   $insertData = [];
+
+
+    //   foreach($data as $field => $value) {
+
+    //     if(Schema::hasColumn($table, $field)) {
+
+    //       $insertData[$field] = $value;
+
+    //     }
+
+    //   }
+
+
+    //   if(count($insertData) <= 0) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Nenhum dado válido foi enviado.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   // Validação de colunas únicas para storeData
+    //   $uniqueColumns = $this->getUniqueColumns($table);
+    //   foreach ($uniqueColumns as $column) {
+    //     if (isset($insertData[$column])) {
+    //       if (DB::table($table)->where($column, $insertData[$column])->exists()) {
+    //         return response()->json([
+    //           'status'  => false,
+    //           'message' => 'O valor para o campo \'' . self::getAutomatorFormFieldNameByFormID($formID, $column) . '\' já existe.'
+    //         ], 400);
+    //       }
+    //     }
+    //   }
+
+    //   $id = DB::table($table)->insertGetId($insertData);
+
+
+    //   return response()->json([
+
+    //     'status'  => true,
+    //     'message' => 'Registro cadastrado com sucesso.',
+    //     'id'      => $id
+
+    //   ]);
+
+
+    // }
 
 
     public function updateData(Request $request, $shortcodeParams = []) {
 
 
-      $slug = $request->route('pageSlug');
+      $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
-      $routeName = str_replace('page-', '', $slug);
-
-      $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-      $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
-
-      if(!is_array($shortcodeParams)) {
-
-        $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
-
-      }
-
-
-      $table = ( ( isset($shortcodeParams['table']) ) ? $shortcodeParams['table'] : ( ($atributes['table']) ? $atributes['table'] : null ) );
-      $index = ( ( isset($shortcodeParams['index']) ) ? $shortcodeParams['index'] : ( ($atributes['index']) ? $atributes['index'] : null ) );
-      $id = $request->input($atributes['index']) ?? null;
-      // $id    = ( ($request->route('id')) ? $request->route('id') : ( ($request->get('id')) ? $request->get('id') : ( ($request->input($atributes['index'])) ? $request->input($atributes['index']) : null ) ) );
-      // $table = $shortcodeParams['table'] ?? null;
-      // $index = $shortcodeParams['index'] ?? null;
-      // $id    = $request->route('id') ?? $request->get('id') ?? null;
+      $table = $attributes['table'] ?? null;
+      $index = $attributes['index'] ?? null;
 
 
       if($table === null || $table === '' || !Schema::hasTable($table)) {
 
         return response()->json([
-
           'status'  => false,
           'message' => 'Tabela inválida.'
-
         ], 400);
+
+      }
+
+
+      $modelClass = null;
+      $modelInstance = null;
+
+
+      if(isset($attributes['model']) && $attributes['model'] !== '') {
+
+        $modelClass = $this->getAutomatorModelClassByName($attributes['model']);
+
+      }
+
+
+      if($modelClass === null) {
+
+        $modelClass = $this->getAutomatorModelClassByTable($table);
+
+      }
+
+
+      if($modelClass !== null) {
+
+        $modelInstance = new $modelClass;
+
+      }
+
+
+      if(($index === null || $index === '') && $modelInstance !== null) {
+
+        $index = $modelInstance->getKeyName();
 
       }
 
@@ -921,38 +1754,113 @@
       if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
 
         return response()->json([
-
           'status'  => false,
           'message' => 'Índice inválido.'
-
         ], 400);
 
       }
 
 
+      $id = $request->input($index)
+            ?? $request->route($index)
+            ?? $request->get($index)
+            ?? $request->input('id')
+            ?? $request->route('id')
+            ?? $request->get('id')
+            ?? null;
+
+
       if($id === null || $id === '') {
 
         return response()->json([
-
           'status'  => false,
           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
           'message' => SysAutomator::SysAutomatorGetTranslateWord('ID não informado.'),
-          'data' => $request->all()
-
+          'data'    => $request->all()
         ], 400);
 
       }
 
 
       $formID = $request->input('automatorFormID');
-      $data   = $request->except([
 
+      $formRules = $this->getAutomatorFormFieldsRules($formID);
+
+      $data = $request->except([
         '_token',
         '_method',
         'automatorFormID',
         'id'
-
       ]);
+
+
+      $validationResponse = $this->validateAutomatorFormData($data, $formRules, $table, $id, $index);
+
+      if($validationResponse !== null) {
+
+        return $validationResponse;
+
+      }
+
+
+      $with = $attributes['with'] ?? null;
+
+      $syncRelationships = [];
+
+
+      if($with !== null && $with !== '') {
+
+        if(is_string($with)) {
+
+          $with = explode(',', $with);
+
+        }
+
+
+        if(is_array($with)) {
+
+          foreach($with as $relationshipConfig) {
+
+            $relationshipConfig = trim($relationshipConfig);
+
+            if($relationshipConfig === '') {
+
+              continue;
+
+            }
+
+
+            $relationshipName = $relationshipConfig;
+            $relationshipMode = null;
+
+
+            if(strpos($relationshipConfig, ':') !== false) {
+
+              $relationshipParts = explode(':', $relationshipConfig);
+
+              $relationshipName = trim($relationshipParts[0] ?? '');
+              $relationshipMode = trim($relationshipParts[1] ?? '');
+
+            }
+
+
+            if($relationshipName === '' || $relationshipMode !== 'ids') {
+
+              continue;
+
+            }
+
+
+            $syncRelationships[] = [
+              'relationship' => $relationshipName,
+              'field'        => $relationshipName . 'IDs'
+            ];
+
+          }
+
+        }
+
+      }
 
 
       $updateData = [];
@@ -960,58 +1868,726 @@
 
       foreach($data as $field => $value) {
 
-        if(Schema::hasColumn($table, $field) && $field != $index) {
+        if(!Schema::hasColumn($table, $field) || $field == $index) {
 
-          $updateData[$field] = $value;
+          continue;
 
         }
+
+
+        $fieldRules = $formRules[$field] ?? [];
+        $props      = $fieldRules['props'] ?? [];
+        $required   = $fieldRules['required'] ?? false;
+
+
+        if(($value === null || $value === '') && !$required) {
+
+          continue;
+
+        }
+
+
+        if(is_array($value)) {
+
+          continue;
+
+        }
+
+
+        if(isset($props['cast']) && $props['cast'] === 'hash') {
+
+          if($value !== null && $value !== '') {
+
+            $value = Hash::make($value);
+
+          }
+
+        }
+
+
+        $updateData[$field] = $value;
 
       }
 
 
-      if(count($updateData) <= 0) {
+      $filteredSyncRelationships = [];
+
+
+      foreach($syncRelationships as $syncRelationship) {
+
+        $fieldName = $syncRelationship['field'];
+
+        $fieldWasSent = $request->has($fieldName);
+        $fieldRequired = isset($formRules[$fieldName]) && ($formRules[$fieldName]['required'] ?? false);
+
+
+        if(!$fieldWasSent && !$fieldRequired) {
+
+          continue;
+
+        }
+
+
+        $filteredSyncRelationships[] = $syncRelationship;
+
+      }
+
+
+      $syncRelationships = $filteredSyncRelationships;
+
+      $hasRelationshipSync = count($syncRelationships) >= 1;
+
+
+      if(count($updateData) <= 0 && !$hasRelationshipSync) {
 
         return response()->json([
-
           'status'  => false,
           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
           'message' => SysAutomator::SysAutomatorGetTranslateWord('Nenhuma informação válida foi enviada.')
-
         ], 400);
 
       }
 
 
-      // Validação de colunas únicas para updateData
-      $uniqueColumns = $this->getUniqueColumns($table);
-      foreach ($uniqueColumns as $column) {
-        if (isset($updateData[$column])) {
-          $query = DB::table($table)->where($column, $updateData[$column]);
-          // Excluir o registro atual da validação
-          $query->where($index, '!=', $id);
-          if ($query->exists()) {
+      try {
+
+        DB::beginTransaction();
+
+
+        if(count($updateData) >= 1) {
+
+          DB::table($table)->where($index, $id)->update($updateData);
+
+        }
+
+
+        if($hasRelationshipSync) {
+
+          if($modelClass === null || $modelInstance === null) {
+
+            DB::rollBack();
+
             return response()->json([
               'status'  => false,
               'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-              'message' => SysAutomator::SysAutomatorGetTranslateWord('O valor para o campo') . " '" . self::getAutomatorFormFieldNameByFormID($formID, $column) . "' " . SysAutomator::SysAutomatorGetTranslateWord('já existe em outro registro.')
+              'message' => 'Nenhuma Model foi encontrada para sincronizar os relacionamentos.'
             ], 400);
+
           }
+
+
+          $modelItem = $modelClass::where($index, $id)->first();
+
+
+          if(!$modelItem) {
+
+            DB::rollBack();
+
+            return response()->json([
+              'status'  => false,
+              'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+              'message' => 'Registro não encontrado para sincronizar os relacionamentos.'
+            ], 404);
+
+          }
+
+
+          foreach($syncRelationships as $syncRelationship) {
+
+            $relationshipName = $syncRelationship['relationship'];
+            $fieldName        = $syncRelationship['field'];
+
+
+            if(!method_exists($modelItem, $relationshipName)) {
+
+              continue;
+
+            }
+
+
+            $ids = $request->input($fieldName, []);
+
+
+            if($ids === null || $ids === '') {
+
+              $ids = [];
+
+            }
+
+
+            if(!is_array($ids)) {
+
+              $ids = [$ids];
+
+            }
+
+
+            $ids = array_values(array_filter($ids, function($value) {
+              return $value !== null && $value !== '';
+            }));
+
+
+            $ids = array_map(function($value) {
+              return (int) $value;
+            }, $ids);
+
+
+            $ids = array_values(array_unique($ids));
+
+
+            $modelItem->{$relationshipName}()->sync($ids);
+
+          }
+
         }
+
+
+        DB::commit();
+
+
+        return response()->json([
+          'status'  => true,
+          'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
+        ]);
+
+
+      } catch(\Throwable $e) {
+
+        DB::rollBack();
+
+        return response()->json([
+          'status'  => false,
+          'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+          'message' => $e->getMessage()
+        ], 500);
+
       }
-
-      DB::table($table)->where($index, $id)->update($updateData);
-
-
-      return response()->json([
-
-        'status'  => true,
-        'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
-        'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
-
-      ]);
 
 
     }
+
+    // Update 2
+    // public function updateData(Request $request, $shortcodeParams = []) {
+
+
+    //   $slug = $request->route('pageSlug');
+
+    //   $routeName = str_replace('page-', '', $slug);
+
+    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+
+    //   $atributes = [];
+
+    //   if($route && isset($route->tbl_sys_route_content)) {
+
+    //     $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
+
+    //   }
+
+
+    //   if(!is_array($shortcodeParams)) {
+
+    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+
+    //   }
+
+
+    //   if(is_array($shortcodeParams) && count($shortcodeParams) >= 1) {
+
+    //     foreach($shortcodeParams as $paramKey => $paramValue) {
+
+    //       $atributes[$paramKey] = $paramValue;
+
+    //     }
+
+    //   }
+
+
+    //   $table = $atributes['table'] ?? null;
+    //   $index = $atributes['index'] ?? null;
+
+
+    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Tabela inválida.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $modelClass = null;
+    //   $modelInstance = null;
+
+
+    //   if(isset($atributes['model']) && $atributes['model'] !== '') {
+
+    //     $modelClass = $this->getAutomatorModelClassByName($atributes['model']);
+
+    //   }
+
+
+    //   if($modelClass === null) {
+
+    //     $modelClass = $this->getAutomatorModelClassByTable($table);
+
+    //   }
+
+
+    //   if($modelClass !== null) {
+
+    //     $modelInstance = new $modelClass;
+
+    //   }
+
+
+    //   if(($index === null || $index === '') && $modelInstance !== null) {
+
+    //     $index = $modelInstance->getKeyName();
+
+    //   }
+
+
+    //   if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Índice inválido.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $id = $request->input($index) ?? $request->route($index) ?? $request->get($index) ?? $request->input('id') ?? $request->route('id') ?? $request->get('id') ?? null;
+
+
+    //   if($id === null || $id === '') {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('ID não informado.'),
+    //       'data'    => $request->all()
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $formID = $request->input('automatorFormID');
+
+    //   $data = $request->except([
+
+    //     '_token',
+    //     '_method',
+    //     'automatorFormID',
+    //     'id'
+
+    //   ]);
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Relacionamentos enviados pelo shortcode
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Exemplo:
+    //   | [automator function="update-data" table="tbl_users" index="tbl_user_ID" with="UserGetTypes:ids"]
+    //   |
+    //   | O campo esperado no formulário será:
+    //   | UserGetTypesIDs[]
+    //   |
+    //   */
+
+    //   $with = $atributes['with'] ?? null;
+
+    //   $syncRelationships = [];
+
+
+    //   if($with !== null && $with !== '') {
+
+    //     if(is_string($with)) {
+
+    //       $with = explode(',', $with);
+
+    //     }
+
+
+    //     if(is_array($with) && count($with) >= 1) {
+
+    //       foreach($with as $relationshipConfig) {
+
+    //         $relationshipConfig = trim($relationshipConfig);
+
+    //         if($relationshipConfig === '') {
+
+    //           continue;
+
+    //         }
+
+
+    //         $relationshipName = $relationshipConfig;
+    //         $relationshipMode = null;
+
+
+    //         if(strpos($relationshipConfig, ':') !== false) {
+
+    //           $relationshipParts = explode(':', $relationshipConfig);
+
+    //           $relationshipName = trim($relationshipParts[0] ?? '');
+    //           $relationshipMode = trim($relationshipParts[1] ?? '');
+
+    //         }
+
+
+    //         if($relationshipName === '' || $relationshipMode !== 'ids') {
+
+    //           continue;
+
+    //         }
+
+
+    //         $fieldName = $relationshipName . 'IDs';
+
+
+    //         $syncRelationships[] = [
+
+    //           'relationship' => $relationshipName,
+    //           'field'        => $fieldName
+
+    //         ];
+
+    //       }
+
+    //     }
+
+    //   }
+
+
+    //   $updateData = [];
+
+
+    //   foreach($data as $field => $value) {
+
+    //     if(Schema::hasColumn($table, $field) && $field != $index) {
+
+    //       $updateData[$field] = $value;
+
+    //     }
+
+    //   }
+
+
+    //   $hasRelationshipSync = count($syncRelationships) >= 1;
+
+
+    //   if(count($updateData) <= 0 && !$hasRelationshipSync) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Nenhuma informação válida foi enviada.')
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $uniqueColumns = $this->getUniqueColumns($table);
+
+    //   foreach($uniqueColumns as $column) {
+
+    //     if(isset($updateData[$column])) {
+
+    //       $query = DB::table($table)->where($column, $updateData[$column]);
+
+    //       $query->where($index, '!=', $id);
+
+    //       if($query->exists()) {
+
+    //         return response()->json([
+
+    //           'status'  => false,
+    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //           'message' => SysAutomator::SysAutomatorGetTranslateWord('O valor para o campo') . " '" . self::getAutomatorFormFieldNameByFormID($formID, $column) . "' " . SysAutomator::SysAutomatorGetTranslateWord('já existe em outro registro.')
+
+    //         ], 400);
+
+    //       }
+
+    //     }
+
+    //   }
+
+
+    //   try {
+
+    //     DB::beginTransaction();
+
+
+    //     if(count($updateData) >= 1) {
+
+    //       DB::table($table)->where($index, $id)->update($updateData);
+
+    //     }
+
+
+    //     if($hasRelationshipSync) {
+
+    //       if($modelClass === null || $modelInstance === null) {
+
+    //         DB::rollBack();
+
+    //         return response()->json([
+
+    //           'status'  => false,
+    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //           'message' => 'Nenhuma Model foi encontrada para sincronizar os relacionamentos.'
+
+    //         ], 400);
+
+    //       }
+
+
+    //       $modelItem = $modelClass::where($index, $id)->first();
+
+
+    //       if(!$modelItem) {
+
+    //         DB::rollBack();
+
+    //         return response()->json([
+
+    //           'status'  => false,
+    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //           'message' => 'Registro não encontrado para sincronizar os relacionamentos.'
+
+    //         ], 404);
+
+    //       }
+
+
+    //       foreach($syncRelationships as $syncRelationship) {
+
+    //         $relationshipName = $syncRelationship['relationship'];
+    //         $fieldName        = $syncRelationship['field'];
+
+
+    //         if(!method_exists($modelItem, $relationshipName)) {
+
+    //           continue;
+
+    //         }
+
+
+    //         $ids = $request->input($fieldName, []);
+
+
+    //         if($ids === null || $ids === '') {
+
+    //           $ids = [];
+
+    //         }
+
+
+    //         if(!is_array($ids)) {
+
+    //           $ids = [$ids];
+
+    //         }
+
+
+    //         $ids = array_values(array_filter($ids, function($value) {
+
+    //           return $value !== null && $value !== '';
+
+    //         }));
+
+
+    //         $ids = array_map(function($value) {
+
+    //           return (int) $value;
+
+    //         }, $ids);
+
+
+    //         $modelItem->{$relationshipName}()->sync($ids);
+
+    //       }
+
+    //     }
+
+
+    //     DB::commit();
+
+
+    //     return response()->json([
+
+    //       'status'  => true,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
+    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
+
+    //     ]);
+
+
+    //   } catch(\Throwable $e) {
+
+    //     DB::rollBack();
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //       'message' => $e->getMessage()
+
+    //     ], 500);
+
+    //   }
+
+
+    // }
+
+    // public function updateData(Request $request, $shortcodeParams = []) {
+
+
+    //   $slug = $request->route('pageSlug');
+
+    //   $routeName = str_replace('page-', '', $slug);
+
+    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+
+    //   $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
+
+    //   if(!is_array($shortcodeParams)) {
+
+    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+
+    //   }
+
+
+    //   $table = ( ( isset($shortcodeParams['table']) ) ? $shortcodeParams['table'] : ( ($atributes['table']) ? $atributes['table'] : null ) );
+    //   $index = ( ( isset($shortcodeParams['index']) ) ? $shortcodeParams['index'] : ( ($atributes['index']) ? $atributes['index'] : null ) );
+    //   $id = $request->input($atributes['index']) ?? null;
+    //   // $id    = ( ($request->route('id')) ? $request->route('id') : ( ($request->get('id')) ? $request->get('id') : ( ($request->input($atributes['index'])) ? $request->input($atributes['index']) : null ) ) );
+    //   // $table = $shortcodeParams['table'] ?? null;
+    //   // $index = $shortcodeParams['index'] ?? null;
+    //   // $id    = $request->route('id') ?? $request->get('id') ?? null;
+
+
+    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Tabela inválida.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'message' => 'Índice inválido.'
+
+    //     ], 400);
+
+    //   }
+
+
+    //   if($id === null || $id === '') {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('ID não informado.'),
+    //       'data' => $request->all()
+
+    //     ], 400);
+
+    //   }
+
+
+    //   $formID = $request->input('automatorFormID');
+    //   $data   = $request->except([
+
+    //     '_token',
+    //     '_method',
+    //     'automatorFormID',
+    //     'id'
+
+    //   ]);
+
+
+    //   $updateData = [];
+
+
+    //   foreach($data as $field => $value) {
+
+    //     if(Schema::hasColumn($table, $field) && $field != $index) {
+
+    //       $updateData[$field] = $value;
+
+    //     }
+
+    //   }
+
+
+    //   if(count($updateData) <= 0) {
+
+    //     return response()->json([
+
+    //       'status'  => false,
+    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Nenhuma informação válida foi enviada.')
+
+    //     ], 400);
+
+    //   }
+
+
+    //   // Validação de colunas únicas para updateData
+    //   $uniqueColumns = $this->getUniqueColumns($table);
+    //   foreach ($uniqueColumns as $column) {
+    //     if (isset($updateData[$column])) {
+    //       $query = DB::table($table)->where($column, $updateData[$column]);
+    //       // Excluir o registro atual da validação
+    //       $query->where($index, '!=', $id);
+    //       if ($query->exists()) {
+    //         return response()->json([
+    //           'status'  => false,
+    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+    //           'message' => SysAutomator::SysAutomatorGetTranslateWord('O valor para o campo') . " '" . self::getAutomatorFormFieldNameByFormID($formID, $column) . "' " . SysAutomator::SysAutomatorGetTranslateWord('já existe em outro registro.')
+    //         ], 400);
+    //       }
+    //     }
+    //   }
+
+    //   DB::table($table)->where($index, $id)->update($updateData);
+
+
+    //   return response()->json([
+
+    //     'status'  => true,
+    //     'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
+    //     'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
+
+    //   ]);
+
+
+    // }
 
 
 

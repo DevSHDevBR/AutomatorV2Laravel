@@ -13,10 +13,10 @@
 
     <!-- Scripts -->
     
-    <script src="{{ asset('assets/vendor/jquery/jquery-3.7.1.min.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-inputmask/jquery.inputmask.min.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-validate/jquery.validate.min.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery/Sortable.min.js') }}"></script>
+    <script data-automator-editor-asset="jquery" src="{{ asset('assets/vendor/jquery/jquery-3.7.1.min.js') }}"></script>
+    <script data-automator-editor-asset="mask" src="{{ asset('assets/vendor/jquery-inputmask/jquery.inputmask.min.js') }}"></script>
+    <script data-automator-editor-asset="validate" src="{{ asset('assets/vendor/jquery-validate/jquery.validate.min.js') }}"></script>
+    <script data-automator-editor-asset="sortable" src="{{ asset('assets/vendor/jquery/Sortable.min.js') }}"></script>
     <script src="{{ asset('assets/system/painel-scripts.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
 
     <script>
@@ -34,10 +34,12 @@
 
     <script src="{{ asset('assets/system/painel-restrict-scripts.js') }}" type="text/javascript"></script>
     <script src="{{ asset('assets/system/automator-page-editor-script.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('assets/system/automator-form-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     
 
     <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/all.min.css') }}">
+    <link data-automator-editor-asset="fontawesome" rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/all.min.css') }}" />
+    <link data-automator-editor-asset="bootstrap" data-automator-editor-href="{{ asset('assets/system/bootstrap.min.css') }}" hidden />
     <link rel="stylesheet" href="{{ asset('assets/system/painel-style.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/system/painel-restrict-style.css') }}">
 

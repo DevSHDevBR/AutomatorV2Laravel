@@ -945,7 +945,7 @@
                     'class'   => 'btn-warning text-white',
                     'icon'    => 'lock',
                     'text'    => 'Permissões do Tipo de usuário',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões do Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões do Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
 
                   ],
@@ -1113,7 +1113,8 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => 'Novo Usuário',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ");",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ");",
 
                     ]
 
@@ -1133,7 +1134,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => 'Editar Usuário',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-edit') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
 
                   ],
@@ -1710,7 +1711,9 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => 'Novo Formulário',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ");",
+                      'onclick' => "AutomatorCreateViewModal( { view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'store'; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } } );",
+                      // 'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, beforeShow: function(response, modalEl, modal, recordData) { SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData) { SysAutomatorInitFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } } );",
+                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ");",
 
                     ]
 
@@ -1730,7 +1733,41 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => 'Editar Formulário',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorCreateViewModal(
+                      {
+                        view: 'system-form-editor',
+                        formID: '{id}'
+                      },
+                      {
+                        size: 'fullscreen',
+                        backdrop: true,
+                        keyboard: false,
+                        scrollable: false,
+                        keepLoaderUntilCallback: true,
+
+                        callback: function(response, modalEl, modal, recordData) {
+                          response.acao = 'edit';
+                          response.formID = '{id}';
+
+                          SysAutomatorConfigFormEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+                        },
+
+                        afterHideOn: function(response, modalEl, modal, recordData) {
+                          SysAutomatorDestroyFormEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+                        }
+                      }
+                    );",
+                    // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
 
                   ],

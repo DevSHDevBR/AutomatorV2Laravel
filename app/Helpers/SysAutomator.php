@@ -666,7 +666,6 @@
     }
 
 
-
     public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
 
 
@@ -691,6 +690,9 @@
       }
 
 
+      $content = preg_replace('/<code>\s*(\[[^\]]+\])\s*<\/code>/i', '$1', $content);
+
+
       $shortcodes = SysShortcode::get();
 
 
@@ -701,13 +703,189 @@
       }
 
 
+      $shortcodesByCode = [];
+
+
+      foreach($shortcodes as $shortcodeConfig) {
+
+        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+
+        if($shortcodeCode == '') {
+
+          continue;
+
+        }
+
+        $shortcodesByCode[$shortcodeCode] = $shortcodeConfig;
+
+      }
+
+
+      $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route) {
+
+
+        $paramsRules = [];
+
+        $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
+
+
+        if($paramsJson != '') {
+
+          $decodedParams = json_decode($paramsJson, true);
+
+          if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
+
+            $paramsRules = $decodedParams;
+
+          }
+
+        }
+
+
+        if(count($paramsRules) >= 1) {
+
+          foreach($paramsRules as $paramName => $paramRule) {
+
+            $required = false;
+
+
+            if($paramRule === true) {
+
+              $required = true;
+
+            } elseif(is_array($paramRule) && isset($paramRule['required']) && $paramRule['required'] === true) {
+
+              $required = true;
+
+            }
+
+
+            if($required === true) {
+
+              if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
+
+                return $originalShortcode;
+
+              }
+
+            }
+
+          }
+
+        }
+
+
+        $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
+        $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
+
+
+        $class = self::SysAutomatorNormalizeShortcodeClass($class);
+
+
+        if(!$class || !$method) {
+
+          return $originalShortcode;
+
+        }
+
+
+        if(!method_exists($class, $method)) {
+
+          return $originalShortcode;
+
+        }
+
+
+        try {
+
+          $request = request();
+
+
+          $request->attributes->set('automator_shortcode_code', $shortcodeConfig->tbl_sys_shortcode_code);
+          $request->attributes->set('automator_shortcode_params', $attributes);
+          $request->attributes->set('automator_shortcode_vars', $vars);
+          $request->attributes->set('automator_shortcode_route', $route);
+          $request->attributes->set('automator_shortcode_original', $originalShortcode);
+
+
+          foreach($attributes as $attributeKey => $attributeValue) {
+
+            if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
+
+              $request->attributes->set($attributeKey, $attributeValue);
+
+            }
+
+          }
+
+
+          $object = app($class);
+
+
+          $renderedContent = call_user_func(
+
+            [$object, $method],
+            $request,
+            $attributes,
+            $vars,
+            $route,
+            $originalShortcode
+
+          );
+
+
+          if($renderedContent instanceof \Illuminate\Contracts\View\View) {
+
+            return $renderedContent->render();
+
+          }
+
+
+          if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
+
+            return $renderedContent->getContent();
+
+          }
+
+
+          if($renderedContent instanceof \Illuminate\Http\Response) {
+
+            return $renderedContent->getContent();
+
+          }
+
+
+          if(is_array($renderedContent)) {
+
+            return $renderedContent['html'] ?? json_encode($renderedContent);
+
+          }
+
+
+          if($renderedContent === null) {
+
+            return '';
+
+          }
+
+
+          return (string) $renderedContent;
+
+
+        } catch(\Throwable $e) {
+
+          return $originalShortcode;
+
+        }
+
+
+      };
+
+
       foreach($shortcodes as $shortcodeConfig) {
 
 
-        $shortcodeCode = $shortcodeConfig->tbl_sys_shortcode_code ?? '';
-
-        $shortcodeCode = trim($shortcodeCode);
-
+        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
         if($shortcodeCode == '') {
 
@@ -730,7 +908,7 @@
         $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
 
 
-        $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $vars, $route) {
+        $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $shortcodesByCode, $renderShortcodeConfig) {
 
 
           $originalShortcode = $matches[0] ?? '';
@@ -744,213 +922,29 @@
 
           $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
 
-
-          /*
-          |--------------------------------------------------------------------------
-          | Validação dos parâmetros do shortcode
-          |--------------------------------------------------------------------------
-          |
-          | tbl_sys_shortcode_params:
-          | {
-          |   "function": true,
-          |   "name": false
-          | }
-          |
-          | Quando o valor for true, o atributo é obrigatório.
-          | Se não for enviado, o shortcode original volta como texto.
-          |
-          */
-
-          $paramsRules = [];
-
-          $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
+          $currentShortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
 
-          if($paramsJson != '') {
+          if($currentShortcodeCode == 'automator') {
 
-            $decodedParams = json_decode($paramsJson, true);
+            $dynamicFunction = trim($attributes['function'] ?? '');
 
-            if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
 
-              $paramsRules = $decodedParams;
+            if($dynamicFunction != '' && isset($shortcodesByCode[$dynamicFunction])) {
+
+              $targetAttributes = $attributes;
+
+              unset($targetAttributes['function']);
+
+
+              return $renderShortcodeConfig($shortcodesByCode[$dynamicFunction], $targetAttributes, $originalShortcode);
 
             }
 
           }
 
 
-          if(count($paramsRules) >= 1) {
-
-            foreach($paramsRules as $paramName => $required) {
-
-              if($required === true) {
-
-                if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
-
-                  return $originalShortcode;
-
-                }
-
-              }
-
-            }
-
-          }
-
-
-          /*
-          |--------------------------------------------------------------------------
-          | Localiza classe e método cadastrados no banco
-          |--------------------------------------------------------------------------
-          */
-
-          $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
-          $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
-
-
-          $class = self::SysAutomatorNormalizeShortcodeClass($class);
-
-
-          if(!$class || !$method) {
-
-            return $originalShortcode;
-
-          }
-
-
-          if(!method_exists($class, $method)) {
-
-            return $originalShortcode;
-
-          }
-
-
-          try {
-
-
-            $request = request();
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Envia o Request junto com os parâmetros do shortcode
-            |--------------------------------------------------------------------------
-            |
-            | Assim o controller consegue ler:
-            |
-            | $request->attributes->get('automator_shortcode_params')
-            | $request->attributes->get('automator_shortcode_route')
-            | $request->attributes->get('automator_shortcode_vars')
-            |
-            */
-
-            $request->attributes->set('automator_shortcode_code', $shortcodeConfig->tbl_sys_shortcode_code);
-            $request->attributes->set('automator_shortcode_params', $attributes);
-            $request->attributes->set('automator_shortcode_vars', $vars);
-            $request->attributes->set('automator_shortcode_route', $route);
-            $request->attributes->set('automator_shortcode_original', $originalShortcode);
-
-
-            foreach($attributes as $attributeKey => $attributeValue) {
-
-              if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
-
-                $request->attributes->set($attributeKey, $attributeValue);
-
-              }
-
-            }
-
-
-            $object = app($class);
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Chamada padrão
-            |--------------------------------------------------------------------------
-            |
-            | O método recebe:
-            | - Request
-            | - Parâmetros do shortcode
-            | - Variáveis da rota/view
-            | - Dados da rota
-            | - Shortcode original
-            |
-            | Exemplo:
-            | getFunction(Request $request, $shortcodeParams = [])
-            |
-            */
-
-            $renderedContent = call_user_func(
-
-              [$object, $method],
-              $request,
-              $attributes,
-              $vars,
-              $route,
-              $originalShortcode
-
-            );
-
-
-            if($renderedContent instanceof \Illuminate\Contracts\View\View) {
-
-              return $renderedContent->render();
-
-            }
-
-
-            if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
-
-              return $renderedContent->getContent();
-
-            }
-
-
-            if($renderedContent instanceof \Illuminate\Http\Response) {
-
-              return $renderedContent->getContent();
-
-            }
-
-
-            if(is_array($renderedContent)) {
-
-              if(isset($renderedContent['html'])) {
-
-                return $renderedContent['html'];
-
-              }
-
-              return json_encode($renderedContent);
-
-            }
-
-
-            if($renderedContent === null) {
-
-              return '';
-
-            }
-
-
-            return (string) $renderedContent;
-
-
-          } catch(\Throwable $e) {
-
-
-            /*
-            |--------------------------------------------------------------------------
-            | Em caso de erro, mantém o shortcode como texto
-            |--------------------------------------------------------------------------
-            */
-
-            return $originalShortcode;
-
-
-          }
+          return $renderShortcodeConfig($shortcodeConfig, $attributes, $originalShortcode);
 
 
         }, $content);
@@ -963,6 +957,302 @@
 
 
     }
+    // public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
+
+
+    //   if($content === null || $content === '') {
+
+    //     return '';
+
+    //   }
+
+
+    //   if(!is_array($vars)) {
+
+    //     $vars = [];
+
+    //   }
+
+
+    //   if(!is_array($route)) {
+
+    //     $route = [];
+
+    //   }
+
+
+    //   $shortcodes = SysShortcode::get();
+
+
+    //   if($shortcodes->count() <= 0) {
+
+    //     return $content;
+
+    //   }
+
+
+    //   foreach($shortcodes as $shortcodeConfig) {
+
+
+    //     $shortcodeCode = $shortcodeConfig->tbl_sys_shortcode_code ?? '';
+
+    //     $shortcodeCode = trim($shortcodeCode);
+
+
+    //     if($shortcodeCode == '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     $shortcodeCode = trim($shortcodeCode, '[]');
+    //     $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
+
+
+    //     if($shortcodeCode == '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
+
+
+    //     $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $vars, $route) {
+
+
+    //       $originalShortcode = $matches[0] ?? '';
+
+    //       if($originalShortcode == '') {
+
+    //         return '';
+
+    //       }
+
+
+    //       $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Validação dos parâmetros do shortcode
+    //       |--------------------------------------------------------------------------
+    //       |
+    //       | tbl_sys_shortcode_params:
+    //       | {
+    //       |   "function": true,
+    //       |   "name": false
+    //       | }
+    //       |
+    //       | Quando o valor for true, o atributo é obrigatório.
+    //       | Se não for enviado, o shortcode original volta como texto.
+    //       |
+    //       */
+
+    //       $paramsRules = [];
+
+    //       $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
+
+
+    //       if($paramsJson != '') {
+
+    //         $decodedParams = json_decode($paramsJson, true);
+
+    //         if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
+
+    //           $paramsRules = $decodedParams;
+
+    //         }
+
+    //       }
+
+
+    //       if(count($paramsRules) >= 1) {
+
+    //         foreach($paramsRules as $paramName => $required) {
+
+    //           if($required === true) {
+
+    //             if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
+
+    //               return $originalShortcode;
+
+    //             }
+
+    //           }
+
+    //         }
+
+    //       }
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Localiza classe e método cadastrados no banco
+    //       |--------------------------------------------------------------------------
+    //       */
+
+    //       $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
+    //       $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
+
+
+    //       $class = self::SysAutomatorNormalizeShortcodeClass($class);
+
+
+    //       if(!$class || !$method) {
+
+    //         return $originalShortcode;
+
+    //       }
+
+
+    //       if(!method_exists($class, $method)) {
+
+    //         return $originalShortcode;
+
+    //       }
+
+
+    //       try {
+
+
+    //         $request = request();
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Envia o Request junto com os parâmetros do shortcode
+    //         |--------------------------------------------------------------------------
+    //         |
+    //         | Assim o controller consegue ler:
+    //         |
+    //         | $request->attributes->get('automator_shortcode_params')
+    //         | $request->attributes->get('automator_shortcode_route')
+    //         | $request->attributes->get('automator_shortcode_vars')
+    //         |
+    //         */
+
+    //         $request->attributes->set('automator_shortcode_code', $shortcodeConfig->tbl_sys_shortcode_code);
+    //         $request->attributes->set('automator_shortcode_params', $attributes);
+    //         $request->attributes->set('automator_shortcode_vars', $vars);
+    //         $request->attributes->set('automator_shortcode_route', $route);
+    //         $request->attributes->set('automator_shortcode_original', $originalShortcode);
+
+
+    //         foreach($attributes as $attributeKey => $attributeValue) {
+
+    //           if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
+
+    //             $request->attributes->set($attributeKey, $attributeValue);
+
+    //           }
+
+    //         }
+
+
+    //         $object = app($class);
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Chamada padrão
+    //         |--------------------------------------------------------------------------
+    //         |
+    //         | O método recebe:
+    //         | - Request
+    //         | - Parâmetros do shortcode
+    //         | - Variáveis da rota/view
+    //         | - Dados da rota
+    //         | - Shortcode original
+    //         |
+    //         | Exemplo:
+    //         | getFunction(Request $request, $shortcodeParams = [])
+    //         |
+    //         */
+
+    //         $renderedContent = call_user_func(
+
+    //           [$object, $method],
+    //           $request,
+    //           $attributes,
+    //           $vars,
+    //           $route,
+    //           $originalShortcode
+
+    //         );
+
+
+    //         if($renderedContent instanceof \Illuminate\Contracts\View\View) {
+
+    //           return $renderedContent->render();
+
+    //         }
+
+
+    //         if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
+
+    //           return $renderedContent->getContent();
+
+    //         }
+
+
+    //         if($renderedContent instanceof \Illuminate\Http\Response) {
+
+    //           return $renderedContent->getContent();
+
+    //         }
+
+
+    //         if(is_array($renderedContent)) {
+
+    //           if(isset($renderedContent['html'])) {
+
+    //             return $renderedContent['html'];
+
+    //           }
+
+    //           return json_encode($renderedContent);
+
+    //         }
+
+
+    //         if($renderedContent === null) {
+
+    //           return '';
+
+    //         }
+
+
+    //         return (string) $renderedContent;
+
+
+    //       } catch(\Throwable $e) {
+
+
+    //         /*
+    //         |--------------------------------------------------------------------------
+    //         | Em caso de erro, mantém o shortcode como texto
+    //         |--------------------------------------------------------------------------
+    //         */
+
+    //         return $originalShortcode;
+
+
+    //       }
+
+
+    //     }, $content);
+
+
+    //   }
+
+
+    //   return $content;
+
+
+    // }
 
 
 
@@ -1504,86 +1794,7 @@
     }
 
 
-
-    public static function SysAutomatoRenderRouteContent( $slug, $vars = [], $area = 'restrict' ) {
-
-
-      $routeName = str_replace('page-', '', $slug);
-
-      $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-
-      if($route !== null) {
-
-        $route = $route->toArray();
-        $area  = $route['tbl_sys_route_area'];
-
-        if(count($vars) >= 1) {
-
-          $vars2 = [];
-          foreach ($vars as $varKey => $varValue) {
-            
-            if(!array_key_exists($varKey, $vars2)) {
-
-              // $vars2[$varKey] = $varValue;
-              $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
-
-            }
-
-          }
-
-          $vars = $vars2;
-
-        }
-
-        $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
-
-      } else {
-
-        $route = [
-
-          'tbl_sys_route_name'  => 'error-404',
-          'tbl_sys_route_title' => 'Erro 404',
-          'tbl_sys_route_area'  => 'public'
-        
-        ];
-
-        $conteudo = view('pages.404', [
-
-          'pageName' => $route['tbl_sys_route_title']
-
-        ])->render();
-        
-      }
-
-
-      if($route['tbl_sys_route_area'] == 'restrict') {
-
-        return view('layouts.painel-restrict', [
-
-          'content' => $conteudo,
-          'title'   => $route['tbl_sys_route_title'],
-          'page'    => $route['tbl_sys_route_name']
-          
-        ]);
-
-      } else {
-
-        return view('layouts.painel-public', [
-
-          'content' => $conteudo,
-          'title'   => $route['tbl_sys_route_title'],
-          'page'    => $route['tbl_sys_route_name']
-
-        ]);
-
-      }
-
-
-    }
-
-
-    public static function SysAutomatoRenderRouteContent2( $slug, $vars = [], $area = 'restrict' ) {
+    public static function SysAutomatoRenderRouteContent($slug, $vars = [], $area = 'restrict') {
 
 
       $routeName = str_replace('page-', '', $slug);
@@ -1594,17 +1805,16 @@
       if($route !== null) {
 
         $route = $route->toArray();
-        $area  = $route['tbl_sys_route_area'];
 
         if(count($vars) >= 1) {
 
           $vars2 = [];
-          foreach ($vars as $varKey => $varValue) {
-            
+
+          foreach($vars as $varKey => $varValue) {
+
             if(!array_key_exists($varKey, $vars2)) {
 
-              // $vars2[$varKey] = $varValue;
-              $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
+              $vars2[$varKey] = ((is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route['tbl_sys_route_name'], $varValue) : $varValue);
 
             }
 
@@ -1614,10 +1824,9 @@
 
         }
 
-        // var_dump($route['tbl_sys_route_content']);
 
-        // $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
-        $conteudo = self::SysAutomatorRenderSystemPageWithShortcode($route['tbl_sys_route_content'], $vars);
+        $conteudo = self::SysAutomatorRenderDynamicShortcodes($route['tbl_sys_route_content'], $vars, $route);
+
 
       } else {
 
@@ -1626,15 +1835,16 @@
           'tbl_sys_route_name'  => 'error-404',
           'tbl_sys_route_title' => 'Erro 404',
           'tbl_sys_route_area'  => 'public'
-        
+
         ];
+
 
         $conteudo = view('pages.404', [
 
           'pageName' => $route['tbl_sys_route_title']
 
         ])->render();
-        
+
       }
 
 
@@ -1645,23 +1855,185 @@
           'content' => $conteudo,
           'title'   => $route['tbl_sys_route_title'],
           'page'    => $route['tbl_sys_route_name']
-          
-        ]);
-
-      } else {
-
-        return view('layouts.painel-public', [
-
-          'content' => $conteudo,
-          'title'   => $route['tbl_sys_route_title'],
-          'page'    => $route['tbl_sys_route_name']
 
         ]);
 
       }
 
 
+      return view('layouts.painel-public', [
+
+        'content' => $conteudo,
+        'title'   => $route['tbl_sys_route_title'],
+        'page'    => $route['tbl_sys_route_name']
+
+      ]);
+
+
     }
+    // public static function SysAutomatoRenderRouteContent( $slug, $vars = [], $area = 'restrict' ) {
+
+
+    //   $routeName = str_replace('page-', '', $slug);
+
+    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+
+
+    //   if($route !== null) {
+
+    //     $route = $route->toArray();
+    //     $area  = $route['tbl_sys_route_area'];
+
+    //     if(count($vars) >= 1) {
+
+    //       $vars2 = [];
+    //       foreach ($vars as $varKey => $varValue) {
+            
+    //         if(!array_key_exists($varKey, $vars2)) {
+
+    //           // $vars2[$varKey] = $varValue;
+    //           $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
+
+    //         }
+
+    //       }
+
+    //       $vars = $vars2;
+
+    //     }
+
+    //     $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
+
+    //   } else {
+
+    //     $route = [
+
+    //       'tbl_sys_route_name'  => 'error-404',
+    //       'tbl_sys_route_title' => 'Erro 404',
+    //       'tbl_sys_route_area'  => 'public'
+        
+    //     ];
+
+    //     $conteudo = view('pages.404', [
+
+    //       'pageName' => $route['tbl_sys_route_title']
+
+    //     ])->render();
+        
+    //   }
+
+
+    //   if($route['tbl_sys_route_area'] == 'restrict') {
+
+    //     return view('layouts.painel-restrict', [
+
+    //       'content' => $conteudo,
+    //       'title'   => $route['tbl_sys_route_title'],
+    //       'page'    => $route['tbl_sys_route_name']
+          
+    //     ]);
+
+    //   } else {
+
+    //     return view('layouts.painel-public', [
+
+    //       'content' => $conteudo,
+    //       'title'   => $route['tbl_sys_route_title'],
+    //       'page'    => $route['tbl_sys_route_name']
+
+    //     ]);
+
+    //   }
+
+
+    // }
+
+    public static function SysAutomatoRenderRouteContent2($slug, $vars = [], $area = 'restrict') {
+
+
+      return self::SysAutomatoRenderRouteContent($slug, $vars, $area);
+
+
+    }
+    // public static function SysAutomatoRenderRouteContent2( $slug, $vars = [], $area = 'restrict' ) {
+
+
+    //   $routeName = str_replace('page-', '', $slug);
+
+    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+
+
+    //   if($route !== null) {
+
+    //     $route = $route->toArray();
+    //     $area  = $route['tbl_sys_route_area'];
+
+    //     if(count($vars) >= 1) {
+
+    //       $vars2 = [];
+    //       foreach ($vars as $varKey => $varValue) {
+            
+    //         if(!array_key_exists($varKey, $vars2)) {
+
+    //           // $vars2[$varKey] = $varValue;
+    //           $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
+
+    //         }
+
+    //       }
+
+    //       $vars = $vars2;
+
+    //     }
+
+    //     // var_dump($route['tbl_sys_route_content']);
+
+    //     // $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
+    //     $conteudo = self::SysAutomatorRenderSystemPageWithShortcode($route['tbl_sys_route_content'], $vars);
+
+    //   } else {
+
+    //     $route = [
+
+    //       'tbl_sys_route_name'  => 'error-404',
+    //       'tbl_sys_route_title' => 'Erro 404',
+    //       'tbl_sys_route_area'  => 'public'
+        
+    //     ];
+
+    //     $conteudo = view('pages.404', [
+
+    //       'pageName' => $route['tbl_sys_route_title']
+
+    //     ])->render();
+        
+    //   }
+
+
+    //   if($route['tbl_sys_route_area'] == 'restrict') {
+
+    //     return view('layouts.painel-restrict', [
+
+    //       'content' => $conteudo,
+    //       'title'   => $route['tbl_sys_route_title'],
+    //       'page'    => $route['tbl_sys_route_name']
+          
+    //     ]);
+
+    //   } else {
+
+    //     return view('layouts.painel-public', [
+
+    //       'content' => $conteudo,
+    //       'title'   => $route['tbl_sys_route_title'],
+    //       'page'    => $route['tbl_sys_route_name']
+
+    //     ]);
+
+    //   }
+
+
+    // }
 
 
 
@@ -3717,6 +4089,56 @@
 
 
     // }
+
+
+    public static function SysAutomatorRenderFormBuilderFields() {
+
+
+      $fieldTypes = SysFieldType::where('tbl_sys_field_type_layout', false)
+        ->orderBy('tbl_sys_field_type_group_ID', 'ASC')
+        ->orderBy('tbl_sys_field_type_ID', 'ASC')
+        ->get();
+
+
+      $groupIds = $fieldTypes
+        ->pluck('tbl_sys_field_type_group_ID')
+        ->unique()
+        ->values()
+        ->toArray();
+
+
+      $groups = SysFieldTypesGroup::whereIn(
+          'tbl_sys_field_type_group_ID',
+          $groupIds
+        )
+        ->orderBy('tbl_sys_field_type_group_ordem', 'ASC')
+        ->get();
+
+
+      $fieldsByGroup = $fieldTypes->groupBy('tbl_sys_field_type_group_ID');
+
+
+      return $groups
+        ->map(function($group) use ($fieldsByGroup) {
+
+          return [
+
+            'tbl_sys_field_type_group_ID'     => $group->tbl_sys_field_type_group_ID,
+            'tbl_sys_field_type_group_name'   => $group->tbl_sys_field_type_group_name,
+            'tbl_sys_field_type_group_title'  => $group->tbl_sys_field_type_group_title,
+
+            'tbl_sys_field_type_group_fields' => isset($fieldsByGroup[$group->tbl_sys_field_type_group_ID])
+              ? $fieldsByGroup[$group->tbl_sys_field_type_group_ID]->values()->toArray()
+              : []
+
+          ];
+
+        })
+        ->values()
+        ->toArray();
+
+
+    }
 
 
 

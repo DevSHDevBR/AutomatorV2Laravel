@@ -2173,6 +2173,96 @@ function AutomatorCreateViewModal(payload, options) {
   |--------------------------------------------------------------------------
   */
 
+  // function _destroyModal(modalEl, resetActionStatus, callbackDestroy) {
+
+  //   if(resetActionStatus === undefined) {
+  //     resetActionStatus = true;
+  //   }
+
+  //   if(!modalEl) {
+
+  //     if(resetActionStatus) {
+  //       AutomatorSetActionStatus(false);
+  //     }
+
+  //     if(typeof callbackDestroy === 'function') {
+  //       callbackDestroy();
+  //     }
+
+  //     return false;
+
+  //   }
+
+  //   var formEl = modalEl.querySelector('form');
+
+  //   if(formEl && formEl.getAttribute('data-automator-form-changed') == 'true') {
+
+  //     var confirmClose = confirm('Existem alterações não salvas. Deseja realmente fechar este formulário?');
+
+  //     if(confirmClose == false) {
+  //       return false;
+  //     }
+
+  //   }
+
+  //   var modalInstance = bootstrap.Modal.getInstance(modalEl);
+
+  //   modalEl.addEventListener('hidden.bs.modal', function() {
+
+  //     if(modalInstance) {
+  //       modalInstance.dispose();
+  //     }
+
+  //     modalEl.remove();
+
+  //     if(
+  //       window.AutomatorPaginationCurrentModalView &&
+  //       window.AutomatorPaginationCurrentModalView.modalEl &&
+  //       window.AutomatorPaginationCurrentModalView.modalEl.id == modalEl.id
+  //     ) {
+  //       window.AutomatorPaginationCurrentModalView = null;
+  //     }
+
+  //     if(document.querySelectorAll('.modal.show').length <= 0) {
+
+  //       document.body.classList.remove('modal-open');
+
+  //       document.querySelectorAll('.modal-backdrop').forEach(function(backdrop) {
+  //         backdrop.remove();
+  //       });
+
+  //     }
+
+  //     $(window).off('beforeunload.AutomatorModalViewChanged');
+
+  //     if(resetActionStatus) {
+  //       AutomatorSetActionStatus(false);
+  //     }
+
+  //     if(typeof callbackDestroy === 'function') {
+  //       callbackDestroy();
+  //     }
+
+  //   }, { once: true });
+
+  //   if(modalInstance) {
+  //     modalInstance.hide();
+  //   } else {
+
+  //     modalEl.remove();
+
+  //     $(window).off('beforeunload.AutomatorModalViewChanged');
+
+  //     if(resetActionStatus) {
+  //       AutomatorSetActionStatus(false);
+  //     }
+
+  //   }
+
+  //   return true;
+
+  // }
+
   function _destroyModal(modalEl, resetActionStatus, callbackDestroy) {
 
     if(resetActionStatus === undefined) {
@@ -2194,6 +2284,7 @@ function AutomatorCreateViewModal(payload, options) {
     }
 
     var formEl = modalEl.querySelector('form');
+    var discardConfirmed = false;
 
     if(formEl && formEl.getAttribute('data-automator-form-changed') == 'true') {
 
@@ -2201,6 +2292,24 @@ function AutomatorCreateViewModal(payload, options) {
 
       if(confirmClose == false) {
         return false;
+      }
+
+      discardConfirmed = true;
+
+      formEl.setAttribute('data-automator-form-changed', 'false');
+
+      if(typeof AutomatorFormSerializeCurrentState === 'function') {
+        formEl.setAttribute('data-automator-initial-state', AutomatorFormSerializeCurrentState(formEl));
+      }
+
+      $(window).off('beforeunload.AutomatorModalFormChanged');
+      $(window).off('beforeunload.AutomatorModalViewChanged');
+
+      if(
+        window.SysAutomatorEditor &&
+        typeof window.SysAutomatorEditor.discardEditorUnsavedChanges === 'function'
+      ) {
+        window.SysAutomatorEditor.discardEditorUnsavedChanges();
       }
 
     }
@@ -2233,7 +2342,10 @@ function AutomatorCreateViewModal(payload, options) {
 
       }
 
-      $(window).off('beforeunload.AutomatorModalViewChanged');
+      if(discardConfirmed === true) {
+        $(window).off('beforeunload.AutomatorModalFormChanged');
+        $(window).off('beforeunload.AutomatorModalViewChanged');
+      }
 
       if(resetActionStatus) {
         AutomatorSetActionStatus(false);
@@ -2251,7 +2363,10 @@ function AutomatorCreateViewModal(payload, options) {
 
       modalEl.remove();
 
-      $(window).off('beforeunload.AutomatorModalViewChanged');
+      if(discardConfirmed === true) {
+        $(window).off('beforeunload.AutomatorModalFormChanged');
+        $(window).off('beforeunload.AutomatorModalViewChanged');
+      }
 
       if(resetActionStatus) {
         AutomatorSetActionStatus(false);
@@ -3206,13 +3321,42 @@ function SysAutomatorInitPageEditor(
 
 
 function SysAutomatorDestroyPageEditor(
-    response,
-    modalEl,
-    modal,
-    recordData
+  response,
+  modalEl,
+  modal,
+  recordData
 ) {
 
-    SysAutomatorEditor.destroy();
+  if (
+    typeof window.SysAutomatorEditor === 'undefined' ||
+    !window.SysAutomatorEditor
+  ) {
+    return true;
+  }
+
+  try {
+
+    const editor =
+      typeof SysAutomatorEditor.getEditor === 'function'
+        ? SysAutomatorEditor.getEditor()
+        : null;
+
+    if (
+      editor &&
+      editor.Canvas &&
+      typeof editor.Canvas.getFrameEl === 'function' &&
+      editor.Canvas.getFrameEl()
+    ) {
+      SysAutomatorEditor.destroy();
+    }
+
+  } catch (e) {
+
+    console.warn('Editor de páginas já estava destruído ou incompleto.', e);
+
+  }
+
+  return true;
 
 }
 
