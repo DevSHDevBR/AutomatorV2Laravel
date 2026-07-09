@@ -690,6 +690,12 @@
       }
 
 
+      /*
+      |--------------------------------------------------------------------------
+      | Remove <code>...</code> apenas quando envolve um shortcode
+      |--------------------------------------------------------------------------
+      */
+
       $content = preg_replace('/<code>\s*(\[[^\]]+\])\s*<\/code>/i', '$1', $content);
 
 
@@ -710,26 +716,68 @@
 
         $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
-        if($shortcodeCode == '') {
+        if($shortcodeCode === '') {
 
           continue;
 
         }
+
 
         $shortcodesByCode[$shortcodeCode] = $shortcodeConfig;
 
       }
 
 
-      $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route) {
+      $resolveVars = function($attributes) use ($vars) {
 
+
+        $resolvedVars = $vars;
+
+
+        if(isset($attributes['vars']) && trim($attributes['vars']) !== '') {
+
+          $varsName = trim($attributes['vars']);
+
+          if(substr($varsName, 0, 1) === '$') {
+
+            $varsName = substr($varsName, 1);
+
+          }
+
+
+          if(isset($vars[$varsName]) && is_array($vars[$varsName])) {
+
+            $resolvedVars = $vars[$varsName];
+
+          }
+
+        }
+
+
+        if(!is_array($resolvedVars)) {
+
+          $resolvedVars = [];
+
+        }
+
+
+        return $resolvedVars;
+
+
+      };
+
+
+      $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route, $resolveVars) {
+
+
+        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
         $paramsRules = [];
 
         $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
 
 
-        if($paramsJson != '') {
+        if($paramsJson !== '') {
 
           $decodedParams = json_decode($paramsJson, true);
 
@@ -775,9 +823,96 @@
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidade direta: system-form
+        |--------------------------------------------------------------------------
+        */
+
+        if($shortcodeCode === 'system-form') {
+
+          $formName = $attributes['form'] ?? '';
+
+          if($formName === '') {
+
+            return '';
+
+          }
+
+
+          $formID = self::SysAutomatorGetFormIDByName($formName);
+
+
+          if($formID === null || $formID === '') {
+
+            return '';
+
+          }
+
+
+          $resolvedVars = $resolveVars($attributes);
+
+          $form = self::SysAutomatorRenderFormByID($formID, $resolvedVars);
+
+
+          if(is_array($form)) {
+
+            return $form['html'] ?? '';
+
+          }
+
+
+          if($form === null) {
+
+            return '';
+
+          }
+
+
+          return (string) $form;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Compatibilidade direta: system-pages
+        |--------------------------------------------------------------------------
+        */
+
+        if($shortcodeCode === 'system-pages') {
+
+          $view = $attributes['view'] ?? '';
+
+          if($view === '') {
+
+            return '';
+
+          }
+
+
+          if(!View::exists($view)) {
+
+            return '';
+
+          }
+
+
+          $resolvedVars = $resolveVars($attributes);
+
+          return view($view, $resolvedVars)->render();
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Execução padrão cadastrada em tbl_sys_shortcodes
+        |--------------------------------------------------------------------------
+        */
+
         $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
         $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
-
 
         $class = self::SysAutomatorNormalizeShortcodeClass($class);
 
@@ -801,7 +936,7 @@
           $request = request();
 
 
-          $request->attributes->set('automator_shortcode_code', $shortcodeConfig->tbl_sys_shortcode_code);
+          $request->attributes->set('automator_shortcode_code', $shortcodeCode);
           $request->attributes->set('automator_shortcode_params', $attributes);
           $request->attributes->set('automator_shortcode_vars', $vars);
           $request->attributes->set('automator_shortcode_route', $route);
@@ -884,10 +1019,9 @@
 
       foreach($shortcodes as $shortcodeConfig) {
 
-
         $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
-        if($shortcodeCode == '') {
+        if($shortcodeCode === '') {
 
           continue;
 
@@ -898,7 +1032,7 @@
         $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
 
 
-        if($shortcodeCode == '') {
+        if($shortcodeCode === '') {
 
           continue;
 
@@ -913,7 +1047,7 @@
 
           $originalShortcode = $matches[0] ?? '';
 
-          if($originalShortcode == '') {
+          if($originalShortcode === '') {
 
             return '';
 
@@ -925,19 +1059,38 @@
           $currentShortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
 
 
-          if($currentShortcodeCode == 'automator') {
+          /*
+          |--------------------------------------------------------------------------
+          | Novo suporte sem quebrar o antigo:
+          |
+          | [automator function="system-form" ...]
+          | [automator function="system-pages" ...]
+          |
+          | Se a function apontar para um shortcode cadastrado, executa esse shortcode.
+          | Se não apontar, mantém o fluxo antigo do AutomatorController@getFunction,
+          | preservando [automator function="pagination" ...].
+          |--------------------------------------------------------------------------
+          */
+
+          if($currentShortcodeCode === 'automator') {
 
             $dynamicFunction = trim($attributes['function'] ?? '');
 
 
-            if($dynamicFunction != '' && isset($shortcodesByCode[$dynamicFunction])) {
+            if($dynamicFunction !== '' && isset($shortcodesByCode[$dynamicFunction])) {
 
               $targetAttributes = $attributes;
 
               unset($targetAttributes['function']);
 
 
-              return $renderShortcodeConfig($shortcodesByCode[$dynamicFunction], $targetAttributes, $originalShortcode);
+              return $renderShortcodeConfig(
+
+                $shortcodesByCode[$dynamicFunction],
+                $targetAttributes,
+                $originalShortcode
+
+              );
 
             }
 
@@ -948,7 +1101,6 @@
 
 
         }, $content);
-
 
       }
 

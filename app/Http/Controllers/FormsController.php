@@ -876,5 +876,342 @@
     // }
 
 
+    public function storeForm(Request $request) {
+
+      return $this->saveFormEditorPayload($request, null);
+
+    }
+
+
+    public function updateForm(Request $request, $id = null) {
+
+      $formID = $id ?: $request->input('form.tbl_sys_form_ID');
+
+      return $this->saveFormEditorPayload($request, $formID);
+
+    }
+
+
+    private function saveFormEditorPayload(Request $request, $formID = null) {
+
+      try {
+
+        $payload = $request->all();
+
+        $formData = $payload['form'] ?? [];
+        $fieldsData = $payload['fields'] ?? [];
+
+        if(!is_array($formData)) {
+          $formData = [];
+        }
+
+        if(!is_array($fieldsData)) {
+          $fieldsData = [];
+        }
+
+        $isUpdate = ($formID !== null && $formID !== '' && $formID != 0);
+
+        if($isUpdate) {
+
+          $form = SysForm::where('tbl_sys_form_ID', $formID)->first();
+
+          if(!$form) {
+
+            return response()->json([
+              'result'  => false,
+              'status'  => false,
+              'title'   => 'Erro',
+              'message' => SysAutomator::SysAutomatorGetTranslateWord('Formulário não encontrado.'),
+              'data'    => [],
+            ], 404);
+
+          }
+
+          if((bool) $form->tbl_sys_form_locked === true && $this->currentUserIsDeveloper() !== true) {
+
+            return response()->json([
+              'result'  => false,
+              'status'  => false,
+              'title'   => 'Formulário bloqueado',
+              'message' => SysAutomator::SysAutomatorGetTranslateWord('Este formulário está bloqueado e não pode ser alterado.'),
+              'data'    => [],
+            ], 403);
+
+          }
+
+        } else {
+
+          $form = new SysForm();
+
+        }
+
+        if(empty($formData['tbl_sys_form_name'])) {
+
+          return response()->json([
+            'result'  => false,
+            'status'  => false,
+            'title'   => 'Validação',
+            'message' => SysAutomator::SysAutomatorGetTranslateWord('Informe o nome interno do formulário.'),
+            'data'    => [],
+          ], 422);
+
+        }
+
+        if(empty($formData['tbl_sys_form_title'])) {
+
+          return response()->json([
+            'result'  => false,
+            'status'  => false,
+            'title'   => 'Validação',
+            'message' => SysAutomator::SysAutomatorGetTranslateWord('Informe o título do formulário.'),
+            'data'    => [],
+          ], 422);
+
+        }
+
+        $duplicated = SysForm::where('tbl_sys_form_name', $formData['tbl_sys_form_name']);
+
+        if($isUpdate) {
+          $duplicated->where('tbl_sys_form_ID', '!=', $formID);
+        }
+
+        if($duplicated->exists()) {
+
+          return response()->json([
+            'result'  => false,
+            'status'  => false,
+            'title'   => 'Validação',
+            'message' => SysAutomator::SysAutomatorGetTranslateWord('Já existe um formulário com este nome interno.'),
+            'data'    => [],
+          ], 422);
+
+        }
+
+        DB::transaction(function() use ($form, $formData, $fieldsData, $isUpdate) {
+
+          $form->fill([
+            'tbl_sys_form_name'     => $formData['tbl_sys_form_name'] ?? '',
+            'tbl_sys_form_title'    => $formData['tbl_sys_form_title'] ?? '',
+            'tbl_sys_form_cancel'   => $formData['tbl_sys_form_cancel'] ?? 'Cancelar',
+            'tbl_sys_form_submit'   => $formData['tbl_sys_form_submit'] ?? 'Salvar',
+            'tbl_sys_form_method'   => $formData['tbl_sys_form_method'] ?? 'POST',
+            'tbl_sys_form_route'    => $formData['tbl_sys_form_route'] ?? '',
+            'tbl_sys_form_modal'    => $this->normalizeBooleanValue($formData['tbl_sys_form_modal'] ?? true),
+            'tbl_sys_form_admin'    => $this->normalizeBooleanValue($formData['tbl_sys_form_admin'] ?? true),
+            'tbl_sys_form_validate' => $this->normalizeBooleanValue($formData['tbl_sys_form_validate'] ?? false),
+            'tbl_sys_form_locked'   => $this->normalizeBooleanValue($formData['tbl_sys_form_locked'] ?? false),
+          ]);
+
+          $form->save();
+
+          $this->syncFormEditorAccess($form->tbl_sys_form_ID, $formData['form_access'] ?? []);
+
+          $this->syncFormEditorFields($form->tbl_sys_form_ID, $fieldsData);
+
+        });
+
+        return response()->json([
+          'result'  => true,
+          'status'  => true,
+          'title'   => 'Sucesso',
+          'message' => $isUpdate
+            ? SysAutomator::SysAutomatorGetTranslateWord('Formulário atualizado com sucesso.')
+            : SysAutomator::SysAutomatorGetTranslateWord('Formulário criado com sucesso.'),
+          'data'    => [
+            'form_id' => $form->tbl_sys_form_ID,
+          ],
+        ], 200);
+
+      } catch(\Throwable $e) {
+
+        return response()->json([
+          'result'  => false,
+          'status'  => false,
+          'title'   => 'Erro',
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('Não foi possível salvar o formulário.'),
+          'error'   => $e->getMessage(),
+          'data'    => [],
+        ], 500);
+
+      }
+
+    }
+
+
+    private function syncFormEditorFields($formID, array $fieldsData = []) {
+
+      $receivedIDs = [];
+
+      foreach($fieldsData as $index => $fieldData) {
+
+        if(!is_array($fieldData)) {
+          continue;
+        }
+
+        $fieldID = $fieldData['tbl_sys_forms_field_ID'] ?? null;
+
+        $field = null;
+
+        if($fieldID !== null && $fieldID !== '' && $fieldID != 0) {
+
+          $field = SysFormsField::where('tbl_sys_forms_field_ID', $fieldID)
+            ->where('tbl_sys_form_ID', $formID)
+            ->first();
+
+        }
+
+        if(!$field) {
+          $field = new SysFormsField();
+          $field->tbl_sys_form_ID = $formID;
+        }
+
+        if(
+          $field->exists &&
+          (bool) $field->tbl_sys_forms_field_locked === true &&
+          $this->currentUserIsDeveloper() !== true
+        ) {
+          $receivedIDs[] = $field->tbl_sys_forms_field_ID;
+          continue;
+        }
+
+        $props = $fieldData['tbl_sys_forms_field_props'] ?? [];
+
+        if(is_string($props)) {
+
+          $decodedProps = json_decode($props, true);
+
+          $props = is_array($decodedProps) ? $decodedProps : [];
+
+        }
+
+        $field->fill([
+          'tbl_sys_form_ID'                 => $formID,
+          'tbl_sys_field_type_ID'           => $fieldData['tbl_sys_field_type_ID'] ?? null,
+          'tbl_sys_forms_field_title'       => $fieldData['tbl_sys_forms_field_title'] ?? '',
+          'tbl_sys_forms_field_name'        => $fieldData['tbl_sys_forms_field_name'] ?? '',
+          'tbl_sys_forms_field_index'       => $fieldData['tbl_sys_forms_field_index'] ?? '',
+          'tbl_sys_forms_field_class'       => $fieldData['tbl_sys_forms_field_class'] ?? '',
+          'tbl_sys_forms_field_default'     => $fieldData['tbl_sys_forms_field_default'] ?? '',
+          'tbl_sys_forms_field_props'       => json_encode($props, JSON_UNESCAPED_UNICODE),
+          'tbl_sys_forms_field_attrs'       => $fieldData['tbl_sys_forms_field_attrs'] ?? '',
+          'tbl_sys_forms_field_required'    => $this->normalizeBooleanValue($fieldData['tbl_sys_forms_field_required'] ?? false),
+          'tbl_sys_forms_field_locked'      => $this->normalizeBooleanValue($fieldData['tbl_sys_forms_field_locked'] ?? false),
+          'tbl_sys_forms_field_ordem'       => $fieldData['tbl_sys_forms_field_ordem'] ?? ($index + 1),
+        ]);
+
+        $field->save();
+
+        $receivedIDs[] = $field->tbl_sys_forms_field_ID;
+
+        $this->syncFormEditorFieldAccess(
+          $field->tbl_sys_forms_field_ID,
+          $fieldData['field_access'] ?? []
+        );
+
+      }
+
+      SysFormsField::where('tbl_sys_form_ID', $formID)
+        ->whereNotIn('tbl_sys_forms_field_ID', $receivedIDs)
+        ->get()
+        ->each(function($field) {
+
+          if(
+            (bool) $field->tbl_sys_forms_field_locked === true &&
+            $this->currentUserIsDeveloper() !== true
+          ) {
+            return;
+          }
+
+          SysFormsFieldsAccess::where(
+            'tbl_sys_forms_field_ID',
+            $field->tbl_sys_forms_field_ID
+          )->delete();
+
+          $field->delete();
+
+        });
+
+      return true;
+
+    }
+
+
+    private function syncFormEditorAccess($formID, $accessValues = []) {
+
+      $accessValues = $this->normalizeEditorAccessValues($accessValues);
+
+      SysFormsAccess::where('tbl_sys_form_ID', $formID)->delete();
+
+      foreach($accessValues as $userTypeID) {
+
+        SysFormsAccess::create([
+          'tbl_sys_form_ID'    => $formID,
+          'tbl_users_type_ID'  => $userTypeID,
+        ]);
+
+      }
+
+      return true;
+
+    }
+
+
+    private function syncFormEditorFieldAccess($fieldID, $accessValues = []) {
+
+      $accessValues = $this->normalizeEditorAccessValues($accessValues);
+
+      SysFormsFieldsAccess::where('tbl_sys_forms_field_ID', $fieldID)->delete();
+
+      foreach($accessValues as $userTypeID) {
+
+        SysFormsFieldsAccess::create([
+          'tbl_sys_forms_field_ID' => $fieldID,
+          'tbl_users_type_ID'      => $userTypeID,
+        ]);
+
+      }
+
+      return true;
+
+    }
+
+
+    private function normalizeEditorAccessValues($values = []) {
+
+      if(!is_array($values)) {
+        $values = [];
+      }
+
+      $values = array_values(array_unique(array_filter(array_map(function($value) {
+        return (int) $value;
+      }, $values))));
+
+      $developerID = UsersType::where('tbl_users_type_name', 'Desenvolvedor')
+        ->value('tbl_users_type_ID');
+
+      if($developerID && !in_array((int) $developerID, $values)) {
+        $values[] = (int) $developerID;
+      }
+
+      return $values;
+
+    }
+
+
+    private function normalizeBooleanValue($value) {
+
+      return (
+        $value === true ||
+        $value === 1 ||
+        $value === '1' ||
+        $value === 'true' ||
+        $value === 'TRUE' ||
+        $value === 'sim' ||
+        $value === 'SIM'
+      ) ? 1 : 0;
+
+    }
+
+
 
   }

@@ -154,7 +154,7 @@
     min-height: 500px;
     max-width: 850px;
     margin: 0 auto 20px auto;
-    padding: 0 10px;
+    /*padding: 0 10px;*/
     box-sizing: border-box;
     flex-shrink: 0;
   }
@@ -181,8 +181,8 @@
 
   #automator-editor-canvas-container-content {
     min-height: 500px;
-    padding-top: 10px;
-    padding-bottom: 10px;
+    /*padding-top: 10px;*/
+    /*padding-bottom: 10px;*/
     height: auto;
     width: 100%;
   }
@@ -458,7 +458,7 @@
       </button>
     </span>
 
-    <span class="dropdown me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] ?? 'Resolução' !!}" data-bs-trigger="hover">
+    <span class="dropdown me-2" data-bs-placement="top" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] ?? 'Resolução' !!}" data-bs-trigger="hover">
       <button id="automator-editor-header-viewport-btn" type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="fas fa-desktop me-1"></i>
         <span id="automator-editor-header-viewport-label">Auto</span>

@@ -4005,8 +4005,6 @@
 
               'code'  => [
 
-                // 'prefix' => '[automator function="pagination" name="${name}"',
-                // 'sufix'  => ']',
                 'prefix'    => '<div style="width: 100%;"><code>[automator function="pagination" name="${pagination}"',
                 'sufix'     => ']</code></div>',
                 'tag'       => '<code>',

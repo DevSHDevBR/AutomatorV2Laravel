@@ -596,13 +596,269 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+  function prepareSavedPageContentForEditor(content = '') {
+
+    content = String(content || '');
+
+    if (content.trim() === '') {
+      return '';
+    }
+
+    const replacements = [];
+
+    function createToken(shortcode) {
+
+      const index = replacements.length;
+
+      const shortcodeData = parseSavedShortcodeString(shortcode);
+
+      if (!shortcodeData) {
+        replacements.push(shortcode);
+      } else {
+        replacements.push(
+          buildShortcodeEditorHtmlFromSavedShortcode(
+            shortcodeData.shortcodeCode,
+            shortcodeData.attrsText,
+            shortcodeData.originalShortcode
+          )
+        );
+      }
+
+      return '%%AUTOMATOR_EDITOR_SHORTCODE_' + index + '%%';
+
+    }
+
+    content = content.replace(
+      /<div\b[^>]*>\s*<code\b[^>]*>\s*(\[(?:automator|system-form|system-pages)\b[^\]]*\])\s*<\/code>\s*<\/div>/gi,
+      function(fullMatch, shortcode) {
+        return createToken(shortcode);
+      }
+    );
+
+    content = content.replace(
+      /<code\b[^>]*>\s*(\[(?:automator|system-form|system-pages)\b[^\]]*\])\s*<\/code>/gi,
+      function(fullMatch, shortcode) {
+        return createToken(shortcode);
+      }
+    );
+
+    content = content.replace(
+      /\[(automator|system-form|system-pages)\b([^\]]*)\]/gi,
+      function(fullMatch) {
+        return createToken(fullMatch);
+      }
+    );
+
+    replacements.forEach(function(html, index) {
+      content = content.replaceAll(
+        '%%AUTOMATOR_EDITOR_SHORTCODE_' + index + '%%',
+        html
+      );
+    });
+
+    return content;
+
+  }
+
+  function parseSavedShortcodeString(shortcode = '') {
+
+    shortcode = String(shortcode || '').trim();
+
+    const match = shortcode.match(/^\[(automator|system-form|system-pages)\b([^\]]*)\]$/i);
+
+    if (!match) {
+      return null;
+    }
+
+    return {
+      shortcodeCode: String(match[1] || '').trim(),
+      attrsText: String(match[2] || ''),
+      originalShortcode: shortcode
+    };
+
+  }
+
+  function buildShortcodeEditorHtmlFromSavedShortcode(
+    shortcodeCode = '',
+    attrsText = '',
+    originalShortcode = ''
+  ) {
+
+    shortcodeCode = String(shortcodeCode || '').trim();
+    attrsText = String(attrsText || '');
+    originalShortcode = String(originalShortcode || '').trim();
+
+    const attrs = parseSavedShortcodeAttributes(attrsText);
+
+    let componentType = 'shortcode';
+    let selectedShortcode = shortcodeCode;
+    let shortcodeWrapper = shortcodeCode;
+
+    if (shortcodeCode === 'automator' && attrs.function) {
+
+      selectedShortcode = String(attrs.function || '').trim();
+      shortcodeWrapper = 'automator';
+
+      if (selectedShortcode === 'pagination') {
+        componentType = 'pagination';
+      } else {
+        componentType = 'shortcode';
+      }
+
+    }
+
+    if (shortcodeCode === 'system-form' || shortcodeCode === 'system-pages') {
+      selectedShortcode = shortcodeCode;
+      componentType = 'shortcode';
+      shortcodeWrapper = shortcodeCode;
+    }
+
+    const componentData =
+      findComponentDefinitionByType(componentType) ||
+      findComponentDefinitionByType('shortcode');
+
+    if (!componentData) {
+      return '<code>' + escapeHtml(originalShortcode) + '</code>';
+    }
+
+    const fieldTypeID = componentData.id || '';
+    const title = componentData.title || 'Shortcode';
+    const type = componentData.type || componentType;
+    const baseClasses = [];
+
+    if (componentData.grapesComponent && componentData.grapesComponent.classes) {
+      componentData.grapesComponent.classes.forEach(function(className) {
+        if (!isReservedEditorClass(className)) {
+          baseClasses.push(className);
+        }
+      });
+    }
+
+    const classes = ensureEditorInternalClasses(baseClasses).join(' ');
+
+    let html = '';
+
+    html += '<div';
+    html += ' class="' + escapeHtml(classes) + '"';
+    html += ' style="width: 100%;"';
+    html += ' data-automator-field-type-id="' + escapeHtml(fieldTypeID) + '"';
+    html += ' data-automator-field-type-name="' + escapeHtml(type) + '"';
+    html += ' data-automator-field-type-title="' + escapeHtml(title) + '"';
+    html += ' data-automator-base-classes="' + escapeHtml(baseClasses.join(' ')) + '"';
+    html += ' data-automator-can-have-child="false"';
+    html += ' data-automator-shortcode-component="true"';
+    html += ' data-automator-shortcode-wrapper="' + escapeHtml(shortcodeWrapper) + '"';
+
+    if (String(type).toLowerCase() === 'pagination') {
+
+      html += ' data-automator-property-config.pagination="' + escapeHtml(attrs.name || attrs.pagination || '') + '"';
+
+      $.each(attrs, function(attrName, attrValue) {
+
+        if (
+          attrName === 'function' ||
+          attrName === 'name' ||
+          attrName === 'pagination'
+        ) {
+          return;
+        }
+
+        html += ' data-automator-property-pagination_params.' + escapeHtml(attrName) + '="' + escapeHtml(attrValue) + '"';
+
+      });
+
+    } else {
+
+      html += ' data-automator-property-config.shortcode="' + escapeHtml(selectedShortcode) + '"';
+
+      $.each(attrs, function(attrName, attrValue) {
+
+        if (attrName === 'function') {
+          return;
+        }
+
+        html += ' data-automator-property-shortcode_params.' + escapeHtml(attrName) + '="' + escapeHtml(attrValue) + '"';
+
+      });
+
+    }
+
+    html += '>';
+
+    html += '<code class="automator-editor-shortcode-preview" data-automator-shortcode-preview="true">';
+    html += escapeHtml(originalShortcode);
+    html += '</code>';
+
+    html += '</div>';
+
+    return html;
+
+  }
+
+  function buildSavedShortcodePreviewFromAutomatorFunction(
+    selectedShortcode = '',
+    attrs = {}
+  ) {
+
+    selectedShortcode = String(selectedShortcode || '').trim();
+
+    let preview = '[' + selectedShortcode;
+
+    $.each(attrs, function(attrName, attrValue) {
+
+      if (attrName === 'function') {
+        return;
+      }
+
+      preview += ' ' + attrName + '="' + escapeShortcodeAttribute(attrValue) + '"';
+
+    });
+
+    preview += ']';
+
+    return preview;
+
+  }
+
+  function parseSavedShortcodeAttributes(attrsText = '') {
+
+    const attrs = {};
+    const regex = /([a-zA-Z0-9_\-]+)\s*=\s*("([^"]*)"|'([^']*)'|([^\s\]]+))/g;
+
+    let match;
+
+    while ((match = regex.exec(attrsText)) !== null) {
+
+      const key = match[1];
+
+      let value = '';
+
+      if (typeof match[3] !== 'undefined') {
+        value = match[3];
+      } else if (typeof match[4] !== 'undefined') {
+        value = match[4];
+      } else if (typeof match[5] !== 'undefined') {
+        value = match[5];
+      }
+
+      attrs[key] = value;
+
+    }
+
+    return attrs;
+
+  }
+
   function loadInitialContent() {
 
     if (!grapesEditor) {
       return;
     }
 
-    const content = String(editor.content || '');
+    const content = prepareSavedPageContentForEditor(
+      String(editor.content || '')
+    );
+
     const css = String(editor.css || '');
 
     grapesEditor.setComponents(content);
@@ -612,6 +868,398 @@ window.SysAutomatorEditor = (function () {
     } else {
       grapesEditor.setStyle('');
     }
+
+    rehydrateLoadedEditorComponents();
+
+  }
+
+  function rehydrateLoadedEditorComponents() {
+
+    if (!grapesEditor) {
+      return;
+    }
+
+    const wrapper = grapesEditor.DomComponents.getWrapper();
+
+    if (!wrapper || !wrapper.components) {
+      return;
+    }
+
+    walkComponents(wrapper.components(), function(component) {
+      rehydrateLoadedEditorComponent(component);
+    });
+
+    normalizeAllCardChildrenOrder();
+    updateEmptyContainers();
+    updateStructureList();
+
+  }
+
+  function rehydrateLoadedEditorComponent(component) {
+
+    if (!component || !component.getAttributes) {
+      return;
+    }
+
+    if (isPlaceholderComponent(component)) {
+      return;
+    }
+
+    const currentAttrs = component.getAttributes() || {};
+
+    if (
+      currentAttrs['data-automator-field-type-id'] &&
+      currentAttrs['data-automator-field-type-name']
+    ) {
+
+      const componentData = getComponent(currentAttrs['data-automator-field-type-id']);
+
+      rehydrateLoadedComponentProperties(component, componentData);
+
+      if (isShortcodeComponent(component)) {
+        syncShortcodeComponent(component);
+      }
+
+      return;
+
+    }
+
+    const componentData = findComponentDefinitionForLoadedComponent(component);
+
+    if (!componentData) {
+      return;
+    }
+
+    applyComponentDefinitionToLoadedComponent(
+      component,
+      componentData
+    );
+
+    rehydrateLoadedComponentProperties(
+      component,
+      componentData
+    );
+
+    if (isShortcodeComponent(component)) {
+      syncShortcodeComponent(component);
+    }
+
+  }
+
+  function findComponentDefinitionForLoadedComponent(component) {
+
+    if (!component || !component.get) {
+      return null;
+    }
+
+    const tagName = String(component.get('tagName') || '').toLowerCase();
+    const classes = component.getClasses ? component.getClasses() : [];
+
+    let matched = null;
+
+    $.each(editor.components || {}, function(fieldTypeID, componentData) {
+
+      if (matched || !componentData || !componentData.grapesComponent) {
+        return;
+      }
+
+      const typeName = getComponentDataType(componentData);
+
+      if (
+        typeName === 'card' &&
+        hasClassInList(classes, 'card')
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      if (
+        typeName === 'card-header' &&
+        hasClassInList(classes, 'card-header')
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      if (
+        typeName === 'card-body' &&
+        hasClassInList(classes, 'card-body')
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      if (
+        typeName === 'card-footer' &&
+        hasClassInList(classes, 'card-footer')
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      if (
+        typeName === 'link' &&
+        tagName === 'a'
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      if (
+        typeName === 'image' &&
+        tagName === 'img'
+      ) {
+        matched = componentData;
+        return;
+      }
+
+      const componentTag = String(
+        componentData.grapesComponent.tagName || ''
+      ).toLowerCase();
+
+      if (
+        componentTag &&
+        componentTag === tagName &&
+        componentDefinitionClassesMatch(componentData, classes)
+      ) {
+        matched = componentData;
+        return;
+      }
+
+    });
+
+    return matched;
+
+  }
+
+  function componentDefinitionClassesMatch(componentData, currentClasses = []) {
+
+    if (!componentData || !componentData.grapesComponent) {
+      return false;
+    }
+
+    const definitionClasses =
+      componentData.grapesComponent.classes || [];
+
+    const requiredClasses = [];
+
+    definitionClasses.forEach(function(className) {
+
+      if (
+        className &&
+        !isReservedEditorClass(className) &&
+        !isBootstrapColumnSizeClass(className)
+      ) {
+        requiredClasses.push(className);
+      }
+
+    });
+
+    if (!requiredClasses.length) {
+      return true;
+    }
+
+    for (let i = 0; i < requiredClasses.length; i++) {
+
+      if (!hasClassInList(currentClasses, requiredClasses[i])) {
+        return false;
+      }
+
+    }
+
+    return true;
+
+  }
+
+  function hasClassInList(classes = [], className = '') {
+
+    className = String(className || '');
+
+    if (!className) {
+      return false;
+    }
+
+    if (typeof classes === 'string') {
+      classes = classes.split(/\s+/);
+    }
+
+    return classes.indexOf(className) !== -1;
+
+  }
+
+  function applyComponentDefinitionToLoadedComponent(
+    component,
+    componentData
+  ) {
+
+    if (!component || !componentData) {
+      return;
+    }
+
+    const componentConfig = componentData.grapesComponent || {};
+    const currentAttrs = component.getAttributes ? component.getAttributes() : {};
+    const currentClasses = component.getClasses ? component.getClasses() : [];
+
+    const definitionAttrs = componentConfig.attributes || {};
+    const definitionClasses = componentConfig.classes || [];
+
+    const finalAttrs = $.extend({}, currentAttrs, definitionAttrs);
+
+    finalAttrs['data-automator-field-type-id'] = String(componentData.id || '');
+    finalAttrs['data-automator-field-type-name'] = String(componentData.type || '');
+    finalAttrs['data-automator-field-type-title'] = String(componentData.title || 'Bloco');
+    finalAttrs['data-automator-can-have-child'] = componentData.hasChild ? 'true' : 'false';
+
+    if (!finalAttrs['data-automator-base-classes']) {
+      finalAttrs['data-automator-base-classes'] = sanitizeEditorClasses(definitionClasses).join(' ');
+    }
+
+    component.setAttributes(finalAttrs);
+
+    const finalClasses = uniqueArray(
+      sanitizeEditorClasses(currentClasses)
+        .concat(sanitizeEditorClasses(definitionClasses))
+        .concat(['automator-editor-visual-space'])
+    );
+
+    if (typeof component.setClass === 'function') {
+      component.setClass(finalClasses);
+    } else {
+
+      finalClasses.forEach(function(className) {
+        component.addClass(className);
+      });
+
+    }
+
+    component.set({
+      name: componentData.title || component.get('name') || 'Bloco',
+      draggable: true,
+      selectable: true,
+      hoverable: true,
+      highlightable: true,
+      copyable: true,
+      removable: true,
+      droppable: componentData.hasChild ? true : false,
+      editable: componentData.hasChild ? false : canAutomatorBeEdited(componentData.raw)
+    });
+
+  }
+
+  function rehydrateLoadedComponentProperties(
+    component,
+    componentData
+  ) {
+
+    if (!component || !componentData || !component.getAttributes) {
+      return;
+    }
+
+    const attrs = component.getAttributes() || {};
+    const rawAttrs = $.extend({}, attrs);
+
+    $.each(rawAttrs, function(attrName, attrValue) {
+
+      attrName = String(attrName || '');
+
+      if (
+        attrName.indexOf('data-automator-') === 0 ||
+        attrName.indexOf('data-gjs-') === 0
+      ) {
+        return;
+      }
+
+      const propertyName = getPropertyNameFromRealAttribute(
+        componentData,
+        attrName
+      );
+
+      if (!propertyName) {
+        return;
+      }
+
+      attrs['data-automator-property-' + propertyName] = attrValue;
+
+    });
+
+    component.setAttributes(attrs);
+
+  }
+
+  function getPropertyNameFromRealAttribute(
+    componentData,
+    realAttrName
+  ) {
+
+    realAttrName = String(realAttrName || '').toLowerCase();
+
+    if (!componentData || !componentData.raw || !componentData.raw.properties) {
+      return getDefaultPropertyNameFromRealAttribute(realAttrName);
+    }
+
+    let found = '';
+
+    $.each(componentData.raw.properties, function(groupKey, group) {
+
+      if (found) {
+        return;
+      }
+
+      $.each(group.fields || {}, function(fieldKey, field) {
+
+        if (found) {
+          return;
+        }
+
+        const inputName = groupKey + '.' + fieldKey;
+
+        const mappedAttr =
+          field.attribute ||
+          field.attr ||
+          field.html_attr ||
+          getRealAttributeNameFromProperty(inputName);
+
+        if (
+          String(mappedAttr || '').toLowerCase() === realAttrName
+        ) {
+          found = inputName;
+        }
+
+      });
+
+    });
+
+    if (found) {
+      return found;
+    }
+
+    return getDefaultPropertyNameFromRealAttribute(realAttrName);
+
+  }
+
+  function getDefaultPropertyNameFromRealAttribute(realAttrName) {
+
+    realAttrName = String(realAttrName || '').toLowerCase();
+
+    const map = {
+      href: 'configs.href',
+      src: 'configs.src',
+      alt: 'configs.alt',
+      title: 'configs.title',
+      target: 'configs.target',
+      rel: 'configs.rel',
+      name: 'configs.name',
+      value: 'configs.value',
+      placeholder: 'configs.placeholder',
+      type: 'configs.type',
+      action: 'configs.action',
+      method: 'configs.method',
+      id: 'advanced.id',
+      style: 'advanced.style',
+      class: 'advanced.class'
+    };
+
+    return map[realAttrName] || '';
 
   }
 
@@ -1313,7 +1961,6 @@ window.SysAutomatorEditor = (function () {
 
     const baseClasses = sanitizeEditorClasses(getAutomatorClasses(field));
     const defaultValues = getDefaultShortcodeValues(field);
-    const previewText = getShortcodePreviewText(field, defaultValues);
 
     return {
       type: 'default',
@@ -1340,25 +1987,95 @@ window.SysAutomatorEditor = (function () {
       copyable: true,
       removable: true,
       components: [
-        {
-          tagName: 'div',
-          name: 'Pré-visualização',
-          classes: ['automator-editor-shortcode-preview'],
-          attributes: {
-            'data-automator-shortcode-preview': 'true'
-          },
-          draggable: false,
-          droppable: false,
-          editable: false,
-          selectable: false,
-          hoverable: false,
-          highlightable: false,
-          copyable: false,
-          removable: false,
-          content: previewText
-        }
+        buildShortcodePreviewComponent(field, defaultValues)
       ]
     };
+
+  }
+
+  function buildShortcodePreviewComponent(field, values = {}) {
+
+    return {
+      tagName: 'code',
+      name: 'Código do shortcode',
+      classes: ['automator-editor-shortcode-preview'],
+      attributes: {
+        'data-automator-shortcode-preview': 'true'
+      },
+      draggable: false,
+      droppable: false,
+      editable: false,
+      selectable: false,
+      hoverable: false,
+      highlightable: false,
+      copyable: false,
+      removable: false,
+      content: getShortcodeEditorPreviewCode(field, values)
+    };
+
+  }
+
+  function getShortcodeEditorPreviewCode(field, values = {}) {
+
+    const html = buildShortcodeLikeHtml(field, values);
+
+    const wrapper = document.createElement('div');
+
+    wrapper.innerHTML = html;
+
+    const code = wrapper.querySelector('code');
+
+    if (code) {
+      return code.textContent || '';
+    }
+
+    return String(html || '').replace(/<[^>]+>/g, '');
+
+  }
+
+  function buildPaginationShortcodeHtml(field, values = {}) {
+
+    const pagination =
+      values.pagination ||
+      values['config.pagination'] ||
+      values.name ||
+      '';
+
+    let attrs = '';
+
+    if (pagination !== '') {
+      attrs += ' name="' + escapeShortcodeAttribute(pagination) + '"';
+    }
+
+    $.each(values, function(key, value) {
+
+      key = String(key || '');
+
+      if (
+        key === 'pagination' ||
+        key === 'config.pagination' ||
+        key === 'name' ||
+        key.indexOf('data-') === 0 ||
+        key.indexOf('__') === 0
+      ) {
+        return;
+      }
+
+      if (key.indexOf('pagination_params.') !== 0) {
+        return;
+      }
+
+      const attrName = key.replace('pagination_params.', '');
+
+      if (!attrName || value === null || typeof value === 'undefined' || String(value) === '') {
+        return;
+      }
+
+      attrs += ' ' + attrName + '="' + escapeShortcodeAttribute(value) + '"';
+
+    });
+
+    return '<code>[automator function="pagination"' + attrs + ']</code>';
 
   }
 
@@ -1368,6 +2085,10 @@ window.SysAutomatorEditor = (function () {
 
     if (type === 'shortcode') {
       return buildDynamicShortcodeHtml(field, values);
+    }
+
+    if (type === 'pagination') {
+      return buildPaginationShortcodeHtml(field, values);
     }
 
     let html = '';
@@ -1406,14 +2127,22 @@ window.SysAutomatorEditor = (function () {
       '';
 
     if (!shortcode) {
-      return '<div style="width: 100%;"><code>[shortcode]</code></div>';
+      return '<code>[automator]</code>';
     }
+
+    const wrapper =
+      values.__shortcode_wrapper ||
+      '';
 
     const definitions = getShortcodeDefinitions(field);
     const selected = definitions[shortcode] || null;
     const params = selected ? selected.params || {} : {};
 
     let attrs = '';
+
+    if (wrapper === 'automator') {
+      attrs += ' function="' + escapeShortcodeAttribute(shortcode) + '"';
+    }
 
     $.each(params, function (paramKey) {
 
@@ -1426,12 +2155,9 @@ window.SysAutomatorEditor = (function () {
         value = '';
       }
 
-      if (paramKey === 'vars' && String(value) === '') {
-        attrs += ' vars=""';
-        return;
-      }
+      value = String(value);
 
-      if (String(value) === '') {
+      if (value === '') {
         return;
       }
 
@@ -1439,7 +2165,11 @@ window.SysAutomatorEditor = (function () {
 
     });
 
-    return '<div style="width: 100%;"><code>[' + shortcode + attrs + ']</code></div>';
+    if (wrapper === 'automator') {
+      return '<code>[automator' + attrs + ']</code>';
+    }
+
+    return '<code>[' + shortcode + attrs + ']</code>';
 
   }
 
@@ -2375,26 +3105,9 @@ window.SysAutomatorEditor = (function () {
     }
 
     const values = getComponentStoredValues(component);
-    const previewText = getShortcodePreviewText(componentData.raw, values);
 
     component.components([
-      {
-        tagName: 'div',
-        name: 'Pré-visualização',
-        classes: ['automator-editor-shortcode-preview'],
-        attributes: {
-          'data-automator-shortcode-preview': 'true'
-        },
-        draggable: false,
-        droppable: false,
-        editable: false,
-        selectable: false,
-        hoverable: false,
-        highlightable: false,
-        copyable: false,
-        removable: false,
-        content: previewText
-      }
+      buildShortcodePreviewComponent(componentData.raw, values)
     ]);
 
   }
@@ -2438,6 +3151,7 @@ window.SysAutomatorEditor = (function () {
       const selectedValue =
         values.pagination ||
         values['config.pagination'] ||
+        values.name ||
         '';
 
       if (!selectedValue) {
@@ -2518,6 +3232,10 @@ window.SysAutomatorEditor = (function () {
 
     const values = {};
     const attrs = component.getAttributes ? component.getAttributes() : {};
+
+    if (attrs['data-automator-shortcode-wrapper']) {
+      values.__shortcode_wrapper = attrs['data-automator-shortcode-wrapper'];
+    }
 
     $.each(attrs, function (key, value) {
 
@@ -4540,53 +5258,7 @@ window.SysAutomatorEditor = (function () {
 
   function cleanShortcodeWrapperHtml(component) {
 
-    const shortcodeHtml = getShortcodeFinalHtml(component);
-
-    const attrs = component.getAttributes ? component.getAttributes() : {};
-    const tagName = component.get('tagName') || 'div';
-    const classes = component.getClasses ? component.getClasses() : [];
-    const style = component.getStyle ? component.getStyle() : {};
-
-    const finalClasses = sanitizeEditorClasses(classes);
-
-    const el = document.createElement(tagName);
-
-    if (finalClasses.length) {
-      el.setAttribute('class', finalClasses.join(' '));
-    }
-
-    const cleanAttrs = $.extend({}, attrs);
-
-    delete cleanAttrs['data-automator-base-classes'];
-    delete cleanAttrs['data-automator-can-have-child'];
-    delete cleanAttrs['data-automator-shortcode-component'];
-    delete cleanAttrs['data-automator-field-type-id'];
-    delete cleanAttrs['data-automator-field-type-name'];
-    delete cleanAttrs['data-automator-field-type-title'];
-
-    $.each(cleanAttrs, function (key, value) {
-
-      if (key.indexOf('data-automator-property-') === 0) {
-        return;
-      }
-
-      if (key === 'class' || key === 'style') {
-        return;
-      }
-
-      el.setAttribute(key, value);
-
-    });
-
-    const styleString = objectToStyleString(style);
-
-    if (styleString) {
-      el.setAttribute('style', styleString);
-    }
-
-    el.innerHTML = shortcodeHtml;
-
-    return el.outerHTML;
+    return getShortcodeFinalHtml(component);
 
   }
 
@@ -5627,6 +6299,9 @@ window.SysAutomatorEditor = (function () {
     deleteSelectedComponent,
 
     discardEditorUnsavedChanges,
+
+    rehydrateLoadedEditorComponents,
+    prepareSavedPageContentForEditor,
 
     getEditor,
     getComponent,

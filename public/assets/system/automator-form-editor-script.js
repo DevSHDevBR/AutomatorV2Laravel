@@ -1,30 +1,33 @@
 /*
-|--------------------------------------------------------------------------
-| Automator Form Editor
-|--------------------------------------------------------------------------
-|
-| Editor visual exclusivo para formulários.
-| Não usa SysAutomatorEditor.
-| Não salva HTML como fonte da verdade.
-| Usa GrapesJS apenas como camada visual.
-|
+
+  +--------------------------------------------+
+  |            Automator Form Editor           |
+  |--------------------------------------------+
+  |                                            |
+  | Editor visual exclusivo para formulários.  |
+  | Usa GrapesJS apenas como camada visual.    |
+  |                                            |
+  +--------------------------------------------+
+
 */
 
 window.SysAutomatorFormEditor = (function () {
 
+
   const defaultState = {
-    isNew: true,
-    hasChanges: false,
-    initialized: false,
-    previewMode: false,
-    viewportMode: 'auto',
-    selectedFieldCid: null,
-    componentsLoaded: false,
-    componentsLoading: false,
-    userTypes: [],
-    developerUserTypeID: null,
+
+    isNew:                  true,
+    hasChanges:             false,
+    initialized:            false,
+    previewMode:            false,
+    viewportMode:           'auto',
+    selectedFieldCid:       null,
+    componentsLoaded:       false,
+    componentsLoading:      false,
+    userTypes:              [],
+    developerUserTypeID:    null,
     currentUserIsDeveloper: false,
-    currentFormLocked: false,
+    currentFormLocked:      false,
   };
 
   let state = $.extend(true, {}, defaultState);
@@ -62,6 +65,9 @@ window.SysAutomatorFormEditor = (function () {
     state = $.extend(true, {}, defaultState);
 
     state.isNew = data.isNew !== false;
+    state.formID = data.formID || data.id || '';
+    state.acao = data.acao || (state.isNew ? 'store' : 'edit');
+    state.submitAction = state.isNew ? 'add' : 'edit';
     state.suppressChangeTracking = true;
     state.userTypes = [];
     state.developerUserTypeID = null;
@@ -239,6 +245,89 @@ window.SysAutomatorFormEditor = (function () {
     }
 
     return true;
+
+  }
+
+
+  function getOrCreateEditorSubmitForm() {
+
+    let formEl = document.getElementById('automator-form-editor-submit-form');
+
+    if (formEl) {
+      return formEl;
+    }
+
+    formEl = document.createElement('form');
+
+    formEl.id = 'automator-form-editor-submit-form';
+    formEl.method = 'POST';
+    formEl.action = '';
+    formEl.setAttribute('data-submit', 'false');
+    formEl.setAttribute('data-automator-form-changed', 'false');
+    formEl.setAttribute('data-automator-form-editor-submit', 'true');
+    formEl.style.display = 'none';
+
+    formEl.innerHTML = `
+      <input type="hidden" name="id" value="">
+      <input type="hidden" name="tbl_sys_form_ID" value="">
+      <input type="hidden" name="payload" value="">
+    `;
+
+    const modal = document.querySelector('#automator-editor-modal');
+
+    if (modal) {
+      modal.appendChild(formEl);
+    } else {
+      document.body.appendChild(formEl);
+    }
+
+    return formEl;
+
+  }
+
+  function syncEditorSubmitForm() {
+
+    const formEl = getOrCreateEditorSubmitForm();
+
+    const formID =
+      state.formID ||
+      $('#automator-editor-modal [name="tbl_sys_form_ID"]').val() ||
+      $('#automator-editor-modal [name="id"]').val() ||
+      '';
+
+    const actionKey = normalizeEditorSubmitAction(state.acao || state.submitAction);
+
+    state.submitAction = actionKey;
+
+    if (
+      typeof window.AutomatorPaginationRoutes === 'undefined' ||
+      !window.AutomatorPaginationRoutes[actionKey]
+    ) {
+
+      formEl.action = '';
+      formEl.method = 'POST';
+
+      return formEl;
+
+    }
+
+    let actionURL = String(window.AutomatorPaginationRoutes[actionKey] || '');
+
+    if (formID !== '') {
+      actionURL = actionURL.replace('#ID#', formID);
+    } else {
+      actionURL = actionURL.replace('/#ID#', '').replace('#ID#', '');
+    }
+
+    formEl.action = actionURL;
+    formEl.method = 'POST';
+
+    $(formEl).find('[name="id"]').val(formID);
+    $(formEl).find('[name="tbl_sys_form_ID"]').val(formID);
+
+    formEl.setAttribute('data-automator-submit-action', actionKey);
+
+    return formEl;
 
   }
 
@@ -3331,7 +3420,8 @@ window.SysAutomatorFormEditor = (function () {
 
       component.setStyle({
         height: 'auto',
-        'min-height': '0'
+        'min-height': '0',
+        'max-height': 'none'
       });
 
       component.components([
@@ -3366,9 +3456,10 @@ window.SysAutomatorFormEditor = (function () {
       renderFieldSettings(component);
     }
 
-    if (options.skipResize !== true && !isEditingPropertiesPanel()) {
-      syncCanvasHeight();
-      syncEditorViewportSpacing();
+    if (options.skipResize !== true) {
+      setTimeout(function() {
+        syncCanvasHeight();
+      }, 80);
     }
 
     return true;
@@ -7222,20 +7313,245 @@ window.SysAutomatorFormEditor = (function () {
   |--------------------------------------------------------------------------
   */
 
+
   function save() {
 
+    if (state.previewMode === true) {
+      return false;
+    }
+
+    const formEl = syncEditorSubmitForm();
+
+    if (!formEl || !formEl.action) {
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-form-editor-save-route-error',
+        'center',
+        'middle',
+        true,
+        true,
+        'Erro',
+        'A rota dinâmica para salvar este formulário não foi encontrada.',
+        null,
+        false,
+        null,
+        5000
+      );
+
+      return false;
+
+    }
+
     const payload = captureData();
-    
+
+    if (!payload.form) {
+      payload.form = {};
+    }
+
+    const formID =
+      state.formID ||
+      payload.form.tbl_sys_form_ID ||
+      $(formEl).find('[name="tbl_sys_form_ID"]').val() ||
+      '';
+
+    if (formID !== '') {
+      payload.form.tbl_sys_form_ID = formID;
+      payload.form.id = formID;
+    }
+
+    payload.acao = state.submitAction || normalizeEditorSubmitAction(state.acao);
+    payload.action = payload.acao;
+
+    $(formEl).find('[name="payload"]').val(JSON.stringify(payload));
+
     $(selectors.modal).attr('data-automator-form-submit', 'true');
+    formEl.setAttribute('data-submit', 'false');
+
     setSaveState(false);
 
-    console.log('Payload do editor de formulário:', payload);
+    AutomatorGetActionStatus(function(actionStatus) {
 
-    $('#extracted-json').html(
-      JSON.stringify(payload, null, 2)
-    );
+      if (actionStatus === true || actionStatus === 'true') {
 
-    return payload;
+        AutomatorCreateAutoCloseToastAlert(
+          'automator-form-editor-action-running',
+          'center',
+          'middle',
+          true,
+          true,
+          'Ação em andamento',
+          'Já existe uma ação sendo executada.',
+          null,
+          false,
+          null,
+          5000
+        );
+
+        setSaveState(true);
+        $(selectors.modal).removeAttr('data-automator-form-submit');
+
+        return false;
+
+      }
+
+      AutomatorSetActionStatus(true, function() {
+
+        AutomatorPageLoader('show', function() {
+
+          $('#page-loader').css('z-index', '1085');
+
+          $.ajax({
+            url: formEl.action,
+            type: String(formEl.method || 'POST').toUpperCase(),
+            data: JSON.stringify(payload),
+            contentType: 'application/json; charset=UTF-8',
+            processData: false,
+            headers: {
+              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+              'Accept': 'application/json'
+            },
+            dataType: 'json',
+
+            success: function(response) {
+
+              const status = (
+                response &&
+                (
+                  response.status === true ||
+                  response.status === 'true' ||
+                  response.result === true ||
+                  response.result === 'true'
+                )
+              );
+
+              const title = response && response.title
+                ? response.title
+                : (status ? 'Sucesso' : 'Atenção');
+
+              const message = response && response.message
+                ? response.message
+                : (status ? 'Formulário salvo com sucesso.' : 'Não foi possível salvar o formulário.');
+
+              if (status === true) {
+
+                formEl.setAttribute('data-submit', 'true');
+                formEl.setAttribute('data-automator-form-changed', 'false');
+
+                clearUnsavedChangesWarning();
+
+                AutomatorCreateAutoCloseToastAlert(
+                  'automator-form-editor-save-success',
+                  'center',
+                  'middle',
+                  true,
+                  true,
+                  title,
+                  message,
+                  null,
+                  false,
+                  function() {
+                    AutomatorSetActionStatus(false);
+                    window.location.reload();
+                  },
+                  3000
+                );
+
+                return true;
+
+              }
+
+              $(selectors.modal).removeAttr('data-automator-form-submit');
+
+              state.hasChanges = true;
+              updateUnsavedChangesWarning(true);
+              setSaveState(true);
+
+              AutomatorCreateAutoCloseToastAlert(
+                'automator-form-editor-save-error',
+                'center',
+                'middle',
+                true,
+                true,
+                title,
+                message,
+                null,
+                false,
+                function() {
+
+                  $('#page-loader').css('z-index', '');
+
+                  AutomatorPageLoader('hide', function() {
+                    AutomatorSetActionStatus(false);
+                  });
+
+                },
+                5000
+              );
+
+              return false;
+
+            },
+
+            error: function(xhr) {
+
+              let title = 'Erro';
+              let message = 'Não foi possível salvar o formulário.';
+
+              if (xhr.responseJSON) {
+
+                if (xhr.responseJSON.title) {
+                  title = xhr.responseJSON.title;
+                }
+
+                if (xhr.responseJSON.message) {
+                  message = xhr.responseJSON.message;
+                }
+
+              } else if (xhr.responseText) {
+                message = xhr.responseText;
+              }
+
+              $(selectors.modal).removeAttr('data-automator-form-submit');
+
+              state.hasChanges = true;
+              updateUnsavedChangesWarning(true);
+              setSaveState(true);
+
+              AutomatorCreateAutoCloseToastAlert(
+                'automator-form-editor-save-request-error',
+                'center',
+                'middle',
+                true,
+                true,
+                title,
+                message,
+                null,
+                false,
+                function() {
+
+                  $('#page-loader').css('z-index', '');
+
+                  AutomatorPageLoader('hide', function() {
+                    AutomatorSetActionStatus(false);
+                  });
+
+                },
+                5000
+              );
+
+              return false;
+
+            }
+
+          });
+
+        });
+
+      });
+
+    });
+
+    return false;
 
   }
 
@@ -7594,37 +7910,79 @@ window.SysAutomatorFormEditor = (function () {
       }
 
       const frameEl = currentEditor.Canvas.getFrameEl();
+      const frameDoc = currentEditor.Canvas.getDocument ? currentEditor.Canvas.getDocument() : null;
+
       const canvas = $('#automator-editor-canvas');
+      const canvasContainer = $(selectors.canvasContainer);
       const canvasContent = $(selectors.canvas);
       const staticPreview = $('.automator-form-editor-static-preview');
 
-      if (!frameEl || !canvas.length) {
-        return false;
+      let contentHeight = 500;
+
+      if (state.previewMode === true && staticPreview.length) {
+
+        contentHeight = Math.max(
+          500,
+          staticPreview[0].scrollHeight || 0,
+          staticPreview.outerHeight(true) || 0
+        );
+
+      } else if (frameDoc) {
+
+        const form = frameDoc.querySelector('[data-automator-form-editor-preview="true"]');
+
+        if (form) {
+
+          let maxBottom = 0;
+
+          Array.prototype.slice.call(form.children || []).forEach(function(child) {
+            maxBottom = Math.max(maxBottom, child.offsetTop + child.offsetHeight);
+          });
+
+          contentHeight = Math.max(
+            500,
+            form.offsetHeight || 0,
+            form.scrollHeight || 0,
+            maxBottom + 40
+          );
+
+        }
+
       }
 
-      let height = canvas.innerHeight() || 500;
+      const finalHeight = Math.max(500, Math.ceil(contentHeight + 30));
 
-      if (staticPreview.length) {
-        height = Math.max(height, staticPreview.outerHeight(true) + 40, 500);
+      if (frameEl) {
+        frameEl.style.height = finalHeight + 'px';
+        frameEl.style.minHeight = finalHeight + 'px';
+        frameEl.style.maxHeight = finalHeight + 'px';
+        frameEl.style.overflow = 'hidden';
       }
-
-      frameEl.style.height = height + 'px';
-      frameEl.style.minHeight = height + 'px';
-      frameEl.style.maxHeight = height + 'px';
-      frameEl.style.overflow = 'hidden';
 
       canvasContent
         .find('.gjs-editor, .gjs-cv-canvas, .gjs-cv-canvas__frames, .gjs-frame-wrapper')
         .css({
-          height: height + 'px',
-          minHeight: height + 'px',
-          maxHeight: height + 'px',
+          height: finalHeight + 'px',
+          minHeight: finalHeight + 'px',
+          maxHeight: finalHeight + 'px',
           overflow: 'hidden'
         });
 
+      canvasContainer.css({
+        minHeight: finalHeight + 'px',
+        height: 'auto',
+        maxHeight: 'none'
+      });
+
       canvasContent.css({
-        minHeight: '',
-        height: ''
+        minHeight: finalHeight + 'px',
+        height: finalHeight + 'px',
+        maxHeight: finalHeight + 'px'
+      });
+
+      canvas.css({
+        overflowY: 'auto',
+        overflowX: 'auto'
       });
 
       if (state.previewMode !== true) {
@@ -7639,8 +7997,6 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
-
   function syncEditorViewportSpacing() {
 
     const modalContent = $(selectors.modal).closest('.modal-content');
@@ -7653,10 +8009,12 @@ window.SysAutomatorFormEditor = (function () {
       return false;
     }
 
-    const availableHeight =
+    const availableHeight = Math.max(
+      300,
       modalContent.innerHeight()
-      - (modalHeader.outerHeight(true) || 0)
-      - (editorHeader.outerHeight(true) || 0);
+        - (modalHeader.outerHeight(true) || 0)
+        - (editorHeader.outerHeight(true) || 0)
+    );
 
     editorBody.css({
       height: availableHeight + 'px',
@@ -7667,10 +8025,9 @@ window.SysAutomatorFormEditor = (function () {
     canvas.css({
       height: availableHeight + 'px',
       maxHeight: availableHeight + 'px',
-      overflow: 'auto'
+      overflowY: 'auto',
+      overflowX: 'auto'
     });
-
-    syncCanvasDeviceViewport();
 
     return true;
 
@@ -8284,15 +8641,43 @@ window.SysAutomatorFormEditor = (function () {
   }
 
 
+  function normalizeEditorSubmitAction(action = '') {
+
+    action = String(action || '').toLowerCase();
+
+    if (
+      action === 'store' ||
+      action === 'add' ||
+      action === 'create' ||
+      action === 'novo' ||
+      action === 'new'
+    ) {
+      return 'add';
+    }
+
+    if (
+      action === 'edit' ||
+      action === 'update' ||
+      action === 'atualizar'
+    ) {
+      return 'edit';
+    }
+
+    return state.isNew === true ? 'add' : 'edit';
+
+  }
+
+
+
 
   $(window)
-    .off('resize.automator-form-editor')
-    .on('resize.automator-form-editor', function () {
+  .off('resize.automator-form-editor')
+  .on('resize.automator-form-editor', function () {
 
-      syncCanvasHeight();
-      syncEditorViewportSpacing();
+    syncCanvasHeight();
+    syncEditorViewportSpacing();
 
-    });
+  });
 
 
   return {
@@ -8321,6 +8706,9 @@ window.SysAutomatorFormEditor = (function () {
     clearUnsavedChangesWarning,
     requestCloseEditorModal,
 
+    getOrCreateEditorSubmitForm,
+    syncEditorSubmitForm,
+
     getEditor,
     getState
   };
@@ -8333,6 +8721,7 @@ window.SysAutomatorFormEditor = (function () {
 | Wrappers globais usados pelo AutomatorCreateViewModal
 |--------------------------------------------------------------------------
 */
+
 
 
 function SysAutomatorConfigFormEditor(
@@ -8350,12 +8739,17 @@ function SysAutomatorConfigFormEditor(
     response.tbl_sys_form_ID ||
     null;
 
+  const isNew = !formID;
+
   SysAutomatorFormEditor.config({
-    isNew: !formID,
-    formID: formID
+    isNew: isNew,
+    formID: formID,
+    acao: response.acao || (isNew ? 'store' : 'edit')
   }, function () {
 
     SysAutomatorFormEditor.init(function () {
+
+      SysAutomatorFormEditor.syncEditorSubmitForm();
 
       if (formID) {
 
