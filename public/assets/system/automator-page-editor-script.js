@@ -243,32 +243,78 @@ window.SysAutomatorEditor = (function () {
 
     discardEditorUnsavedChanges();
 
-    const currentEditor = grapesEditor;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove os observadores externos do editor
+    |--------------------------------------------------------------------------
+    */
+
+    $(document).off(
+      '.automator-editor-page-settings'
+    );
+
+
+    const currentEditor =
+      grapesEditor;
 
     grapesEditor = null;
+
 
     if (currentEditor) {
 
       try {
+
         currentEditor.destroy();
+
       } catch (e) {
-        console.warn('GrapesJS do editor de páginas já estava destruído.', e);
+
+        console.warn(
+          'GrapesJS do editor de páginas já estava destruído.',
+          e
+        );
+
       }
 
     }
 
+
     try {
+
       $(selectors.canvas).empty();
+
       $(selectors.structureList).empty();
+
     } catch (e) {}
 
+
     if ($(selectors.rightContent).length) {
-      $(selectors.rightContent).html('<div class="text-center p-3">Selecione um bloco para editar.</div>');
+
+      $(selectors.rightContent).html(
+        '<div class="text-center p-3">' +
+        'Selecione um bloco para editar.' +
+        '</div>'
+      );
+
     }
 
+
     if (resetConfig === true) {
-      state = $.extend(true, {}, defaultState);
-      editor = $.extend(true, {}, defaultEditor);
+
+      state =
+        $.extend(
+          true,
+          {},
+          defaultState
+        );
+
+      editor =
+        $.extend(
+          true,
+          {},
+          defaultEditor
+        );
+
     }
 
   }
@@ -692,12 +738,11 @@ window.SysAutomatorEditor = (function () {
 
     let componentType = 'shortcode';
     let selectedShortcode = shortcodeCode;
-    let shortcodeWrapper = shortcodeCode;
+    let shortcodeWrapper = 'automator';
 
     if (shortcodeCode === 'automator' && attrs.function) {
 
       selectedShortcode = String(attrs.function || '').trim();
-      shortcodeWrapper = 'automator';
 
       if (selectedShortcode === 'pagination') {
         componentType = 'pagination';
@@ -705,12 +750,16 @@ window.SysAutomatorEditor = (function () {
         componentType = 'shortcode';
       }
 
-    }
+    } else {
 
-    if (shortcodeCode === 'system-form' || shortcodeCode === 'system-pages') {
       selectedShortcode = shortcodeCode;
-      componentType = 'shortcode';
-      shortcodeWrapper = shortcodeCode;
+
+      if (selectedShortcode === 'pagination') {
+        componentType = 'pagination';
+      } else {
+        componentType = 'shortcode';
+      }
+
     }
 
     const componentData =
@@ -727,11 +776,15 @@ window.SysAutomatorEditor = (function () {
     const baseClasses = [];
 
     if (componentData.grapesComponent && componentData.grapesComponent.classes) {
+
       componentData.grapesComponent.classes.forEach(function(className) {
+
         if (!isReservedEditorClass(className)) {
           baseClasses.push(className);
         }
+
       });
+
     }
 
     const classes = ensureEditorInternalClasses(baseClasses).join(' ');
@@ -786,7 +839,13 @@ window.SysAutomatorEditor = (function () {
     html += '>';
 
     html += '<code class="automator-editor-shortcode-preview" data-automator-shortcode-preview="true">';
-    html += escapeHtml(originalShortcode);
+    html += escapeHtml(
+      String(type).toLowerCase() === 'pagination'
+        ? buildPaginationShortcodeHtml(componentData.raw, {
+            pagination: attrs.name || attrs.pagination || ''
+          }).replace(/<\/?code[^>]*>/gi, '')
+        : '[automator function="' + selectedShortcode + '"]'
+    );
     html += '</code>';
 
     html += '</div>';
@@ -802,11 +861,19 @@ window.SysAutomatorEditor = (function () {
 
     selectedShortcode = String(selectedShortcode || '').trim();
 
-    let preview = '[' + selectedShortcode;
+    if (selectedShortcode === '') {
+      return '[automator]';
+    }
+
+    let preview = '[automator function="' + escapeShortcodeAttribute(selectedShortcode) + '"';
 
     $.each(attrs, function(attrName, attrValue) {
 
       if (attrName === 'function') {
+        return;
+      }
+
+      if (attrValue === null || typeof attrValue === 'undefined' || String(attrValue) === '') {
         return;
       }
 
@@ -1266,23 +1333,57 @@ window.SysAutomatorEditor = (function () {
   function initInterface(callback = null) {
 
     updateLeftTabVisibility('inserter');
+
     setLeftSidebarOpen(true);
 
-    if (editor.settingsBlock && editor.settingsBlock.collapsed === true) {
-      $(selectors.rightAside).addClass('is-collapsed').removeClass('show');
+
+    if (
+      editor.settingsBlock &&
+      editor.settingsBlock.collapsed === true
+    ) {
+
+      $(selectors.rightAside)
+        .addClass('is-collapsed')
+        .removeClass('show');
+
     } else {
-      $(selectors.rightAside).removeClass('is-collapsed');
+
+      $(selectors.rightAside)
+        .removeClass('is-collapsed');
+
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inicializa os recursos da interface
+    |--------------------------------------------------------------------------
+    */
+
     initBootstrapHelpers();
+
     bindHeaderSlugSync();
+
+    bindPageSettingsChangeObserver();
+
     bindEditorGlobalTabFocus();
+
     updateViewportButton();
+
     focusRightSidebarTab('page');
+
     syncEditorLayoutState();
 
+
     if (typeof callback === 'function') {
-      callback({ state, editor, selectors, grapesEditor });
+
+      callback({
+        state,
+        editor,
+        selectors,
+        grapesEditor
+      });
+
     }
 
   }
@@ -2130,21 +2231,15 @@ window.SysAutomatorEditor = (function () {
       return '<code>[automator]</code>';
     }
 
-    const wrapper =
-      values.__shortcode_wrapper ||
-      '';
-
     const definitions = getShortcodeDefinitions(field);
     const selected = definitions[shortcode] || null;
     const params = selected ? selected.params || {} : {};
 
     let attrs = '';
 
-    if (wrapper === 'automator') {
-      attrs += ' function="' + escapeShortcodeAttribute(shortcode) + '"';
-    }
+    attrs += ' function="' + escapeShortcodeAttribute(shortcode) + '"';
 
-    $.each(params, function (paramKey) {
+    $.each(params, function(paramKey) {
 
       let value =
         values['shortcode_params.' + paramKey] ||
@@ -2165,11 +2260,7 @@ window.SysAutomatorEditor = (function () {
 
     });
 
-    if (wrapper === 'automator') {
-      return '<code>[automator' + attrs + ']</code>';
-    }
-
-    return '<code>[' + shortcode + attrs + ']</code>';
+    return '<code>[automator' + attrs + ']</code>';
 
   }
 
@@ -4847,33 +4938,229 @@ window.SysAutomatorEditor = (function () {
       return null;
     }
 
-    if (!grapesEditor) {
-      const emptyData = {
-        html: '',
-        css: '',
-        components: []
-      };
+    const data = getEditorSubmitContentData();
 
-      console.log('SysAutomatorEditor submit:', emptyData);
-
-      return emptyData;
-    }
-
-    const data = {
-      html: normalizeFinalHtml(cleanEditorHtml('')),
-      css: grapesEditor.getCss(),
-      components: grapesEditor.getComponents().toJSON()
-    };
+    syncEditorSubmitContentToForm(data);
 
     $('#extracted-json').html(JSON.stringify(data));
 
     console.log('SysAutomatorEditor submit:', data);
 
-    state.hasChanges = false;
-    setSaveState(false);
-    resetEditorChangeObserverState();
+    const formEl = getEditorSubmitForm();
+
+    if (!formEl) {
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-editor-submit-form-not-found-' + Date.now(),
+        'center',
+        'middle',
+        true,
+        true,
+        'Erro',
+        'O formulário de envio da página não foi encontrado.',
+        null,
+        false,
+        null,
+        5000
+      );
+
+      return data;
+
+    }
+
+    formEl.setAttribute('data-automator-form-changed', 'true');
+
+    if (typeof formEl.requestSubmit === 'function') {
+      formEl.requestSubmit();
+    } else {
+      $(formEl).trigger('submit');
+    }
 
     return data;
+
+  }
+
+  function getEditorSubmitContentData() {
+
+    if (!grapesEditor) {
+
+      return {
+        html: '',
+        css: '',
+        components: []
+      };
+
+    }
+
+    return {
+      html: normalizeFinalHtml(cleanEditorHtml('')),
+      css: grapesEditor.getCss(),
+      components: grapesEditor.getComponents().toJSON()
+    };
+
+  }
+
+  function syncEditorSubmitContentToForm(data = {}) {
+
+    const formEl = getEditorSubmitForm();
+
+    if (!formEl) {
+      return false;
+    }
+
+    syncEditorRouteFieldsToForm(formEl);
+
+    setEditorSubmitHiddenInput(
+      formEl,
+      'tbl_sys_route_content',
+      data.html || ''
+    );
+
+    setEditorSubmitHiddenInput(
+      formEl,
+      'tbl_sys_route_css',
+      data.css || ''
+    );
+
+    setEditorSubmitHiddenInput(
+      formEl,
+      'automator_editor_components',
+      JSON.stringify(data.components || [])
+    );
+
+    return true;
+
+  }
+
+  function setEditorSubmitHiddenInput(
+    formEl,
+    name,
+    value
+  ) {
+
+    if (
+      !formEl ||
+      !name
+    ) {
+      return null;
+    }
+
+    const existingFields =
+      formEl.querySelectorAll(
+        'input[type="hidden"][name="' + name + '"]'
+      );
+
+    let input = null;
+
+    if (existingFields.length > 0) {
+
+      input =
+        existingFields[0];
+
+      /*
+      |--------------------------------------------------------------------------
+      | Remove duplicatas do mesmo campo
+      |--------------------------------------------------------------------------
+      */
+
+      for (
+        let index = 1;
+        index < existingFields.length;
+        index++
+      ) {
+
+        existingFields[index].remove();
+
+      }
+
+    }
+
+    if (!input) {
+
+      input =
+        document.createElement('input');
+
+      input.type =
+        'hidden';
+
+      input.name =
+        name;
+
+      formEl.appendChild(
+        input
+      );
+
+    }
+
+    input.value =
+      value !== null &&
+      typeof value !== 'undefined'
+        ? String(value)
+        : '';
+
+    return input;
+
+  }
+
+  function getEditorSubmitForm() {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Formulário específico do editor
+    |--------------------------------------------------------------------------
+    */
+
+    const editorForm =
+      document.getElementById(
+        'automator-editor-change-observer-form'
+      );
+
+    if (editorForm) {
+      return editorForm;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Formulário registrado no contexto do modal
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      window.AutomatorPaginationCurrentModalView &&
+      window.AutomatorPaginationCurrentModalView.formEl
+    ) {
+
+      return window
+        .AutomatorPaginationCurrentModalView
+        .formEl;
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Último fallback dentro do editor
+    |--------------------------------------------------------------------------
+    */
+
+    const editorModal =
+      document.getElementById(
+        'automator-editor-modal'
+      );
+
+    if (editorModal) {
+
+      const formEl =
+        editorModal.querySelector(
+          'form'
+        );
+
+      if (formEl) {
+        return formEl;
+      }
+
+    }
+
+    return null;
 
   }
 
@@ -5947,6 +6234,111 @@ window.SysAutomatorEditor = (function () {
 
   }
 
+  function bindPageSettingsChangeObserver() {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Campos que pertencem às configurações da página
+    |--------------------------------------------------------------------------
+    |
+    | O evento é delegado porque alguns desses campos podem ser renderizados
+    | dinamicamente na sidebar direita depois que o editor foi iniciado.
+    |
+    */
+
+    const selector =
+      '#automator-editor-modal ' +
+      'input[name^="tbl_sys_route_"], ' +
+
+      '#automator-editor-modal ' +
+      'select[name^="tbl_sys_route_"], ' +
+
+      '#automator-editor-modal ' +
+      'textarea[name^="tbl_sys_route_"], ' +
+
+      '#automator-editor-modal ' +
+      '[data-automator-field-name^="tbl_sys_route_"]';
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove somente os eventos deste observador
+    |--------------------------------------------------------------------------
+    */
+
+    $(document).off(
+      '.automator-editor-page-settings',
+      selector
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registra alterações feitas pelo usuário
+    |--------------------------------------------------------------------------
+    */
+
+    $(document).on(
+      'input.automator-editor-page-settings ' +
+      'change.automator-editor-page-settings ' +
+      'keyup.automator-editor-page-settings',
+      selector,
+      function(event) {
+
+        const field = event.currentTarget;
+
+        if (!field) {
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ignora os campos ocultos do formulário interno de envio
+        |--------------------------------------------------------------------------
+        |
+        | Esses campos são sincronizados programaticamente antes do submit e não
+        | representam uma interação direta do usuário.
+        |
+        */
+
+        if (
+          field.closest &&
+          field.closest(
+            '#automator-editor-change-observer-form'
+          )
+        ) {
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Ignora alterações durante o carregamento inicial
+        |--------------------------------------------------------------------------
+        */
+
+        if (!state.initialized) {
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Registra a modificação no mesmo estado usado pelo GrapesJS
+        |--------------------------------------------------------------------------
+        */
+
+        markEditorAsChanged();
+
+      }
+    );
+
+
+    return true;
+
+  }
+
   function ensureStructureDropStyles() {
 
     if (document.getElementById('automator-editor-structure-drop-styles')) {
@@ -6224,18 +6616,69 @@ window.SysAutomatorEditor = (function () {
 
   }
 
-
   function resetEditorChangeObserverState() {
 
-    const formEl = getEditorChangeObserverForm();
+    const formEl =
+      getEditorChangeObserverForm();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Redefine o estado principal do editor
+    |--------------------------------------------------------------------------
+    */
+
+    state.hasChanges = false;
+
+    setSaveState(false);
+
 
     if (!formEl) {
       return false;
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza o conteúdo inicial utilizado para comparação
+    |--------------------------------------------------------------------------
+    */
+
     syncEditorChangeObserverState(true);
 
-    formEl.setAttribute('data-automator-form-changed', 'false');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Garante que o formulário seja considerado inalterado
+    |--------------------------------------------------------------------------
+    */
+
+    formEl.setAttribute(
+      'data-automator-form-changed',
+      'false'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza manualmente o estado inicial após todos os campos carregarem
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      typeof AutomatorFormSerializeCurrentState ===
+      'function'
+    ) {
+
+      formEl.setAttribute(
+        'data-automator-initial-state',
+        AutomatorFormSerializeCurrentState(
+          formEl
+        )
+      );
+
+    }
+
 
     return true;
 
@@ -6243,14 +6686,228 @@ window.SysAutomatorEditor = (function () {
 
   function markEditorAsChanged() {
 
+    /*
+    |--------------------------------------------------------------------------
+    | Não registra modificações durante a inicialização
+    |--------------------------------------------------------------------------
+    */
+
     if (!state.initialized) {
-      return;
+      return false;
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | O preview não permite edição
+    |--------------------------------------------------------------------------
+    */
+
+    if (state.previewMode) {
+      return false;
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza o estado geral
+    |--------------------------------------------------------------------------
+    */
 
     state.hasChanges = true;
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Habilita o botão Criar/Salvar
+    |--------------------------------------------------------------------------
+    */
+
     setSaveState(true);
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza o observador de saída do modal/página
+    |--------------------------------------------------------------------------
+    */
+
     syncEditorChangeObserverState(false);
+
+
+    return true;
+
+  }
+
+  function syncEditorRouteFieldsToForm(formEl) {
+
+    if (!formEl) {
+      return false;
+    }
+
+    const editorModal =
+      document.getElementById('automator-editor-modal') ||
+      formEl.closest('.modal') ||
+      document;
+
+    const fields = [
+      'tbl_sys_route_ID',
+      'tbl_sys_route_title',
+      'tbl_sys_route_name',
+      'tbl_sys_route_permalink',
+      'tbl_sys_route_api',
+      'tbl_sys_route_admin',
+      'tbl_sys_route_locked',
+      'tbl_sys_route_type',
+      'tbl_sys_route_controller',
+      'tbl_sys_route_method',
+      'tbl_sys_route_args',
+      'tbl_sys_route_description',
+      'tbl_sys_route_area',
+      'tbl_sys_route_status',
+      'tbl_sys_route_parent_id'
+    ];
+
+    fields.forEach(function(fieldName) {
+
+      /*
+      |--------------------------------------------------------------------------
+      | O ID da rota já é definido pelo onclick/callback da paginação
+      |--------------------------------------------------------------------------
+      |
+      | Não devemos buscá-lo novamente usando document.querySelector(), pois
+      | poderia ser encontrado outro elemento fora do editor e sobrescrever o
+      | ID numérico correto.
+      |
+      */
+
+      if (fieldName === 'tbl_sys_route_ID') {
+
+        const currentIDField =
+          formEl.querySelector(
+            'input[type="hidden"][name="tbl_sys_route_ID"]'
+          );
+
+        if (!currentIDField) {
+          return;
+        }
+
+        const currentID =
+          String(currentIDField.value || '').trim();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Preserva somente um ID válido
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+          currentID !== '' &&
+          /^\d+$/.test(currentID)
+        ) {
+
+          setEditorSubmitHiddenInput(
+            formEl,
+            'tbl_sys_route_ID',
+            currentID
+          );
+
+        }
+
+        return;
+
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Procura o campo somente dentro do editor
+      |--------------------------------------------------------------------------
+      */
+
+      let field =
+        editorModal.querySelector(
+          '[name="' + fieldName + '"]:not([type="hidden"])'
+        ) ||
+        editorModal.querySelector(
+          '#' + fieldName
+        );
+
+      /*
+      |--------------------------------------------------------------------------
+      | Fallback para campos hidden reais de configurações
+      |--------------------------------------------------------------------------
+      */
+
+      if (!field) {
+
+        field =
+          editorModal.querySelector(
+            '[name="' + fieldName + '"]'
+          );
+
+      }
+
+      if (!field) {
+        return;
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Evita utilizar o próprio campo hidden do formulário como origem
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        field.form === formEl &&
+        field.type === 'hidden'
+      ) {
+        return;
+      }
+
+      let value = '';
+
+      const type =
+        String(
+          field.getAttribute('type') || ''
+        ).toLowerCase();
+
+      if (type === 'checkbox') {
+
+        value =
+          field.checked
+            ? (field.value || '1')
+            : '0';
+
+      } else if (type === 'radio') {
+
+        const checked =
+          editorModal.querySelector(
+            '[name="' + fieldName + '"]:checked'
+          );
+
+        if (!checked) {
+          return;
+        }
+
+        value =
+          checked.value;
+
+      } else {
+
+        value =
+          field.value;
+
+      }
+
+      setEditorSubmitHiddenInput(
+        formEl,
+        fieldName,
+        value
+      );
+
+    });
+
+    return true;
 
   }
 
@@ -6264,12 +6921,19 @@ window.SysAutomatorEditor = (function () {
     focusRightSidebarTab,
     bindEditorGlobalTabFocus,
 
+    bindPageSettingsChangeObserver,
+
     markEditorAsChanged,
     resetEditorChangeObserverState,
     syncEditorChangeObserverState,
     getCurrentEditorViewState,
     restoreEditorViewState,
     ensureStructureDropStyles,
+
+    getEditorSubmitContentData,
+    syncEditorSubmitContentToForm,
+    syncEditorRouteFieldsToForm,
+    getEditorSubmitForm,
 
     waitEditorReady,
 

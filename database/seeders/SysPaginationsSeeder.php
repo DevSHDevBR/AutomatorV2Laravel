@@ -679,7 +679,57 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => 'Nova Página',
-                      'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData){ SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData ){ SysAutomatorInitPageEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyPageEditor(response, modalEl, modal, recordData); }});",
+                      'onclick' => "AutomatorCreateViewModal(
+                        {
+                          view: 'system-page-editor',
+                          editorAction: 'store'
+                        },
+                        {
+                          editorAction: 'store',
+                          size: 'fullscreen',
+                          backdrop: true,
+                          keyboard: false,
+                          keepLoaderUntilCallback: true,
+
+                          beforeShow: function(response, modalEl, modal, recordData) {
+
+                            SysAutomatorConfigPageEditor(
+                              response,
+                              modalEl,
+                              modal,
+                              recordData,
+                              {
+                                method: 'POST',
+                                action: 'add'
+                              }
+                            );
+
+                          },
+
+                          callback: function(response, modalEl, modal, recordData) {
+
+                            SysAutomatorInitPageEditor(
+                              response,
+                              modalEl,
+                              modal,
+                              recordData
+                            );
+
+                          },
+
+                          afterHideOn: function(response, modalEl, modal, recordData) {
+
+                            SysAutomatorDestroyPageEditor(
+                              response,
+                              modalEl,
+                              modal,
+                              recordData
+                            );
+
+                          }
+                        }
+                      );",
+                      // 'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData){ SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData ){ SysAutomatorInitPageEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyPageEditor(response, modalEl, modal, recordData); }});",
                       // 'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData){ SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData ){ SysAutomatorInitPageEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorEditor.destroy(); }});",
                       // 'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor'}, { size: 'fullscreen', backdrop: true, keyboard: false, callback: function(response, modalEl, modal, recordData) { SysAutomatorEditor.init({ isNew: true }); } });",
                       // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Página') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes') . ");",
@@ -702,7 +752,62 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => 'Editar Página',
-                    'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor', pageID: '{id}' }, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData){ SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData ){ SysAutomatorInitPageEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorEditor.destroy(); }});",
+                    'onclick' => "AutomatorCreateViewModal(
+                      {
+                        view: 'system-page-editor',
+                        editorAction: 'update',
+                        pageID: '{id}'
+                      },
+                      {
+                        acao: 'get',
+                        id: '{id}',
+                        pageID: '{id}',
+                        editorAction: 'update',
+                        size: 'fullscreen',
+                        backdrop: true,
+                        keyboard: false,
+                        keepLoaderUntilCallback: true,
+
+                        beforeShow: function(response, modalEl, modal, recordData) {
+
+                          SysAutomatorConfigPageEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData,
+                            {
+                              method: 'POST',
+                              action: 'edit',
+                              tbl_sys_route_ID: '{id}'
+                            }
+                          );
+
+                        },
+
+                        callback: function(response, modalEl, modal, recordData) {
+
+                          SysAutomatorInitPageEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+
+                        },
+
+                        afterHideOn: function(response, modalEl, modal, recordData) {
+
+                          SysAutomatorDestroyPageEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+
+                        }
+                      }
+                    );",
+                    // 'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor', pageID: '{id}' }, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData){ SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData ){ SysAutomatorInitPageEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorEditor.destroy(); }});",
                     // 'onclick' => "AutomatorCreateViewModal({ view: 'system-page-editor', pageID: '{id}'}, { size: 'fullscreen', backdrop: true, keyboard: false, beforeShow: function(response, modalEl, modal, recordData) { SysAutomatorConfigPageEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData) { SysAutomatorInitPageEditor(response, modalEl, modal, recordData); } });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Página') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
@@ -1672,7 +1777,7 @@
                   'edit' => [
 
                     'route'  => 'admin-api-forms-update',
-                    'params' => [],
+                    'params' => ['id' => "#ID#"],
                     'show'   => true,
 
                   ],
@@ -1711,7 +1816,9 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => 'Novo Formulário',
-                      'onclick' => "AutomatorCreateViewModal( { view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'store'; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } } );",
+                      'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'store'; response.formID = null; response.form_id = null; response.tbl_sys_form_ID = null; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } });",
+                      // 'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'store'; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } });",
+                      // 'onclick' => "AutomatorCreateViewModal( { view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'store'; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } } );",
                       // 'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, beforeShow: function(response, modalEl, modal, recordData) { SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, callback: function(response, modalEl, modal, recordData) { SysAutomatorInitFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } } );",
                       // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ");",
 
@@ -1733,40 +1840,42 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => 'Editar Formulário',
-                    'onclick' => "AutomatorCreateViewModal(
-                      {
-                        view: 'system-form-editor',
-                        formID: '{id}'
-                      },
-                      {
-                        size: 'fullscreen',
-                        backdrop: true,
-                        keyboard: false,
-                        scrollable: false,
-                        keepLoaderUntilCallback: true,
+                    'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor', formID: '{id}' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'edit'; response.formID = '{id}'; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } });",
+                    // 'onclick' => "AutomatorCreateViewModal({ view: 'system-form-editor' }, { size: 'fullscreen', backdrop: true, keyboard: false, scrollable: false, keepLoaderUntilCallback: true, callback: function(response, modalEl, modal, recordData) { response.acao = 'edit'; response.formID = {id}; response.id = {id}; SysAutomatorConfigFormEditor(response, modalEl, modal, recordData); }, afterHideOn: function(response, modalEl, modal, recordData) { SysAutomatorDestroyFormEditor(response, modalEl, modal, recordData); } });",
+                    // 'onclick' => "AutomatorCreateViewModal(
+                    //   {
+                    //     view: 'system-form-editor',
+                    //     formID: '{id}'
+                    //   },
+                    //   {
+                    //     size: 'fullscreen',
+                    //     backdrop: true,
+                    //     keyboard: false,
+                    //     scrollable: false,
+                    //     keepLoaderUntilCallback: true,
 
-                        callback: function(response, modalEl, modal, recordData) {
-                          response.acao = 'edit';
-                          response.formID = '{id}';
+                    //     callback: function(response, modalEl, modal, recordData) {
+                    //       response.acao = 'edit';
+                    //       response.formID = '{id}';
 
-                          SysAutomatorConfigFormEditor(
-                            response,
-                            modalEl,
-                            modal,
-                            recordData
-                          );
-                        },
+                    //       SysAutomatorConfigFormEditor(
+                    //         response,
+                    //         modalEl,
+                    //         modal,
+                    //         recordData
+                    //       );
+                    //     },
 
-                        afterHideOn: function(response, modalEl, modal, recordData) {
-                          SysAutomatorDestroyFormEditor(
-                            response,
-                            modalEl,
-                            modal,
-                            recordData
-                          );
-                        }
-                      }
-                    );",
+                    //     afterHideOn: function(response, modalEl, modal, recordData) {
+                    //       SysAutomatorDestroyFormEditor(
+                    //         response,
+                    //         modalEl,
+                    //         modal,
+                    //         recordData
+                    //       );
+                    //     }
+                    //   }
+                    // );",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Formulário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-forms') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
 

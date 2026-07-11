@@ -6,6 +6,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="csrf-token" content="{{ csrf_token() }}" />
+    <link rel="icon" type="image/x-icon" href="{{ asset('assets/system/favicon.ico') }}" />
 
     <title>{{ SysAutomator::SysAutomatorGetConfigValue('site-title', 'Automator') }} - {!! $title !!}</title>
 
@@ -32,8 +33,8 @@
       
     </script>
 
-    <script src="{{ asset('assets/system/painel-restrict-scripts.js') }}" type="text/javascript"></script>
-    <script src="{{ asset('assets/system/automator-page-editor-script.js') }}" type="text/javascript"></script>
+    <script src="{{ asset('assets/system/painel-restrict-scripts.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
+    <script src="{{ asset('assets/system/automator-page-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     <script src="{{ asset('assets/system/automator-form-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     
 

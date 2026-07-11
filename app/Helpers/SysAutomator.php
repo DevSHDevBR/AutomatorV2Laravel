@@ -6985,4 +6985,81 @@
 
 
 
+    public static function SysAutomatorNormalizeRelationFieldProps($props = []) {
+
+      if(!is_array($props)) {
+        $props = [];
+      }
+
+      $fieldType = strtolower((string) ($props['type'] ?? ''));
+
+      if(isset($props['params']) && is_array($props['params'])) {
+
+        $fieldType = strtolower((string) (
+          $props['type']
+          ?? $props['params']['configs.type']
+          ?? $props['params']['advanced.type']
+          ?? $props['params']['type']
+          ?? $fieldType
+        ));
+
+      }
+
+      if($fieldType == '') {
+        $fieldType = 'select';
+      }
+
+      if(!in_array($fieldType, ['select', 'checkbox', 'radio'])) {
+        $fieldType = 'select';
+      }
+
+      $props['type'] = $fieldType;
+
+      if(!isset($props['relation']) || !is_array($props['relation'])) {
+        $props['relation'] = [];
+      }
+
+      $relation = $props['relation'];
+
+      $relation['table'] = trim((string) (
+        $relation['table']
+        ?? $relation['tabela-destino']
+        ?? ''
+      ));
+
+      $relation['value'] = trim((string) (
+        $relation['value']
+        ?? $relation['column']
+        ?? $relation['campo-destino']
+        ?? ''
+      ));
+
+      $relation['label'] = trim((string) (
+        $relation['label']
+        ?? $relation['display']
+        ?? $relation['label-destino']
+        ?? ''
+      ));
+
+      unset(
+        $relation['column'],
+        $relation['display'],
+        $relation['key'],
+        $relation['label_table'],
+        $relation['label_value'],
+        $relation['label_display'],
+        $relation['tabela-destino'],
+        $relation['campo-destino'],
+        $relation['label-destino']
+      );
+
+      $props['relation'] = $relation;
+
+      return $props;
+
+    }
+
+
+
+
   }

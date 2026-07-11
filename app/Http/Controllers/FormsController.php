@@ -885,7 +885,11 @@
 
     public function updateForm(Request $request, $id = null) {
 
-      $formID = $id ?: $request->input('form.tbl_sys_form_ID');
+      $formID = $id
+        ?: $request->input('id')
+        ?: $request->input('tbl_sys_form_ID')
+        ?: $request->input('form.id')
+        ?: $request->input('form.tbl_sys_form_ID');
 
       return $this->saveFormEditorPayload($request, $formID);
 

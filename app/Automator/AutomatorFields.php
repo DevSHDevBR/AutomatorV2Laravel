@@ -47,7 +47,7 @@
           'form'       => $formData['form'] ?? [],
           'field'      => $field,
           'fields'     => $fields,
-          'props'      => $field['props'] ?? [],
+          'props'      => self::normalizeFieldPropsForRender($field),
           'attrs'      => $field['attrs'] ?? [],
           'config'     => $field['config'] ?? [],
           'field_type' => $field['field_type'] ?? [],
@@ -373,6 +373,59 @@
       $args['columnType'] = $args['columnType'] ?? null;
 
 
+      if(!is_array($args['props'])) {
+
+        if($args['props'] != '') {
+
+          $decodedProps = json_decode($args['props'], true);
+
+          $args['props'] = is_array($decodedProps)
+            ? $decodedProps
+            : [];
+
+        } else {
+
+          $args['props'] = [];
+
+        }
+
+      }
+
+
+      if(!is_array($args['attrs'])) {
+
+        if($args['attrs'] != '') {
+
+          $decodedAttrs = json_decode($args['attrs'], true);
+
+          $args['attrs'] = is_array($decodedAttrs)
+            ? $decodedAttrs
+            : [];
+
+        } else {
+
+          $args['attrs'] = [];
+
+        }
+
+      }
+
+
+      $fieldTypeName = strtolower((string) (
+        $args['field_type']['tbl_sys_field_type_name']
+        ?? $args['field']['field_type']['tbl_sys_field_type_name']
+        ?? $args['field']['tbl_sys_field_type_name']
+        ?? ''
+      ));
+
+
+      if($fieldTypeName == 'relation' || $fieldTypeName == 'relations') {
+
+        $args['props'] = self::normalizeRelationFieldProps($args['props']);
+
+      }
+
+
       if($args['render'] == 'formulario') {
 
         $field = $args['field'];
@@ -396,17 +449,6 @@
         $args['field_class'] = $field['tbl_sys_forms_field_class'] ?? '';
 
         $args['field_selector'] = $field['field_selector'] ?? (($fieldName != '') ? '[name="' . $fieldName . '"]' : '');
-
-        /*
-        |--------------------------------------------------------------------------
-        | Atributos booleanos vindos de props
-        |--------------------------------------------------------------------------
-        |
-        | Permite usar disabled/readonly diretamente em tbl_sys_forms_field_props
-        | ou em tbl_sys_forms_field_attrs. O attrs continua tendo prioridade,
-        | mas quando não existir, a propriedade é convertida para atributo HTML.
-        |
-        */
 
         if(!isset($args['attrs']['disabled']) && self::isTruthy($args['props']['disabled'] ?? false)) {
 
@@ -463,6 +505,117 @@
 
 
     }
+    // public static function normalizeArgs($args = []) {
+
+
+    //   $args['form']       = $args['form'] ?? [];
+    //   $args['field']      = $args['field'] ?? [];
+    //   $args['fields']     = $args['fields'] ?? [];
+    //   $args['props']      = $args['props'] ?? [];
+    //   $args['attrs']      = $args['attrs'] ?? [];
+    //   $args['config']     = $args['config'] ?? [];
+    //   $args['field_type'] = $args['field_type'] ?? [];
+    //   $args['values']     = $args['values'] ?? [];
+    //   $args['render']     = $args['render'] ?? 'formulario';
+
+    //   $args['pagination'] = $args['pagination'] ?? [];
+    //   $args['column']     = $args['column'] ?? [];
+    //   $args['columns']    = $args['columns'] ?? [];
+    //   $args['item']       = $args['item'] ?? null;
+    //   $args['request']    = $args['request'] ?? [];
+    //   $args['columnType'] = $args['columnType'] ?? null;
+
+
+    //   if($args['render'] == 'formulario') {
+
+    //     $field = $args['field'];
+
+    //     $fieldID = $field['tbl_sys_forms_field_ID'] ?? uniqid();
+
+    //     $fieldName = $field['tbl_sys_forms_field_name'] ?? '';
+
+    //     $args['field_id'] = $field['field_id'] ?? ('field_' . $fieldID);
+
+    //     $args['field_name'] = $field['field_name'] ?? $fieldName;
+
+    //     $args['field_label'] = $field['tbl_sys_forms_field_title'] 
+    //       ?? $field['tbl_sys_forms_field_label'] 
+    //       ?? '';
+
+    //     $args['field_value'] = $field['value'] ?? self::getFieldValue($field, $args['values']);
+
+    //     $args['field_required'] = self::isTruthy($field['tbl_sys_forms_field_required'] ?? false);
+
+    //     $args['field_class'] = $field['tbl_sys_forms_field_class'] ?? '';
+
+    //     $args['field_selector'] = $field['field_selector'] ?? (($fieldName != '') ? '[name="' . $fieldName . '"]' : '');
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Atributos booleanos vindos de props
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | Permite usar disabled/readonly diretamente em tbl_sys_forms_field_props
+    //     | ou em tbl_sys_forms_field_attrs. O attrs continua tendo prioridade,
+    //     | mas quando não existir, a propriedade é convertida para atributo HTML.
+    //     |
+    //     */
+
+    //     if(!isset($args['attrs']['disabled']) && self::isTruthy($args['props']['disabled'] ?? false)) {
+
+    //       $args['attrs']['disabled'] = true;
+
+    //     }
+
+    //     if(
+    //       !isset($args['attrs']['readonly']) &&
+    //       (
+    //         self::isTruthy($args['props']['readonly'] ?? false) ||
+    //         self::isTruthy($args['props']['readonlue'] ?? false)
+    //       )
+    //     ) {
+
+    //       $args['attrs']['readonly'] = true;
+
+    //     }
+
+    //     $args['field_attrs'] = self::renderAttrs($args['attrs']);
+
+    //   }
+
+
+    //   if($args['render'] == 'paginacao') {
+
+    //     $column = $args['column'];
+
+    //     $args['column_name'] = $column['column_name'] 
+    //       ?? $column['tbl_sys_paginations_col_name'] 
+    //       ?? $column['tbl_sys_paginations_col_field'] 
+    //       ?? $column['tbl_sys_paginations_col_column'] 
+    //       ?? '';
+
+    //     $args['column_label'] = $column['label']
+    //       ?? $column['tbl_sys_paginations_col_title']
+    //       ?? $column['tbl_sys_paginations_col_label']
+    //       ?? $args['column_name'];
+
+    //     $args['column_value'] = self::getColumnValue($args['item'], $args['column_name']);
+
+    //     if(isset($column['replaced']) && is_array($column['replaced']) && array_key_exists($args['column_value'], $column['replaced'])) {
+
+    //       $args['column_value'] = $column['replaced'][$args['column_value']];
+
+    //     }
+
+    //     $args['column_attrs'] = self::renderAttrs($args['attrs']);
+
+    //   }
+
+
+    //   return $args;
+
+
+    // }
 
 
 
@@ -860,176 +1013,6 @@
 
     }
 
-    // Funcionava
-    // public static function renderViewEditorField($field, $data = []) {
-
-
-    //   $type = SysFieldType::where('tbl_sys_field_type_layout', true)->where('tbl_sys_field_type_ID', $field)->first();
-    //   if($type) {
-
-    //     $fieldType = $type->toArray();
-
-    //     $dados          = $fieldType;
-    //     $dados['value'] = $data;
-
-
-    //     $configs = ( ($dados['tbl_sys_field_type_configs'] !== null) ? ( ($dados['tbl_sys_field_type_configs'] != '') ? ( (array) json_decode($dados['tbl_sys_field_type_configs'], true) ) : [] ) : [] );
-
-    //     $code = ( ($configs['code'] !== null) ? ( (is_array($configs['code'])) ? ( (count($configs['code']) >= 1) ? $configs['code'] : [] ) : [] ) : [] );
-
-    //     $blocks = ( (isset($configs['block'])) ? ( (is_array($configs['block'])) ? $configs['block'] : [] ) : [] );
-    //     $vars   = ( (isset($code['vars'])) ? ( (is_array($code['vars'])) ? $code['vars'] : ( (is_object($code['vars'])) ? ( (array) $code['vars'] ) : [] ) )  : false );
-    //     $props  = [];
-    //     $existe = [];
-
-    //     foreach ($blocks as $blockKey => $blockArgs) {
-          
-    //       $fields = [];
-    //       foreach ($blockArgs['fields'] as $blockFieldsKey => $blockFieldsArgs) {
-            
-    //         // $props[] = [$blockFieldsKey, $blockFieldsArgs];
-
-    //         if(is_array($vars)) {
-
-    //           if(count($vars) >= 1) {
-
-    //             if(array_key_exists($blockFieldsKey, $vars)) {
-
-    //               if($vars[$blockFieldsKey]['type'] == 'relation') {
-
-    //                 $varsQuery = DB::table($vars[$blockFieldsKey]['table'])->get()->toArray();
-    //                 if(is_array($varsQuery)) {
-
-    //                   if(count($varsQuery) >= 1) {
-
-    //                     $varsData = [];
-    //                     foreach ($varsQuery as $varKey => $varValue) {
-    //                       $varValue = ( (array) $varValue );
-    //                       // $existe[] = $varValue[$vars[$blockFieldsKey]['label']];
-    //                       $varsData[$varValue[$vars[$blockFieldsKey]['index']]] = $varValue[$vars[$blockFieldsKey]['label']];
-
-    //                     }
-
-    //                     // $existe[] = $blockArgs['fields'][$blockFieldsKey]['choices'];
-    //                     // $existe[] = $varsData;
-
-
-    //                     $blocks[$blockKey]['fields'][$blockFieldsKey]['choices'] = $varsData;
-
-    //                   }
-
-    //                 }
-
-    //               }
-
-    //             }
-
-    //           }
-
-    //         }
-
-    //         if(array_key_exists('onload', $blockFieldsArgs)) {
-
-    //           if(is_array($blockFieldsArgs['onload'])) {
-
-    //             if(array_key_exists('add-prop', $blockFieldsArgs['onload'])) {
-
-    //               foreach ($blockFieldsArgs['onload']['add-prop'] as $propItem) {
-                    
-    //                 // $props[] = array_values($propItem)[0];
-    //                 // $props[] = array_keys($propItem)[0];
-    //                 if(!array_key_exists(array_keys($propItem)[0], $props)) {
-
-    //                   $props[array_keys($propItem)[0]] = array_values($propItem)[0];
-
-    //                 }
-
-    //               }
-
-    //             }
-
-    //           }
-
-    //         }
-
-    //       }
-
-    //     }
-
-    //     $rendered = ( (isset($code['rendered'])) ? $code['rendered']  : false );
-    //     $prefix   = ( (isset($code['prefix']))   ? $code['prefix']  : false );
-    //     $sufix    = ( (isset($code['sufix']))    ? $code['sufix']  : false );
-
-    //     $editor = ( (isset($code['editor'])) ? $code['editor'] : false );
-
-    //     if($rendered == true) {
-
-    //       $tag = ( (isset($code['default'])) ? $code['default'] : false );
-    //       if($tag != false) {
-
-    //         $tag = str_replace(['<', '>'], '', $tag);
-    //         $prefix = str_replace('[$tag$]', '<' . $tag, $prefix);
-    //         $sufix  = str_replace('[$tag$]', $tag, $sufix);
-
-    //       }
-
-    //     } else {
-
-    //       $tag = ( (isset($code['tag'])) ? $code['tag'] : false );
-    //       if($tag != false) {
-
-    //         if(is_array($tag)) {
-    //           $tag = $code['default'];
-    //         }
-    //         $tag = str_replace(['<', '>'], '', $tag);
-    //         $prefix = str_replace('[$tag$]', $tag, $prefix);
-    //         $sufix  = str_replace('[$tag$]', $tag, $sufix);
-
-    //       }
-          
-    //       if($editor == true) {
-
-    //         $prefix = substr($prefix, 0, -1) . ' contenteditable="true"' . ">";
-
-    //       }
-
-    //     }
-
-
-    //     $retorno = [
-
-    //       'id'             => $dados['tbl_sys_field_type_ID'],
-    //       'type'           => $dados['tbl_sys_field_type_name'],
-    //       'icon'           => $dados['tbl_sys_field_type_icon'],
-    //       'title'          => $dados['tbl_sys_field_type_title'],
-    //       'description'    => $dados['tbl_sys_field_type_description'],
-    //       'code'           => '',
-    //       // 'code'           => $configs['code']['prefix'] . $configs['code']['sufix'],
-    //       'class'          => ( (isset($code['class']))  ? $code['class']  : '' ),
-    //       'tag'            => ( (isset($code['tag']))    ? $code['tag']    : '' ),
-    //       'prefix'         => $prefix,
-    //       'sufix'          => $sufix,
-    //       'toolbar'        => ( (isset($configs['toolbar'])) ? $configs['toolbar'] : [] ),
-    //       'rendered'       => $rendered,
-    //       // 'default'        => ( (isset($code['default']))    ? $code['default']   : false ),
-    //       'can_have_child' => ( (isset($code['has_child']))  ? $code['has_child'] : false ),
-    //       'props'          => $props,
-    //       'editor'         => $editor,
-    //       'properties'     => $blocks,
-    //       'existe'     => $existe,
-    //       'vars'     => $vars,
-
-    //     ];
-
-
-    //     return $retorno;
-
-    //   }
-
-    //   return '';
-
-
-    // }
 
 
     private static function resolveEditorShortcodeParamsRelations(array $params): array {
@@ -1081,6 +1064,113 @@
       }
 
       return $params;
+
+    }
+
+
+
+    public static function normalizeRelationFieldProps($props = []) {
+
+      if(!is_array($props)) {
+        $props = [];
+      }
+
+      $fieldType = strtolower((string) ($props['type'] ?? ''));
+
+      if(isset($props['params']) && is_array($props['params'])) {
+
+        $fieldType = strtolower((string) (
+          $props['type']
+          ?? $props['params']['configs.type']
+          ?? $props['params']['advanced.type']
+          ?? $props['params']['type']
+          ?? $fieldType
+        ));
+
+      }
+
+      if($fieldType == '') {
+        $fieldType = 'select';
+      }
+
+      if(!in_array($fieldType, ['select', 'checkbox', 'radio'])) {
+        $fieldType = 'select';
+      }
+
+      $props['type'] = $fieldType;
+
+      if(!isset($props['relation']) || !is_array($props['relation'])) {
+        $props['relation'] = [];
+      }
+
+      $relation = $props['relation'];
+
+      $relation['table'] = trim((string) (
+        $relation['table']
+        ?? $relation['tabela-destino']
+        ?? ''
+      ));
+
+      $relation['value'] = trim((string) (
+        $relation['value']
+        ?? $relation['column']
+        ?? $relation['campo-destino']
+        ?? ''
+      ));
+
+      $relation['label'] = trim((string) (
+        $relation['label']
+        ?? $relation['display']
+        ?? $relation['label-destino']
+        ?? ''
+      ));
+
+      unset(
+        $relation['column'],
+        $relation['display'],
+        $relation['key'],
+        $relation['label_table'],
+        $relation['label_value'],
+        $relation['label_display'],
+        $relation['tabela-destino'],
+        $relation['campo-destino'],
+        $relation['label-destino']
+      );
+
+      $props['relation'] = $relation;
+
+      return $props;
+
+    }
+
+
+    public static function normalizeFieldPropsForRender($field = []) {
+
+      $props = $field['props'] ?? [];
+
+      if(!is_array($props)) {
+
+        if($props != '') {
+          $props = json_decode($props, true);
+        }
+
+        if(!is_array($props)) {
+          $props = [];
+        }
+
+      }
+
+      $fieldTypeName = strtolower((string) (
+        $field['field_type']['tbl_sys_field_type_name']
+        ?? $field['tbl_sys_field_type_name']
+        ?? ''
+      ));
+
+      if($fieldTypeName == 'relation' || $fieldTypeName == 'relations') {
+        $props = self::normalizeRelationFieldProps($props);
+      }
+
+      return $props;
 
     }
 

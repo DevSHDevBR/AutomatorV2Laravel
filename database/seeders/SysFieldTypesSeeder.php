@@ -2921,7 +2921,7 @@
               'code' => [
 
                 'prefix' => '<[$tag$]>',
-                'sufix'  => '</div>',
+                'sufix'  => '</[$tag$]>',
                 'editor' => false,
                 'has_child' => false,
                 'class'     => 'col col-12 m-0 p-0',
@@ -2952,9 +2952,12 @@
 
               'code' => [
 
-                'prefix' => '<[$tag$]',
-                'sufix'  => ' />',
-                'tag'    => 'hr'
+                'prefix'    => '<[$tag$]>',
+                'sufix'     => '</[$tag$]>',
+                'editor'    => false,
+                'has_child' => false,
+                'class'     => 'col col-12 m-0 p-0',
+                'tag'       => 'div'
               
               ],
 

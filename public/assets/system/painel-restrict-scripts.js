@@ -2075,20 +2075,72 @@ $(document)
 */
 function AutomatorCreateViewModal(payload, options) {
 
-  options = (options && typeof options === 'object') ? options : {};
+  payload = (
+    payload &&
+    typeof payload === 'object'
+  )
+    ? payload
+    : {};
 
-  var acao        = options.acao      || null;
-  var id          = options.id        || null;
-  var size        = options.size      || 'lg';
-  var centered    = (options.centered  !== undefined) ? options.centered  : true;
-  var scrollable  = (options.scrollable !== undefined) ? options.scrollable : true;
-  var backdrop    = (options.backdrop  !== undefined) ? options.backdrop  : 'static';
-  var keyboard    = (options.keyboard  !== undefined) ? options.keyboard  : false;
-  var callback    = (typeof options.callback === 'function') ? options.callback : null;
-  var beforeShow  = (typeof options.beforeShow === 'function') ? options.beforeShow : null;
-  var afterHideOn = (typeof options.afterHideOn === 'function') ? options.afterHideOn : null;
+  options = (
+    options &&
+    typeof options === 'object'
+  )
+    ? options
+    : {};
 
-  var keepLoaderUntilCallback = options.keepLoaderUntilCallback === true;
+  var acao        = options.acao || null;
+  var id          = options.id || null;
+  var pageID      = options.pageID || payload.pageID || id || null;
+
+  var editorAction =
+    options.editorAction ||
+    payload.editorAction ||
+    (
+      pageID
+        ? 'update'
+        : 'store'
+    );
+
+  var size        = options.size || 'lg';
+
+  var centered    =
+    options.centered !== undefined
+      ? options.centered
+      : true;
+
+  var scrollable  =
+    options.scrollable !== undefined
+      ? options.scrollable
+      : true;
+
+  var backdrop    =
+    options.backdrop !== undefined
+      ? options.backdrop
+      : 'static';
+
+  var keyboard    =
+    options.keyboard !== undefined
+      ? options.keyboard
+      : false;
+
+  var callback =
+    typeof options.callback === 'function'
+      ? options.callback
+      : null;
+
+  var beforeShow =
+    typeof options.beforeShow === 'function'
+      ? options.beforeShow
+      : null;
+
+  var afterHideOn =
+    typeof options.afterHideOn === 'function'
+      ? options.afterHideOn
+      : null;
+
+  var keepLoaderUntilCallback =
+    options.keepLoaderUntilCallback === true;
 
 
   /*
@@ -2887,6 +2939,11 @@ function AutomatorCreateViewModal(payload, options) {
 
             if(response.status == true) {
 
+              response.editorAction = editorAction;
+              response.acao = editorAction;
+              response.pageID = pageID || '';
+              response.modalRequestAction = acao || '';
+
               _fetchRecordData(response);
 
             } else {
@@ -3188,91 +3245,952 @@ document.addEventListener('click', function(e) {
 
 // }
 
+function AutomatorPaginationCreateModalViewCallBack(
+  args = []
+) {
+
+  if (
+    !Array.isArray(args) ||
+    args.length < 1
+  ) {
+    return false;
+  }
+
+  const vars =
+    args[0] &&
+    typeof args[0] === 'object'
+      ? args[0]
+      : {};
+
+  let currentView =
+    window.AutomatorPaginationCurrentModalView ||
+    null;
+
+  let modalEl =
+    currentView &&
+    currentView.modalEl
+      ? currentView.modalEl
+      : document.querySelector(
+          '.automator-view-modal.show'
+        );
+
+  let formEl =
+    document.getElementById(
+      'automator-editor-change-observer-form'
+    );
+
+  if (
+    !formEl &&
+    currentView &&
+    currentView.formEl
+  ) {
+
+    formEl =
+      currentView.formEl;
+
+  }
+
+  if (
+    !formEl &&
+    modalEl
+  ) {
+
+    formEl =
+      modalEl.querySelector(
+        '#automator-editor-change-observer-form'
+      ) ||
+      modalEl.querySelector(
+        '#automator-editor-modal form'
+      ) ||
+      modalEl.querySelector('form');
+
+  }
+
+  if (!formEl) {
+
+    console.error(
+      'Nenhum formulário do editor de páginas foi encontrado para configurar o envio.'
+    );
+
+    return false;
+
+  }
+
+  if (!currentView) {
+
+    currentView = {
+      modalID:
+        modalEl
+          ? modalEl.id
+          : '',
+
+      formID:
+        formEl.id ||
+        '',
+
+      modalEl:
+        modalEl,
+
+      formEl:
+        formEl,
+
+      modal:
+        modalEl
+          ? bootstrap.Modal.getInstance(
+              modalEl
+            )
+          : null
+    };
+
+    window.AutomatorPaginationCurrentModalView =
+      currentView;
+
+  } else {
+
+    currentView.formEl =
+      formEl;
+
+    currentView.formID =
+      formEl.id ||
+      '';
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Método
+  |--------------------------------------------------------------------------
+  */
+
+  formEl.setAttribute(
+    'method',
+    String(
+      vars.method ||
+      'POST'
+    ).toUpperCase()
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Action da paginação
+  |--------------------------------------------------------------------------
+  */
+
+  const actionName =
+    String(
+      vars.action ||
+      ''
+    );
+
+  if (
+    actionName === '' ||
+    typeof window.AutomatorPaginationRoutes === 'undefined' ||
+    !window.AutomatorPaginationRoutes[actionName]
+  ) {
+
+    console.error(
+      'A rota da ação "' +
+      actionName +
+      '" não foi encontrada.'
+    );
+
+    return false;
+
+  }
+
+  let actionURL =
+    String(
+      window.AutomatorPaginationRoutes[
+        actionName
+      ] ||
+      ''
+    );
+
+  /*
+  |--------------------------------------------------------------------------
+  | ID da página
+  |--------------------------------------------------------------------------
+  */
+
+  let recordID =
+    vars.tbl_sys_route_ID ||
+    vars.pageID ||
+    vars.id ||
+    '';
+
+  recordID =
+    String(recordID || '').trim();
+
+  if (
+    recordID !== '' &&
+    !/^\d+$/.test(recordID)
+  ) {
+
+    console.error(
+      'O ID informado para edição não é válido:',
+      recordID
+    );
+
+    return false;
+
+  }
+
+  if (
+    recordID !== '' &&
+    actionURL.indexOf('#ID#') !== -1
+  ) {
+
+    actionURL =
+      actionURL.replace(
+        '#ID#',
+        recordID
+      );
+
+  }
+
+  formEl.setAttribute(
+    'action',
+    actionURL
+  );
+
+  formEl.setAttribute(
+    'data-automator-editor-action',
+    actionName
+  );
+
+  formEl.setAttribute(
+    'data-automator-modal-id',
+    currentView.modalID ||
+    ''
+  );
+
+  formEl.setAttribute(
+    'data-automator-form-id',
+    currentView.formID ||
+    formEl.id ||
+    ''
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | Registra o ID da rota no formulário
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    actionName === 'edit' &&
+    recordID !== ''
+  ) {
+
+    let routeIDInput =
+      formEl.querySelector(
+        'input[type="hidden"][name="tbl_sys_route_ID"]'
+      );
+
+    if (!routeIDInput) {
+
+      routeIDInput =
+        document.createElement('input');
+
+      routeIDInput.type =
+        'hidden';
+
+      routeIDInput.name =
+        'tbl_sys_route_ID';
+
+      formEl.appendChild(
+        routeIDInput
+      );
+
+    }
+
+    routeIDInput.value =
+      recordID;
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Adiciona os demais argumentos
+  |--------------------------------------------------------------------------
+  */
+
+  $.each(
+    vars,
+    function(index, value) {
+
+      if (
+        index === 'method' ||
+        index === 'action' ||
+        index === 'tbl_sys_route_ID' ||
+        index === 'pageID' ||
+        index === 'id'
+      ) {
+        return;
+      }
+
+      let input =
+        formEl.querySelector(
+          'input[type="hidden"][name="' +
+          index +
+          '"]'
+        );
+
+      if (!input) {
+
+        input =
+          document.createElement('input');
+
+        input.type =
+          'hidden';
+
+        input.name =
+          index;
+
+        formEl.appendChild(
+          input
+        );
+
+      }
+
+      input.value =
+        value !== null &&
+        typeof value !== 'undefined'
+          ? String(value)
+          : '';
+
+    }
+  );
+
+  if (
+    typeof AutomatorFormSerializeCurrentState ===
+    'function'
+  ) {
+
+    formEl.setAttribute(
+      'data-automator-initial-state',
+      AutomatorFormSerializeCurrentState(
+        formEl
+      )
+    );
+
+  }
+
+  formEl.setAttribute(
+    'data-automator-form-changed',
+    'false'
+  );
+
+  return {
+    vars: vars,
+    formEl: formEl,
+    modalEl: modalEl,
+    currentView: currentView,
+    method: formEl.getAttribute('method'),
+    action: formEl.getAttribute('action'),
+    recordID: recordID
+  };
+
+}
+
 
 function getSysAutomatorPageEditorData(
   response,
   recordData
 ) {
 
+  response =
+    response &&
+    typeof response === 'object'
+      ? response
+      : {};
+
+  recordData =
+    recordData &&
+    typeof recordData === 'object'
+      ? recordData
+      : {};
+
   const dados =
-    response && response.dados
+    response.dados &&
+    typeof response.dados === 'object'
       ? response.dados
       : {};
 
-  const page =
-    recordData && Object.keys(recordData).length
-      ? recordData
-      : (
-          dados.page
-            ? dados.page
-            : dados
-        );
+  let page = {};
+
+  /*
+  |--------------------------------------------------------------------------
+  | Resolve os dados reais da página retornados pelo GET
+  |--------------------------------------------------------------------------
+  */
+
+  if (
+    recordData.data &&
+    typeof recordData.data === 'object'
+  ) {
+
+    page =
+      recordData.data;
+
+  } else if (
+    recordData.page &&
+    typeof recordData.page === 'object'
+  ) {
+
+    page =
+      recordData.page;
+
+  } else if (
+    recordData.item &&
+    typeof recordData.item === 'object'
+  ) {
+
+    page =
+      recordData.item;
+
+  } else if (
+    recordData.values &&
+    typeof recordData.values === 'object'
+  ) {
+
+    page =
+      recordData.values;
+
+  } else if (
+    Object.keys(recordData).length > 0
+  ) {
+
+    page =
+      recordData;
+
+  } else if (
+    dados.page &&
+    typeof dados.page === 'object'
+  ) {
+
+    page =
+      dados.page;
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Resolve o ID sem usar response.id
+  |--------------------------------------------------------------------------
+  |
+  | response.id pode ser o identificador interno da view ou da rota da API,
+  | por exemplo "page-admin-api-routes-update". Ele não representa o ID
+  | numérico da página.
+  |
+  */
+
+  let pageID =
+    page.tbl_sys_route_ID ||
+    page.pageID ||
+    response.pageID ||
+    '';
+
+  pageID =
+    String(pageID || '').trim();
+
+  if (
+    pageID !== '' &&
+    !/^\d+$/.test(pageID)
+  ) {
+
+    pageID =
+      '';
+
+  }
+
+  const editorAction =
+    response.editorAction ||
+    response.acao ||
+    (
+      pageID !== ''
+        ? 'update'
+        : 'store'
+    );
 
   return {
+    id: pageID,
+
+    action: editorAction,
+
+    isNew:
+      editorAction === 'store' ||
+      editorAction === 'add',
+
     content:
       page.tbl_sys_route_content ||
       page.content ||
       '',
+
     css:
       page.tbl_sys_route_css ||
       page.css ||
       '',
+
     blocks:
       dados.blocks ||
       response.blocks ||
-      {}
+      {},
+
+    page:
+      page
   };
 
 }
+
 
 function SysAutomatorConfigPageEditor(
   response,
   modalEl,
   modal,
-  recordData
+  recordData,
+  submitConfig = {}
 ) {
 
   AutomatorPageLoader('show');
 
-  const pageData = getSysAutomatorPageEditorData(
-    response,
-    recordData
-  );
+
+  response = (
+    response &&
+    typeof response === 'object'
+  )
+    ? response
+    : {};
+
+
+  submitConfig = (
+    submitConfig &&
+    typeof submitConfig === 'object'
+  )
+    ? submitConfig
+    : {};
+
+
+  const pageData =
+    getSysAutomatorPageEditorData(
+      response,
+      recordData
+    );
+
+
+  const isNew =
+    pageData.isNew === true;
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Mantém o contexto correto da operação
+  |--------------------------------------------------------------------------
+  */
+
+  const editorAction =
+    isNew
+      ? 'store'
+      : 'update';
+
+
+  response.editorAction =
+    editorAction;
+
+  response.acao =
+    editorAction;
+
+  response.pageID =
+    pageData.id || '';
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Ajusta os dados visuais e de contexto do modal
+  |--------------------------------------------------------------------------
+  */
+
+  if (modalEl) {
+
+    const modalTitle =
+      modalEl.querySelector(
+        '.modal-title'
+      );
+
+
+    if (modalTitle) {
+
+      modalTitle.textContent =
+        isNew
+          ? 'Nova Página'
+          : 'Editar Página';
+
+    }
+
+
+    modalEl.setAttribute(
+      'data-automator-editor-action',
+      editorAction
+    );
+
+
+    modalEl.setAttribute(
+      'data-automator-editor-page-id',
+      pageData.id || ''
+    );
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inicializa o editor
+  |--------------------------------------------------------------------------
+  */
 
   SysAutomatorEditor.config({
-    isNew: response.acao === 'store',
+
+    isNew: isNew,
+
     editor: {
+
+      pageID:
+        pageData.id || '',
+
+      action:
+        editorAction,
+
       settingsBlock: {
+
         collapsed: false,
+
         tab: 'page-settings'
+
       },
-      content: response.acao === 'store'
-        ? ''
-        : pageData.content,
-      css: response.acao === 'store'
-        ? ''
-        : pageData.css,
-      blocks: pageData.blocks
+
+      content:
+        isNew
+          ? ''
+          : pageData.content,
+
+      css:
+        isNew
+          ? ''
+          : pageData.css,
+
+      blocks:
+        pageData.blocks
+
     }
-  }, function () {
 
-    SysAutomatorEditor.init(function () {
+  }, function() {
 
-      setSysAutomatorPageEditorInitialHeaderState(response);
 
-      setTimeout(function () {
+    SysAutomatorEditor.init(function() {
 
-        AutomatorPageLoader('hide', function () {
-          AutomatorSetActionStatus(false);
-        });
+
+      /*
+      |--------------------------------------------------------------------------
+      | Restaura título, slug e configurações da página
+      |--------------------------------------------------------------------------
+      */
+
+      setSysAutomatorPageEditorInitialHeaderState(
+        response
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Completa as configurações de submit
+      |--------------------------------------------------------------------------
+      */
+
+      const finalSubmitConfig =
+        $.extend(
+          {},
+          submitConfig
+        );
+
+
+      if (!finalSubmitConfig.method) {
+
+        finalSubmitConfig.method =
+          'POST';
+
+      }
+
+
+      if (!finalSubmitConfig.action) {
+
+        finalSubmitConfig.action =
+          isNew
+            ? 'add'
+            : 'edit';
+
+      }
+
+
+      if (
+        !isNew &&
+        pageData.id
+      ) {
+
+        finalSubmitConfig.tbl_sys_route_ID =
+          finalSubmitConfig.tbl_sys_route_ID ||
+          pageData.id;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Configura o formulário interno de envio
+      |--------------------------------------------------------------------------
+      */
+
+      const submitContext =
+        AutomatorPaginationCreateModalViewCallBack([
+          finalSubmitConfig
+        ]);
+
+
+      if (
+        !submitContext ||
+        !submitContext.formEl
+      ) {
+
+        console.error(
+          'Não foi possível configurar o formulário de envio do editor de páginas.'
+        );
+
+
+        AutomatorPageLoader(
+          'hide',
+          function() {
+
+            AutomatorSetActionStatus(
+              false
+            );
+
+          }
+        );
+
+
+        return;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Registra o ID da rota em edição
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        !isNew &&
+        pageData.id
+      ) {
+
+        let routeIDField =
+          submitContext.formEl.querySelector(
+            '[name="tbl_sys_route_ID"]'
+          );
+
+
+        if (!routeIDField) {
+
+          routeIDField =
+            document.createElement(
+              'input'
+            );
+
+          routeIDField.type =
+            'hidden';
+
+          routeIDField.name =
+            'tbl_sys_route_ID';
+
+          submitContext.formEl.appendChild(
+            routeIDField
+          );
+
+        }
+
+
+        routeIDField.value =
+          pageData.id;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Sincroniza os campos da página com o formulário
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        window.SysAutomatorEditor &&
+        typeof SysAutomatorEditor.syncEditorRouteFieldsToForm ===
+        'function'
+      ) {
+
+        SysAutomatorEditor.syncEditorRouteFieldsToForm(
+          submitContext.formEl
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Atualiza o estado inicial do formulário de envio
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+        typeof AutomatorFormSerializeCurrentState ===
+        'function'
+      ) {
+
+        submitContext.formEl.setAttribute(
+          'data-automator-initial-state',
+          AutomatorFormSerializeCurrentState(
+            submitContext.formEl
+          )
+        );
+
+      }
+
+
+      submitContext.formEl.setAttribute(
+        'data-automator-form-changed',
+        'false'
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Registra o estado completo já carregado como estado inicial
+      |--------------------------------------------------------------------------
+      |
+      | Esta chamada precisa ocorrer depois:
+      |
+      | - do título ser preenchido;
+      | - do slug ser preenchido;
+      | - das configurações da página serem carregadas;
+      | - do ID da página ser definido;
+      | - da action e method do formulário serem configurados.
+      |
+      */
+
+      if (
+        window.SysAutomatorEditor &&
+        typeof SysAutomatorEditor.resetEditorChangeObserverState ===
+        'function'
+      ) {
+
+        SysAutomatorEditor.resetEditorChangeObserverState();
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Finaliza o carregamento
+      |--------------------------------------------------------------------------
+      */
+
+      setTimeout(function() {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reforça o estado inicial após eventos assíncronos dos campos
+        |--------------------------------------------------------------------------
+        */
+
+        if (
+          window.SysAutomatorEditor &&
+          typeof SysAutomatorEditor.resetEditorChangeObserverState ===
+          'function'
+        ) {
+
+          SysAutomatorEditor.resetEditorChangeObserverState();
+
+        }
+
+
+        AutomatorPageLoader(
+          'hide',
+          function() {
+
+            AutomatorSetActionStatus(
+              false
+            );
+
+          }
+        );
 
       }, 350);
 
+
     });
+
 
   });
 
 }
+
+// function SysAutomatorConfigPageEditor(
+//   response,
+//   modalEl,
+//   modal,
+//   recordData
+// ) {
+
+//   AutomatorPageLoader('show');
+
+//   const pageData = getSysAutomatorPageEditorData(
+//     response,
+//     recordData
+//   );
+
+//   SysAutomatorEditor.config({
+//     isNew: response.acao === 'store',
+//     editor: {
+//       settingsBlock: {
+//         collapsed: false,
+//         tab: 'page-settings'
+//       },
+//       content: response.acao === 'store'
+//         ? ''
+//         : pageData.content,
+//       css: response.acao === 'store'
+//         ? ''
+//         : pageData.css,
+//       blocks: pageData.blocks
+//     }
+//   }, function () {
+
+//     SysAutomatorEditor.init(function () {
+
+//       setSysAutomatorPageEditorInitialHeaderState(response);
+
+//       setTimeout(function () {
+
+//         AutomatorPageLoader('hide', function () {
+//           AutomatorSetActionStatus(false);
+//         });
+
+//       }, 350);
+
+//     });
+
+//   });
+
+// }
 
 function SysAutomatorInitPageEditor(
     response,

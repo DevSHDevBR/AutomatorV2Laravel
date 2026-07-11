@@ -1,7 +1,9 @@
 @if($render == 'formulario')
-
-  @php
   
+  @php
+
+    $props = SysAutomator::SysAutomatorNormalizeRelationFieldProps($props);
+
     $placeholder = $props['placeholder'] ?? $config['placeholder'] ?? $field_label;
 
     $options = [];
@@ -36,8 +38,13 @@
 
     $selectedValue = array_map('strval', $selectedValue);
 
+    $relationType = $props['type'] ?? 'select';
 
-    $relationType = $props['type'] ?? 'checkbox';
+    if(!in_array($relationType, ['select', 'checkbox', 'radio'])) {
+
+      $relationType = 'select';
+
+    }
 
 
     $automatorRelationIsTruthy = function($value) {
@@ -147,7 +154,7 @@
           if(isset($filterProps['tooltip']) && $filterProps['tooltip'] != '') {
 
             $filterData['tooltip'] = [
-              "title" => $filterProps['tooltip']
+              'title' => $filterProps['tooltip']
             ];
 
           }
@@ -161,61 +168,104 @@
     };
 
 
-    if( ( isset($props['relation']) ) && ( is_array($props['relation']) ) ) {
+    if(isset($props['relation']) && is_array($props['relation'])) {
 
       $relation = $props['relation'];
 
+      $relationTable = $relation['table'] ?? '';
+      $relationValue = $relation['value'] ?? '';
+      $relationLabel = $relation['label'] ?? '';
 
-      /*
-      |--------------------------------------------------------------------------
-      | Suporte a label como array
-      |--------------------------------------------------------------------------
-      |
-      | Quando "label" for um array com as chaves "table", "value" e "display",
-      | é feita uma segunda query para buscar o valor de exibição real.
-      |
-      | IMPORTANTE: antes de chamar SysAutomatorPreperRelationFieldOptionsData,
-      | substituímos o label array por uma string temporária (o próprio "value"),
-      | pois a função interna usa stripos() e não aceita array.
-      | O lookup real é feito depois, com o mapa construído abaixo.
-      |
-      */
+      if($relationTable != '' && $relationValue != '' && $relationLabel != '') {
 
-      $labelIsArray   = isset($relation['label']) && is_array($relation['label']);
-      $labelLookupMap = [];
-      $relationForQuery = $relation;
+        $relationForQuery = $relation;
 
-      if($labelIsArray) {
+        $labelIsArray = is_array($relationLabel);
 
-        $labelConfig = $relation['label'];
+        $labelLookupMap = [];
 
-        $labelTableOk   = isset($labelConfig['table'])   && $labelConfig['table']   != '';
-        $labelValueOk   = isset($labelConfig['value'])   && $labelConfig['value']   != '';
-        $labelDisplayOk = isset($labelConfig['display']) && $labelConfig['display'] != '';
+        if($labelIsArray) {
 
-        /*
-        | Substitui o label array por uma string segura para a query principal.
-        | Usamos o próprio campo "value" da relation como label temporário,
-        | assim a função interna não quebra.
-        */
-        $relationForQuery['label'] = $relation['value'];
+          $labelConfig = $relationLabel;
 
-        if($labelTableOk && $labelValueOk && $labelDisplayOk) {
+          $relationForQuery['label'] = $relationValue;
 
-          $labelRows = \Illuminate\Support\Facades\DB::table($labelConfig['table'])
-            ->select($labelConfig['value'], $labelConfig['display'])
-            ->get();
+          if(
+            isset($labelConfig['table']) &&
+            isset($labelConfig['value']) &&
+            isset($labelConfig['display']) &&
+            $labelConfig['table'] != '' &&
+            $labelConfig['value'] != '' &&
+            $labelConfig['display'] != ''
+          ) {
 
-          foreach($labelRows as $labelRow) {
+            $labelRows = \Illuminate\Support\Facades\DB::table($labelConfig['table'])
+              ->select($labelConfig['value'], $labelConfig['display'])
+              ->get();
 
-            $labelRow = (array) $labelRow;
+            foreach($labelRows as $labelRow) {
 
-            $mapKey   = (string) ($labelRow[ $labelConfig['value']   ] ?? '');
-            $mapValue =          ($labelRow[ $labelConfig['display'] ] ?? '');
+              $labelRow = (array) $labelRow;
 
-            if($mapKey !== '') {
+              $mapKey = (string) ($labelRow[$labelConfig['value']] ?? '');
 
-              $labelLookupMap[$mapKey] = $mapValue;
+              $mapValue = $labelRow[$labelConfig['display']] ?? '';
+
+              if($mapKey !== '') {
+
+                $labelLookupMap[$mapKey] = $mapValue;
+
+              }
+
+            }
+
+          }
+
+        }
+
+
+        $optionsItems = SysAutomator::SysAutomatorPreperRelationFieldOptionsData($relationForQuery);
+
+
+        if($optionsItems !== null) {
+
+          foreach($optionsItems as $optionItem) {
+
+            $optionItem = (array) $optionItem;
+
+            if(isset($optionItem[$relationValue])) {
+
+              $optionValue = $optionItem[$relationValue];
+
+              if($labelIsArray) {
+
+                $optionDisplayLabel = $labelLookupMap[(string) $optionValue] ?? $optionValue;
+
+              } else {
+
+                $optionDisplayLabel = $optionItem[$relationLabel] ?? $optionValue;
+
+              }
+
+              $filterData = $automatorRelationBuildFilterData($optionItem, $relation['filters'] ?? []);
+
+              if($filterData['remove'] == true) {
+
+                continue;
+
+              }
+
+              if(!array_key_exists($optionValue, $options)) {
+
+                $options[$optionValue] = [
+                  'label'    => $optionDisplayLabel,
+                  'tooltip'  => $filterData['tooltip'],
+                  'class'    => $filterData['class'],
+                  'disabled' => $filterData['disabled'],
+                  'readonly' => $filterData['readonly'],
+                ];
+
+              }
 
             }
 
@@ -225,145 +275,154 @@
 
       }
 
-
-      $optionsItems = SysAutomator::SysAutomatorPreperRelationFieldOptionsData($relationForQuery);
-
-
-      if($optionsItems !== null) {
-
-        foreach($optionsItems as $optionItem) {
-
-          $optionItem = ( (array) $optionItem );
-
-          if(isset($optionItem[$relation['value']])) {
-
-            $optionValue = $optionItem[$relation['value']];
-
-            /*
-            |--------------------------------------------------------------
-            | Resolve o label de exibição
-            |--------------------------------------------------------------
-            |
-            | Se label for array: usa o mapa construído acima (labelLookupMap)
-            | para encontrar o display correto pelo value do item.
-            | Se label for string: usa a coluna diretamente (comportamento original).
-            |
-            */
-
-            if($labelIsArray) {
-
-              $optionDisplayLabel = $labelLookupMap[(string) $optionValue] ?? $optionValue;
-
-            } else {
-
-              $optionDisplayLabel = isset($optionItem[$relation['label']]) ? $optionItem[$relation['label']] : $optionValue;
-
-            }
-
-            $filterData = $automatorRelationBuildFilterData($optionItem, $relation['filters'] ?? []);
-
-            if($filterData['remove'] == true) {
-
-              continue;
-
-            }
-
-            if(!array_key_exists($optionValue, $options)) {
-
-              $options[$optionValue] = [
-                'label'    => $optionDisplayLabel,
-                'tooltip'  => $filterData['tooltip'],
-                'class'    => $filterData['class'],
-                'disabled' => $filterData['disabled'],
-                'readonly' => $filterData['readonly'],
-              ];
-
-            }
-
-          }
-
-        }
-
-      }
-    
     }
 
   @endphp
 
-  <div class="mb-3 {{ $props['wrapper_class'] ?? '' }}">
 
-    @if($relationType == 'checkbox')
-    
-      <div class="fs-5 mb-3">{!! $placeholder !!}</div>
+  <div class="mb-3 {{ $props['wrapper_class'] ?? 'col-12' }}">
 
-      @if(isset($props['container']) && is_array($props['container']))
-        
-        @if(isset($props['container']['element']) && ($props['container']['element'] != ''))
-          
-          @php $conta = 0; @endphp
+    @if($relationType == 'select')
 
-          @foreach($options as $optionValue => $optionLabel)
+      <div class="form-floating">
 
-            @php
+        <select
+          id="{{ $field_id }}"
+          name="{{ $field_name }}"
+          class="form-select {{ $field_class }}"
+          data-automator-field="true"
+          data-automator-field-name="{{ $field_name }}"
+          data-automator-field-id="{{ $field_id }}"
+          {{ $field_required ? 'required' : '' }}
+          {!! $field_attrs !!}
+        >
 
-              $inputID = $field_id . '-' . $optionValue;
+          @if(
+            isset($props['has_empty']) &&
+            (
+              $props['has_empty'] === true ||
+              $props['has_empty'] === 1 ||
+              $props['has_empty'] === '1' ||
+              $props['has_empty'] === 'true'
+            )
+          )
 
-              $optionDisabled = isset($optionLabel['disabled']) && $optionLabel['disabled'] == true;
+            <option value="">
+              {{ $props['empty_value'] ?? $props['empty_text'] ?? 'Selecione uma opção' }}
+            </option>
 
+          @endif
 
-              $inputName = ( ($optionDisabled == true) ? '' : ( ($relationType == 'checkbox') ? $field_name . '[]' : $field_name ) );
+          @foreach($options as $optionValue => $optionData)
 
-              $isChecked = in_array((string) $optionValue, $selectedValue);
-
-              $optionInputClass = trim('btn-check' . ( ($field_class != '') ? ' ' . $field_class : '' ) . '' . ($props['container']['class'] ?? '') . ' ' . ($optionLabel['class'] ?? ''));
-
-              $isDisabledByClass = false;
-
-              if(isset($optionInputClass) && str_contains(' ' . $optionInputClass . ' ', ' disabled ')) {
-                $isDisabledByClass = true;
-              }
-
-              if($isDisabledByClass == true) {
-                $optionInputClass = trim(str_replace('disabled', 'automator-disabled-selection', $optionInputClass));
-              }
-
-
-              $optionReadonly = isset($optionLabel['readonly']) && $optionLabel['readonly'] == true;
-              
-              $optionTooltip = ( ( isset($optionLabel['tooltip']) ) ? ( ( is_array($optionLabel['tooltip']) ) ? $optionLabel['tooltip'] : ( ($optionLabel['tooltip'] != '') ? $optionLabel['tooltip'] : null ) ) : null );
-              $tooltip = '';
-              if($optionTooltip != null) {
-                $tooltip = ' data-bs-toggle="tooltip" data-bs-title="' . $optionTooltip['title'] . '"';
-              }
-
-            @endphp
-
-              <input
-                id="{{ $inputID }}"
-                type="{!! $relationType !!}"
-                name="{!! $inputName !!}"
-                value="{!! $optionValue !!}"
-                class="{{ $optionInputClass }}"
-                data-automator-relation-disabled="{{ $isDisabledByClass ? 'true' : 'false' }}"
-                data-automator-field="true"
-                data-automator-field-name="{{ $field_name }}"
-                data-automator-field-id="{{ $inputID }}"
-                {{ $field_required ? 'required' : '' }}
-                {{ $isChecked ? 'checked' : '' }}
-                {{ $optionReadonly ? 'readonly' : '' }}
-                {!! $field_attrs !!}
-              />
-
-              <label class="btn btn-outline-secondary mb-2 mr-2 {{ $isDisabledByClass ? 'automator-disabled-selection-label' : '' }}" for="{{ $inputID }}" {!! $tooltip !!}>{!! $optionLabel['label'] !!}</label>
-            
-
-            @php $conta++; @endphp
+            <option
+              value="{{ $optionValue }}"
+              {{ in_array((string) $optionValue, $selectedValue) ? 'selected' : '' }}
+              {{ isset($optionData['disabled']) && $optionData['disabled'] ? 'disabled' : '' }}
+            >
+              {{ $optionData['label'] }}
+            </option>
 
           @endforeach
 
-        @endif
+        </select>
 
+        <label for="{{ $field_id }}">
+          {!! $placeholder !!}
+          {!! $field_required ? '<span class="text-danger">*</span>' : '' !!}
+        </label>
+
+      </div>
+
+    @elseif($relationType == 'checkbox' || $relationType == 'radio')
+
+      @if($placeholder != '')
+        <div class="fs-5 mb-3">
+          {!! $placeholder !!}
+          {!! $field_required ? '<span class="text-danger">*</span>' : '' !!}
+        </div>
       @endif
+
+      @foreach($options as $optionValue => $optionData)
+
+        @php
+
+          $inputID = $field_id . '-' . $optionValue;
+
+          $optionDisabled = isset($optionData['disabled']) && $optionData['disabled'] == true;
+
+          $inputName = $optionDisabled
+            ? ''
+            : (($relationType == 'checkbox') ? $field_name . '[]' : $field_name);
+
+          $isChecked = in_array((string) $optionValue, $selectedValue);
+
+          $optionInputClass = trim(
+            'btn-check ' .
+            (($field_class != '') ? $field_class . ' ' : '') .
+            ($props['container']['class'] ?? '') . ' ' .
+            ($optionData['class'] ?? '')
+          );
+
+          $isDisabledByClass = false;
+
+          if(isset($optionInputClass) && str_contains(' ' . $optionInputClass . ' ', ' disabled ')) {
+
+            $isDisabledByClass = true;
+
+          }
+
+          if($isDisabledByClass == true) {
+
+            $optionInputClass = trim(str_replace('disabled', 'automator-disabled-selection', $optionInputClass));
+
+          }
+
+          $optionReadonly = isset($optionData['readonly']) && $optionData['readonly'] == true;
+
+          $optionTooltip = isset($optionData['tooltip'])
+            ? (
+              is_array($optionData['tooltip'])
+                ? $optionData['tooltip']
+                : (($optionData['tooltip'] != '') ? ['title' => $optionData['tooltip']] : null)
+            )
+            : null;
+
+          $tooltip = '';
+
+          if($optionTooltip != null && isset($optionTooltip['title'])) {
+
+            $tooltip = ' data-bs-toggle="tooltip" data-bs-title="' . e($optionTooltip['title']) . '"';
+
+          }
+
+        @endphp
+
+        <input
+          id="{{ $inputID }}"
+          type="{!! $relationType !!}"
+          name="{!! $inputName !!}"
+          value="{!! $optionValue !!}"
+          class="{{ $optionInputClass }}"
+          data-automator-relation-disabled="{{ $isDisabledByClass ? 'true' : 'false' }}"
+          data-automator-field="true"
+          data-automator-field-name="{{ $field_name }}"
+          data-automator-field-id="{{ $inputID }}"
+          {{ $field_required ? 'required' : '' }}
+          {{ $isChecked ? 'checked' : '' }}
+          {{ $optionReadonly ? 'readonly' : '' }}
+          {!! $field_attrs !!}
+        />
+
+        <label
+          class="btn btn-outline-secondary mb-2 me-2 {{ $isDisabledByClass ? 'automator-disabled-selection-label' : '' }}"
+          for="{{ $inputID }}"
+          {!! $tooltip !!}
+        >
+          {!! $optionData['label'] !!}
+        </label>
+
+      @endforeach
 
     @endif
 
@@ -374,26 +433,32 @@
 
   @if($columnType == 'thead')
 
-    <!-- <th scope="col" class="{{ $column['header']['class'] ?? ($column['header']['classes'] ?? '') }}"> -->
-      {!! SysAutomator::SysAutomatorGetTranslateWord($column_label) !!}
-    <!-- </th> -->
+    {!! SysAutomator::SysAutomatorGetTranslateWord($column_label) !!}
 
   @elseif($columnType == 'tbody')
 
     @php
 
-      $props = ( ($column['tbl_sys_paginations_col_props'] != "") ? ( (is_array($column['tbl_sys_paginations_col_props'])) ? $column['tbl_sys_paginations_col_props'] : ( (array) json_decode($column['tbl_sys_paginations_col_props'], true) ) ) : [] );
+      $props = (($column['tbl_sys_paginations_col_props'] != "")
+        ? (
+          is_array($column['tbl_sys_paginations_col_props'])
+            ? $column['tbl_sys_paginations_col_props']
+            : ((array) json_decode($column['tbl_sys_paginations_col_props'], true))
+        )
+        : []
+      );
+
       if(count($props) >= 1) {
 
         $_props = [
 
-          'type'     => ( (isset($props['type']))     ? $props['type']     : 'single' ),
-          'mode'     => ( (isset($props['mode']))     ? $props['mode']     : 'normal' ),
-          'empty'    => ( (isset($props['empty']))    ? $props['empty']    : $column_value ),
-          'table'    => ( (isset($props['table']))    ? $props['table']    : '' ),
-          'column'   => ( (isset($props['column']))   ? $props['column']   : '' ),
-          'display'  => ( (isset($props['display']))  ? $props['display']  : null ),
-          'nullable' => ( (isset($props['nullable'])) ? $props['nullable'] : true ),
+          'type'     => ((isset($props['type']))     ? $props['type']     : 'single'),
+          'mode'     => ((isset($props['mode']))     ? $props['mode']     : 'normal'),
+          'empty'    => ((isset($props['empty']))    ? $props['empty']    : $column_value),
+          'table'    => ((isset($props['table']))    ? $props['table']    : ''),
+          'column'   => ((isset($props['column']))   ? $props['column']   : ''),
+          'display'  => ((isset($props['display']))  ? $props['display']  : null),
+          'nullable' => ((isset($props['nullable'])) ? $props['nullable'] : true),
 
         ];
 
@@ -418,6 +483,7 @@
       }
 
     @endphp
+
     <td class="{{ $column['body']['class'] ?? ($column['body']['classes'] ?? '') }}">
       {!! $column_value !!}
     </td>
@@ -425,3 +491,5 @@
   @endif
 
 @endif
+
+

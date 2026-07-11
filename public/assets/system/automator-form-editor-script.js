@@ -299,25 +299,7 @@ window.SysAutomatorFormEditor = (function () {
 
     state.submitAction = actionKey;
 
-    if (
-      typeof window.AutomatorPaginationRoutes === 'undefined' ||
-      !window.AutomatorPaginationRoutes[actionKey]
-    ) {
-
-      formEl.action = '';
-      formEl.method = 'POST';
-
-      return formEl;
-
-    }
-
-    let actionURL = String(window.AutomatorPaginationRoutes[actionKey] || '');
-
-    if (formID !== '') {
-      actionURL = actionURL.replace('#ID#', formID);
-    } else {
-      actionURL = actionURL.replace('/#ID#', '').replace('#ID#', '');
-    }
+    const actionURL = buildEditorActionUrl(actionKey, formID);
 
     formEl.action = actionURL;
     formEl.method = 'POST';
@@ -4409,24 +4391,26 @@ window.SysAutomatorFormEditor = (function () {
 
     const props = getFieldProps(fieldData);
 
-    if (!props.relation || typeof props.relation !== 'object') {
+    if (!props.relation || typeof props.relation !== 'object' || Array.isArray(props.relation)) {
       props.relation = {};
     }
 
     if (propertyName === 'relation.table') {
 
-      props.relation.table = value;
+      props.relation.table = String(value || '').trim();
 
     } else if (propertyName === 'relation.value') {
 
-      props.relation.value = value;
+      props.relation.value = String(value || '').trim();
 
     } else if (propertyName === 'relation.label') {
 
-      props.relation.label = value;
+      props.relation.label = String(value || '').trim();
 
     }
 
+    delete props.relation.column;
+    delete props.relation.display;
     delete props.relation.key;
     delete props.relation.label_table;
     delete props.relation.label_value;
@@ -4438,7 +4422,7 @@ window.SysAutomatorFormEditor = (function () {
 
     fieldData.tbl_sys_forms_field_props = props;
 
-    return fieldData;
+    return normalizeRelationPropsForSave(fieldData);
 
   }
 
@@ -5887,28 +5871,25 @@ window.SysAutomatorFormEditor = (function () {
       }
 
       if (cleanProperty === 'relation.value') {
-        return relation.value || defaultValue;
+        return relation.value || relation.column || defaultValue;
       }
 
       if (cleanProperty === 'relation.label') {
-        return getRelationLabelColumn(fieldData) || defaultValue;
+        return relation.label || relation.display || defaultValue;
+      }
+
+      if (
+        cleanProperty === 'configs.type' ||
+        cleanProperty === 'advanced.type' ||
+        cleanProperty === 'type'
+      ) {
+        return getRelationFieldType(fieldData) || defaultValue;
       }
 
     }
 
     if (isPasswordButtonProperty(cleanProperty)) {
       return fieldHasPasswordButton(fieldData) ? 'true' : 'false';
-    }
-
-    if (
-      (fieldType === 'relation' || fieldType === 'relations') &&
-      (
-        cleanProperty === 'advanced.type' ||
-        cleanProperty === 'type' ||
-        cleanProperty === 'configs.type'
-      )
-    ) {
-      return getRelationFieldType(fieldData) || defaultValue;
     }
 
     if (
@@ -5930,23 +5911,19 @@ window.SysAutomatorFormEditor = (function () {
 
     }
 
-    if (cleanProperty === 'validation.required') {
+    if (cleanProperty === 'configs.required' || cleanProperty === 'validation.required') {
       return boolToString(fieldData.tbl_sys_forms_field_required);
     }
 
-    if (cleanProperty === 'validation.locked') {
+    if (cleanProperty === 'configs.locked' || cleanProperty === 'validation.locked') {
       return boolToString(fieldData.tbl_sys_forms_field_locked);
     }
 
-    if (
-      cleanProperty === 'advanced.class' ||
-      cleanProperty === 'aparencia.class' ||
-      cleanProperty === 'appearance.class'
-    ) {
+    if (cleanProperty === 'aparencia.class' || cleanProperty === 'advanced.class') {
       return fieldData.tbl_sys_forms_field_class || defaultValue;
     }
 
-    if (cleanProperty === 'advanced.default') {
+    if (cleanProperty === 'advanced.default' || cleanProperty === 'configs.value') {
       return fieldData.tbl_sys_forms_field_default || defaultValue;
     }
 
@@ -7306,6 +7283,78 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
+  function getEditorFormIDFromResponse(response = {}, recordData = {}) {
+
+    response = response || {};
+    recordData = recordData || {};
+
+    const acao = String(response.acao || recordData.acao || '').toLowerCase();
+
+    const explicitFormID =
+      response.formID ||
+      response.form_id ||
+      response.tbl_sys_form_ID ||
+      recordData.formID ||
+      recordData.form_id ||
+      recordData.tbl_sys_form_ID ||
+      null;
+
+    if (explicitFormID) {
+      return explicitFormID;
+    }
+
+    if (
+      acao === 'edit' ||
+      acao === 'update' ||
+      acao === 'atualizar'
+    ) {
+
+      return response.id || recordData.id || null;
+
+    }
+
+    return null;
+
+  }
+
+  function buildEditorActionUrl(actionKey, formID = '') {
+
+    if (
+      typeof window.AutomatorPaginationRoutes === 'undefined' ||
+      !window.AutomatorPaginationRoutes[actionKey]
+    ) {
+      return '';
+    }
+
+    let actionURL = String(window.AutomatorPaginationRoutes[actionKey] || '');
+
+    formID = String(formID || '').trim();
+
+    if (formID !== '') {
+
+      if (actionURL.indexOf('#ID#') >= 0) {
+
+        actionURL = actionURL.replace('#ID#', formID);
+
+      } else if (actionKey === 'edit') {
+
+        actionURL = actionURL.replace(/\/$/, '');
+        actionURL += '/' + encodeURIComponent(formID);
+
+      }
+
+    } else {
+
+      actionURL = actionURL
+        .replace('/#ID#', '')
+        .replace('#ID#', '');
+
+    }
+
+    return actionURL;
+
+  }
+
 
   /*
   |--------------------------------------------------------------------------
@@ -7342,26 +7391,12 @@ window.SysAutomatorFormEditor = (function () {
 
     }
 
-    const payload = captureData();
+    let payload = captureData();
 
-    if (!payload.form) {
-      payload.form = {};
-    }
+    payload = normalizeEditorPayloadBeforeSubmit(payload);
 
-    const formID =
-      state.formID ||
-      payload.form.tbl_sys_form_ID ||
-      $(formEl).find('[name="tbl_sys_form_ID"]').val() ||
-      '';
-
-    if (formID !== '') {
-      payload.form.tbl_sys_form_ID = formID;
-      payload.form.id = formID;
-    }
-
-    payload.acao = state.submitAction || normalizeEditorSubmitAction(state.acao);
-    payload.action = payload.acao;
-
+    $(formEl).find('[name="id"]').val(payload.id || '');
+    $(formEl).find('[name="tbl_sys_form_ID"]').val(payload.tbl_sys_form_ID || '');
     $(formEl).find('[name="payload"]').val(JSON.stringify(payload));
 
     $(selectors.modal).attr('data-automator-form-submit', 'true');
@@ -7372,26 +7407,9 @@ window.SysAutomatorFormEditor = (function () {
     AutomatorGetActionStatus(function(actionStatus) {
 
       if (actionStatus === true || actionStatus === 'true') {
-
-        AutomatorCreateAutoCloseToastAlert(
-          'automator-form-editor-action-running',
-          'center',
-          'middle',
-          true,
-          true,
-          'Ação em andamento',
-          'Já existe uma ação sendo executada.',
-          null,
-          false,
-          null,
-          5000
-        );
-
         setSaveState(true);
         $(selectors.modal).removeAttr('data-automator-form-submit');
-
         return false;
-
       }
 
       AutomatorSetActionStatus(true, function() {
@@ -7424,13 +7442,8 @@ window.SysAutomatorFormEditor = (function () {
                 )
               );
 
-              const title = response && response.title
-                ? response.title
-                : (status ? 'Sucesso' : 'Atenção');
-
-              const message = response && response.message
-                ? response.message
-                : (status ? 'Formulário salvo com sucesso.' : 'Não foi possível salvar o formulário.');
+              const title = response && response.title ? response.title : (status ? 'Sucesso' : 'Atenção');
+              const message = response && response.message ? response.message : (status ? 'Formulário salvo com sucesso.' : 'Não foi possível salvar o formulário.');
 
               if (status === true) {
 
@@ -7463,7 +7476,6 @@ window.SysAutomatorFormEditor = (function () {
               $(selectors.modal).removeAttr('data-automator-form-submit');
 
               state.hasChanges = true;
-              updateUnsavedChangesWarning(true);
               setSaveState(true);
 
               AutomatorCreateAutoCloseToastAlert(
@@ -7477,13 +7489,10 @@ window.SysAutomatorFormEditor = (function () {
                 null,
                 false,
                 function() {
-
                   $('#page-loader').css('z-index', '');
-
                   AutomatorPageLoader('hide', function() {
                     AutomatorSetActionStatus(false);
                   });
-
                 },
                 5000
               );
@@ -7498,15 +7507,8 @@ window.SysAutomatorFormEditor = (function () {
               let message = 'Não foi possível salvar o formulário.';
 
               if (xhr.responseJSON) {
-
-                if (xhr.responseJSON.title) {
-                  title = xhr.responseJSON.title;
-                }
-
-                if (xhr.responseJSON.message) {
-                  message = xhr.responseJSON.message;
-                }
-
+                title = xhr.responseJSON.title || title;
+                message = xhr.responseJSON.message || message;
               } else if (xhr.responseText) {
                 message = xhr.responseText;
               }
@@ -7514,7 +7516,6 @@ window.SysAutomatorFormEditor = (function () {
               $(selectors.modal).removeAttr('data-automator-form-submit');
 
               state.hasChanges = true;
-              updateUnsavedChangesWarning(true);
               setSaveState(true);
 
               AutomatorCreateAutoCloseToastAlert(
@@ -7528,13 +7529,10 @@ window.SysAutomatorFormEditor = (function () {
                 null,
                 false,
                 function() {
-
                   $('#page-loader').css('z-index', '');
-
                   AutomatorPageLoader('hide', function() {
                     AutomatorSetActionStatus(false);
                   });
-
                 },
                 5000
               );
@@ -8602,23 +8600,11 @@ window.SysAutomatorFormEditor = (function () {
     const props = getFieldProps(fieldData);
     const relation = props.relation && typeof props.relation === 'object' ? props.relation : {};
 
-    if (typeof relation.label === 'string') {
-      return String(relation.label || '').trim();
-    }
-
-    if (relation.label && typeof relation.label === 'object') {
-
-      if (typeof relation.label.display !== 'undefined') {
-        return String(relation.label.display || '').trim();
-      }
-
-      if (typeof relation.label.value !== 'undefined') {
-        return String(relation.label.value || '').trim();
-      }
-
-    }
-
-    return '';
+    return String(
+      relation.label ||
+      relation.display ||
+      ''
+    ).trim();
 
   }
 
@@ -8668,6 +8654,114 @@ window.SysAutomatorFormEditor = (function () {
   }
 
 
+  function normalizeRelationPropsForSave(fieldData) {
+
+    const type = String(fieldData.tbl_sys_field_type_name || '').toLowerCase();
+
+    if (type !== 'relation' && type !== 'relations') {
+      return fieldData;
+    }
+
+    const props = getFieldProps(fieldData);
+
+    if (!props.relation || typeof props.relation !== 'object' || Array.isArray(props.relation)) {
+      props.relation = {};
+    }
+
+    const relation = props.relation;
+
+    relation.table = String(
+      relation.table ||
+      relation['tabela-destino'] ||
+      ''
+    ).trim();
+
+    relation.value = String(
+      relation.value ||
+      relation.column ||
+      relation['campo-destino'] ||
+      ''
+    ).trim();
+
+    relation.label = String(
+      relation.label ||
+      relation.display ||
+      relation['label-destino'] ||
+      ''
+    ).trim();
+
+    delete relation.column;
+    delete relation.display;
+    delete relation.key;
+    delete relation.label_table;
+    delete relation.label_value;
+    delete relation.label_display;
+    delete relation['tabela-destino'];
+    delete relation['campo-destino'];
+    delete relation['label-destino'];
+
+    props.relation = relation;
+
+    if (!props.params || typeof props.params !== 'object' || Array.isArray(props.params)) {
+      props.params = {};
+    }
+
+    const relationType = String(
+      props.type ||
+      props.params['configs.type'] ||
+      props.params['advanced.type'] ||
+      props.params.type ||
+      'select'
+    ).toLowerCase();
+
+    props.type = ['select', 'checkbox', 'radio'].indexOf(relationType) !== -1
+      ? relationType
+      : 'select';
+
+    props.params['configs.type'] = props.type;
+
+    fieldData.tbl_sys_forms_field_props = props;
+
+    return fieldData;
+
+  }
+
+
+  function normalizeEditorPayloadBeforeSubmit(payload = {}) {
+
+    if (!payload.form) {
+      payload.form = {};
+    }
+
+    if (!Array.isArray(payload.fields)) {
+      payload.fields = [];
+    }
+
+    const formID =
+      state.formID ||
+      payload.form.tbl_sys_form_ID ||
+      payload.form.id ||
+      $('#automator-editor-modal [name="tbl_sys_form_ID"]').val() ||
+      $('#automator-editor-modal [name="id"]').val() ||
+      '';
+
+    if (formID !== '') {
+      payload.id = formID;
+      payload.tbl_sys_form_ID = formID;
+      payload.form.id = formID;
+      payload.form.tbl_sys_form_ID = formID;
+    }
+
+    payload.fields = payload.fields.map(function(fieldData) {
+      return normalizeRelationPropsForSave(fieldData);
+    });
+
+    payload.acao = state.submitAction || normalizeEditorSubmitAction(state.acao);
+    payload.action = payload.acao;
+
+    return payload;
+
+  }
 
 
   $(window)
@@ -8708,6 +8802,7 @@ window.SysAutomatorFormEditor = (function () {
 
     getOrCreateEditorSubmitForm,
     syncEditorSubmitForm,
+    getEditorFormIDFromResponse,
 
     getEditor,
     getState
@@ -8723,7 +8818,6 @@ window.SysAutomatorFormEditor = (function () {
 */
 
 
-
 function SysAutomatorConfigFormEditor(
   response,
   modalEl,
@@ -8733,17 +8827,16 @@ function SysAutomatorConfigFormEditor(
 
   AutomatorPageLoader('show');
 
-  const formID =
-    response.formID ||
-    response.form_id ||
-    response.tbl_sys_form_ID ||
-    null;
+  response = response || {};
+  recordData = recordData || {};
 
+  const formID = SysAutomatorFormEditor.getEditorFormIDFromResponse(response, recordData);
   const isNew = !formID;
 
   SysAutomatorFormEditor.config({
     isNew: isNew,
     formID: formID,
+    id: formID,
     acao: response.acao || (isNew ? 'store' : 'edit')
   }, function () {
 
@@ -8755,13 +8848,19 @@ function SysAutomatorConfigFormEditor(
 
         SysAutomatorFormEditor.loadExistingForm(formID, function() {
 
+          SysAutomatorFormEditor.syncEditorSubmitForm();
+
           setTimeout(function () {
 
-            const state = SysAutomatorFormEditor.getState();
+            const editorState = SysAutomatorFormEditor.getState();
 
-            if (state) {
-              state.suppressChangeTracking = false;
-              state.hasChanges = false;
+            if (editorState) {
+              editorState.formID = formID;
+              editorState.isNew = false;
+              editorState.acao = 'edit';
+              editorState.submitAction = 'edit';
+              editorState.suppressChangeTracking = false;
+              editorState.hasChanges = false;
             }
 
             SysAutomatorFormEditor.clearUnsavedChangesWarning();
@@ -8794,13 +8893,18 @@ function SysAutomatorConfigFormEditor(
 
       setTimeout(function () {
 
-        const state = SysAutomatorFormEditor.getState();
+        const editorState = SysAutomatorFormEditor.getState();
 
-        if (state) {
-          state.suppressChangeTracking = false;
-          state.hasChanges = false;
+        if (editorState) {
+          editorState.formID = '';
+          editorState.isNew = true;
+          editorState.acao = 'store';
+          editorState.submitAction = 'add';
+          editorState.suppressChangeTracking = false;
+          editorState.hasChanges = false;
         }
 
+        SysAutomatorFormEditor.syncEditorSubmitForm();
         SysAutomatorFormEditor.clearUnsavedChangesWarning();
 
         AutomatorPageLoader('hide', function () {
@@ -8814,6 +8918,114 @@ function SysAutomatorConfigFormEditor(
   });
 
 }
+// function SysAutomatorConfigFormEditor(
+//   response,
+//   modalEl,
+//   modal,
+//   recordData
+// ) {
+
+//   AutomatorPageLoader('show');
+
+//   response = response || {};
+//   recordData = recordData || {};
+
+//   const formID =
+//     response.formID ||
+//     response.form_id ||
+//     response.tbl_sys_form_ID ||
+//     response.id ||
+//     recordData.formID ||
+//     recordData.tbl_sys_form_ID ||
+//     recordData.id ||
+//     null;
+
+//   const isNew = !formID;
+
+//   SysAutomatorFormEditor.config({
+//     isNew: isNew,
+//     formID: formID,
+//     id: formID,
+//     acao: response.acao || (isNew ? 'store' : 'edit')
+//   }, function () {
+
+//     SysAutomatorFormEditor.init(function () {
+
+//       SysAutomatorFormEditor.syncEditorSubmitForm();
+
+//       if (formID) {
+
+//         SysAutomatorFormEditor.loadExistingForm(formID, function() {
+
+//           SysAutomatorFormEditor.syncEditorSubmitForm();
+
+//           setTimeout(function () {
+
+//             const editorState = SysAutomatorFormEditor.getState();
+
+//             if (editorState) {
+//               editorState.formID = formID;
+//               editorState.isNew = false;
+//               editorState.acao = 'edit';
+//               editorState.submitAction = 'edit';
+//               editorState.suppressChangeTracking = false;
+//               editorState.hasChanges = false;
+//             }
+
+//             SysAutomatorFormEditor.clearUnsavedChangesWarning();
+
+//             AutomatorPageLoader('hide', function () {
+//               AutomatorSetActionStatus(false);
+//             });
+
+//           }, 350);
+
+//         });
+
+//         return;
+
+//       }
+
+//       $('#tbl_sys_form_title-sync').prop('checked', true);
+
+//       const titleInput = $('#tbl_sys_form_title');
+
+//       if (titleInput.length) {
+
+//         SysAutomatorFormEditor.syncHeaderInputSlug(titleInput[0]);
+
+//         setTimeout(function () {
+//           titleInput.trigger('focus');
+//         }, 100);
+
+//       }
+
+//       setTimeout(function () {
+
+//         const editorState = SysAutomatorFormEditor.getState();
+
+//         if (editorState) {
+//           editorState.isNew = true;
+//           editorState.acao = 'store';
+//           editorState.submitAction = 'add';
+//           editorState.suppressChangeTracking = false;
+//           editorState.hasChanges = false;
+//         }
+
+//         SysAutomatorFormEditor.syncEditorSubmitForm();
+//         SysAutomatorFormEditor.clearUnsavedChangesWarning();
+
+//         AutomatorPageLoader('hide', function () {
+//           AutomatorSetActionStatus(false);
+//         });
+
+//       }, 350);
+
+//     });
+
+//   });
+
+// }
 
 
 function SysAutomatorInitFormEditor(
