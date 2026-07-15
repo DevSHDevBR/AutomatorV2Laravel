@@ -25,6 +25,7 @@
       'tbl_sys_field_type_icon',
       'tbl_sys_field_type_title',
       'tbl_sys_field_type_description',
+      'tbl_sys_field_type_pagination',
       'tbl_sys_field_type_params',
       'tbl_sys_field_type_locked',
       'tbl_sys_field_type_layout',

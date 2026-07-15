@@ -13,6 +13,7 @@
   use Illuminate\Support\Facades\Schema;
 
   use App\Helpers\SysAutomator;
+  use App\Models\SysPagination;
   use App\Models\SysRoute;
   use App\Models\SysForm;
   use App\Models\SysFormsAccess;
@@ -454,7 +455,6 @@
 
     // }
 
-
     private function getDatabaseDataForAdminFunctions(Request $request) {
 
 
@@ -479,9 +479,11 @@
         try {
 
           $tables = [];
+
           $databaseName = DB::getDatabaseName();
 
           $rows = DB::select('SHOW TABLES');
+
 
           foreach($rows as $row) {
 
@@ -489,20 +491,30 @@
 
             $tableName = array_values($row)[0] ?? '';
 
+
             if($tableName == '') {
+
               continue;
+
             }
 
+
             $tables[] = [
+
               'value' => $tableName,
               'label' => $tableName,
+
             ];
 
           }
 
+
           usort($tables, function($a, $b) {
+
             return strcmp($a['label'], $b['label']);
+
           });
+
 
           return response()->json([
 
@@ -530,9 +542,19 @@
 
       if($dataType == 'get-table-columns') {
 
-        $tableName = trim((string) $request->input('table-name', $request->input('table_name', '')));
+        $tableName = trim((string) $request->input(
 
-        if($tableName == '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+          'table-name',
+
+          $request->input('table_name', '')
+
+        ));
+
+
+        if(
+          $tableName == '' ||
+          !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)
+        ) {
 
           return response()->json([
 
@@ -543,6 +565,7 @@
           ], 400);
 
         }
+
 
         if(!Schema::hasTable($tableName)) {
 
@@ -556,20 +579,25 @@
 
         }
 
+
         try {
 
           $columns = Schema::getColumnListing($tableName);
 
           $data = [];
 
+
           foreach($columns as $column) {
 
             $data[] = [
+
               'value' => $column,
               'label' => $column,
+
             ];
 
           }
+
 
           return response()->json([
 
@@ -597,11 +625,37 @@
 
       if($dataType == 'get-table-options') {
 
-        $tableName   = trim((string) $request->input('table-name', $request->input('table_name', '')));
-        $valueColumn = trim((string) $request->input('value-column', $request->input('value_column', '')));
-        $labelColumn = trim((string) $request->input('label-column', $request->input('label_column', '')));
+        $tableName = trim((string) $request->input(
 
-        if($tableName == '' || !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)) {
+          'table-name',
+
+          $request->input('table_name', '')
+
+        ));
+
+
+        $valueColumn = trim((string) $request->input(
+
+          'value-column',
+
+          $request->input('value_column', '')
+
+        ));
+
+
+        $labelColumn = trim((string) $request->input(
+
+          'label-column',
+
+          $request->input('label_column', '')
+
+        ));
+
+
+        if(
+          $tableName == '' ||
+          !preg_match('/^[a-zA-Z0-9_]+$/', $tableName)
+        ) {
 
           return response()->json([
 
@@ -613,7 +667,11 @@
 
         }
 
-        if($valueColumn == '' || !preg_match('/^[a-zA-Z0-9_]+$/', $valueColumn)) {
+
+        if(
+          $valueColumn == '' ||
+          !preg_match('/^[a-zA-Z0-9_]+$/', $valueColumn)
+        ) {
 
           return response()->json([
 
@@ -625,7 +683,11 @@
 
         }
 
-        if($labelColumn == '' || !preg_match('/^[a-zA-Z0-9_]+$/', $labelColumn)) {
+
+        if(
+          $labelColumn == '' ||
+          !preg_match('/^[a-zA-Z0-9_]+$/', $labelColumn)
+        ) {
 
           return response()->json([
 
@@ -636,6 +698,7 @@
           ], 400);
 
         }
+
 
         if(!Schema::hasTable($tableName)) {
 
@@ -649,7 +712,11 @@
 
         }
 
-        if(!Schema::hasColumn($tableName, $valueColumn) || !Schema::hasColumn($tableName, $labelColumn)) {
+
+        if(
+          !Schema::hasColumn($tableName, $valueColumn) ||
+          !Schema::hasColumn($tableName, $labelColumn)
+        ) {
 
           return response()->json([
 
@@ -661,6 +728,7 @@
 
         }
 
+
         try {
 
           $rows = DB::table($tableName)
@@ -668,25 +736,35 @@
             ->orderBy($labelColumn, 'asc')
             ->get();
 
+
           $data = [];
+
 
           foreach($rows as $row) {
 
             $row = (array) $row;
 
             $value = $row[$valueColumn] ?? '';
+
             $label = $row[$labelColumn] ?? $value;
 
+
             if((string) $value === '') {
+
               continue;
+
             }
 
+
             $data[] = [
+
               'value' => $value,
               'label' => $label,
+
             ];
 
           }
+
 
           return response()->json([
 
@@ -710,6 +788,13 @@
           ], 500);
 
         }
+
+      }
+
+
+      if($dataType == 'get-route-data') {
+
+        return $this->getRouteDataForPaginationEditor($request);
 
       }
 
@@ -910,13 +995,13 @@
 
             if(isset($name) && $name != '') {
 
-              if(strlen($name) >= 8) {
+              if(strlen($name) >= 5) {
 
                 if(strlen($name) <= 255) {
 
                   if(isset($email) && $email != '') {
 
-                    if(strlen($email) >= 12) {
+                    if(strlen($email) >= 8) {
 
                       if(strlen($email) <= 255) {
 
@@ -925,13 +1010,22 @@
 
                           $continuar = false;
                           $search = User::where('tbl_user_email', $email)->first();
-                          if(count($search) <= 0) {
+                          if($search) {
 
-                            $continuar = true;
+                            $search = ( (array) $search );
+                            if(count($search) <= 0) {
+
+                              $continuar = true;
+
+                            } else {
+
+                              $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O valor informado no campo 'E-mail' ja está sendo utilizado por outro usuário!");
+
+                            }
 
                           } else {
 
-                            $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O valor informado no campo 'E-mail' ja está sendo utilizado por outro usuário!");
+                            $continuar = true;
 
                           }
 
@@ -1671,6 +1765,337 @@
 
         ];
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Editor de paginações
+        |--------------------------------------------------------------------------
+        */
+
+
+        $modalPagination = [
+
+          'title'   => SysAutomator::SysAutomatorGetTranslateWord('Nova Paginação'),
+
+        ];
+
+
+
+        // $_routes = SysAutomator::SysAutomatorRenderPaginationRoutesList('web');
+
+
+        $tables = [];
+        $databaseName = DB::getDatabaseName();
+
+        $rows = DB::select('SHOW TABLES');
+
+        foreach($rows as $row) {
+
+          $row = (array) $row;
+
+          $tableName = array_values($row)[0] ?? '';
+
+          if($tableName == '') {
+            continue;
+          }
+
+          $tables[] = [
+            'value' => $tableName,
+            'label' => $tableName,
+          ];
+
+        }
+
+        usort($tables, function($a, $b) {
+          return strcmp($a['label'], $b['label']);
+        });
+
+        $_tables = [];
+
+        foreach ($tables as $_table) {
+          
+          if(!in_array($_table['value'], $_tables)) {
+
+            $_tables[$_table['value']] = $_table['label'];
+
+          }
+
+        }
+
+
+        $dadosPaginationEditor = [
+
+          'header' => [
+
+            'type'    => 'form-input',
+            'content' => [
+
+              'type'      => 'text',
+              'id'        => 'tbl_sys_pagination_title',
+              'name'      => 'tbl_sys_pagination_title',
+              'label'     => SysAutomator::SysAutomatorGetTranslateWord('Titulo da Paginação'),
+              'required'  => true,
+              'value'     => '',
+
+            ]
+
+          ],
+          'actions' => [
+            'inserter' => false,
+            'structure' => false,
+            'buttons'   => false,
+          ],
+          'configs' => [
+
+            'pagination-settings' => [
+
+              'default'     => true,
+              'disabled'    => false,
+              'label'       => SysAutomator::SysAutomatorGetTranslateWord('Configurações'),
+              'description' => SysAutomator::SysAutomatorGetTranslateWord('Configurações principais da paginação'),
+              'fields'      => [
+
+                'tbl_sys_pagination_name' => [
+
+                  'type'     => 'text',
+                  'name'     => 'tbl_sys_pagination_name',
+                  'class'    => 'form-floating mb-3',
+                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Nome da paginação'),
+                  'value'    => '',
+                  'required' => true
+
+                ],
+
+                'pagintarionArgs-page_name' => [
+
+                  'type'     => 'text',
+                  'name'     => 'page_name',
+                  'class'    => 'form-floating mb-3',
+                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Nome da página'),
+                  'value'    => '',
+                  'required' => true
+
+                ],
+
+                'tbl_sys_pagination_route' => [
+
+                  'type'      => 'select',
+                  'name'      => 'tbl_sys_pagination_route',
+                  'class'     => 'form-floating mb-3',
+                  'label'     => SysAutomator::SysAutomatorGetTranslateWord('Rota'),
+                  'value'     => "",
+                  'nullValue' => "- Selecione -",
+                  'required'  => true,
+                  'options'   => SysAutomator::SysAutomatorRenderPaginationRoutesList('web')
+                  // 'options'  => $_routes
+
+                ],
+
+                'tbl_sys_pagination_table' => [
+
+                  'type'      => 'select',
+                  'name'      => 'tbl_sys_pagination_table',
+                  'class'     => 'form-floating mb-3',
+                  'label'     => SysAutomator::SysAutomatorGetTranslateWord('Tabela'),
+                  'value'     => "",
+                  'nullValue' => "- Selecione -",
+                  'disabled'  => false,
+                  'required'  => true,
+                  'options'   => $_tables
+
+                ],
+
+                'tbl_sys_pagination_index' => [
+
+                  'type'      => 'select',
+                  'name'      => 'tbl_sys_pagination_index',
+                  'class'     => 'form-floating mb-3',
+                  'label'     => SysAutomator::SysAutomatorGetTranslateWord('Chave Primária'),
+                  'value'     => "",
+                  'nullValue' => "- Selecione a tabela -",
+                  'required'  => true,
+                  'disabled'  => true,
+                  'options'   => []
+
+                ],
+
+                'pagintarionArgs-per_page' => [
+
+                  'type'     => 'select',
+                  'name'     => 'per_page',
+                  'class'    => 'form-floating mb-3',
+                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Itens por página'),
+                  'value'    => 15,
+                  'required' => true,
+                  'choices'  => [
+
+                    10  => '10',
+                    15  => '15',
+                    25  => '25',
+                    50  => '50',
+                    100 => '100',
+
+                  ]
+
+                ],
+
+                'tbl_sys_pagination_locked' => [
+
+                  'type'     => 'select',
+                  'name'     => 'tbl_sys_pagination_locked',
+                  'class'    => 'form-floating mb-3',
+                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Bloqueado'),
+                  'value'    => 0,
+                  'required' => true,
+                  'options'  => [
+
+                    1 => SysAutomator::SysAutomatorGetTranslateWord('Sim'),
+                    0 => SysAutomator::SysAutomatorGetTranslateWord('Não')
+
+                  ]
+
+                ],
+
+              ]
+
+            ],
+            'pagination-actions' => [
+
+              'default'      => false,
+              'disabled'     => true,
+              'disabledText' => SysAutomator::SysAutomatorGetTranslateWord("Para liberar esta 'aba' conclua a configuração!"),
+              'label'        => SysAutomator::SysAutomatorGetTranslateWord('Ações'),
+              'description'  => SysAutomator::SysAutomatorGetTranslateWord('Rotas de ações da paginação'),
+              'fields'       => [
+
+                'pagintarionArgs-actions' => [
+
+                  'type'     => 'dynamic-inserter',
+                  'name'     => 'actions',
+                  'class'    => 'form-floating mb-3',
+                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Rotas da paginção'),
+                  'value'    => '',
+                  'routes'   => SysAutomator::SysAutomatorRenderPaginationRoutesList('api'),
+                  'required' => false
+
+                ],
+
+              ]
+
+            ]
+
+          ],
+
+          'fields' => SysAutomator::SysAutomatorRenderPaginationBuilderFields()
+
+        ];
+
+
+        $pagination = [];
+
+        $paginationID = ( (isset($data['pageID'])) ? ( ($data['pageID'] != '') ? $data['pageID'] : null ) : null );
+
+        if($paginationID != null) {
+
+          $pagination = SysPagination::where('tbl_sys_pagination_ID', $paginationID)->first();
+          if($pagination) {
+
+            $pagination = $pagination->toArray();
+
+
+            $modalPagination['title'] = SysAutomator::SysAutomatorGetTranslateWord('Editar Paginação');
+
+            $dadosPaginationEditor['header']['content']['value']                                                       = $pagination['tbl_sys_pagination_title'] ?? '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_name']['value']     = $pagination['tbl_sys_pagination_name'] ?? '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['pagintarionArgs-page_name']['value']   = '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_route']['value']    = $pagination['tbl_sys_pagination_route'] ?? '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_table']['value']    = $pagination['tbl_sys_pagination_table'] ?? '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_table']['disabled'] = true;
+
+            $columns = Schema::getColumnListing($pagination['tbl_sys_pagination_table']);
+
+            $_columns = [];
+
+            foreach ($columns as $column) {
+              
+              if(!in_array($column, $_columns)){
+
+                $_columns[$column] = $column;
+
+              }
+
+            }
+
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_index']['choices']  = $_columns;
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_index']['value']    = $pagination['tbl_sys_pagination_index'] ?? '';
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['pagintarionArgs-per_page']['value']    = 15;
+            $dadosPaginationEditor['configs']['pagination-settings']['fields']['tbl_sys_pagination_locked']['value']   = $pagination['tbl_sys_pagination_locked'] ?? 0;
+            
+
+          }
+
+        }
+
+
+        $paginationBlocks = [];
+
+
+        foreach($dadosPaginationEditor['fields'] as $grupo) {
+
+
+          foreach(($grupo['tbl_sys_field_type_group_fields'] ?? []) as $field) {
+
+
+            $paginationBlock = SysAutomator::SysAutomatorRenderPageBuilderField(
+
+              $field,
+
+              [],
+
+              false
+
+            );
+
+
+            if(
+              is_array($paginationBlock) &&
+              count($paginationBlock) >= 1
+            ) {
+
+              $paginationBlocks[] = $paginationBlock;
+
+            }
+
+
+          }
+
+
+        }
+
+
+        $views['system-pagination-editor'] = [
+
+          'view'      => 'system.modals.system-pagination-editor',
+          'title'     => $modalPagination['title'],
+          'acao'      => (($paginationID != null) ? 'update' : 'store'),
+          'view_data' => $dadosPaginationEditor,
+          'dados'     => [
+
+            'form'       => $pagination,
+            'pagination' => $pagination,
+            'fields'     => $dadosPaginationEditor['fields'],
+            'blocks'     => $paginationBlocks,
+
+          ],
+          'classes' => [
+
+            'modal-body' => 'p-0'
+
+          ],
+          'footer' => null,
+
+        ];
+
       }
 
 
@@ -1726,6 +2151,144 @@
         'footer'  => $footer,
 
       ], 200);
+
+
+    }
+
+
+
+    private function getRouteDataForPaginationEditor(Request $request) {
+
+
+      if(!Auth::check()) {
+
+        return response()->json([
+
+          'status'  => false,
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('Sessão expirada ou usuário não autenticado.'),
+          'data'    => [],
+
+        ], 401);
+
+      }
+
+
+      $routeName = trim((string) $request->input(
+
+        'route-name',
+
+        $request->input('route_name', '')
+
+      ));
+
+
+      if($routeName == '') {
+
+        return response()->json([
+
+          'status'  => false,
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('Informe a rota que deseja carregar.'),
+          'data'    => [],
+
+        ], 400);
+
+      }
+
+
+      $route = SysRoute::where('tbl_sys_route_name', $routeName)
+        ->where('tbl_sys_route_api', true)
+        ->first();
+
+
+      if(!$route) {
+
+        return response()->json([
+
+          'status'  => false,
+          'message' => SysAutomator::SysAutomatorGetTranslateWord('A rota informada não foi encontrada.'),
+          'data'    => [],
+
+        ], 404);
+
+      }
+
+
+      $routeArgs = trim((string) $route->tbl_sys_route_args);
+
+      $params = [];
+
+
+      if($routeArgs != '') {
+
+        preg_match_all(
+
+          '/\{([^{}]+)\}/',
+
+          $routeArgs,
+
+          $matches
+
+        );
+
+
+        if(
+          isset($matches[1]) &&
+          is_array($matches[1]) &&
+          count($matches[1]) >= 1
+        ) {
+
+          foreach($matches[1] as $paramName) {
+
+            $paramOriginal = trim((string) $paramName);
+
+            $paramName = trim(
+
+              str_replace('?', '', $paramOriginal)
+
+            );
+
+
+            if(
+              $paramName == '' ||
+              array_key_exists($paramName, $params)
+            ) {
+
+              continue;
+
+            }
+
+
+            $params[$paramName] = [
+
+              'name'     => $paramName,
+              'value'    => '',
+              'required' => substr($paramOriginal, -1) != '?',
+              'default'  => true,
+
+            ];
+
+          }
+
+        }
+
+      }
+
+
+      return response()->json([
+
+        'status'  => true,
+        'message' => SysAutomator::SysAutomatorGetTranslateWord('Informações da rota carregadas com sucesso.'),
+        'data'    => [
+
+          'name'   => $route->tbl_sys_route_name,
+          'title'  => $route->tbl_sys_route_title,
+          'type'   => $route->tbl_sys_route_type,
+          'args'   => $routeArgs,
+          'params' => array_values($params),
+
+        ],
+
+      ]);
 
 
     }

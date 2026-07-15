@@ -38,6 +38,126 @@
             'tbl_sys_field_type_layout'      => false,
             'tbl_sys_field_type_configs'     => '',
             'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados do tipo texto',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "attrs" => [
+
+                  'label'  => 'Atributos',
+                  'fields' => [
+
+                    "replaced" => [
+
+                      "label"       => "Substituição",
+                      "type"        => "dynamic-list",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "",
+                      "default"     => [],
+
+                    ]
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
             'tbl_sys_field_type_params' => json_encode([
 
               'wrapper' => [
@@ -381,6 +501,106 @@
             'tbl_sys_field_type_title'       => 'Número',
             'tbl_sys_field_type_description' => 'Uma entrada limitada a valores numéricos.',
             'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados do tipo numero',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
             'tbl_sys_field_type_params'      => json_encode([
               
               'wrapper' => [
@@ -2750,6 +2970,105 @@
             'tbl_sys_field_type_description' => 'Uma interface interativa e personalizável para escolher um ou vários itens, páginas ou itens com a opção de pesquisa da relação criada para o campo.',
             'tbl_sys_field_type_layout'      => false,
             'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados relacionados entre tabelas do banco de dados.',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
             'tbl_sys_field_type_params'      => json_encode([
               
               'wrapper' => [
@@ -2910,6 +3229,96 @@
           [
 
             'tbl_sys_field_type_group_ID'    => 5,
+            'tbl_sys_field_type_name'        => 'horizontal-ruler',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldHorizontalRuler',
+            'tbl_sys_field_type_icon'        => 'ruler-horizontal',
+            'tbl_sys_field_type_title'       => 'Linha Horizontal',
+            'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar uma linha horizontal.',
+            'tbl_sys_field_type_layout'      => true,
+            'tbl_sys_field_type_configs'     => json_encode([
+
+              'code' => [
+
+                'prefix' => '<[$tag$] ',
+                'sufix'  => '/>',
+                'editor' => false,
+                'has_child' => false,
+                'tag'    => 'hr'
+              
+              ],
+
+              'block'   => [
+
+                'colors' => [
+
+                  'label'  => "Cores",
+                  'fields' => [
+
+                    'background' => [
+
+                      'label'   => 'Cor de fundo',
+                      'field'   => 'color-picker',
+                      'default' => 'none',
+
+                    ],
+
+                    'color' => [
+
+                      'label'   => 'Cor da linha',
+                      'field'   => 'color-picker',
+                      'default' => '#000000',
+
+                    ],
+
+                  ]
+
+                ],
+                'advanced' => [
+                  
+                  'label'  => 'Avançado',
+                  'fields' => [
+
+                    'id'  => [
+
+                      'label'   => 'ID do Linha',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+                    'class'  => [
+
+                      'label'   => 'Classes Adicionais',
+                      'field'   => 'text',
+                      'default' => ''
+
+                    ],
+
+                    'style'  => [
+
+                      'label'   => 'Estilo adicional',
+                      'field'   => 'editor-css',
+                      'class'   => 'textarea-css-editor',
+                      'default' => ''
+
+                    ]
+
+                  ]
+
+                ]
+
+              ],
+              'toolbar' => [],
+
+
+            ]),
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_params'      => ''
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 5,
             'tbl_sys_field_type_name'        => 'breakline',
             'tbl_sys_field_type_class'       => 'AutomatorFieldBreakLine',
             'tbl_sys_field_type_icon'        => 'arrows-left-right',
@@ -2943,7 +3352,7 @@
 
             'tbl_sys_field_type_group_ID'    => 5,
             'tbl_sys_field_type_name'        => 'breakpoint',
-            'tbl_sys_field_type_class'       => 'AutomatorFieldBreakLine',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldBreakPoint',
             'tbl_sys_field_type_icon'        => 'arrows-left-right',
             'tbl_sys_field_type_title'       => 'Quebra de Linha',
             'tbl_sys_field_type_description' => 'Um elemento HTML para adicionar uma quebra de linha no formulário.',
@@ -2967,7 +3376,35 @@
 
             ]),
             'tbl_sys_field_type_locked'      => true,
-            'tbl_sys_field_type_params'      => ''
+            'tbl_sys_field_type_params'      => json_encode([
+
+              'aparencia' => [
+                  
+                'label'  => 'Aparência',
+                'fields' => [
+
+                  'class'  => [
+
+                    'label'   => 'Classes Adicionais',
+                    'field'   => 'text',
+                    'default' => ''
+
+                  ],
+
+                  'style'  => [
+
+                    'label'   => 'Estilo adicional',
+                    'field'   => 'editor-css',
+                    'class'   => 'textarea-css-editor',
+                    'default' => ''
+
+                  ]
+
+                ]
+
+              ]
+
+            ])
 
           ],
 

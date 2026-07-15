@@ -3477,14 +3477,14 @@
       |--------------------------------------------------------------------------
       */
 
-      if(!Auth::guard('web')->check()) {
+      if(!Auth::check()) {
 
         return false;
 
       }
 
 
-      $user = Auth::guard('web')->user();
+      $user = Auth::user();
 
 
       if($user === null) {
@@ -3492,6 +3492,22 @@
         return false;
 
       }
+
+      // if(!Auth::guard('web')->check()) {
+
+      //   return false;
+
+      // }
+
+
+      // $user = Auth::guard('web')->user();
+
+
+      // if($user === null) {
+
+      //   return false;
+
+      // }
 
 
 
@@ -4289,6 +4305,145 @@
         ->values()
         ->toArray();
 
+
+    }
+
+
+
+
+    public static function SysAutomatorRenderPaginationBuilderFields() {
+
+
+      $fieldTypes = SysFieldType::where('tbl_sys_field_type_layout', false)
+        ->whereNotNull('tbl_sys_field_type_pagination')
+        ->whereRaw("TRIM(tbl_sys_field_type_pagination) != ''")
+        ->orderBy('tbl_sys_field_type_group_ID', 'ASC')
+        ->orderBy('tbl_sys_field_type_ID', 'ASC')
+        ->get();
+
+
+      $fieldTypes = $fieldTypes
+        ->filter(function($fieldType) {
+
+
+          $pagination = $fieldType->tbl_sys_field_type_pagination;
+
+
+          if(
+            $pagination === null ||
+            trim((string) $pagination) == ''
+          ) {
+
+            return false;
+
+          }
+
+
+          $pagination = json_decode($pagination, true);
+
+
+          if(
+            !is_array($pagination) ||
+            count($pagination) <= 0
+          ) {
+
+            return false;
+
+          }
+
+
+          return true;
+
+
+        })
+        ->values();
+
+
+      if($fieldTypes->isEmpty()) {
+
+        return [];
+
+      }
+
+
+      $groupIds = $fieldTypes
+        ->pluck('tbl_sys_field_type_group_ID')
+        ->unique()
+        ->values()
+        ->toArray();
+
+
+      $groups = SysFieldTypesGroup::whereIn(
+          'tbl_sys_field_type_group_ID',
+          $groupIds
+        )
+        ->orderBy('tbl_sys_field_type_group_ordem', 'ASC')
+        ->get();
+
+
+      $fieldsByGroup = $fieldTypes->groupBy('tbl_sys_field_type_group_ID');
+
+
+      return $groups
+        ->map(function($group) use ($fieldsByGroup) {
+
+          return [
+
+            'tbl_sys_field_type_group_ID'     => $group->tbl_sys_field_type_group_ID,
+            'tbl_sys_field_type_group_name'   => $group->tbl_sys_field_type_group_name,
+            'tbl_sys_field_type_group_title'  => $group->tbl_sys_field_type_group_title,
+
+            'tbl_sys_field_type_group_fields' => isset($fieldsByGroup[$group->tbl_sys_field_type_group_ID])
+              ? $fieldsByGroup[$group->tbl_sys_field_type_group_ID]->values()->toArray()
+              : []
+
+          ];
+
+        })
+        ->filter(function($group) {
+
+          return count($group['tbl_sys_field_type_group_fields']) >= 1;
+
+        })
+        ->values()
+        ->toArray();
+
+
+    }
+
+
+    public static function SysAutomatorRenderPaginationRoutesList($type = 'web') {
+
+
+      $retorno = [];
+
+      $type = ( ($type == 'api') ? true : false );
+
+      $routes = SysRoute::getRoutes([
+
+        'where' => [
+
+          'tbl_sys_route_status' => 'ativo',
+          'tbl_sys_route_api'    => $type,
+
+        ],
+
+      ]);
+
+      $_routes = [];
+      foreach ($routes as $route) {
+
+        if(!in_array($route['tbl_sys_route_name'], $_routes)) {
+
+          $_routes[$route['tbl_sys_route_name']] = $route['tbl_sys_route_title'];
+
+        }
+
+      }
+
+      $retorno = $_routes;
+
+      return $retorno;
 
     }
 
@@ -6908,6 +7063,14 @@
                 // $query = $query->toArray();
                 $retorno = ( (isset($query[$props['display']])) ? $query[$props['display']] : $column_value );
 
+              } else {
+
+                if($props['empty']) {
+
+                  $retorno = $props['empty'];
+
+                }
+
               }
 
             }
@@ -6972,10 +7135,46 @@
 
 
 
-    public static function SysAutomatorRenderPageBuilderField($field, $data = []) {
+    public static function SysAutomatorRenderPageBuilderField($field, $data = [], $layout = true) {
 
 
-      $rendered = AutomatorFields::renderViewEditorField($field, $data);
+      $fieldID = $field;
+
+
+      if(is_array($field)) {
+
+        $fieldID = $field['tbl_sys_field_type_ID'] ?? null;
+
+
+        if(!is_array($data) || count($data) <= 0) {
+
+          $data = $field;
+
+        }
+
+      }
+
+
+      if(
+        $fieldID === null ||
+        $fieldID === ''
+      ) {
+
+        return '';
+
+      }
+
+
+      $rendered = AutomatorFields::renderViewEditorField(
+
+        $fieldID,
+
+        $data,
+
+        $layout
+
+      );
+
 
       return $rendered;
 

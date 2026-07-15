@@ -1163,14 +1163,20 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
   function normalizeAddedFieldComponent(component) {
 
-    if (!component || state.previewMode === true || state.normalizingComponent === true) {
+    if (
+      !component ||
+      state.previewMode === true ||
+      state.normalizingComponent === true
+    ) {
       return false;
     }
 
-    const attrs = component.getAttributes ? component.getAttributes() : {};
+    const attrs =
+      component.getAttributes
+        ? component.getAttributes()
+        : {};
 
     if (attrs['data-automator-form-field'] !== 'true') {
       return false;
@@ -1182,41 +1188,100 @@ window.SysAutomatorFormEditor = (function () {
       return false;
     }
 
-    const duplicatedUid = countFieldComponentsByUid(fieldData.uid) > 1;
-    const duplicatedName = fieldNameExistsExcept(fieldData.tbl_sys_forms_field_name, component);
-    const props = getFieldProps(fieldData);
-    const duplicatedId = fieldIdExistsExcept(props.input_id, component);
+    const alternativeComponent =
+      isAlternativeFieldComponent(fieldData);
 
-    if (!duplicatedUid && !duplicatedName && !duplicatedId) {
+    const duplicatedUid =
+      countFieldComponentsByUid(fieldData.uid) > 1;
+
+    const duplicatedName =
+      fieldNameExistsExcept(
+        fieldData.tbl_sys_forms_field_name,
+        component
+      );
+
+    const props = getFieldProps(fieldData);
+
+    const duplicatedId =
+      alternativeComponent
+        ? false
+        : fieldIdExistsExcept(
+            props.input_id,
+            component
+          );
+
+    if (
+      !duplicatedUid &&
+      !duplicatedName &&
+      !duplicatedId
+    ) {
       return false;
     }
 
-    const oldTitle = fieldData.tbl_sys_forms_field_title || 'Campo';
-    const oldType = fieldData.tbl_sys_field_type_name || 'field';
+    const oldTitle =
+      fieldData.tbl_sys_forms_field_title ||
+      'Campo';
+
+    const oldType =
+      fieldData.tbl_sys_field_type_name ||
+      'field';
+
     const oldProps = getFieldProps(fieldData);
 
-    fieldData.uid = 'form-field-' + Date.now() + '-' + Math.floor(Math.random() * 999999);
+    fieldData.uid =
+      'form-field-' +
+      Date.now() +
+      '-' +
+      Math.floor(Math.random() * 999999);
 
     fieldData.tbl_sys_forms_field_ID = '';
     fieldData.tbl_sys_forms_field_title = oldTitle;
-    fieldData.tbl_sys_forms_field_name = generateUniqueFieldName(oldType);
-    fieldData.tbl_sys_forms_field_index = fieldData.tbl_sys_forms_field_name;
+    fieldData.tbl_sys_forms_field_name =
+      generateUniqueFieldName(oldType);
 
-    oldProps.input_id = generateUniqueFieldId(fieldData.tbl_sys_forms_field_name);
+    fieldData.tbl_sys_forms_field_index =
+      fieldData.tbl_sys_forms_field_name;
 
-    if (!oldProps.wrapper_class) {
-      oldProps.wrapper_class = getDefaultWrapperClassFromRawParams(fieldData.raw || {});
+    if (alternativeComponent) {
+
+      oldProps.input_id = '';
+      oldProps.wrapper_class = '';
+
+      fieldData.tbl_sys_forms_field_attrs = '';
+
+    } else {
+
+      oldProps.input_id =
+        generateUniqueFieldId(
+          fieldData.tbl_sys_forms_field_name
+        );
+
+      if (!oldProps.wrapper_class) {
+
+        oldProps.wrapper_class =
+          getDefaultWrapperClassFromRawParams(
+            fieldData.raw || {}
+          );
+
+      }
+
+      fieldData.tbl_sys_forms_field_attrs =
+        'id="' + oldProps.input_id + '"';
+
     }
 
-    fieldData.tbl_sys_forms_field_attrs = 'id="' + oldProps.input_id + '"';
     fieldData.tbl_sys_forms_field_props = oldProps;
 
     state.normalizingComponent = true;
 
-    setFieldDataToComponent(component, fieldData, {
-      refreshPanel: false,
-      skipResize: true
-    });
+    setFieldDataToComponent(
+      component,
+      fieldData,
+      {
+        refreshPanel: false,
+        skipResize: true
+      }
+    );
 
     state.normalizingComponent = false;
 
@@ -1280,25 +1345,43 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
-
   function getDefaultWrapperClassFromRawParams(raw) {
 
+    raw =
+      raw &&
+      typeof raw === 'object'
+        ? raw
+        : {};
+
+    const temporaryFieldData = {
+      raw: raw,
+      tbl_sys_field_type_name:
+        raw.tbl_sys_field_type_name ||
+        raw.type ||
+        ''
+    };
+
+    if (!fieldUsesBootstrapWrapper(temporaryFieldData)) {
+      return '';
+    }
+
     let params =
-      raw && raw.tbl_sys_field_type_params
+      raw.tbl_sys_field_type_params
         ? raw.tbl_sys_field_type_params
         : (
-            raw && raw.params
+            raw.params
               ? raw.params
               : {}
           );
 
     if (typeof params === 'string') {
+
       try {
         params = JSON.parse(params);
       } catch (e) {
         params = {};
       }
+
     }
 
     if (!params || typeof params !== 'object') {
@@ -1306,10 +1389,18 @@ window.SysAutomatorFormEditor = (function () {
     }
 
     if (params.wrapper_class) {
-      return String(params.wrapper_class || 'col-12').trim() || 'col-12';
+
+      return normalizeBootstrapWrapperClass(
+        String(params.wrapper_class || 'col-12').trim() || 'col-12'
+      );
+
     }
 
-    if (!params.wrapper || !params.wrapper.fields) {
+    if (
+      !params.wrapper ||
+      !params.wrapper.fields ||
+      typeof params.wrapper.fields !== 'object'
+    ) {
       return 'col-12';
     }
 
@@ -1331,7 +1422,10 @@ window.SysAutomatorFormEditor = (function () {
         return;
       }
 
-      let value = parseInt(fields[fieldKey].default || '', 10);
+      const value = parseInt(
+        fields[fieldKey].default || '',
+        10
+      );
 
       if (!value || value < 1 || value > 12) {
         return;
@@ -1345,38 +1439,54 @@ window.SysAutomatorFormEditor = (function () {
       classes.push('col-12');
     }
 
-    return classes.join(' ');
+    return normalizeBootstrapWrapperClass(
+      classes.join(' ')
+    );
 
   }
 
+  function buildEmptyStructuralFieldComponent(fieldData) {
 
-  function buildFieldComponent(fieldData) {
-
-    const type = String(fieldData.tbl_sys_field_type_name || '').toLowerCase();
-
-    if (type === 'hidden') {
-      return buildHiddenFieldComponent(fieldData);
-    }
-
-    const wrapperClass = getFieldWrapperClass(fieldData);
+    const tagName =
+      getEmptyStructuralComponentTagName(fieldData);
 
     return {
       type: 'default',
-      tagName: 'div',
-      name: fieldData.tbl_sys_forms_field_title || 'Campo',
-      classes: getFieldComponentClasses(fieldData),
+      tagName: tagName,
+      name:
+        fieldData.tbl_sys_forms_field_title ||
+        fieldData.tbl_sys_field_type_name ||
+        'Componente estrutural',
+
+      classes:
+        getEmptyStructuralComponentClass(fieldData),
+
       attributes: {
         'data-automator-form-field': 'true',
         'data-automator-form-field-uid': fieldData.uid,
-        'data-automator-field-type-id': fieldData.tbl_sys_field_type_ID,
-        'data-automator-field-type-name': fieldData.tbl_sys_field_type_name,
-        'data-automator-field-type-title': fieldData.tbl_sys_forms_field_title,
-        'data-automator-form-field-data': encodeFieldData(fieldData)
+        'data-automator-field-type-id':
+          fieldData.tbl_sys_field_type_ID,
+        'data-automator-field-type-name':
+          fieldData.tbl_sys_field_type_name,
+        'data-automator-field-type-title':
+          fieldData.tbl_sys_forms_field_title,
+        'data-automator-form-field-data':
+          encodeFieldData(fieldData),
+
+        'data-automator-alternative-component': 'true',
+        'data-automator-component-behavior':
+          getAlternativeFieldBehavior(fieldData),
+        'data-automator-empty-structural-component': 'true'
       },
+
       style: {
         height: 'auto',
-        'min-height': '0'
+        'min-height': '24px',
+        width: '100%',
+        display: 'block',
+        clear: 'both'
       },
+
       draggable: true,
       droppable: false,
       editable: false,
@@ -1385,11 +1495,76 @@ window.SysAutomatorFormEditor = (function () {
       highlightable: true,
       copyable: true,
       removable: true,
+
+      /*
+      |--------------------------------------------------------------------------
+      | Não possui conteúdo interno
+      |--------------------------------------------------------------------------
+      */
+
+      components: []
+    };
+
+  }
+
+
+  function buildFieldComponent(fieldData) {
+
+    const type = normalizeFieldTypeName(fieldData);
+
+    if (type === 'hidden') {
+      return buildHiddenFieldComponent(fieldData);
+    }
+
+    if (isEmptyStructuralFieldComponent(fieldData)) {
+      return buildEmptyStructuralFieldComponent(fieldData);
+    }
+
+    return {
+      type: 'default',
+      tagName: 'div',
+      name:
+        fieldData.tbl_sys_forms_field_title ||
+        'Campo',
+
+      classes:
+        getFieldComponentClasses(fieldData),
+
+      attributes: {
+        'data-automator-form-field': 'true',
+        'data-automator-form-field-uid':
+          fieldData.uid,
+        'data-automator-field-type-id':
+          fieldData.tbl_sys_field_type_ID,
+        'data-automator-field-type-name':
+          fieldData.tbl_sys_field_type_name,
+        'data-automator-field-type-title':
+          fieldData.tbl_sys_forms_field_title,
+        'data-automator-form-field-data':
+          encodeFieldData(fieldData)
+      },
+
+      style: {
+        height: 'auto',
+        'min-height': '0'
+      },
+
+      draggable: true,
+      droppable: false,
+      editable: false,
+      selectable: true,
+      hoverable: true,
+      highlightable: true,
+      copyable: true,
+      removable: true,
+
       components: [
         {
           type: 'default',
           tagName: 'div',
-          classes: ['automator-form-editor-field-preview'],
+          classes: [
+            'automator-form-editor-field-preview'
+          ],
           draggable: false,
           droppable: false,
           selectable: false,
@@ -1397,7 +1572,8 @@ window.SysAutomatorFormEditor = (function () {
           highlightable: false,
           copyable: false,
           removable: false,
-          components: buildFieldPreviewComponents(fieldData)
+          components:
+            buildFieldPreviewComponents(fieldData)
         }
       ]
     };
@@ -1602,6 +1778,41 @@ window.SysAutomatorFormEditor = (function () {
           outline: none !important;
           display: none !important;
           pointer-events: none !important;
+        }
+
+        .automator-form-editor-empty-structural-component {
+          position: relative !important;
+          display: block !important;
+          flex: 0 0 100% !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          min-width: 100% !important;
+          min-height: 24px !important;
+          height: auto !important;
+          clear: both !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          box-sizing: border-box !important;
+        }
+
+        .automator-form-editor-empty-structural-component::after {
+          content: "";
+          display: block;
+          width: 100%;
+          min-height: 24px;
+          border-top: 1px dashed rgba(13, 110, 253, .4);
+          pointer-events: none;
+        }
+
+        body.automator-form-editor-preview-mode
+        .automator-form-editor-empty-structural-component {
+          min-height: 0 !important;
+        }
+
+        body.automator-form-editor-preview-mode
+        .automator-form-editor-empty-structural-component::after {
+          display: none !important;
+          content: none !important;
         }
       `;
 
@@ -2077,23 +2288,47 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
   function createDefaultFieldData(args = {}) {
 
     const fieldTypeName = args.fieldTypeName || 'text';
     const fieldTitle = args.fieldTypeTitle || 'Campo';
     const raw = args.raw || {};
 
+    const temporaryFieldData = {
+      tbl_sys_field_type_name: fieldTypeName,
+      raw: raw
+    };
+
+    const alternativeComponent =
+      isAlternativeFieldComponent(temporaryFieldData);
+
     const uniqueName = generateUniqueFieldName(fieldTypeName);
-    const uniqueId = generateUniqueFieldId(uniqueName);
+
+    const uniqueId =
+      alternativeComponent
+        ? ''
+        : generateUniqueFieldId(uniqueName);
 
     const wrapperClass =
-      fieldTypeName === 'hidden'
+      fieldTypeName === 'hidden' ||
+      alternativeComponent
         ? ''
-        : (getDefaultWrapperClassFromRawParams(raw) || 'col-12');
+        : (
+            getDefaultWrapperClassFromRawParams(raw) ||
+            'col-12'
+          );
+
+    const attrs =
+      uniqueId !== ''
+        ? 'id="' + uniqueId + '"'
+        : '';
 
     return {
-      uid: 'form-field-' + Date.now() + '-' + Math.floor(Math.random() * 999999),
+      uid:
+        'form-field-' +
+        Date.now() +
+        '-' +
+        Math.floor(Math.random() * 999999),
 
       tbl_sys_forms_field_ID: '',
       tbl_sys_field_type_ID: args.fieldTypeID || '',
@@ -2105,7 +2340,7 @@ window.SysAutomatorFormEditor = (function () {
       tbl_sys_forms_field_index: uniqueName,
       tbl_sys_forms_field_class: '',
       tbl_sys_forms_field_default: '',
-      tbl_sys_forms_field_attrs: 'id="' + uniqueId + '"',
+      tbl_sys_forms_field_attrs: attrs,
       tbl_sys_forms_field_required: false,
       tbl_sys_forms_field_locked: false,
       tbl_sys_forms_field_ordem: 0,
@@ -2194,231 +2429,505 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
-
   function buildFieldPreviewComponents(fieldData) {
 
-    const type = String(fieldData.tbl_sys_field_type_name || 'text').toLowerCase();
-    const props = getFieldProps(fieldData);
-    const inputId = props.input_id || '';
-    const inputName = fieldData.tbl_sys_forms_field_name || '';
-    const hasPasswordButton = type === 'password' && fieldHasPasswordButton(fieldData);
+    const type =
+      normalizeFieldTypeName(fieldData);
 
-    if (type === 'hidden') {
+    const props =
+      getFieldProps(fieldData);
+
+    const inputId =
+      props.input_id || '';
+
+    const inputName =
+      fieldData.tbl_sys_forms_field_name || '';
+
+    const hasPasswordButton =
+      type === 'password' &&
+      fieldHasPasswordButton(fieldData);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Componentes que não possuem conteúdo interno
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      type === 'hidden' ||
+      isEmptyStructuralFieldComponent(fieldData)
+    ) {
+
       return [];
+
     }
 
-    if (type === 'relation' || type === 'relations') {
 
-      const relationStatusComponents = buildRelationStatusPreviewComponents(fieldData);
+    /*
+    |--------------------------------------------------------------------------
+    | Campo relacional
+    |--------------------------------------------------------------------------
+    */
 
-      if (relationStatusComponents.length) {
+    if (
+      type === 'relation' ||
+      type === 'relations'
+    ) {
+
+      const relationStatusComponents =
+        buildRelationStatusPreviewComponents(
+          fieldData
+        );
+
+      if (
+        Array.isArray(relationStatusComponents) &&
+        relationStatusComponents.length
+      ) {
+
         return relationStatusComponents;
+
       }
 
-      const relationType = getRelationFieldType(fieldData);
+      const relationType =
+        getRelationFieldType(fieldData);
 
-      if (relationType === 'checkbox' || relationType === 'radio') {
-        return buildChoiceListPreviewComponents(fieldData, relationType);
+      if (
+        relationType === 'checkbox' ||
+        relationType === 'radio'
+      ) {
+
+        return buildChoiceListPreviewComponents(
+          fieldData,
+          relationType
+        );
+
       }
 
     }
 
-    if (type === 'checkbox' || type === 'dynamic-list' || type === 'dynamic_list') {
-      return buildChoiceListPreviewComponents(fieldData, 'checkbox');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Lista de opções em checkbox
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      type === 'checkbox' ||
+      type === 'dynamic-list' ||
+      type === 'dynamic_list'
+    ) {
+
+      return buildChoiceListPreviewComponents(
+        fieldData,
+        'checkbox'
+      );
+
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Senha
+    |--------------------------------------------------------------------------
+    */
 
     if (type === 'password') {
 
       const inputComponent = {
+
         tagName: 'div',
-        classes: ['form-floating', 'flex-grow-1'],
+
+        classes: [
+          'form-floating',
+          'flex-grow-1'
+        ],
+
         selectable: false,
         draggable: false,
         droppable: false,
         editable: false,
         removable: false,
+
         components: [
+
           {
+
             tagName: 'input',
-            classes: ['form-control', 'automator-input-password'],
+
+            classes: [
+              'form-control',
+              'automator-input-password'
+            ],
+
             attributes: {
+
               id: inputId,
               name: inputName,
               type: 'password',
               value: '',
-              placeholder: fieldData.tbl_sys_forms_field_title || '',
+
+              placeholder:
+                fieldData.tbl_sys_forms_field_title || '',
+
               disabled: 'disabled',
+
               'data-automator-field': 'true',
               'data-automator-field-name': inputName,
               'data-automator-field-id': inputId
+
             },
+
             selectable: false,
             draggable: false,
             droppable: false,
             editable: false,
             removable: false
+
           },
+
           buildLabelComponent(fieldData)
+
         ]
+
       };
 
-      if (hasPasswordButton) {
+
+      if (!hasPasswordButton) {
+
         return [
-          {
-            tagName: 'div',
-            classes: ['input-group'],
-            selectable: false,
-            draggable: false,
-            droppable: false,
-            editable: false,
-            removable: false,
-            components: [
-              inputComponent,
-              {
-                tagName: 'span',
-                classes: ['input-group-text', 'p-0', 'text-center'],
-                attributes: {
-                  style: 'min-width: 50px;'
-                },
-                selectable: false,
-                draggable: false,
-                droppable: false,
-                editable: false,
-                removable: false,
-                components: [
-                  {
-                    tagName: 'button',
-                    classes: ['h-100', 'w-100', 'border-0'],
-                    attributes: {
-                      type: 'button',
-                      disabled: 'disabled',
-                      'data-show': 'Exibir senha',
-                      'data-hide': 'Ocultar senha',
-                      'data-bs-title': 'Exibir senha'
-                    },
-                    selectable: false,
-                    draggable: false,
-                    droppable: false,
-                    editable: false,
-                    removable: false,
-                    components: [
-                      {
-                        tagName: 'i',
-                        classes: ['fa', 'fa-eye'],
-                        selectable: false,
-                        draggable: false,
-                        droppable: false,
-                        editable: false,
-                        removable: false
-                      }
-                    ]
-                  }
-                ]
-              }
-            ]
-          }
+          inputComponent
         ];
+
       }
 
-      return [inputComponent];
 
-    }
-
-    if (type === 'textarea' || type === 'editor' || type === 'json') {
       return [
+
         {
+
           tagName: 'div',
-          classes: ['form-floating'],
+
+          classes: [
+            'input-group'
+          ],
+
           selectable: false,
           draggable: false,
           droppable: false,
           editable: false,
           removable: false,
-          components: [
-            {
-              tagName: 'textarea',
-              classes: ['form-control'],
-              attributes: {
-                id: inputId,
-                name: inputName,
-                placeholder: fieldData.tbl_sys_forms_field_title || '',
-                disabled: 'disabled',
-                style: 'height: 90px; min-height: 90px;'
-              },
-              selectable: false,
-              draggable: false,
-              droppable: false,
-              editable: false,
-              removable: false
-            },
-            buildLabelComponent(fieldData)
-          ]
-        }
-      ];
-    }
 
-    if (type === 'select' || type === 'relation' || type === 'relations') {
-      return [
-        {
-          tagName: 'div',
-          classes: ['form-floating'],
-          selectable: false,
-          draggable: false,
-          droppable: false,
-          editable: false,
-          removable: false,
           components: [
+
+            inputComponent,
+
             {
-              tagName: 'select',
-              classes: ['form-select'],
-              attributes: {
-                id: inputId,
-                name: inputName,
-                disabled: 'disabled'
+
+              tagName: 'span',
+
+              classes: [
+                'input-group-text',
+                'p-0',
+                'text-center'
+              ],
+
+              style: {
+                'min-width': '50px'
               },
+
               selectable: false,
               draggable: false,
               droppable: false,
               editable: false,
               removable: false,
-              components: buildSelectOptions(fieldData)
-            },
-            buildLabelComponent(fieldData)
+
+              components: [
+
+                {
+
+                  tagName: 'button',
+
+                  classes: [
+                    'h-100',
+                    'w-100',
+                    'border-0',
+                    'bg-transparent'
+                  ],
+
+                  attributes: {
+
+                    type: 'button',
+                    disabled: 'disabled',
+                    tabindex: '-1'
+
+                  },
+
+                  selectable: false,
+                  draggable: false,
+                  droppable: false,
+                  editable: false,
+                  removable: false,
+
+                  components: [
+
+                    {
+
+                      tagName: 'i',
+
+                      classes: [
+                        'fa',
+                        'fa-eye'
+                      ],
+
+                      selectable: false,
+                      draggable: false,
+                      droppable: false,
+                      editable: false,
+                      removable: false
+
+                    }
+
+                  ]
+
+                }
+
+              ]
+
+            }
+
           ]
+
         }
+
       ];
+
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Área de texto, editor e JSON
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      type === 'textarea' ||
+      type === 'editor' ||
+      type === 'json'
+    ) {
+
+      return [
+
+        {
+
+          tagName: 'div',
+
+          classes: [
+            'form-floating'
+          ],
+
+          selectable: false,
+          draggable: false,
+          droppable: false,
+          editable: false,
+          removable: false,
+
+          components: [
+
+            {
+
+              tagName: 'textarea',
+
+              classes: [
+                'form-control'
+              ],
+
+              attributes: {
+
+                id: inputId,
+                name: inputName,
+
+                placeholder:
+                  fieldData.tbl_sys_forms_field_title || '',
+
+                disabled: 'disabled',
+
+                'data-automator-field': 'true',
+                'data-automator-field-name': inputName,
+                'data-automator-field-id': inputId
+
+              },
+
+              style: {
+                'min-height': '90px'
+              },
+
+              selectable: false,
+              draggable: false,
+              droppable: false,
+              editable: false,
+              removable: false
+
+            },
+
+            buildLabelComponent(fieldData)
+
+          ]
+
+        }
+
+      ];
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Select comum ou relacional
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      type === 'select' ||
+      type === 'relation' ||
+      type === 'relations'
+    ) {
+
+      return [
+
+        {
+
+          tagName: 'div',
+
+          classes: [
+            'form-floating'
+          ],
+
+          selectable: false,
+          draggable: false,
+          droppable: false,
+          editable: false,
+          removable: false,
+
+          components: [
+
+            {
+
+              tagName: 'select',
+
+              classes: [
+                'form-select'
+              ],
+
+              attributes: {
+
+                id: inputId,
+                name: inputName,
+                disabled: 'disabled',
+
+                'data-automator-field': 'true',
+                'data-automator-field-name': inputName,
+                'data-automator-field-id': inputId
+
+              },
+
+              selectable: false,
+              draggable: false,
+              droppable: false,
+              editable: false,
+              removable: false,
+
+              /*
+              |--------------------------------------------------------------------------
+              | Utiliza a função já existente no editor
+              |--------------------------------------------------------------------------
+              */
+
+              components:
+                buildSelectOptions(fieldData)
+
+            },
+
+            buildLabelComponent(fieldData)
+
+          ]
+
+        }
+
+      ];
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Input padrão
+    |--------------------------------------------------------------------------
+    */
+
     return [
+
       {
+
         tagName: 'div',
-        classes: ['form-floating'],
+
+        classes: [
+          'form-floating'
+        ],
+
         selectable: false,
         draggable: false,
         droppable: false,
         editable: false,
         removable: false,
+
         components: [
+
           {
+
             tagName: 'input',
-            classes: ['form-control'],
+
+            classes: [
+              'form-control'
+            ],
+
             attributes: {
+
               id: inputId,
               name: inputName,
-              type: normalizeInputType(type),
-              placeholder: fieldData.tbl_sys_forms_field_title || '',
-              disabled: 'disabled'
+
+              type:
+                normalizeInputType(type),
+
+              value:
+                fieldData.tbl_sys_forms_field_default || '',
+
+              placeholder:
+                fieldData.tbl_sys_forms_field_title || '',
+
+              disabled: 'disabled',
+
+              'data-automator-field': 'true',
+              'data-automator-field-name': inputName,
+              'data-automator-field-id': inputId
+
             },
+
             selectable: false,
             draggable: false,
             droppable: false,
             editable: false,
             removable: false
+
           },
+
           buildLabelComponent(fieldData)
+
         ]
+
       }
+
     ];
 
   }
@@ -2923,20 +3432,113 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
-
   function renderStaticPreviewFieldHtml(fieldData) {
 
-    const type = String(fieldData.tbl_sys_field_type_name || 'text').toLowerCase();
-    const props = getFieldProps(fieldData);
+    const type =
+      normalizeFieldTypeName(fieldData);
 
-    const inputId = props.input_id || '';
-    const inputName = fieldData.tbl_sys_forms_field_name || '';
-    const title = fieldData.tbl_sys_forms_field_title || 'Campo';
-    const wrapperClass = getFieldWrapperClass(fieldData);
-    const previewClass = getPreviewWrapperClass(wrapperClass);
-    const previewStyle = getPreviewWrapperStyle(wrapperClass);
-    const previewSize = getColumnSizeForPreviewViewport(wrapperClass, getActivePreviewViewportMode()) || 12;
+    const props =
+      getFieldProps(fieldData);
+
+    const inputId =
+      props.input_id || '';
+
+    const inputName =
+      fieldData.tbl_sys_forms_field_name || '';
+
+    const title =
+      fieldData.tbl_sys_forms_field_title ||
+      'Campo';
+
+    /*
+    |--------------------------------------------------------------------------
+    | Componente estrutural vazio
+    |--------------------------------------------------------------------------
+    |
+    | Não recebe:
+    | - classe mb-3
+    | - classes col-*
+    | - atributos de input
+    | - título
+    | - conteúdo interno
+    |
+    */
+
+    if (isEmptyStructuralFieldComponent(fieldData)) {
+
+      const tagName =
+        getEmptyStructuralComponentTagName(
+          fieldData
+        );
+
+      const customClass =
+        normalizeCustomClass(
+          fieldData.tbl_sys_forms_field_class || ''
+        );
+
+      let html =
+        '<' + tagName;
+
+      if (customClass !== '') {
+
+        html +=
+          ' class="' +
+          escapeHtml(customClass) +
+          '"';
+
+      }
+
+      html +=
+        ' data-automator-alternative-component="true"';
+
+      html +=
+        ' data-automator-component-behavior="' +
+        escapeHtml(
+          getAlternativeFieldBehavior(fieldData)
+        ) +
+        '"';
+
+      html +=
+        ' data-automator-field-type="' +
+        escapeHtml(type) +
+        '"';
+
+      html += '></' + tagName + '>';
+
+      return html;
+
+    }
+
+    if (type === 'hidden') {
+
+      return (
+        '<input type="hidden"' +
+        ' id="' + escapeHtml(inputId) + '"' +
+        ' name="' + escapeHtml(inputName) + '"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_default ||
+          ''
+        ) +
+        '">'
+      );
+
+    }
+
+    const wrapperClass =
+      getFieldWrapperClass(fieldData);
+
+    const previewClass =
+      getPreviewWrapperClass(wrapperClass);
+
+    const previewStyle =
+      getPreviewWrapperStyle(wrapperClass);
+
+    const previewSize =
+      getColumnSizeForPreviewViewport(
+        wrapperClass,
+        getActivePreviewViewportMode()
+      ) || 12;
 
     const required = (
       fieldData.tbl_sys_forms_field_required === true ||
@@ -2945,32 +3547,74 @@ window.SysAutomatorFormEditor = (function () {
       fieldData.tbl_sys_forms_field_required === 'true'
     );
 
-    const requiredAttr = required ? ' required' : '';
-    const requiredMark = required ? ' <span class="text-danger">*</span>' : '';
+    const requiredAttr =
+      required
+        ? ' required'
+        : '';
 
-    if (type === 'hidden') {
-      return '<input type="hidden" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '" value="' + escapeHtml(fieldData.tbl_sys_forms_field_default || '') + '">';
-    }
+    const requiredMark =
+      required
+        ? ' <span class="text-danger">*</span>'
+        : '';
 
     let html = '';
 
-    html += '<div class="mb-3 ' + escapeHtml(previewClass) + '" data-preview-column-size="' + escapeHtml(previewSize) + '" style="' + escapeHtml(previewStyle) + '">';
+    html +=
+      '<div class="mb-3 ' +
+      escapeHtml(previewClass) +
+      '"' +
+      ' data-preview-column-size="' +
+      escapeHtml(previewSize) +
+      '"' +
+      ' style="' +
+      escapeHtml(previewStyle) +
+      '">';
 
-    if (type === 'relation' || type === 'relations') {
+    if (
+      type === 'relation' ||
+      type === 'relations'
+    ) {
 
-      const relationType = getRelationFieldType(fieldData);
+      const relationType =
+        getRelationFieldType(fieldData);
 
-      if (relationType === 'checkbox' || relationType === 'radio') {
+      if (
+        relationType === 'checkbox' ||
+        relationType === 'radio'
+      ) {
 
-        html += renderStaticPreviewChoiceInputsHtml(fieldData, relationType);
+        html +=
+          renderStaticPreviewChoiceInputsHtml(
+            fieldData,
+            relationType
+          );
 
       } else {
 
         html += '<div class="form-floating">';
-        html += '<select class="form-select" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '"' + requiredAttr + '>';
-        html += renderStaticPreviewSelectOptions(fieldData);
+
+        html +=
+          '<select class="form-select"' +
+          ' id="' + escapeHtml(inputId) + '"' +
+          ' name="' + escapeHtml(inputName) + '"' +
+          requiredAttr +
+          '>';
+
+        html +=
+          renderStaticPreviewSelectOptions(
+            fieldData
+          );
+
         html += '</select>';
-        html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
+
+        html +=
+          '<label for="' +
+          escapeHtml(inputId) +
+          '">' +
+          escapeHtml(title) +
+          requiredMark +
+          '</label>';
+
         html += '</div>';
 
       }
@@ -2978,44 +3622,133 @@ window.SysAutomatorFormEditor = (function () {
     } else if (type === 'select') {
 
       html += '<div class="form-floating">';
-      html += '<select class="form-select" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '"' + requiredAttr + '>';
-      html += renderStaticPreviewSelectOptions(fieldData);
+
+      html +=
+        '<select class="form-select"' +
+        ' id="' + escapeHtml(inputId) + '"' +
+        ' name="' + escapeHtml(inputName) + '"' +
+        requiredAttr +
+        '>';
+
+      html +=
+        renderStaticPreviewSelectOptions(
+          fieldData
+        );
+
       html += '</select>';
-      html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
+
+      html +=
+        '<label for="' +
+        escapeHtml(inputId) +
+        '">' +
+        escapeHtml(title) +
+        requiredMark +
+        '</label>';
+
       html += '</div>';
 
-    } else if (type === 'textarea' || type === 'editor' || type === 'json') {
+    } else if (
+      type === 'textarea' ||
+      type === 'editor' ||
+      type === 'json'
+    ) {
 
       html += '<div class="form-floating">';
-      html += '<textarea class="form-control" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '" placeholder="' + escapeHtml(title) + '" style="min-height: 90px;"' + requiredAttr + '>' + escapeHtml(fieldData.tbl_sys_forms_field_default || '') + '</textarea>';
-      html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
+
+      html +=
+        '<textarea class="form-control"' +
+        ' id="' + escapeHtml(inputId) + '"' +
+        ' name="' + escapeHtml(inputName) + '"' +
+        ' placeholder="' + escapeHtml(title) + '"' +
+        ' style="min-height: 90px;"' +
+        requiredAttr +
+        '>';
+
+      html +=
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_default ||
+          ''
+        );
+
+      html += '</textarea>';
+
+      html +=
+        '<label for="' +
+        escapeHtml(inputId) +
+        '">' +
+        escapeHtml(title) +
+        requiredMark +
+        '</label>';
+
       html += '</div>';
 
-    } else if (type === 'checkbox' || type === 'dynamic-list' || type === 'dynamic_list') {
+    } else if (
+      type === 'checkbox' ||
+      type === 'dynamic-list' ||
+      type === 'dynamic-list'
+    ) {
 
-      html += renderStaticPreviewChoiceInputsHtml(fieldData, 'checkbox');
+      html +=
+        renderStaticPreviewChoiceInputsHtml(
+          fieldData,
+          'checkbox'
+        );
 
     } else if (type === 'password') {
 
-      const hasPasswordButton = fieldHasPasswordButton(fieldData);
+      const hasButton =
+        fieldHasPasswordButton(fieldData);
 
-      if (hasPasswordButton) {
-
+      if (hasButton) {
         html += '<div class="input-group">';
-        html += '<div class="form-floating flex-grow-1">';
-        html += '<input type="password" class="form-control automator-input-password" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '" value="" placeholder="' + escapeHtml(title) + '"' + requiredAttr + '>';
-        html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
-        html += '</div>';
-        html += '<span class="input-group-text p-0 text-center" style="min-width: 50px;">';
-        html += '<button type="button" class="h-100 w-100 border-0" data-show="Exibir senha" data-hide="Ocultar senha" onclick="AutomatorPasswordInputBTN(this, \'' + escapeHtml(inputId) + '\')" data-bs-title="Exibir senha"><i class="fa fa-eye"></i></button>';
+      }
+
+      html +=
+        '<div class="form-floating' +
+        (hasButton ? ' flex-grow-1' : '') +
+        '">';
+
+      html +=
+        '<input type="password"' +
+        ' class="form-control automator-input-password"' +
+        ' id="' + escapeHtml(inputId) + '"' +
+        ' name="' + escapeHtml(inputName) + '"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_default ||
+          ''
+        ) +
+        '"' +
+        ' placeholder="' + escapeHtml(title) + '"' +
+        requiredAttr +
+        '>';
+
+      html +=
+        '<label for="' +
+        escapeHtml(inputId) +
+        '">' +
+        escapeHtml(title) +
+        requiredMark +
+        '</label>';
+
+      html += '</div>';
+
+      if (hasButton) {
+
+        html +=
+          '<span class="input-group-text p-0 text-center"' +
+          ' style="min-width: 50px;">';
+
+        html +=
+          '<button type="button"' +
+          ' class="h-100 w-100 border-0 bg-transparent"' +
+          ' tabindex="-1">';
+
+        html +=
+          '<i class="fa fa-eye"></i>';
+
+        html += '</button>';
         html += '</span>';
-        html += '</div>';
-
-      } else {
-
-        html += '<div class="form-floating">';
-        html += '<input type="password" class="form-control automator-input-password" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '" value="" placeholder="' + escapeHtml(title) + '"' + requiredAttr + '>';
-        html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
         html += '</div>';
 
       }
@@ -3023,8 +3756,32 @@ window.SysAutomatorFormEditor = (function () {
     } else {
 
       html += '<div class="form-floating">';
-      html += '<input type="' + escapeHtml(normalizeInputType(type)) + '" class="form-control" id="' + escapeHtml(inputId) + '" name="' + escapeHtml(inputName) + '" value="' + escapeHtml(fieldData.tbl_sys_forms_field_default || '') + '" placeholder="' + escapeHtml(title) + '"' + requiredAttr + '>';
-      html += '<label for="' + escapeHtml(inputId) + '">' + escapeHtml(title) + requiredMark + '</label>';
+
+      html +=
+        '<input type="' +
+        escapeHtml(normalizeInputType(type)) +
+        '"' +
+        ' class="form-control"' +
+        ' id="' + escapeHtml(inputId) + '"' +
+        ' name="' + escapeHtml(inputName) + '"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_default ||
+          ''
+        ) +
+        '"' +
+        ' placeholder="' + escapeHtml(title) + '"' +
+        requiredAttr +
+        '>';
+
+      html +=
+        '<label for="' +
+        escapeHtml(inputId) +
+        '">' +
+        escapeHtml(title) +
+        requiredMark +
+        '</label>';
+
       html += '</div>';
 
     }
@@ -3128,23 +3885,40 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
-
   function buildSelectOptions(fieldData) {
 
-    const choices = getFieldChoices(fieldData);
-    const props = getFieldProps(fieldData);
+    const choices =
+      getFieldChoices(fieldData);
+
+    const props =
+      getFieldProps(fieldData);
+
     const components = [];
 
     const selectedValue = String(
+
       typeof props.preview_value !== 'undefined'
+
         ? props.preview_value
+
         : (
+
             typeof fieldData.tbl_sys_forms_field_default !== 'undefined'
+
               ? fieldData.tbl_sys_forms_field_default
+
               : ''
+
           )
+
     );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Opção vazia
+    |--------------------------------------------------------------------------
+    */
 
     if (getFieldHasEmptyOption(fieldData)) {
 
@@ -3153,7 +3927,10 @@ window.SysAutomatorFormEditor = (function () {
       };
 
       if (selectedValue === '') {
-        attrs.selected = 'selected';
+
+        attrs.selected =
+          'selected';
+
       }
 
       if (
@@ -3162,21 +3939,38 @@ window.SysAutomatorFormEditor = (function () {
         fieldData.tbl_sys_forms_field_required === '1' ||
         fieldData.tbl_sys_forms_field_required === 'true'
       ) {
-        attrs.disabled = 'disabled';
+
+        attrs.disabled =
+          'disabled';
+
       }
 
       components.push({
+
         tagName: 'option',
+
         attributes: attrs,
-        content: getFieldEmptyOptionText(fieldData) || 'Selecione uma opção',
+
+        content:
+          getFieldEmptyOptionText(fieldData) ||
+          'Selecione uma opção',
+
         draggable: false,
         droppable: false,
         selectable: false,
         editable: false,
         removable: false
+
       });
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Opções configuradas no campo
+    |--------------------------------------------------------------------------
+    */
 
     Object.keys(choices).forEach(function(key) {
 
@@ -3184,24 +3978,60 @@ window.SysAutomatorFormEditor = (function () {
         value: key
       };
 
-      if (String(key) === selectedValue) {
-        attrs.selected = 'selected';
+      if (
+        String(key) === selectedValue
+      ) {
+
+        attrs.selected =
+          'selected';
+
       }
 
+      const label =
+        normalizeChoiceItemLabel(
+          choices[key],
+          key
+        );
+
       components.push({
+
         tagName: 'option',
+
         attributes: attrs,
-        content: choices[key],
+
+        content: label,
+
         draggable: false,
         droppable: false,
         selectable: false,
         editable: false,
         removable: false
+
       });
 
     });
 
+
     return components;
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Compatibilidade com referências anteriores
+  |--------------------------------------------------------------------------
+  |
+  | Algumas versões do editor passaram a utilizar o nome
+  | buildSelectOptionsComponents. A implementação oficial continua sendo
+  | buildSelectOptions.
+  |
+  | Esta função evita que uma referência residual interrompa todo o editor.
+  |
+  */
+
+  function buildSelectOptionsComponents(fieldData) {
+
+    return buildSelectOptions(fieldData);
 
   }
 
@@ -3365,23 +4195,73 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
+  function setFieldDataToComponent(
+    component,
+    fieldData,
+    options = {}
+  ) {
 
-  function setFieldDataToComponent(component, fieldData, options = {}) {
-
-    if (!component || !component.setAttributes) {
+    if (
+      !component ||
+      !component.setAttributes
+    ) {
       return false;
     }
 
-    const type = String(fieldData.tbl_sys_field_type_name || '').toLowerCase();
-    const attrs = component.getAttributes ? component.getAttributes() : {};
+    const type =
+      normalizeFieldTypeName(fieldData);
 
-    attrs['data-automator-form-field-data'] = encodeFieldData(fieldData);
-    attrs['data-automator-field-type-title'] = fieldData.tbl_sys_forms_field_title || '';
-    attrs['data-automator-field-type-name'] = fieldData.tbl_sys_field_type_name || '';
-    attrs['data-automator-field-type-id'] = fieldData.tbl_sys_field_type_ID || '';
+    const alternativeComponent =
+      isAlternativeFieldComponent(fieldData);
+
+    const emptyStructuralComponent =
+      isEmptyStructuralFieldComponent(fieldData);
+
+    const attrs =
+      component.getAttributes
+        ? component.getAttributes()
+        : {};
+
+    attrs['data-automator-form-field-data'] =
+      encodeFieldData(fieldData);
+
+    attrs['data-automator-field-type-title'] =
+      fieldData.tbl_sys_forms_field_title || '';
+
+    attrs['data-automator-field-type-name'] =
+      fieldData.tbl_sys_field_type_name || '';
+
+    attrs['data-automator-field-type-id'] =
+      fieldData.tbl_sys_field_type_ID || '';
+
+    if (alternativeComponent) {
+
+      attrs['data-automator-alternative-component'] =
+        'true';
+
+      attrs['data-automator-component-behavior'] =
+        getAlternativeFieldBehavior(fieldData);
+
+    } else {
+
+      delete attrs[
+        'data-automator-alternative-component'
+      ];
+
+      delete attrs[
+        'data-automator-component-behavior'
+      ];
+
+    }
 
     component.setAttributes(attrs);
-    component.set('name', fieldData.tbl_sys_forms_field_title || 'Campo');
+
+    component.set(
+      'name',
+      fieldData.tbl_sys_forms_field_title ||
+      fieldData.tbl_sys_field_type_name ||
+      'Campo'
+    );
 
     if (type === 'hidden') {
 
@@ -3389,16 +4269,93 @@ window.SysAutomatorFormEditor = (function () {
 
       attrs.type = 'hidden';
       attrs.id = props.input_id || '';
-      attrs.name = fieldData.tbl_sys_forms_field_name || '';
-      attrs.value = fieldData.tbl_sys_forms_field_default || '';
-      attrs['data-automator-hidden-field'] = 'true';
+      attrs.name =
+        fieldData.tbl_sys_forms_field_name || '';
+
+      attrs.value =
+        fieldData.tbl_sys_forms_field_default || '';
+
+      attrs['data-automator-hidden-field'] =
+        'true';
+
+      delete attrs[
+        'data-automator-empty-structural-component'
+      ];
 
       component.setAttributes(attrs);
-      component.setStyle({ display: 'none' });
+
+      component.setStyle({
+        display: 'none'
+      });
+
+    } else if (emptyStructuralComponent) {
+
+      const structuralTagName =
+        getEmptyStructuralComponentTagName(
+          fieldData
+        );
+
+      attrs[
+        'data-automator-empty-structural-component'
+      ] = 'true';
+
+      delete attrs[
+        'data-automator-hidden-field'
+      ];
+
+      delete attrs.id;
+      delete attrs.name;
+      delete attrs.value;
+      delete attrs.type;
+
+      component.setAttributes(attrs);
+
+      if (
+        typeof component.set === 'function'
+      ) {
+        component.set(
+          'tagName',
+          structuralTagName
+        );
+      }
+
+      component.setClass(
+        getEmptyStructuralComponentClass(
+          fieldData
+        )
+      );
+
+      component.setStyle({
+        height: 'auto',
+        'min-height': '24px',
+        width: '100%',
+        display: 'block',
+        clear: 'both'
+      });
+
+      /*
+      |--------------------------------------------------------------------------
+      | O componente estrutural não contém elementos internos
+      |--------------------------------------------------------------------------
+      */
+
+      component.components([]);
 
     } else {
 
-      component.setClass(getFieldComponentClasses(fieldData));
+      delete attrs[
+        'data-automator-hidden-field'
+      ];
+
+      delete attrs[
+        'data-automator-empty-structural-component'
+      ];
+
+      component.setAttributes(attrs);
+
+      component.setClass(
+        getFieldComponentClasses(fieldData)
+      );
 
       component.setStyle({
         height: 'auto',
@@ -3410,7 +4367,9 @@ window.SysAutomatorFormEditor = (function () {
         {
           type: 'default',
           tagName: 'div',
-          classes: ['automator-form-editor-field-preview'],
+          classes: [
+            'automator-form-editor-field-preview'
+          ],
           draggable: false,
           droppable: false,
           selectable: false,
@@ -3418,7 +4377,8 @@ window.SysAutomatorFormEditor = (function () {
           highlightable: false,
           copyable: false,
           removable: false,
-          components: buildFieldPreviewComponents(fieldData)
+          components:
+            buildFieldPreviewComponents(fieldData)
         }
       ]);
 
@@ -3426,22 +4386,32 @@ window.SysAutomatorFormEditor = (function () {
 
     reorderHiddenFields();
 
-    if (options.silent !== true && state.suppressChangeTracking !== true) {
+    if (
+      options.silent !== true &&
+      state.suppressChangeTracking !== true
+    ) {
+
       state.hasChanges = true;
       setSaveState(true);
+
     }
 
     syncFieldsFromCanvas();
     updateStructureList();
 
-    if (options.refreshPanel !== false && !isEditingPropertiesPanel()) {
+    if (
+      options.refreshPanel !== false &&
+      !isEditingPropertiesPanel()
+    ) {
       renderFieldSettings(component);
     }
 
     if (options.skipResize !== true) {
+
       setTimeout(function() {
         syncCanvasHeight();
       }, 80);
+
     }
 
     return true;
@@ -3475,9 +4445,15 @@ window.SysAutomatorFormEditor = (function () {
 
   function getFieldWrapperClass(fieldData) {
 
+    if (!fieldUsesBootstrapWrapper(fieldData)) {
+      return '';
+    }
+
     const props = getFieldProps(fieldData);
 
-    return normalizeBootstrapWrapperClass(props.wrapper_class || 'col-12');
+    return normalizeBootstrapWrapperClass(
+      props.wrapper_class || 'col-12'
+    );
 
   }
 
@@ -3802,50 +4778,199 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
   function renderFieldSettings(component) {
 
-    const fieldData = getFieldDataFromComponent(component);
-    const locked = isFieldLockedForCurrentUser(fieldData);
+    const fieldData =
+      getFieldDataFromComponent(component);
+
+    const locked =
+      isFieldLockedForCurrentUser(fieldData);
+
+    const alternativeComponent =
+      isAlternativeFieldComponent(fieldData);
+
+    const emptyStructuralComponent =
+      isEmptyStructuralFieldComponent(fieldData);
 
     fieldData.__component = component;
 
-    let disabledAttr = locked ? ' disabled' : '';
+    const disabledAttr =
+      locked
+        ? ' disabled'
+        : '';
+
     let html = '';
 
     if (locked) {
-      html += '<div class="alert alert-warning mx-3 mt-3 mb-2 small">';
-      html += 'Este campo está bloqueado. Apenas usuários desenvolvedores podem alterar suas configurações.';
+
+      html +=
+        '<div class="alert alert-warning mx-3 mt-3 mb-2 small">';
+
+      html +=
+        'Este campo está bloqueado. Apenas usuários desenvolvedores podem alterar suas configurações.';
+
       html += '</div>';
+
     }
 
-    html += '<div class="mb-3 mt-1 px-3">';
-    html += '<label class="form-label small fw-bold">Tipo de campo</label>';
-    html += '<input type="text" class="form-control form-control-sm" value="' + escapeHtml(fieldData.tbl_sys_field_type_name || '') + '" disabled>';
+    html +=
+      '<div class="mb-3 mt-1 px-3">';
+
+    html +=
+      '<label class="form-label small fw-bold">' +
+      (
+        alternativeComponent
+          ? 'Tipo de componente'
+          : 'Tipo de campo'
+      ) +
+      '</label>';
+
+    html +=
+      '<input type="text"' +
+      ' class="form-control form-control-sm"' +
+      ' value="' +
+      escapeHtml(
+        fieldData.tbl_sys_field_type_name || ''
+      ) +
+      '"' +
+      ' disabled>';
+
     html += '</div>';
 
-    html += '<div class="mb-3 px-3">';
-    html += '<label class="form-label small fw-bold">Título</label>';
-    html += '<input type="text" class="form-control form-control-sm automator-form-field-property" data-property="tbl_sys_forms_field_title" value="' + escapeHtml(fieldData.tbl_sys_forms_field_title || '') + '"' + disabledAttr + '>';
-    html += '</div>';
+    /*
+    |--------------------------------------------------------------------------
+    | Campos de identificação
+    |--------------------------------------------------------------------------
+    |
+    | Componentes estruturais vazios não são entradas de formulário.
+    | Seus identificadores internos continuam sendo mantidos pelo sistema,
+    | mas não são exibidos para edição.
+    |
+    */
 
-    html += '<div class="mb-3 px-3">';
-    html += '<label class="form-label small fw-bold">Nome do campo</label>';
-    html += '<input type="text" class="form-control form-control-sm automator-form-field-property" data-property="tbl_sys_forms_field_name" value="' + escapeHtml(fieldData.tbl_sys_forms_field_name || '') + '"' + disabledAttr + '>';
-    html += '</div>';
+    if (!emptyStructuralComponent) {
 
-    html += '<div class="mb-3 px-3">';
-    html += '<label class="form-label small fw-bold">Índice</label>';
-    html += '<input type="text" class="form-control form-control-sm automator-form-field-property" data-property="tbl_sys_forms_field_index" value="' + escapeHtml(fieldData.tbl_sys_forms_field_index || '') + '"' + disabledAttr + '>';
-    html += '</div>';
+      html +=
+        '<div class="mb-3 px-3">';
 
-    html += renderFormFieldApiProperties(fieldData, component);
+      html +=
+        '<label class="form-label small fw-bold">' +
+        'Título' +
+        '</label>';
 
-    html += renderFieldSecurityAccordion(fieldData, component);
+      html +=
+        '<input type="text"' +
+        ' class="form-control form-control-sm automator-form-field-property"' +
+        ' data-property="tbl_sys_forms_field_title"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_title ||
+          ''
+        ) +
+        '"' +
+        disabledAttr +
+        '>';
 
-    html += '<div class="px-3 py-3">';
-    html += '<button type="button" class="btn btn-outline-danger btn-sm w-100" onclick="SysAutomatorFormEditor.deleteSelectedField()"' + disabledAttr + '>';
-    html += '<i class="fa fa-trash me-1"></i> Excluir campo';
+      html += '</div>';
+
+      html +=
+        '<div class="mb-3 px-3">';
+
+      html +=
+        '<label class="form-label small fw-bold">' +
+        'Nome do campo' +
+        '</label>';
+
+      html +=
+        '<input type="text"' +
+        ' class="form-control form-control-sm automator-form-field-property"' +
+        ' data-property="tbl_sys_forms_field_name"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_name ||
+          ''
+        ) +
+        '"' +
+        disabledAttr +
+        '>';
+
+      html += '</div>';
+
+      html +=
+        '<div class="mb-3 px-3">';
+
+      html +=
+        '<label class="form-label small fw-bold">' +
+        'Índice' +
+        '</label>';
+
+      html +=
+        '<input type="text"' +
+        ' class="form-control form-control-sm automator-form-field-property"' +
+        ' data-property="tbl_sys_forms_field_index"' +
+        ' value="' +
+        escapeHtml(
+          fieldData.tbl_sys_forms_field_index ||
+          ''
+        ) +
+        '"' +
+        disabledAttr +
+        '>';
+
+      html += '</div>';
+
+    } else {
+
+      html +=
+        '<div class="alert alert-light border mx-3 mb-3 small">';
+
+      html +=
+        'Este componente é estrutural e não gera um campo de entrada.';
+
+      html += '</div>';
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Propriedades cadastradas no tipo
+    |--------------------------------------------------------------------------
+    |
+    | No breakpoint atual, será exibido apenas o grupo "Aparência", porque é o
+    | único grupo existente em tbl_sys_field_type_params.
+    |
+    */
+
+    html +=
+      renderFormFieldApiProperties(
+        fieldData,
+        component
+      );
+
+    html +=
+      renderFieldSecurityAccordion(
+        fieldData,
+        component
+      );
+
+    html +=
+      '<div class="px-3 py-3">';
+
+    html +=
+      '<button type="button"' +
+      ' class="btn btn-outline-danger btn-sm w-100"' +
+      ' onclick="SysAutomatorFormEditor.deleteSelectedField()"' +
+      disabledAttr +
+      '>';
+
+    html +=
+      '<i class="fa fa-trash me-1"></i> ' +
+      (
+        alternativeComponent
+          ? 'Excluir componente'
+          : 'Excluir campo'
+      );
+
     html += '</button>';
     html += '</div>';
 
@@ -3854,13 +4979,23 @@ window.SysAutomatorFormEditor = (function () {
     $(selectors.rightContent).html(html);
 
     if (locked) {
-      $(selectors.rightContent).find('input, select, textarea, button').prop('disabled', true);
-      $(selectors.rightContent).find('[data-developer="true"]').prop('checked', true).prop('disabled', true);
+
+      $(selectors.rightContent)
+        .find('input, select, textarea, button')
+        .prop('disabled', true);
+
+      $(selectors.rightContent)
+        .find('[data-developer="true"]')
+        .prop('checked', true)
+        .prop('disabled', true);
+
     }
 
     bindFieldPropertyInputs(component);
     bindFormFieldApiProperties(component);
     bindFieldSecurityEvents(component);
+
+    return true;
 
   }
 
@@ -6771,28 +7906,56 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
-
   function getFieldComponentClasses(fieldData) {
 
-    const wrapperClass = getFieldWrapperClass(fieldData);
-    const customClass = normalizeCustomClass(fieldData.tbl_sys_forms_field_class || '');
+    if (isEmptyStructuralFieldComponent(fieldData)) {
+
+      return getEmptyStructuralComponentClass(
+        fieldData
+      );
+
+    }
+
+    const wrapperClass =
+      getFieldWrapperClass(fieldData);
+
+    const customClass =
+      normalizeCustomClass(
+        fieldData.tbl_sys_forms_field_class || ''
+      );
 
     const classes = [];
 
-    wrapperClass.split(/\s+/).filter(Boolean).forEach(function(cls) {
-      if (classes.indexOf(cls) === -1) {
-        classes.push(cls);
-      }
-    });
+    wrapperClass
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach(function(className) {
 
-    customClass.split(/\s+/).filter(Boolean).forEach(function(cls) {
-      if (classes.indexOf(cls) === -1) {
-        classes.push(cls);
-      }
-    });
+        if (classes.indexOf(className) === -1) {
+          classes.push(className);
+        }
 
-    if (classes.indexOf('automator-form-editor-field-wrapper') === -1) {
-      classes.push('automator-form-editor-field-wrapper');
+      });
+
+    customClass
+      .split(/\s+/)
+      .filter(Boolean)
+      .forEach(function(className) {
+
+        if (classes.indexOf(className) === -1) {
+          classes.push(className);
+        }
+
+      });
+
+    if (
+      classes.indexOf(
+        'automator-form-editor-field-wrapper'
+      ) === -1
+    ) {
+      classes.push(
+        'automator-form-editor-field-wrapper'
+      );
     }
 
     return classes;
@@ -8650,6 +9813,306 @@ window.SysAutomatorFormEditor = (function () {
     }
 
     return state.isNew === true ? 'add' : 'edit';
+
+  }
+
+  function normalizeFieldTypeName(fieldData = {}) {
+
+    return String(
+      fieldData.tbl_sys_field_type_name ||
+      fieldData.fieldTypeName ||
+      fieldData.type ||
+      ''
+    )
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, '-');
+
+  }
+
+
+  function decodeFieldTypeObject(value) {
+
+    if (!value) {
+      return {};
+    }
+
+    if (typeof value === 'object' && !Array.isArray(value)) {
+      return value;
+    }
+
+    if (typeof value !== 'string') {
+      return {};
+    }
+
+    try {
+
+      const decoded = JSON.parse(value);
+
+      return (
+        decoded &&
+        typeof decoded === 'object' &&
+        !Array.isArray(decoded)
+      )
+        ? decoded
+        : {};
+
+    } catch (e) {
+
+      return {};
+
+    }
+
+  }
+
+
+  function getFieldTypeRawData(fieldData = {}) {
+
+    const raw =
+      fieldData.raw &&
+      typeof fieldData.raw === 'object'
+        ? fieldData.raw
+        : {};
+
+    return raw;
+
+  }
+
+
+  function getFieldTypeParamsObject(fieldData = {}) {
+
+    const raw = getFieldTypeRawData(fieldData);
+
+    let params =
+      raw.tbl_sys_field_type_params ??
+      raw.params ??
+      fieldData.tbl_sys_field_type_params ??
+      {};
+
+    return decodeFieldTypeObject(params);
+
+  }
+
+
+  function getFieldTypeConfigsObject(fieldData = {}) {
+
+    const raw = getFieldTypeRawData(fieldData);
+
+    let configs =
+      raw.tbl_sys_field_type_configs ??
+      raw.configs ??
+      fieldData.tbl_sys_field_type_configs ??
+      {};
+
+    return decodeFieldTypeObject(configs);
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Componentes com comportamento alternativo
+  |--------------------------------------------------------------------------
+  |
+  | Permite que componentes diferentes de breakpoint usem o mesmo fluxo sem
+  | adicionar vários ifs espalhados pelo editor.
+  |
+  | Formas de ativação:
+  |
+  | 1. Nome conhecido:
+  |    breakpoint
+  |
+  | 2. Parâmetros:
+  |    {
+  |      "editor": {
+  |        "behavior": "empty-structural"
+  |      }
+  |    }
+  |
+  | 3. Configuração estrutural automática:
+  |    - tag div
+  |    - sem filhos
+  |    - sem grupo wrapper
+  |
+  */
+
+  function getAlternativeFieldBehavior(fieldData = {}) {
+
+    const type = normalizeFieldTypeName(fieldData);
+    const params = getFieldTypeParamsObject(fieldData);
+    const configs = getFieldTypeConfigsObject(fieldData);
+
+    const editorConfig =
+      params.editor &&
+      typeof params.editor === 'object'
+        ? params.editor
+        : (
+            configs.editor &&
+            typeof configs.editor === 'object'
+              ? configs.editor
+              : {}
+          );
+
+    const declaredBehavior = String(
+      editorConfig.behavior ||
+      editorConfig.mode ||
+      editorConfig.component ||
+      params.editor_behavior ||
+      params.editor_mode ||
+      configs.editor_behavior ||
+      configs.editor_mode ||
+      ''
+    )
+      .trim()
+      .toLowerCase()
+      .replace(/_/g, '-');
+
+    if (
+      declaredBehavior === 'empty-structural' ||
+      declaredBehavior === 'structural-empty' ||
+      declaredBehavior === 'empty-component' ||
+      declaredBehavior === 'breakpoint'
+    ) {
+      return 'empty-structural';
+    }
+
+    if (
+      type === 'breakpoint' ||
+      type === 'break-point'
+    ) {
+      return 'empty-structural';
+    }
+
+    const code =
+      configs.code &&
+      typeof configs.code === 'object'
+        ? configs.code
+        : {};
+
+    const tagName = String(code.tag || '')
+      .trim()
+      .toLowerCase();
+
+    const hasChild =
+      code.has_child === true ||
+      code.has_child === 1 ||
+      code.has_child === '1' ||
+      code.has_child === 'true';
+
+    const hasWrapperConfiguration = (
+      params.wrapper &&
+      typeof params.wrapper === 'object' &&
+      params.wrapper.fields &&
+      typeof params.wrapper.fields === 'object'
+    );
+
+    if (
+      tagName === 'div' &&
+      hasChild === false &&
+      hasWrapperConfiguration === false
+    ) {
+      return 'empty-structural';
+    }
+
+    return 'standard';
+
+  }
+
+
+  function isAlternativeFieldComponent(fieldData = {}) {
+
+    return getAlternativeFieldBehavior(fieldData) !== 'standard';
+
+  }
+
+
+  function isEmptyStructuralFieldComponent(fieldData = {}) {
+
+    return getAlternativeFieldBehavior(fieldData) === 'empty-structural';
+
+  }
+
+
+  function fieldUsesBootstrapWrapper(fieldData = {}) {
+
+    if (normalizeFieldTypeName(fieldData) === 'hidden') {
+      return false;
+    }
+
+    if (isAlternativeFieldComponent(fieldData)) {
+      return false;
+    }
+
+    return true;
+
+  }
+
+
+  function getEmptyStructuralComponentTagName(fieldData = {}) {
+
+    const configs = getFieldTypeConfigsObject(fieldData);
+
+    const code =
+      configs.code &&
+      typeof configs.code === 'object'
+        ? configs.code
+        : {};
+
+    const tagName = String(code.tag || 'div')
+      .trim()
+      .toLowerCase();
+
+    if (!/^[a-z][a-z0-9-]*$/.test(tagName)) {
+      return 'div';
+    }
+
+    return tagName;
+
+  }
+
+
+  function getEmptyStructuralComponentClass(fieldData = {}) {
+
+    const customClass = normalizeCustomClass(
+      fieldData.tbl_sys_forms_field_class || ''
+    );
+
+    const classes = [];
+
+    if (customClass !== '') {
+
+      customClass
+        .split(/\s+/)
+        .filter(Boolean)
+        .forEach(function(className) {
+
+          if (classes.indexOf(className) === -1) {
+            classes.push(className);
+          }
+
+        });
+
+    }
+
+    if (
+      classes.indexOf('automator-form-editor-field-wrapper') === -1
+    ) {
+      classes.push('automator-form-editor-field-wrapper');
+    }
+
+    if (
+      classes.indexOf('automator-form-editor-structural-component') === -1
+    ) {
+      classes.push('automator-form-editor-structural-component');
+    }
+
+    if (
+      classes.indexOf('automator-form-editor-empty-structural-component') === -1
+    ) {
+      classes.push('automator-form-editor-empty-structural-component');
+    }
+
+    return classes;
 
   }
 

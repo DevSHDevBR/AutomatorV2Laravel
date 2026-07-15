@@ -36,6 +36,7 @@
     <script src="{{ asset('assets/system/painel-restrict-scripts.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     <script src="{{ asset('assets/system/automator-page-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     <script src="{{ asset('assets/system/automator-form-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
+    <script src="{{ asset('assets/system/automator-pagination-editor-script.js') }}?data=<?php echo md5(date('YmdHis')); ?>" type="text/javascript"></script>
     
 
     <!-- Font Awesome for Icons -->

@@ -246,7 +246,7 @@
 
       $options = [];
 
-      var_dump($column);
+      //var_dump($column);
 
       if(isset($column['props']['options']) && is_array($column['props']['options'])) {
 

@@ -31,6 +31,7 @@
         $table->string('tbl_sys_field_type_title', 255);
         $table->text('tbl_sys_field_type_description')->nullable();
         $table->text('tbl_sys_field_type_params')->nullable();
+        $table->text('tbl_sys_field_type_pagination')->nullable();
         $table->boolean('tbl_sys_field_type_layout')->default(false);
         $table->text('tbl_sys_field_type_configs')->nullable();
         $table->boolean('tbl_sys_field_type_locked')->default(false);

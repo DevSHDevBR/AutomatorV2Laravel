@@ -1256,7 +1256,7 @@
                 'tbl_sys_forms_field_props'    => json_encode([
                   "wrapper_class" => "col-12 col-md-5",
                   "maxlenght"     => 255,
-                  "minlenght"     => 8,
+                  "minlenght"     => 5,
                   "unique"        => [
 
                     "table"  => "tbl_sys_navs",
@@ -1284,7 +1284,7 @@
                 'tbl_sys_forms_field_props'    => json_encode([
                   "wrapper_class" => "col-12 col-md-7",
                   "maxlenght" => 255,
-                  "minlenght" => 8,
+                  "minlenght" => 5,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -1399,7 +1399,7 @@
                 'tbl_sys_forms_field_default'  => '',
                 'tbl_sys_forms_field_props'    => json_encode([
                   "maxlenght" => 255,
-                  "minlenght" => 8,
+                  "minlenght" => 5,
                   "unique"    => [
 
                     "table"  => "tbl_users_types",
@@ -1685,7 +1685,7 @@
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12,
+                  "minlenght"     => 5,
                   "unique"        => [
 
                     "table"  => "tbl_users",
@@ -1713,7 +1713,7 @@
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12,
+                  "minlenght"     => 5,
                   "unique"        => [
 
                     "table"  => "tbl_users",
@@ -1742,7 +1742,7 @@
                   
                   "wrapper_class" => "col-12",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12
+                  "minlenght"     => 5
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -1958,7 +1958,7 @@
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12,
+                  "minlenght"     => 5,
                   "unique"        => [
 
                     "table"  => "tbl_users",
@@ -1986,7 +1986,7 @@
                   
                   "wrapper_class" => "col-12 col-md-6",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12,
+                  "minlenght"     => 8,
                   "unique"        => [
 
                     "table"  => "tbl_users",
@@ -2015,7 +2015,7 @@
                   
                   "wrapper_class" => "col-12",
                   "maxlenght"     => 255,
-                  "minlenght"     => 12
+                  "minlenght"     => 5
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',

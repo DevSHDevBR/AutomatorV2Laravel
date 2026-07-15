@@ -206,7 +206,8 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => 'Nova Área de navegação',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ");",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ");",
 
                     ]
 
@@ -2027,19 +2028,120 @@
                 'tbl_sys_paginations_arg_name'  => 'header_actions',
                 'tbl_sys_paginations_arg_value' => json_encode([
 
-                    [
+                  // [
 
-                      'type'    => 'button',
-                      'action'  => 'add',
-                      'id'      => 'btn-add-user-type',
-                      'class'   => 'btn btn-success',
-                      'icon'    => 'plus',
-                      'text'    => 'Nova Paginação',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Nova Paginação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-paginations') . ");",
+                  //   'type'    => 'button',
+                  //   'action'  => 'add',
+                  //   'id'      => 'btn-add-pagination',
+                  //   'class'   => 'btn btn-success',
+                  //   'icon'    => 'plus',
+                  //   'text'    => 'Nova Paginação',
+                  //   'onclick' => "AutomatorCreateViewModal(
+                  //     { view: 'system-pagination-editor' },
+                  //     {
+                  //       size: 'fullscreen',
+                  //       backdrop: true,
+                  //       keyboard: false,
+                  //       keepLoaderUntilCallback: false
 
-                    ]
+                  //     }
+                  //   );",
+                  //   // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Nova Paginação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-paginations') . ");",
 
-                  ])
+                  // ]
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'add',
+                    'id'      => 'btn-add-pagination',
+                    'class'   => 'btn btn-success',
+                    'icon'    => 'plus',
+                    'text'    => 'Nova Paginação',
+                    'onclick' => "AutomatorCreateViewModal(
+                      {
+                        view: 'system-pagination-editor',
+                        editorAction: 'store'
+                      },
+                      {
+                        editorAction: 'store',
+                        size: 'fullscreen',
+                        backdrop: true,
+                        keyboard: false,
+                        scrollable: false,
+                        keepLoaderUntilCallback: true,
+
+                        callback: function(response, modalEl, modal, recordData) {
+
+                          response.acao = 'store';
+                          response.editorAction = 'store';
+                          response.paginationID = null;
+                          response.pagination_id = null;
+                          response.tbl_sys_pagination_ID = null;
+
+                          SysAutomatorConfigPaginationEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            {}
+                          );
+
+                        },
+
+                        afterHideOn: function(response, modalEl, modal, recordData) {
+
+                          SysAutomatorDestroyPaginationEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+
+                        }
+                      }
+                    );",
+                    // 'onclick' => "AutomatorCreateViewModal(
+                    //   {
+                    //     view: 'system-pagination-editor'
+                    //   },
+                    //   {
+                    //     size: 'fullscreen',
+                    //     backdrop: true,
+                    //     keyboard: false,
+                    //     scrollable: false,
+                    //     keepLoaderUntilCallback: true,
+
+                    //     callback: function(response, modalEl, modal, recordData) {
+
+                    //       response.acao = 'store';
+                    //       response.paginationID = null;
+                    //       response.pagination_id = null;
+                    //       response.tbl_sys_pagination_ID = null;
+
+                    //       SysAutomatorConfigPaginationEditor(
+                    //         response,
+                    //         modalEl,
+                    //         modal,
+                    //         recordData
+                    //       );
+
+                    //     },
+
+                    //     afterHideOn: function(response, modalEl, modal, recordData) {
+
+                    //       SysAutomatorDestroyPaginationEditor(
+                    //         response,
+                    //         modalEl,
+                    //         modal,
+                    //         recordData
+                    //       );
+
+                    //     }
+                    //   }
+                    // );",
+
+                  ]
+
+                ])
               
               ],
               [
@@ -2055,7 +2157,53 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => 'Editar Paginação',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Paginação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-paginations') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorCreateViewModal(
+                      {
+                        view: 'system-pagination-editor',
+                        editorAction: 'update',
+                        pageID: {id}
+                      },
+                      {
+                        acao: 'get',
+                        id: {id},
+                        pageID: {id},
+                        editorAction: 'update',
+                        size: 'fullscreen',
+                        backdrop: true,
+                        keyboard: false,
+                        scrollable: false,
+                        keepLoaderUntilCallback: true,
+
+                        callback: function(response, modalEl, modal, recordData) {
+
+                          response.acao = 'update';
+                          response.editorAction = 'update';
+                          response.paginationID = {id};
+                          response.pagination_id = {id};
+                          response.tbl_sys_pagination_ID = {id};
+
+                          SysAutomatorConfigPaginationEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+
+                        },
+
+                        afterHideOn: function(response, modalEl, modal, recordData) {
+
+                          SysAutomatorDestroyPaginationEditor(
+                            response,
+                            modalEl,
+                            modal,
+                            recordData
+                          );
+
+                        }
+                      }
+                    );",
+                    // 'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Paginação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-paginations') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
                     // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
 
                   ],

@@ -8878,6 +8878,636 @@ function AutomatorInitModalFormChangeObserver(modalEl, formEl, submitBtn = null)
 
 }
 
+// ========================================
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Localiza o botão submit de um formulário renderizado na página
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorGetSystemPageFormSubmitButton(formEl = null) {
+
+
+    if(!formEl) {
+
+      return null;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Primeiro procura dentro do próprio formulário
+    |--------------------------------------------------------------------------
+    */
+
+    var submitBtn = formEl.querySelector(
+
+      '.js-automator-pagination-modal-submit[type="submit"],' +
+      'button[type="submit"],' +
+      'input[type="submit"]'
+
+    );
+
+
+    if(submitBtn) {
+
+      return submitBtn;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Procura botão externo vinculado pelo atributo form
+    |--------------------------------------------------------------------------
+    */
+
+    var formID = formEl.getAttribute('id') || '';
+
+
+    if(formID === '') {
+
+      return null;
+
+    }
+
+
+    return document.querySelector(
+
+      '[type="submit"][form="' + CSS.escape(formID) + '"]'
+
+    );
+
+
+  }
+
+
+/*
+  |--------------------------------------------------------------------------
+  | Atualiza o status de alteração do formulário de página
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorUpdateSystemPageFormChangedStatus(
+
+    formEl = null,
+
+    submitBtn = null
+
+  ) {
+
+
+    if(!formEl) {
+
+      return false;
+
+    }
+
+
+    if(!submitBtn) {
+
+      submitBtn = AutomatorGetSystemPageFormSubmitButton(
+
+        formEl
+
+      );
+
+    }
+
+
+    var changed = AutomatorFormHasChanged(formEl);
+
+
+    formEl.setAttribute(
+
+      'data-automator-form-changed',
+
+      changed ? 'true' : 'false'
+
+    );
+
+
+    if(submitBtn) {
+
+      submitBtn.disabled = !changed;
+
+    }
+
+
+    return changed;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Verifica alterações pendentes em formulários não modais
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorSystemPageFormsHaveChanges() {
+
+
+    var forms = document.querySelectorAll(
+
+      'form[data-automator-system-form="true"]'
+
+    );
+
+
+    for(var index = 0; index < forms.length; index++) {
+
+
+      if(
+
+        forms[index].getAttribute(
+
+          'data-automator-form-changed'
+
+        ) === 'true'
+
+      ) {
+
+        return true;
+
+      }
+
+
+    }
+
+
+    return false;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Aviso ao sair da página com alterações não salvas
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorBindSystemPageFormsBeforeUnload() {
+
+
+    $(window)
+
+      .off('beforeunload.AutomatorSystemPageForms')
+
+      .on(
+
+        'beforeunload.AutomatorSystemPageForms',
+
+        function(e) {
+
+
+          if(
+
+            AutomatorSystemPageFormsHaveChanges() !== true
+
+          ) {
+
+            return;
+
+          }
+
+
+          var message =
+
+            'Existem alterações não salvas. Ao sair, as informações alteradas poderão ser perdidas.';
+
+
+          e.preventDefault();
+
+          e.returnValue = message;
+
+
+          return message;
+
+
+        }
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inicializa observação de um formulário não modal
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorInitSystemPageFormChangeObserver(
+
+    formEl = null
+
+  ) {
+
+
+    if(!formEl) {
+
+      return false;
+
+    }
+
+
+    if(
+
+      formEl.getAttribute(
+
+        'data-automator-system-form'
+
+      ) !== 'true'
+
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Evita cadastrar os eventos mais de uma vez
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+      formEl.getAttribute(
+
+        'data-automator-change-observer-initialized'
+
+      ) === 'true'
+
+    ) {
+
+      return true;
+
+    }
+
+
+    var submitBtn =
+
+      AutomatorGetSystemPageFormSubmitButton(
+
+        formEl
+
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Registra o estado inicial
+    |--------------------------------------------------------------------------
+    */
+
+    formEl.setAttribute(
+
+      'data-automator-initial-state',
+
+      AutomatorFormSerializeCurrentState(formEl)
+
+    );
+
+
+    formEl.setAttribute(
+
+      'data-automator-form-changed',
+
+      'false'
+
+    );
+
+
+    formEl.setAttribute(
+
+      'data-automator-change-observer-initialized',
+
+      'true'
+
+    );
+
+
+    if(submitBtn) {
+
+      submitBtn.disabled = true;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Função comum de atualização
+    |--------------------------------------------------------------------------
+    */
+
+    var updateChangedStatus = function() {
+
+
+      AutomatorUpdateSystemPageFormChangedStatus(
+
+        formEl,
+
+        submitBtn
+
+      );
+
+
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Eventos nativos
+    |--------------------------------------------------------------------------
+    */
+
+    formEl.addEventListener(
+
+      'input',
+
+      updateChangedStatus
+
+    );
+
+
+    formEl.addEventListener(
+
+      'change',
+
+      updateChangedStatus
+
+    );
+
+
+    formEl.addEventListener(
+
+      'keyup',
+
+      updateChangedStatus
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reset
+    |--------------------------------------------------------------------------
+    |
+    | O evento reset ocorre antes dos campos voltarem aos valores originais.
+    | O setTimeout permite comparar depois que o navegador concluir o reset.
+    |
+    */
+
+    formEl.addEventListener(
+
+      'reset',
+
+      function() {
+
+
+        setTimeout(
+
+          function() {
+
+
+            AutomatorUpdateSystemPageFormChangedStatus(
+
+              formEl,
+
+              submitBtn
+
+            );
+
+
+          },
+
+          0
+
+        );
+
+
+      }
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Eventos customizados usados por componentes e editores
+    |--------------------------------------------------------------------------
+    */
+
+    $(formEl)
+
+      .off(
+
+        '.AutomatorSystemPageFormChanges'
+
+      )
+
+      .on(
+
+        'automator:change.AutomatorSystemPageFormChanges ' +
+
+        'automator:editor-change.AutomatorSystemPageFormChanges ' +
+
+        'select2:select.AutomatorSystemPageFormChanges ' +
+
+        'select2:unselect.AutomatorSystemPageFormChanges',
+
+        function() {
+
+
+          updateChangedStatus();
+
+
+        }
+
+      );
+
+
+    AutomatorBindSystemPageFormsBeforeUnload();
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inicializa todos os formulários não modais da página
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorInitSystemPageFormChangeObservers(
+
+    container = document
+
+  ) {
+
+
+    if(!container) {
+
+      container = document;
+
+    }
+
+
+    var forms = [];
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | O próprio container pode ser um formulário
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+      container.matches &&
+
+      container.matches(
+
+        'form[data-automator-system-form="true"]'
+
+      )
+
+    ) {
+
+      forms.push(container);
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Formulários descendentes
+    |--------------------------------------------------------------------------
+    */
+
+    if(container.querySelectorAll) {
+
+
+      container
+
+        .querySelectorAll(
+
+          'form[data-automator-system-form="true"]'
+
+        )
+
+        .forEach(function(formEl) {
+
+
+          if(!forms.includes(formEl)) {
+
+            forms.push(formEl);
+
+          }
+
+
+        });
+
+
+    }
+
+
+    forms.forEach(function(formEl) {
+
+
+      AutomatorInitSystemPageFormChangeObserver(
+
+        formEl
+
+      );
+
+
+    });
+
+
+    return forms.length;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Redefine o estado inicial do formulário não modal
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorResetSystemPageFormChangedState(
+
+    formEl = null
+
+  ) {
+
+
+    if(!formEl) {
+
+      return false;
+
+    }
+
+
+    var submitBtn =
+
+      AutomatorGetSystemPageFormSubmitButton(
+
+        formEl
+
+      );
+
+
+    formEl.setAttribute(
+
+      'data-automator-initial-state',
+
+      AutomatorFormSerializeCurrentState(formEl)
+
+    );
+
+
+    formEl.setAttribute(
+
+      'data-automator-form-changed',
+
+      'false'
+
+    );
+
+
+    if(submitBtn) {
+
+      submitBtn.disabled = true;
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+// ========================================
 
 
 function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '', id = null, callback = null) {
@@ -14333,3 +14963,28 @@ $(function() {
     );
 
 })(jQuery);
+
+
+/*
+|--------------------------------------------------------------------------
+| Inicialização dos formulários renderizados diretamente na página
+|--------------------------------------------------------------------------
+*/
+
+$(document).ready(function() {
+
+
+  setTimeout(function() {
+
+
+    AutomatorInitSystemPageFormChangeObservers(
+
+      document
+
+    );
+
+
+  }, 100);
+
+
+});
