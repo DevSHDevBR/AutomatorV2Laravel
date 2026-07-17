@@ -18,6 +18,7 @@
   use App\Models\SysForm;
   use App\Models\SysFormsAccess;
   use App\Models\User;
+  use App\Models\UsersType;
 
 
 
@@ -2072,6 +2073,8 @@
 
         }
 
+        $paginationEditorSecurityData = $this->preparePaginationEditorSecurityData();
+
 
         $views['system-pagination-editor'] = [
 
@@ -2085,6 +2088,23 @@
             'pagination' => $pagination,
             'fields'     => $dadosPaginationEditor['fields'],
             'blocks'     => $paginationBlocks,
+            'userTypes' =>
+
+              $paginationEditorSecurityData[
+                'userTypes'
+              ],
+
+            'user_types' =>
+
+              $paginationEditorSecurityData[
+                'user_types'
+              ],
+
+            'currentUser' =>
+
+              $paginationEditorSecurityData[
+                'currentUser'
+              ],
 
           ],
           'classes' => [
@@ -2289,6 +2309,167 @@
         ],
 
       ]);
+
+
+    }
+
+
+
+    private function preparePaginationEditorSecurityData(): array {
+
+
+      $userTypes = UsersType::query()
+        ->orderBy(
+          'tbl_users_type_ID',
+          'asc'
+        )
+        ->get()
+        ->map(function($userType) {
+
+
+          $userTypeID =
+
+            (string) $userType->tbl_users_type_ID;
+
+
+          $userTypeName =
+
+            (string) $userType->tbl_users_type_name;
+
+
+          return [
+
+            'id' =>
+
+              $userTypeID,
+
+
+            'name' =>
+
+              $userTypeName,
+
+
+            'tbl_users_type_ID' =>
+
+              $userTypeID,
+
+
+            'tbl_users_type_name' =>
+
+              $userTypeName,
+
+
+            'isDeveloper' =>
+
+              mb_strtolower(
+
+                trim(
+
+                  $userTypeName
+
+                )
+
+              ) === 'desenvolvedor',
+
+          ];
+
+
+        })
+        ->values()
+        ->toArray();
+
+
+      $currentUser = Auth::user();
+
+
+      $currentUserTypeID = null;
+
+      $currentUserTypeName = '';
+
+
+      if($currentUser !== null) {
+
+
+        $currentUserTypeID =
+
+          $currentUser->tbl_users_type_ID ??
+
+          $currentUser->tbl_user_type_ID ??
+
+          null;
+
+
+        if($currentUserTypeID !== null) {
+
+
+          $currentUserTypeName =
+
+            (string) UsersType::where(
+
+              'tbl_users_type_ID',
+
+              $currentUserTypeID
+
+            )->value(
+
+              'tbl_users_type_name'
+
+            );
+
+
+        }
+
+
+      }
+
+
+      return [
+
+        'userTypes' =>
+
+          $userTypes,
+
+
+        'user_types' =>
+
+          $userTypes,
+
+
+        'currentUser' => [
+
+          'id' =>
+
+            $currentUser->tbl_user_ID ??
+
+            $currentUser->id ??
+
+            null,
+
+
+          'userTypeID' =>
+
+            $currentUserTypeID !== null
+
+              ? (string) $currentUserTypeID
+
+              : null,
+
+
+          'isDeveloper' =>
+
+            mb_strtolower(
+
+              trim(
+
+                $currentUserTypeName
+
+              )
+
+            ) === 'desenvolvedor',
+
+        ],
+
+      ];
 
 
     }

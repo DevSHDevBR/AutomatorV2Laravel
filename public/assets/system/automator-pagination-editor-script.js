@@ -125,6 +125,75 @@ window.SysAutomatorPaginationEditor = (function () {
 
   };
 
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza a ação de envio do editor
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationEditorSubmitAction(
+    action = '',
+    isNew = null
+  ) {
+
+
+    action = String(
+
+      action || ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    const actionAliases = {
+
+      add:    'add',
+      create: 'add',
+      store:  'add',
+
+      edit:   'edit',
+      update: 'edit',
+
+    };
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        actionAliases,
+
+        action
+
+      )
+    ) {
+
+      return actionAliases[action];
+
+    }
+
+
+    if(isNew === null) {
+
+      isNew = state.isNew;
+
+    }
+
+
+    return AutomatorNormalizeBoolean(
+
+      isNew
+
+    ) === true
+
+      ? 'add'
+
+      : 'edit';
+
+
+  }
+
+
 
   /*
   |--------------------------------------------------------------------------
@@ -170,19 +239,26 @@ window.SysAutomatorPaginationEditor = (function () {
     ).trim();
 
 
-    state.acao = String(
+    if(state.paginationID != '') {
+
+      state.isNew = false;
+
+    }
+
+
+    state.acao = normalizePaginationEditorSubmitAction(
 
       data.acao ||
 
-      (
+      data.editorAction ||
 
-        state.isNew === true
-          ? 'store'
-          : 'update'
+      data.submitAction ||
 
-      )
+      '',
 
-    ).trim();
+      state.isNew
+
+    );
 
 
     state.recordData = normalizePlainObject(
@@ -207,19 +283,33 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Carrega os tipos de usuário antes de inicializar o editor
+    |--------------------------------------------------------------------------
+    */
+
     applyPaginationEditorSecurityResponse(
 
-      $.extend(
+      state.editorResponse
 
-        true,
+    );
 
-        {},
 
-        state.editorResponse,
+    applyPaginationEditorSecurityResponse(
 
-        state.recordData
+      normalizePlainObject(
+
+        state.editorResponse.dados
 
       )
+
+    );
+
+
+    applyPaginationEditorSecurityResponse(
+
+      state.recordData
 
     );
 
@@ -285,6 +375,10 @@ window.SysAutomatorPaginationEditor = (function () {
 
     bindActionsEvents();
 
+    bindPaginationActionCardEvents();
+
+    bindPaginationActionNameAutocompleteEvents();
+
     bindColumnsEvents();
 
     bindPaginationPreviewSettingsEvents();
@@ -294,6 +388,8 @@ window.SysAutomatorPaginationEditor = (function () {
     bindPaginationAccessEvents();
 
     bindPaginationButtonsEvents();
+
+    bindPaginationButtonIconSelectionEvents();
 
     bindPaginationActionRolesEvents();
 
@@ -442,6 +538,228 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
   }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Renderiza a pré-visualização do ícone do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function renderPaginationButtonIconPreview(
+    item,
+    iconName = ''
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    iconName = normalizePaginationButtonIcon(
+
+      iconName
+
+    );
+
+
+    const preview = item.find(
+
+      selectors.paginationButtonIconPreview
+
+    ).first();
+
+
+    if(!preview.length) {
+
+      return false;
+
+    }
+
+
+    preview
+      .addClass(
+
+        'd-flex align-items-center justify-content-center text-center'
+
+      )
+      .css({
+
+        minWidth: '50px',
+
+      })
+      .html(
+
+        '<span class="' +
+
+          'h-100 w-100 d-flex align-items-center ' +
+
+          'justify-content-center text-center border-0' +
+
+        '">' +
+
+          '<i class="fa fa-' +
+
+            escapeHtml(
+
+              iconName ||
+
+              'icons'
+
+            ) +
+
+          '"></i>' +
+
+        '</span>'
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Evento de seleção do ícone do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function bindPaginationButtonIconSelectionEvents() {
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-icon-result',
+        '.automator-pagination-editor-button-icon-result'
+      )
+      .on(
+        'click.automator-pagination-editor-button-icon-result',
+        '.automator-pagination-editor-button-icon-result',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          const result = $(this);
+
+
+          const item = result.closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          if(!item.length) {
+
+            return false;
+
+          }
+
+
+          const iconName = normalizePaginationButtonIcon(
+
+            result.attr(
+              'data-icon'
+            )
+
+          );
+
+
+          const hiddenInput = item.find(
+
+            selectors.paginationButtonIconHidden
+
+          ).first();
+
+
+          const searchInput = item.find(
+
+            selectors.paginationButtonIconSearch
+
+          ).first();
+
+
+          const results = item.find(
+
+            selectors.paginationButtonIconResults
+
+          ).first();
+
+
+          hiddenInput.val(
+
+            iconName
+
+          );
+
+
+          searchInput
+            .val('')
+            .attr(
+
+              'placeholder',
+
+              iconName != ''
+
+                ? iconName
+
+                : 'Buscar ícone...'
+
+            );
+
+
+          renderPaginationButtonIconPreview(
+
+            item,
+
+            iconName
+
+          );
+
+
+          results
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+          syncPaginationButtonsState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
+
 
 
   function initializePaginationModalScroll() {
@@ -1858,6 +2176,22 @@ window.SysAutomatorPaginationEditor = (function () {
       '.automator-pagination-editor-action-item';
 
 
+    selectors.actionHeader =
+      '.automator-pagination-editor-action-header';
+
+
+    selectors.actionHeaderTitle =
+      '.automator-pagination-editor-action-header-title';
+
+
+    selectors.actionCollapse =
+      '.automator-pagination-editor-action-collapse';
+
+
+    selectors.actionBody =
+      '.automator-pagination-editor-action-body';
+
+
     selectors.actionName =
       '.automator-pagination-editor-action-name';
 
@@ -1932,6 +2266,105 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+  function positionPaginationActionAddButton(
+    manager
+  ) {
+
+
+    manager = $(manager);
+
+
+    if(!manager.length) {
+
+      return false;
+
+    }
+
+
+    const list = manager.find(
+
+      selectors.actionsList
+
+    ).first();
+
+
+    const addButton = manager.find(
+
+      selectors.actionAdd
+
+    ).first();
+
+
+    if(
+      !list.length ||
+      !addButton.length
+    ) {
+
+      return false;
+
+    }
+
+
+    let addButtonContainer = addButton.closest(
+
+      '.automator-pagination-editor-action-add-container'
+
+    );
+
+
+    if(!addButtonContainer.length) {
+
+
+      addButton.wrap(
+
+        '<div class="' +
+
+          'automator-pagination-editor-action-add-container ' +
+
+          'mt-3 w-100' +
+
+        '"></div>'
+
+      );
+
+
+      addButtonContainer = addButton.closest(
+
+        '.automator-pagination-editor-action-add-container'
+
+      );
+
+
+    }
+
+
+    addButtonContainer.addClass(
+
+      'w-100'
+
+    );
+
+
+    addButton.addClass(
+
+      'w-100'
+
+    );
+
+
+    addButtonContainer.insertAfter(
+
+      list
+
+    );
+
+
+    return true;
+
+
+  }
+
+
   /*
   |--------------------------------------------------------------------------
   | Finaliza inicialização
@@ -1957,6 +2390,9 @@ window.SysAutomatorPaginationEditor = (function () {
     state.hasChanges = false;
 
     state.suppressChangeTracking = false;
+
+
+    getPaginationSaveButtonTooltipWrapper();
 
 
     setSaveState(
@@ -4611,6 +5047,87 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
+  | Wrapper do tooltip do botão salvar
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationSaveButtonTooltipWrapper() {
+
+
+    const saveButton = $(
+
+      selectors.saveButton
+
+    ).first();
+
+
+    if(!saveButton.length) {
+
+      return $();
+
+    }
+
+
+    let wrapper = saveButton.closest(
+
+      selectors.tooltipWrapper
+
+    );
+
+
+    if(wrapper.length) {
+
+      wrapper
+        .addClass(
+          'd-inline-block'
+        )
+        .attr(
+          'tabindex',
+          '0'
+        );
+
+
+      return wrapper;
+
+    }
+
+
+    saveButton.wrap(
+
+      '<span ' +
+
+        'class="d-inline-block" ' +
+
+        'tabindex="0" ' +
+
+        'data-automator-pagination-tooltip ' +
+
+        'data-automator-pagination-disabled-title="' +
+
+          'Conclua as configurações necessárias para salvar a paginação.' +
+
+        '"' +
+
+      '></span>'
+
+    );
+
+
+    wrapper = saveButton.closest(
+
+      selectors.tooltipWrapper
+
+    );
+
+
+    return wrapper;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Estado do botão salvar
   |--------------------------------------------------------------------------
   */
@@ -4661,7 +5178,78 @@ window.SysAutomatorPaginationEditor = (function () {
 
       selectors.saveButton
 
-    );
+    ).first();
+
+
+    const wrapper =
+
+      getPaginationSaveButtonTooltipWrapper();
+
+
+    let disabledTitle =
+
+      'Nenhuma alteração válida foi realizada.';
+
+
+    if(state.submitting === true) {
+
+
+      disabledTitle =
+
+        'A paginação está sendo salva. Aguarde a conclusão da ação.';
+
+
+    } else if(validation.valid !== true) {
+
+
+      const validationErrors =
+
+        Array.isArray(
+
+          validation.errors
+
+        )
+
+          ? validation.errors.filter(function(
+              error,
+              index,
+              errors
+            ) {
+
+
+              error = String(
+
+                error || ''
+
+              ).trim();
+
+
+              return (
+
+                error != '' &&
+
+                errors.indexOf(error) === index
+
+              );
+
+
+            })
+
+          : [];
+
+
+      disabledTitle =
+
+        validationErrors.length >= 1
+
+          ? 'Configurações inválidas: ' +
+
+            validationErrors.join(' ')
+
+          : 'Existem configurações inválidas na paginação.';
+
+
+    }
 
 
     saveButton.prop(
@@ -4673,9 +5261,21 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
-    const wrapper = saveButton.closest(
+    /*
+    |--------------------------------------------------------------------------
+    | Um botão disabled não recebe eventos de mouse
+    |--------------------------------------------------------------------------
+    */
 
-      selectors.tooltipWrapper
+    saveButton.css(
+
+      'pointer-events',
+
+      canSave === true
+
+        ? ''
+
+        : 'none'
 
     );
 
@@ -4687,11 +5287,16 @@ window.SysAutomatorPaginationEditor = (function () {
 
         'data-automator-pagination-disabled-title',
 
-        validation.valid === true
+        disabledTitle
 
-          ? 'Nenhuma alteração válida foi realizada.'
+      );
 
-          : 'Configurações inválidas'
+
+      wrapper.attr(
+
+        'data-automator-pagination-enabled-title',
+
+        'Salvar paginação'
 
       );
 
@@ -5975,13 +6580,29 @@ window.SysAutomatorPaginationEditor = (function () {
 
             'aria-disabled="true" ' +
 
-            'class="btn btn-danger"' +
+            'class="' +
+
+              'btn btn-danger ' +
+
+              'text-decoration-none' +
+
+            '"' +
 
           '>' +
 
-            '<i class="fa fa-exclamation-triangle me-2"></i>' +
+            '<i class="' +
 
-            'Configuração incompleta' +
+              'fa fa-exclamation-triangle me-2 ' +
+
+              'text-decoration-none' +
+
+            '"></i>' +
+
+            '<span class="text-decoration-none">' +
+
+              'Configuração incompleta' +
+
+            '</span>' +
 
           '</button>' +
 
@@ -6018,6 +6639,19 @@ window.SysAutomatorPaginationEditor = (function () {
         'btn ' +
 
         className;
+
+    }
+
+
+    if(
+      !/(^|\s)text-decoration-none(\s|$)/.test(
+        className
+      )
+    ) {
+
+      className +=
+
+        ' text-decoration-none';
 
     }
 
@@ -6061,7 +6695,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
         escapeHtml(className) +
 
-      '"' +
+      '" ' +
+
+      'style="text-decoration: none;"' +
 
       '>' +
 
@@ -6070,22 +6706,30 @@ window.SysAutomatorPaginationEditor = (function () {
 
           buttonData.icon != ''
 
-            ? '<i class="fa fa-' +
+            ? '<i class="' +
+
+                'fa fa-' +
 
                 escapeHtml(buttonData.icon) +
 
-              ' me-2"></i>'
+                ' me-2 text-decoration-none' +
+
+              '"></i>'
 
             : ''
 
         ) +
 
 
-        escapeHtml(
+        '<span class="text-decoration-none">' +
 
-          buttonData.text
+          escapeHtml(
 
-        ) +
+            buttonData.text
+
+          ) +
+
+        '</span>' +
 
 
       '</' +
@@ -6128,7 +6772,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '<span class="' +
 
-          'd-inline-block me-2 mb-2 align-middle' +
+          'd-inline-block me-2 mb-2 align-middle ' +
+
+          'text-decoration-none' +
 
         '">' +
 
@@ -6553,6 +7199,29 @@ window.SysAutomatorPaginationEditor = (function () {
     ).first();
 
 
+    const iconInput = item.find(
+
+      selectors.paginationButtonIconHidden
+
+    ).first();
+
+
+    const iconWrapper = item.find(
+
+      '.automator-pagination-editor-button-icon-wrapper'
+
+    ).first();
+
+
+    const buttonScope = String(
+
+      item.attr(
+        'data-button-scope'
+      ) || 'actions'
+
+    ).trim();
+
+
     const buttonID = normalizePaginationButtonSlug(
 
       idInput.val()
@@ -6572,6 +7241,13 @@ window.SysAutomatorPaginationEditor = (function () {
       textInput.val() || ''
 
     ).trim();
+
+
+    const iconName = normalizePaginationButtonIcon(
+
+      iconInput.val()
+
+    );
 
 
     let duplicatedID = false;
@@ -6645,6 +7321,19 @@ window.SysAutomatorPaginationEditor = (function () {
       buttonText.length <= 255;
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | O ícone é opcional para botões do cabeçalho
+    |--------------------------------------------------------------------------
+    */
+
+    const iconValid =
+
+      buttonScope == 'header' ||
+
+      iconName != '';
+
+
     idInput.toggleClass(
 
       'is-invalid',
@@ -6672,13 +7361,37 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    iconWrapper.toggleClass(
+
+      'is-invalid',
+
+      iconValid !== true
+
+    );
+
+
+    iconWrapper.find(
+
+      '.automator-pagination-editor-button-icon-input-group'
+
+    ).toggleClass(
+
+      'border border-danger rounded',
+
+      iconValid !== true
+
+    );
+
+
     const valid =
 
       idValid === true &&
 
       actionValid === true &&
 
-      textValid === true;
+      textValid === true &&
+
+      iconValid === true;
 
 
     item.attr(
@@ -7104,7 +7817,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
             'class="' +
 
-              'd-inline-block ' +
+              'd-block w-100 ' +
 
               'automator-pagination-editor-action-delete-tooltip' +
 
@@ -7123,6 +7836,20 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       }
+
+
+      tooltipWrapper.addClass(
+
+        'd-block w-100'
+
+      );
+
+
+      deleteButton.addClass(
+
+        'w-100'
+
+      );
 
 
       const actionInUse =
@@ -7455,7 +8182,6 @@ window.SysAutomatorPaginationEditor = (function () {
 
   }
 
-
   /*
   |--------------------------------------------------------------------------
   | Validação das colunas
@@ -7482,9 +8208,6 @@ window.SysAutomatorPaginationEditor = (function () {
       return errors;
 
     }
-
-
-    const usedColumns = [];
 
 
     columns.forEach(function(column, index) {
@@ -7548,33 +8271,16 @@ window.SysAutomatorPaginationEditor = (function () {
       }
 
 
-      if(
-        columnName != '' &&
-        usedColumns.indexOf(columnName) >= 0
-      ) {
-
-        errors.push(
-
-          'A coluna "' +
-
-          columnName +
-
-          '" foi adicionada mais de uma vez.'
-
-        );
-
-      }
-
-
-      if(columnName != '') {
-
-        usedColumns.push(
-
-          columnName
-
-        );
-
-      }
+      /*
+      |--------------------------------------------------------------------------
+      | Colunas repetidas são permitidas
+      |--------------------------------------------------------------------------
+      |
+      | Uma coluna relacional pode utilizar a mesma chave física de outra
+      | coluna. Por exemplo, tbl_user_ID pode ser exibida como ID e também
+      | utilizada para resolver o registro relacionado do tipo de usuário.
+      |
+      */
 
 
       const sizeType = String(
@@ -7589,7 +8295,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
         ) || 'auto'
 
-      );
+      ).trim();
 
 
       const sizeValue = getNestedValue(
@@ -8027,15 +8733,162 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+      editor.removeAttribute(
+
+        'data-automator-pagination-close-confirmed'
+
+      );
+
+
     }
 
 
     removeBeforeUnloadWarning();
 
 
+    $(window).off(
+
+      'beforeunload.AutomatorPaginationEditorChanged'
+
+    );
+
+
     if($(selectors.saveButton).length) {
 
-      $(selectors.saveButton).prop('disabled', true);
+
+      $(selectors.saveButton).prop(
+
+        'disabled',
+
+        true
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Finaliza alterações depois de um submit realizado
+  |--------------------------------------------------------------------------
+  */
+
+  function clearPaginationEditorChangesAfterSubmit() {
+
+
+    state.hasChanges = false;
+
+    state.submitting = false;
+
+    state.suppressChangeTracking = true;
+
+
+    const editor = document.querySelector(
+
+      selectors.editor
+
+    );
+
+
+    if(editor) {
+
+
+      editor.setAttribute(
+
+        'data-automator-pagination-changed',
+
+        'false'
+
+      );
+
+
+      editor.setAttribute(
+
+        'data-automator-pagination-submit',
+
+        'true'
+
+      );
+
+
+      editor.setAttribute(
+
+        'data-automator-pagination-close-confirmed',
+
+        'true'
+
+      );
+
+
+    }
+
+
+    removeBeforeUnloadWarning();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove também o observador genérico da ação em andamento
+    |--------------------------------------------------------------------------
+    |
+    | A persistência já foi concluída. A partir deste ponto, fechar o toast,
+    | fechar o modal ou recarregar a página não deve gerar confirmação de saída.
+    |
+    */
+
+    if(
+      typeof window.AutomatorSetActionStatus === 'function'
+    ) {
+
+      AutomatorSetActionStatus(
+
+        false
+
+      );
+
+    }
+
+
+    $(window).off(
+
+      'beforeunload.AutomatorModalFormChanged'
+
+    );
+
+
+    $(window).off(
+
+      'beforeunload.AutomatorPaginationEditorChanged'
+
+    );
+
+
+    $(window).off(
+
+      'beforeunload.AutomatorSetActionStatus'
+
+    );
+
+
+    if($(selectors.saveButton).length) {
+
+
+      $(selectors.saveButton).prop(
+
+        'disabled',
+
+        true
+
+      );
+
 
     }
 
@@ -9303,7 +10156,47 @@ window.SysAutomatorPaginationEditor = (function () {
       ) == 'true'
     ) {
 
+
+      const currentIconName = normalizePaginationButtonIcon(
+
+        wrapper.find(
+          selectors.paginationButtonIconHidden
+        ).first().val()
+
+      );
+
+
+      wrapper.find(
+
+        selectors.paginationButtonIconSearch
+
+      )
+        .first()
+        .val('')
+        .attr(
+
+          'placeholder',
+
+          currentIconName != ''
+
+            ? currentIconName
+
+            : 'Buscar ícone...'
+
+        );
+
+
+      renderPaginationButtonIconPreview(
+
+        item,
+
+        currentIconName
+
+      );
+
+
       return true;
+
 
     }
 
@@ -9394,11 +10287,23 @@ window.SysAutomatorPaginationEditor = (function () {
 
           'input-group-text p-0 text-center ' +
 
+          'd-flex align-items-center justify-content-center ' +
+
           'automator-pagination-editor-button-icon-preview' +
 
         '" ' +
 
-        'style="min-width: 50px;"' +
+        'style="' +
+
+          'min-width: 50px; ' +
+
+          'display: flex; ' +
+
+          'align-items: center; ' +
+
+          'justify-content: center;' +
+
+        '"' +
 
         '>' +
 
@@ -9406,7 +10311,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
             'h-100 w-100 d-flex align-items-center ' +
 
-            'justify-content-center border-0' +
+            'justify-content-center text-center border-0' +
 
           '">' +
 
@@ -9448,7 +10353,19 @@ window.SysAutomatorPaginationEditor = (function () {
 
             '" ' +
 
-            'placeholder="Buscar ícone..." ' +
+            'placeholder="' +
+
+              escapeHtml(
+
+                iconName != ''
+
+                  ? iconName
+
+                  : 'Buscar ícone...'
+
+              ) +
+
+            '" ' +
 
           '/>' +
 
@@ -9495,6 +10412,15 @@ window.SysAutomatorPaginationEditor = (function () {
       'data-icon-layout-ready',
 
       'true'
+
+    );
+
+
+    renderPaginationButtonIconPreview(
+
+      item,
+
+      iconName
 
     );
 
@@ -10031,6 +10957,17 @@ window.SysAutomatorPaginationEditor = (function () {
         function() {
 
 
+          if(
+            $(this).hasClass(
+              'automator-pagination-editor-dynamic-relation-property'
+            )
+          ) {
+
+            return;
+
+          }
+
+
           updateSelectedColumnFromProperties();
 
 
@@ -10131,6 +11068,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
         }
       );
+
+
+    bindPaginationRelationPropertyEvents();
 
 
     return true;
@@ -11604,12 +12544,42 @@ window.SysAutomatorPaginationEditor = (function () {
     html += '</div>';
 
 
-    panel.append(html);
+    panel.append(
+
+      html
+
+    );
 
 
-    initializeColumnDynamicLists(panel);
+    initializeColumnDynamicLists(
+
+      panel
+
+    );
+
 
     updateColumnSizeValueFieldVisibility();
+
+
+    if(
+      column.type == 'relation' ||
+      panel.find(
+        '.automator-pagination-editor-dynamic-relation-property'
+      ).length
+    ) {
+
+
+      initializePaginationRelationPropertyFields(
+
+        panel,
+
+        state.initialized === true
+
+      );
+
+
+    }
+
 
     refreshTooltips();
 
@@ -11933,6 +12903,1450 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+  function getPaginationRelationPropertyInput(
+    fieldPath = ''
+  ) {
+
+
+    return $(selectors.proprietiesPanel)
+      .find(
+
+        selectors.columnPropertyInput +
+
+        '[data-property-path="' +
+
+          escapeSelectorValue(
+
+            fieldPath
+
+          ) +
+
+        '"]'
+
+      )
+      .first();
+
+
+  }
+
+
+  function setPaginationRelationPropertyLoading(
+    input,
+    label = 'Carregando...'
+  ) {
+
+
+    input = $(input);
+
+
+    if(!input.length) {
+
+      return false;
+
+    }
+
+
+    input
+      .prop(
+        'disabled',
+        true
+      )
+      .empty()
+      .append(
+
+        $('<option>', {
+
+          value: '',
+          text:  label,
+
+        })
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+  function resetPaginationRelationColumnSelect(
+    input,
+    label = '- Selecione a Tabela -'
+  ) {
+
+
+    input = $(input);
+
+
+    if(!input.length) {
+
+      return false;
+
+    }
+
+
+    input
+      .empty()
+      .append(
+
+        $('<option>', {
+
+          value:    '',
+          text:     label,
+          disabled: true,
+          selected: true,
+
+        })
+
+      )
+      .val('')
+      .prop(
+        'disabled',
+        true
+      );
+
+
+    return true;
+
+
+  }
+
+
+  function loadPaginationRelationTables(
+    input,
+    selectedValue = '',
+    excludedTables = [],
+    callback = null
+  ) {
+
+
+    input = $(input);
+
+
+    selectedValue = String(
+
+      selectedValue || ''
+
+    ).trim();
+
+
+    excludedTables = normalizeArrayValue(
+
+      excludedTables
+
+    ).map(function(tableName) {
+
+
+      return String(
+
+        tableName || ''
+
+      ).trim();
+
+
+    });
+
+
+    if(!input.length) {
+
+
+      if(typeof callback === 'function') {
+
+        callback();
+
+      }
+
+
+      return false;
+
+    }
+
+
+    setPaginationRelationPropertyLoading(
+
+      input,
+
+      'Carregando tabelas...'
+
+    );
+
+
+    requestDatabaseData(
+
+      {
+
+        'data-type': 'get-tables',
+
+      },
+
+      function(response) {
+
+
+        const tables = normalizeResponseItems(
+
+          response && response.data
+
+            ? response.data
+
+            : []
+
+        );
+
+
+        renderSelectOptions(
+
+          input,
+
+          tables,
+
+          selectedValue,
+
+          '- Selecione a Tabela -',
+
+          {
+
+            keepEmptyOption: true,
+            selectFirst:     false,
+            emptyDisabled:   true,
+
+          }
+
+        );
+
+
+        excludedTables.forEach(function(tableName) {
+
+
+          if(tableName == '') {
+
+            return;
+
+          }
+
+
+          input.find(
+
+            'option[value="' +
+
+              escapeSelectorValue(
+
+                tableName
+
+              ) +
+
+            '"]'
+
+          ).prop(
+
+            'disabled',
+
+            true
+
+          );
+
+
+        });
+
+
+        if(
+          selectedValue != '' &&
+          input.find(
+            'option[value="' +
+              escapeSelectorValue(
+                selectedValue
+              ) +
+            '"]'
+          ).length
+        ) {
+
+          input.val(
+
+            selectedValue
+
+          );
+
+        }
+
+
+        input.prop(
+
+          'disabled',
+
+          false
+
+        );
+
+
+        if(typeof callback === 'function') {
+
+          callback(
+
+            response
+
+          );
+
+        }
+
+
+      },
+
+      function(response) {
+
+
+        resetPaginationRelationColumnSelect(
+
+          input,
+
+          '- Não foi possível carregar as tabelas -'
+
+        );
+
+
+        if(typeof callback === 'function') {
+
+          callback(
+
+            response
+
+          );
+
+        }
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function loadPaginationRelationColumns(
+    input,
+    tableName = '',
+    selectedValue = '',
+    callback = null
+  ) {
+
+
+    input = $(input);
+
+
+    tableName = String(
+
+      tableName || ''
+
+    ).trim();
+
+
+    selectedValue = String(
+
+      selectedValue || ''
+
+    ).trim();
+
+
+    if(!input.length) {
+
+
+      if(typeof callback === 'function') {
+
+        callback();
+
+      }
+
+
+      return false;
+
+    }
+
+
+    if(tableName == '') {
+
+
+      resetPaginationRelationColumnSelect(
+
+        input
+
+      );
+
+
+      if(typeof callback === 'function') {
+
+        callback();
+
+      }
+
+
+      return false;
+
+    }
+
+
+    setPaginationRelationPropertyLoading(
+
+      input,
+
+      'Carregando colunas...'
+
+    );
+
+
+    requestDatabaseData(
+
+      {
+
+        'data-type':  'get-table-columns',
+        'table-name': tableName,
+
+      },
+
+      function(response) {
+
+
+        const columns = normalizeResponseItems(
+
+          response && response.data
+
+            ? response.data
+
+            : []
+
+        );
+
+
+        renderSelectOptions(
+
+          input,
+
+          columns,
+
+          selectedValue,
+
+          '- Selecione a Coluna -',
+
+          {
+
+            keepEmptyOption: true,
+            selectFirst:     false,
+            emptyDisabled:   true,
+
+          }
+
+        );
+
+
+        if(
+          selectedValue != '' &&
+          input.find(
+            'option[value="' +
+              escapeSelectorValue(
+                selectedValue
+              ) +
+            '"]'
+          ).length
+        ) {
+
+          input.val(
+
+            selectedValue
+
+          );
+
+        }
+
+
+        input.prop(
+
+          'disabled',
+
+          false
+
+        );
+
+
+        if(typeof callback === 'function') {
+
+          callback(
+
+            response
+
+          );
+
+        }
+
+
+      },
+
+      function(response) {
+
+
+        resetPaginationRelationColumnSelect(
+
+          input,
+
+          '- Não foi possível carregar as colunas -'
+
+        );
+
+
+        if(typeof callback === 'function') {
+
+          callback(
+
+            response
+
+          );
+
+        }
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function updatePaginationRelationalFieldsState() {
+
+
+    const modeInput = getPaginationRelationPropertyInput(
+
+      'relation.mode'
+
+    );
+
+
+    const tableInput = getPaginationRelationPropertyInput(
+
+      'relation.table'
+
+    );
+
+
+    const columnInput = getPaginationRelationPropertyInput(
+
+      'relation.column'
+
+    );
+
+
+    const relationalTableInput = getPaginationRelationPropertyInput(
+
+      'relation.relational-table'
+
+    );
+
+
+    const relationalColumnInput = getPaginationRelationPropertyInput(
+
+      'relation.relational-column'
+
+    );
+
+
+    const relationalMode =
+
+      String(
+
+        modeInput.val() || ''
+
+      ).trim() == 'relational';
+
+
+    const relationTable = String(
+
+      tableInput.val() || ''
+
+    ).trim();
+
+
+    const relationColumn = String(
+
+      columnInput.val() || ''
+
+    ).trim();
+
+
+    const relationalTableWrapper = relationalTableInput.closest(
+
+      '[data-automator-pagination-property-wrapper="relation.relational-table"]'
+
+    );
+
+
+    const relationalColumnWrapper = relationalColumnInput.closest(
+
+      '[data-automator-pagination-property-wrapper="relation.relational-column"]'
+
+    );
+
+
+    relationalTableWrapper.toggleClass(
+
+      'd-none',
+
+      relationalMode !== true
+
+    );
+
+
+    relationalColumnWrapper.toggleClass(
+
+      'd-none',
+
+      relationalMode !== true
+
+    );
+
+
+    if(relationalMode !== true) {
+
+
+      relationalTableInput.prop(
+
+        'disabled',
+
+        true
+
+      );
+
+
+      relationalColumnInput.prop(
+
+        'disabled',
+
+        true
+
+      );
+
+
+      return true;
+
+    }
+
+
+    relationalTableInput.prop(
+
+      'disabled',
+
+      relationTable == '' ||
+      relationColumn == ''
+
+    );
+
+
+    relationalColumnInput.prop(
+
+      'disabled',
+
+      String(
+
+        relationalTableInput.val() || ''
+
+      ).trim() == ''
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function initializePaginationRelationPropertyFields(
+    container = null,
+    showLoader = true
+  ) {
+
+
+    container = container
+
+      ? $(container)
+
+      : $(selectors.proprietiesPanel);
+
+
+    const tableInput = container.find(
+
+      selectors.columnPropertyInput +
+
+      '[data-property-path="relation.table"]'
+
+    ).first();
+
+
+    const columnInput = container.find(
+
+      selectors.columnPropertyInput +
+
+      '[data-property-path="relation.column"]'
+
+    ).first();
+
+
+    const displayInput = container.find(
+
+      selectors.columnPropertyInput +
+
+      '[data-property-path="relation.display"]'
+
+    ).first();
+
+
+    const relationalTableInput = container.find(
+
+      selectors.columnPropertyInput +
+
+      '[data-property-path="relation.relational-table"]'
+
+    ).first();
+
+
+    const relationalColumnInput = container.find(
+
+      selectors.columnPropertyInput +
+
+      '[data-property-path="relation.relational-column"]'
+
+    ).first();
+
+
+    if(!tableInput.length) {
+
+      return false;
+
+    }
+
+
+    const paginationTable = String(
+
+      $(selectors.table).val() || ''
+
+    ).trim();
+
+
+    const selectedTable = String(
+
+      tableInput.attr(
+        'data-current-value'
+      ) ||
+
+      tableInput.val() ||
+
+      ''
+
+    ).trim();
+
+
+    const selectedColumn = String(
+
+      columnInput.attr(
+        'data-current-value'
+      ) ||
+
+      columnInput.val() ||
+
+      ''
+
+    ).trim();
+
+
+    const selectedDisplay = String(
+
+      displayInput.attr(
+        'data-current-value'
+      ) ||
+
+      displayInput.val() ||
+
+      ''
+
+    ).trim();
+
+
+    const selectedRelationalTable = String(
+
+      relationalTableInput.attr(
+        'data-current-value'
+      ) ||
+
+      relationalTableInput.val() ||
+
+      ''
+
+    ).trim();
+
+
+    const selectedRelationalColumn = String(
+
+      relationalColumnInput.attr(
+        'data-current-value'
+      ) ||
+
+      relationalColumnInput.val() ||
+
+      ''
+
+    ).trim();
+
+
+    function finishInitialization() {
+
+
+      updatePaginationRelationalFieldsState();
+
+      updateSelectedColumnFromProperties();
+
+      syncPaginationValidationVisualState();
+
+      refreshTooltips();
+
+
+      if(showLoader === true) {
+
+
+        $('#page-loader').css(
+
+          'z-index',
+
+          ''
+
+        );
+
+
+        AutomatorPageLoader(
+
+          'hide'
+
+        );
+
+
+      }
+
+
+    }
+
+
+    function executeInitialization() {
+
+
+      loadPaginationRelationTables(
+
+        tableInput,
+
+        selectedTable,
+
+        [
+
+          paginationTable,
+
+        ],
+
+        function() {
+
+
+          if(selectedTable == '') {
+
+
+            resetPaginationRelationColumnSelect(
+
+              columnInput
+
+            );
+
+
+            resetPaginationRelationColumnSelect(
+
+              displayInput
+
+            );
+
+
+          }
+
+
+          loadPaginationRelationColumns(
+
+            columnInput,
+
+            selectedTable,
+
+            selectedColumn,
+
+            function() {
+
+
+              loadPaginationRelationColumns(
+
+                displayInput,
+
+                selectedTable,
+
+                selectedDisplay,
+
+                function() {
+
+
+                  loadPaginationRelationTables(
+
+                    relationalTableInput,
+
+                    selectedRelationalTable,
+
+                    [
+
+                      paginationTable,
+                      selectedTable,
+
+                    ],
+
+                    function() {
+
+
+                      if(selectedRelationalTable == '') {
+
+
+                        resetPaginationRelationColumnSelect(
+
+                          relationalColumnInput
+
+                        );
+
+
+                        finishInitialization();
+
+
+                        return;
+
+                      }
+
+
+                      loadPaginationRelationColumns(
+
+                        relationalColumnInput,
+
+                        selectedRelationalTable,
+
+                        selectedRelationalColumn,
+
+                        function() {
+
+
+                          finishInitialization();
+
+
+                        }
+
+                      );
+
+
+                    }
+
+                  );
+
+
+                }
+
+              );
+
+
+            }
+
+          );
+
+
+        }
+
+      );
+
+
+    }
+
+
+    if(showLoader === true) {
+
+
+      AutomatorPageLoader(
+
+        'show',
+
+        function() {
+
+
+          $('#page-loader').css(
+
+            'z-index',
+
+            '1085'
+
+          );
+
+
+          executeInitialization();
+
+
+        }
+
+      );
+
+
+    } else {
+
+      executeInitialization();
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  function bindPaginationRelationPropertyEvents() {
+
+
+    $(document)
+      .off(
+        'change.automator-pagination-editor-relation-mode',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.mode"]'
+      )
+      .on(
+        'change.automator-pagination-editor-relation-mode',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.mode"]',
+        function(event) {
+
+
+          event.stopPropagation();
+
+
+          updatePaginationRelationalFieldsState();
+
+          updateSelectedColumnFromProperties();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'change.automator-pagination-editor-relation-table',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.table"]'
+      )
+      .on(
+        'change.automator-pagination-editor-relation-table',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.table"]',
+        function(event) {
+
+
+          event.stopPropagation();
+
+
+          const tableInput = $(this);
+
+
+          const tableName = String(
+
+            tableInput.val() || ''
+
+          ).trim();
+
+
+          const columnInput = getPaginationRelationPropertyInput(
+
+            'relation.column'
+
+          );
+
+
+          const displayInput = getPaginationRelationPropertyInput(
+
+            'relation.display'
+
+          );
+
+
+          const relationalTableInput = getPaginationRelationPropertyInput(
+
+            'relation.relational-table'
+
+          );
+
+
+          const relationalColumnInput = getPaginationRelationPropertyInput(
+
+            'relation.relational-column'
+
+          );
+
+
+          AutomatorPageLoader(
+
+            'show',
+
+            function() {
+
+
+              $('#page-loader').css(
+
+                'z-index',
+
+                '1085'
+
+              );
+
+
+              resetPaginationRelationColumnSelect(
+
+                columnInput
+
+              );
+
+
+              resetPaginationRelationColumnSelect(
+
+                displayInput
+
+              );
+
+
+              resetPaginationRelationColumnSelect(
+
+                relationalColumnInput
+
+              );
+
+
+              loadPaginationRelationColumns(
+
+                columnInput,
+
+                tableName,
+
+                '',
+
+                function() {
+
+
+                  loadPaginationRelationColumns(
+
+                    displayInput,
+
+                    tableName,
+
+                    '',
+
+                    function() {
+
+
+                      loadPaginationRelationTables(
+
+                        relationalTableInput,
+
+                        '',
+
+                        [
+
+                          String(
+                            $(selectors.table).val() || ''
+                          ).trim(),
+
+                          tableName,
+
+                        ],
+
+                        function() {
+
+
+                          updatePaginationRelationalFieldsState();
+
+                          updateSelectedColumnFromProperties();
+
+                          setSaveState(
+
+                            true
+
+                          );
+
+
+                          $('#page-loader').css(
+
+                            'z-index',
+
+                            ''
+
+                          );
+
+
+                          AutomatorPageLoader(
+
+                            'hide'
+
+                          );
+
+
+                        }
+
+                      );
+
+
+                    }
+
+                  );
+
+
+                }
+
+              );
+
+
+            }
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'change.automator-pagination-editor-relation-column',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.column"]'
+      )
+      .on(
+        'change.automator-pagination-editor-relation-column',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.column"]',
+        function(event) {
+
+
+          event.stopPropagation();
+
+
+          const tableName = String(
+
+            getPaginationRelationPropertyInput(
+              'relation.table'
+            ).val() || ''
+
+          ).trim();
+
+
+          const relationalTableInput = getPaginationRelationPropertyInput(
+
+            'relation.relational-table'
+
+          );
+
+
+          AutomatorPageLoader(
+
+            'show',
+
+            function() {
+
+
+              $('#page-loader').css(
+
+                'z-index',
+
+                '1085'
+
+              );
+
+
+              loadPaginationRelationTables(
+
+                relationalTableInput,
+
+                String(
+
+                  relationalTableInput.val() || ''
+
+                ).trim(),
+
+                [
+
+                  String(
+                    $(selectors.table).val() || ''
+                  ).trim(),
+
+                  tableName,
+
+                ],
+
+                function() {
+
+
+                  updatePaginationRelationalFieldsState();
+
+                  updateSelectedColumnFromProperties();
+
+                  setSaveState(
+
+                    true
+
+                  );
+
+
+                  $('#page-loader').css(
+
+                    'z-index',
+
+                    ''
+
+                  );
+
+
+                  AutomatorPageLoader(
+
+                    'hide'
+
+                  );
+
+
+                }
+
+              );
+
+
+            }
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'change.automator-pagination-editor-relation-relational-table',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.relational-table"]'
+      )
+      .on(
+        'change.automator-pagination-editor-relation-relational-table',
+        selectors.columnPropertyInput +
+        '[data-property-path="relation.relational-table"]',
+        function(event) {
+
+
+          event.stopPropagation();
+
+
+          const tableName = String(
+
+            $(this).val() || ''
+
+          ).trim();
+
+
+          const relationalColumnInput = getPaginationRelationPropertyInput(
+
+            'relation.relational-column'
+
+          );
+
+
+          AutomatorPageLoader(
+
+            'show',
+
+            function() {
+
+
+              $('#page-loader').css(
+
+                'z-index',
+
+                '1085'
+
+              );
+
+
+              loadPaginationRelationColumns(
+
+                relationalColumnInput,
+
+                tableName,
+
+                '',
+
+                function() {
+
+
+                  updatePaginationRelationalFieldsState();
+
+                  updateSelectedColumnFromProperties();
+
+                  setSaveState(
+
+                    true
+
+                  );
+
+
+                  $('#page-loader').css(
+
+                    'z-index',
+
+                    ''
+
+                  );
+
+
+                  AutomatorPageLoader(
+
+                    'hide'
+
+                  );
+
+
+                }
+
+              );
+
+
+            }
+
+          );
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
+
+
   /*
   |--------------------------------------------------------------------------
   | Renderiza campo de propriedade
@@ -12079,6 +14493,195 @@ window.SysAutomatorPaginationEditor = (function () {
             'Adicionar substituição' +
 
           '</button>' +
+
+        '</div>'
+
+      );
+
+
+    }
+
+
+    if(
+      fieldType == 'dynamic-table-list' ||
+      fieldType == 'dynamic-column-list'
+    ) {
+
+
+      let nullLabel = '- Selecione -';
+
+
+      if(fieldType == 'dynamic-table-list') {
+
+        nullLabel = '- Selecione a Tabela -';
+
+      }
+
+
+      if(fieldType == 'dynamic-column-list') {
+
+        nullLabel = '- Selecione a Tabela -';
+
+      }
+
+
+      const isRelationalField =
+
+        fieldPath == 'relation.relational-table' ||
+
+        fieldPath == 'relation.relational-column';
+
+
+      return (
+
+        '<div ' +
+
+          'class="mb-3' +
+
+            (
+
+              isRelationalField === true
+
+                ? ' automator-pagination-editor-relational-only'
+
+                : ''
+
+            ) +
+
+          '" ' +
+
+          'data-automator-pagination-property-wrapper="' +
+
+            escapeHtml(fieldPath) +
+
+          '"' +
+
+        '>' +
+
+          '<label ' +
+
+            'for="' +
+
+              escapeHtml(fieldID) +
+
+            '" ' +
+
+            'class="form-label small fw-semibold mb-1"' +
+
+          '>' +
+
+            escapeHtml(fieldLabel) +
+
+            (
+
+              fieldRequired === true
+
+                ? ' <span class="text-danger">*</span>'
+
+                : ''
+
+            ) +
+
+          '</label>' +
+
+          '<select ' +
+
+            'id="' +
+
+              escapeHtml(fieldID) +
+
+            '" ' +
+
+            'class="' +
+
+              'form-select form-select-sm ' +
+
+              'automator-pagination-editor-column-property ' +
+
+              'automator-pagination-editor-dynamic-relation-property' +
+
+            '" ' +
+
+            'data-property-type="' +
+
+              escapeHtml(fieldType) +
+
+            '" ' +
+
+            'data-property-path="' +
+
+              escapeHtml(fieldPath) +
+
+            '" ' +
+
+            'data-current-value="' +
+
+              escapeHtml(
+
+                currentValue === null ||
+                currentValue === undefined
+
+                  ? ''
+
+                  : currentValue
+
+              ) +
+
+            '"' +
+
+            (
+
+              fieldRequired === true
+
+                ? ' required'
+
+                : ''
+
+            ) +
+
+          '>' +
+
+            '<option ' +
+
+              'value="" ' +
+
+              'disabled="disabled" ' +
+
+              (
+
+                String(
+
+                  currentValue || ''
+
+                ).trim() == ''
+
+                  ? 'selected="selected"'
+
+                  : ''
+
+              ) +
+
+            '>' +
+
+              nullLabel +
+
+            '</option>' +
+
+          '</select>' +
+
+          (
+
+            fieldDescription != ''
+
+              ? '<div class="form-text">' +
+
+                  escapeHtml(fieldDescription) +
+
+                '</div>'
+
+              : ''
+
+          ) +
 
         '</div>'
 
@@ -13719,6 +16322,24 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    if(
+      fieldType == 'dynamic-table-list'
+    ) {
+
+      return 'dynamic-table-list';
+
+    }
+
+
+    if(
+      fieldType == 'dynamic-column-list'
+    ) {
+
+      return 'dynamic-column-list';
+
+    }
+
+
     if(fieldType == 'select') {
 
       return 'select';
@@ -14158,11 +16779,33 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    control.css(
+
+      'pointer-events',
+
+      enabled === true
+
+        ? ''
+
+        : 'none'
+
+    );
+
+
     if(!wrapper.length) {
 
       return true;
 
     }
+
+
+    wrapper.css(
+
+      'pointer-events',
+
+      'auto'
+
+    );
 
 
     const disabledTitle = String(
@@ -14199,76 +16842,73 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     const tooltipTitle = enabled === true
+
       ? currentEnabledTitle
+
       : disabledTitle;
 
 
-    disposeTooltip(wrapper[0]);
+    disposeTooltip(
+
+      wrapper[0]
+
+    );
 
 
     if(tooltipTitle != '') {
 
 
-      wrapper.attr(
-
-        'data-bs-toggle',
-
-        'tooltip'
-
-      );
-
-
-      wrapper.attr(
-
-        'data-bs-placement',
-
-        'bottom'
-
-      );
-
-
-      wrapper.attr(
-
-        'data-bs-trigger',
-
-        'hover'
-
-      );
+      wrapper
+        .attr(
+          'data-bs-toggle',
+          'tooltip'
+        )
+        .attr(
+          'data-bs-placement',
+          'bottom'
+        )
+        .attr(
+          'data-bs-trigger',
+          'hover focus'
+        )
+        .attr(
+          'data-bs-title',
+          tooltipTitle
+        )
+        .attr(
+          'title',
+          tooltipTitle
+        );
 
 
-      wrapper.attr(
+      createTooltip(
 
-        'data-bs-title',
+        wrapper[0],
 
-        tooltipTitle
+        true
 
       );
-
-
-      wrapper.attr(
-
-        'title',
-
-        tooltipTitle
-
-      );
-
-
-      createTooltip(wrapper[0]);
 
 
     } else {
 
 
-      wrapper.removeAttr('data-bs-toggle');
-
-      wrapper.removeAttr('data-bs-placement');
-
-      wrapper.removeAttr('data-bs-trigger');
-
-      wrapper.removeAttr('data-bs-title');
-
-      wrapper.removeAttr('title');
+      wrapper
+        .removeAttr(
+          'data-bs-toggle'
+        )
+        .removeAttr(
+          'data-bs-placement'
+        )
+        .removeAttr(
+          'data-bs-trigger'
+        )
+        .removeAttr(
+          'data-bs-title'
+        )
+        .removeAttr(
+          'title'
+        );
 
 
     }
@@ -14873,6 +17513,107 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+  function findPaginationEditorSecuritySource(
+    response = {}
+  ) {
+
+
+    response = normalizePlainObject(
+
+      response
+
+    );
+
+
+    const candidates = [
+
+      response,
+
+      response.data,
+
+      response.dados,
+
+      response.configs,
+
+      response.config,
+
+      response.contentData,
+
+      response.content_data,
+
+      response.viewData,
+
+      response.view_data,
+
+      response.editorData,
+
+      response.editor_data,
+
+      response.recordData,
+
+      response.record_data,
+
+    ];
+
+
+    let securitySource = {};
+
+
+    candidates.some(function(candidate) {
+
+
+      candidate = normalizePlainObject(
+
+        candidate
+
+      );
+
+
+      const userTypes =
+
+        candidate.userTypes ||
+
+        candidate.user_types ||
+
+        candidate.usersTypes ||
+
+        candidate.users_types ||
+
+        candidate.tbl_users_types ||
+
+        null;
+
+
+      if(
+        Array.isArray(userTypes) ||
+        (
+          userTypes &&
+          typeof userTypes === 'object'
+        )
+      ) {
+
+
+        securitySource = candidate;
+
+
+        return true;
+
+
+      }
+
+
+      return false;
+
+
+    });
+
+
+    return securitySource;
+
+
+  }
+
+
   /*
   |--------------------------------------------------------------------------
   | Dados de segurança
@@ -14891,7 +17632,26 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    const securitySource =
+
+      findPaginationEditorSecuritySource(
+
+        response
+
+      );
+
+
     let userTypes =
+
+      securitySource.userTypes ||
+
+      securitySource.user_types ||
+
+      securitySource.usersTypes ||
+
+      securitySource.users_types ||
+
+      securitySource.tbl_users_types ||
 
       response.userTypes ||
 
@@ -14912,14 +17672,38 @@ window.SysAutomatorPaginationEditor = (function () {
       typeof userTypes === 'object'
     ) {
 
-      userTypes = Object.values(userTypes);
+      userTypes = Object.values(
+
+        userTypes
+
+      );
 
     }
 
 
-    state.userTypes = Array.isArray(userTypes)
-      ? userTypes
-      : [];
+    /*
+    |--------------------------------------------------------------------------
+    | Não apaga dados já carregados
+    |--------------------------------------------------------------------------
+    |
+    | Durante a criação de uma paginação, mais de uma etapa pode chamar esta
+    | função. Alguns desses retornos não possuem os tipos de usuário. Nesse
+    | cenário, a lista já carregada não deve ser substituída por um array vazio.
+    |
+    */
+
+    if(
+      Array.isArray(userTypes) &&
+      userTypes.length >= 1
+    ) {
+
+      state.userTypes = userTypes;
+
+    } else if(!Array.isArray(state.userTypes)) {
+
+      state.userTypes = [];
+
+    }
 
 
     state.developerUserTypeID = null;
@@ -14945,7 +17729,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
         ''
 
-      );
+      ).trim();
 
 
       const userTypeName = String(
@@ -14979,6 +17763,10 @@ window.SysAutomatorPaginationEditor = (function () {
 
     const currentUser = normalizePlainObject(
 
+      securitySource.currentUser ||
+
+      securitySource.current_user ||
+
       response.currentUser ||
 
       response.current_user ||
@@ -14988,13 +17776,34 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
-    state.currentUserIsDeveloper = (
+    if(
+      currentUser.isDeveloper !== undefined ||
+      currentUser.is_developer !== undefined
+    ) {
 
-      currentUser.isDeveloper === true ||
 
-      currentUser.is_developer === true
+      state.currentUserIsDeveloper = (
 
-    );
+
+        currentUser.isDeveloper === true ||
+
+        currentUser.is_developer === true ||
+
+        String(
+
+          currentUser.isDeveloper ||
+
+          currentUser.is_developer ||
+
+          ''
+
+        ) == '1'
+
+
+      );
+
+
+    }
 
 
     return true;
@@ -15410,11 +18219,14 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
-      manager.find(
+      const list = manager.find(
 
         selectors.actionsList
 
-      ).empty();
+      ).first();
+
+
+      list.empty();
 
 
       Object.keys(actions).forEach(function(actionName) {
@@ -15441,6 +18253,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       });
+
+
+      positionPaginationActionAddButton(
+
+        manager
+
+      );
 
 
       updateActionsEmptyState(
@@ -15470,6 +18289,306 @@ window.SysAutomatorPaginationEditor = (function () {
 
   }
 
+  function updatePaginationActionCardHeader(
+    item
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const actionName = normalizeActionName(
+
+      item.find(
+
+        selectors.actionName
+
+      ).val()
+
+    );
+
+
+    const headerTitle = item.find(
+
+      selectors.actionHeaderTitle
+
+    ).first();
+
+
+    const collapseButton = item.find(
+
+      selectors.actionCollapse
+
+    ).first();
+
+
+    headerTitle.text(
+
+      actionName != ''
+
+        ? actionName
+
+        : 'Nova ação'
+
+    );
+
+
+    collapseButton.prop(
+
+      'disabled',
+
+      actionName == ''
+
+    );
+
+
+    collapseButton.attr(
+
+      'aria-disabled',
+
+      actionName == ''
+
+        ? 'true'
+
+        : 'false'
+
+    );
+
+
+    if(actionName == '') {
+
+
+      const body = item.find(
+
+        selectors.actionBody
+
+      ).first();
+
+
+      body.addClass(
+
+        'show'
+
+      );
+
+
+      collapseButton
+        .removeClass(
+          'collapsed'
+        )
+        .attr(
+          'aria-expanded',
+          'true'
+        );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  function bindPaginationActionCardEvents() {
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-action-collapse',
+        selectors.actionCollapse
+      )
+      .on(
+        'click.automator-pagination-editor-action-collapse',
+        selectors.actionCollapse,
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          const button = $(this);
+
+
+          if(button.prop('disabled') === true) {
+
+            return false;
+
+          }
+
+
+          const item = button.closest(
+
+            selectors.actionItem
+
+          );
+
+
+          const actionName = normalizeActionName(
+
+            item.find(
+
+              selectors.actionName
+
+            ).val()
+
+          );
+
+
+          if(actionName == '') {
+
+            return false;
+
+          }
+
+
+          const body = item.find(
+
+            selectors.actionBody
+
+          ).first();
+
+
+          if(!body.length) {
+
+            return false;
+
+          }
+
+
+          const bodyElement = body[0];
+
+
+          if(
+            typeof bootstrap !== 'undefined' &&
+            bootstrap.Collapse
+          ) {
+
+
+            const collapse = bootstrap.Collapse.getOrCreateInstance(
+
+              bodyElement,
+
+              {
+
+                toggle: false,
+
+              }
+
+            );
+
+
+            collapse.toggle();
+
+
+          } else {
+
+
+            const opened = body.hasClass(
+
+              'show'
+
+            );
+
+
+            body.toggleClass(
+
+              'show',
+
+              opened !== true
+
+            );
+
+
+            button
+              .toggleClass(
+                'collapsed',
+                opened === true
+              )
+              .attr(
+                'aria-expanded',
+                opened === true
+                  ? 'false'
+                  : 'true'
+              );
+
+
+          }
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'shown.bs.collapse.automator-pagination-editor-action-card ' +
+        'hidden.bs.collapse.automator-pagination-editor-action-card',
+        selectors.actionBody
+      )
+      .on(
+        'shown.bs.collapse.automator-pagination-editor-action-card ' +
+        'hidden.bs.collapse.automator-pagination-editor-action-card',
+        selectors.actionBody,
+        function(event) {
+
+
+          const body = $(this);
+
+
+          const item = body.closest(
+
+            selectors.actionItem
+
+          );
+
+
+          const button = item.find(
+
+            selectors.actionCollapse
+
+          ).first();
+
+
+          const opened =
+
+            event.type == 'shown';
+
+
+          button
+            .toggleClass(
+              'collapsed',
+              opened !== true
+            )
+            .attr(
+              'aria-expanded',
+              opened === true
+                ? 'true'
+                : 'false'
+            );
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
 
   /*
   |--------------------------------------------------------------------------
@@ -15637,6 +18756,13 @@ window.SysAutomatorPaginationEditor = (function () {
             );
 
           }
+
+
+          updatePaginationActionCardHeader(
+
+            item
+
+          );
 
 
           const actionNameValid = validateActionName(
@@ -16350,6 +19476,13 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+    const bodyID =
+
+      itemID +
+
+      '-body';
+
+
     let routeOptions =
 
       '<option value="">' +
@@ -16413,11 +19546,35 @@ window.SysAutomatorPaginationEditor = (function () {
 
       '>' +
 
-        '<div class="px-3 py-2 border-bottom bg-light">' +
+        '<div class="' +
 
-          '<div class="d-flex align-items-center justify-content-between">' +
+          'automator-pagination-editor-action-header ' +
 
-            '<strong class="small">Ação</strong>' +
+          'px-3 py-2 border-bottom bg-light' +
+
+        '">' +
+
+          '<div class="d-flex align-items-center justify-content-between gap-2">' +
+
+            '<strong class="' +
+
+              'small text-truncate ' +
+
+              'automator-pagination-editor-action-header-title' +
+
+            '">' +
+
+              escapeHtml(
+
+                normalizedActionName != ''
+
+                  ? normalizedActionName
+
+                  : 'Nova ação'
+
+              ) +
+
+            '</strong>' +
 
             '<button ' +
 
@@ -16425,21 +19582,33 @@ window.SysAutomatorPaginationEditor = (function () {
 
               'class="' +
 
-                'btn btn-sm btn-danger ' +
+                'btn btn-sm btn-light border ' +
 
-                'automator-pagination-editor-action-delete' +
+                'automator-pagination-editor-action-collapse' +
 
               '" ' +
 
-              'data-bs-toggle="tooltip" ' +
+              'aria-controls="' +
 
-              'data-bs-placement="left" ' +
+                escapeHtml(bodyID) +
 
-              'data-bs-title="Excluir ação"' +
+              '" ' +
+
+              'aria-expanded="true"' +
+
+              (
+
+                normalizedActionName == ''
+
+                  ? ' disabled aria-disabled="true"'
+
+                  : ''
+
+              ) +
 
             '>' +
 
-              '<i class="fa fa-trash"></i>' +
+              '<i class="fa fa-chevron-up"></i>' +
 
             '</button>' +
 
@@ -16447,95 +19616,203 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '</div>' +
 
-        '<div class="p-3">' +
+        '<div ' +
 
-          '<div class="mb-3">' +
+          'id="' +
 
-            '<label class="form-label small fw-semibold mb-1">' +
+            escapeHtml(bodyID) +
 
-              'Nome da ação' +
+          '" ' +
 
-            '</label>' +
+          'class="' +
 
-            '<input ' +
+            'collapse show ' +
 
-              'type="text" ' +
+            'automator-pagination-editor-action-body' +
 
-              'class="' +
+          '"' +
 
-                'form-control form-control-sm ' +
+        '>' +
 
-                'automator-pagination-editor-action-name' +
+          '<div class="p-3">' +
 
-              '" ' +
+            '<div class="mb-3">' +
 
-              'placeholder="Nome da ação" ' +
+              '<label class="form-label small fw-semibold mb-1">' +
 
-              'autocomplete="off" ' +
+                'Nome da ação' +
 
-              'value="' +
+              '</label>' +
 
-                escapeHtml(normalizedActionName) +
+              '<input ' +
 
-              '" ' +
+                'type="text" ' +
 
-            '/>' +
+                'class="' +
 
-            '<div class="invalid-feedback">' +
+                  'form-control form-control-sm ' +
 
-              'Informe um nome único para a ação.' +
+                  'automator-pagination-editor-action-name' +
+
+                '" ' +
+
+                'placeholder="Nome da ação" ' +
+
+                'autocomplete="off" ' +
+
+                'value="' +
+
+                  escapeHtml(normalizedActionName) +
+
+                '" ' +
+
+              '/>' +
+
+              '<div class="invalid-feedback">' +
+
+                'Informe um nome único para a ação.' +
+
+              '</div>' +
 
             '</div>' +
 
-          '</div>' +
+            '<div class="mb-3">' +
 
-          '<div class="mb-3">' +
+              '<label class="form-label small fw-semibold mb-1">' +
 
-            '<label class="form-label small fw-semibold mb-1">' +
+                'Rota' +
 
-              'Rota' +
+              '</label>' +
 
-            '</label>' +
+              '<select ' +
 
-            '<select ' +
+                'class="' +
 
-              'class="' +
+                  'form-select form-select-sm ' +
 
-                'form-select form-select-sm ' +
+                  'automator-pagination-editor-action-route' +
 
-                'automator-pagination-editor-action-route' +
+                '" ' +
 
-              '" ' +
+                'disabled' +
 
-              'disabled' +
+              '>' +
 
-            '>' +
+                routeOptions +
 
-              routeOptions +
+              '</select>' +
 
-            '</select>' +
+            '</div>' +
 
-          '</div>' +
+            '<div class="mb-3">' +
 
-          '<div class="mb-3">' +
+              '<label class="form-label small fw-semibold mb-2">' +
 
-            '<label class="form-label small fw-semibold mb-2">' +
+                'Parâmetros' +
 
-              'Parâmetros' +
+              '</label>' +
 
-            '</label>' +
+              '<div ' +
 
-            '<div ' +
+                'class="' +
 
-              'class="' +
+                  'automator-pagination-editor-action-params-list' +
 
-                'automator-pagination-editor-action-params-list' +
+                '" ' +
 
-              '" ' +
+                'data-empty="Nenhum parâmetro adicionado."' +
 
-              'data-empty="Nenhum parâmetro adicionado."' +
+              '></div>' +
 
-            '></div>' +
+              '<button ' +
+
+                'type="button" ' +
+
+                'class="' +
+
+                  'btn btn-sm btn-outline-primary w-100 mt-2 ' +
+
+                  'automator-pagination-editor-action-param-add' +
+
+                '" ' +
+
+                'disabled' +
+
+              '>' +
+
+                '<i class="fa fa-plus me-1"></i>' +
+
+                'Adicionar parâmetro' +
+
+              '</button>' +
+
+            '</div>' +
+
+            '<div class="mb-3">' +
+
+              '<label class="form-label small fw-semibold mb-2">' +
+
+                'Regras de uso' +
+
+              '</label>' +
+
+              '<div class="' +
+
+                'automator-pagination-editor-action-roles-list' +
+
+              '"></div>' +
+
+              '<button ' +
+
+                'type="button" ' +
+
+                'class="' +
+
+                  'btn btn-sm btn-outline-primary w-100 mt-2 ' +
+
+                  'automator-pagination-editor-action-role-add' +
+
+                '"' +
+
+              '>' +
+
+                '<i class="fa fa-plus me-1"></i>' +
+
+                'Adicionar condição' +
+
+              '</button>' +
+
+            '</div>' +
+
+            '<div class="mb-3">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                'Visível' +
+
+              '</label>' +
+
+              '<select ' +
+
+                'class="' +
+
+                  'form-select form-select-sm ' +
+
+                  'automator-pagination-editor-action-show' +
+
+                '" ' +
+
+                'disabled' +
+
+              '>' +
+
+                '<option value="true">Sim</option>' +
+
+                '<option value="false">Não</option>' +
+
+              '</select>' +
+
+            '</div>' +
 
             '<button ' +
 
@@ -16543,87 +19820,25 @@ window.SysAutomatorPaginationEditor = (function () {
 
               'class="' +
 
-                'btn btn-sm btn-outline-primary w-100 mt-2 ' +
+                'btn btn-sm btn-outline-danger w-100 ' +
 
-                'automator-pagination-editor-action-param-add' +
-
-              '" ' +
-
-              'disabled' +
-
-            '>' +
-
-              '<i class="fa fa-plus me-1"></i>' +
-
-              'Adicionar parâmetro' +
-
-            '</button>' +
-
-          '</div>' +
-
-          '<div class="mb-3">' +
-
-            '<label class="form-label small fw-semibold mb-2">' +
-
-              'Regras de uso' +
-
-            '</label>' +
-
-            '<div class="' +
-
-              'automator-pagination-editor-action-roles-list' +
-
-            '"></div>' +
-
-            '<button ' +
-
-              'type="button" ' +
-
-              'class="' +
-
-                'btn btn-sm btn-outline-primary w-100 mt-2 ' +
-
-                'automator-pagination-editor-action-role-add' +
-
-              '"' +
-
-            '>' +
-
-              '<i class="fa fa-plus me-1"></i>' +
-
-              'Adicionar condição' +
-
-            '</button>' +
-
-          '</div>' +
-
-          '<div>' +
-
-            '<label class="form-label small fw-semibold mb-1">' +
-
-              'Visível' +
-
-            '</label>' +
-
-            '<select ' +
-
-              'class="' +
-
-                'form-select form-select-sm ' +
-
-                'automator-pagination-editor-action-show' +
+                'automator-pagination-editor-action-delete' +
 
               '" ' +
 
-              'disabled' +
+              'data-bs-toggle="tooltip" ' +
+
+              'data-bs-placement="top" ' +
+
+              'data-bs-title="Excluir ação"' +
 
             '>' +
 
-              '<option value="true">Sim</option>' +
+              '<i class="fa fa-trash me-1"></i>' +
 
-              '<option value="false">Não</option>' +
+              'Excluir ação' +
 
-            '</select>' +
+            '</button>' +
 
           '</div>' +
 
@@ -16635,6 +19850,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     list.append(
+
+      item
+
+    );
+
+
+    ensurePaginationActionNameAutocomplete(
 
       item
 
@@ -16785,6 +20007,20 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    updatePaginationActionCardHeader(
+
+      item
+
+    );
+
+
+    positionPaginationActionAddButton(
+
+      manager
+
+    );
+
+
     updateActionsEmptyState(
 
       manager
@@ -16800,15 +20036,39 @@ window.SysAutomatorPaginationEditor = (function () {
     if(focusName === true) {
 
 
-      item.find(
+      setTimeout(function() {
 
-        selectors.actionName
 
-      ).trigger(
+        const nameInput = item.find(
 
-        'focus'
+          selectors.actionName
 
-      );
+        ).first();
+
+
+        nameInput.trigger(
+
+          'focus'
+
+        );
+
+
+        if(
+          nameInput.length &&
+          nameInput[0].scrollIntoView
+        ) {
+
+          nameInput[0].scrollIntoView({
+
+            behavior: 'smooth',
+            block:    'center',
+
+          });
+
+        }
+
+
+      }, 50);
 
 
     }
@@ -17494,6 +20754,129 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza valores enviados ao controller
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationSubmitValue(
+    value
+  ) {
+
+
+    if(
+      value === undefined ||
+      value === null
+    ) {
+
+      return '';
+
+    }
+
+
+    if(Array.isArray(value)) {
+
+
+      return value.map(function(item) {
+
+
+        return normalizePaginationSubmitValue(
+
+          item
+
+        );
+
+
+      });
+
+
+    }
+
+
+    if(
+      value &&
+      typeof value === 'object'
+    ) {
+
+
+      const normalizedValue = {};
+
+
+      Object.keys(
+
+        value
+
+      ).forEach(function(key) {
+
+
+        normalizedValue[key] =
+
+          normalizePaginationSubmitValue(
+
+            value[key]
+
+          );
+
+
+      });
+
+
+      return normalizedValue;
+
+
+    }
+
+
+    if(typeof value === 'boolean') {
+
+      return value;
+
+    }
+
+
+    return value;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza booleano para envio
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationSubmitBoolean(
+    value,
+    defaultValue = false
+  ) {
+
+
+    if(
+      value === undefined ||
+      value === null ||
+      value === ''
+    ) {
+
+      return defaultValue === true;
+
+    }
+
+
+    return normalizeBooleanValue(
+
+      value,
+
+      defaultValue
+
+    );
+
+
+  }
+
+
   /*
   |--------------------------------------------------------------------------
   | Serializa coluna
@@ -17513,114 +20896,333 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    const values = normalizePlainObject(
+
+      column.values
+
+    );
+
+
+    const header = normalizePlainObject(
+
+      values.header
+
+    );
+
+
+    const body = normalizePlainObject(
+
+      values.body
+
+    );
+
+
+    const currentProps = normalizePlainObject(
+
+      values.props
+
+    );
+
+
+    const attrs = normalizePlainObject(
+
+      column.attrs
+
+    );
+
+
+    const canSearch = normalizePlainObject(
+
+      values.canSearch
+
+    );
+
+
+    const canSort = normalizePlainObject(
+
+      values.canSort
+
+    );
+
+
+    const search = getPaginationSubmitBoolean(
+
+      canSearch.search !== undefined
+
+        ? canSearch.search
+
+        : column.search,
+
+      false
+
+    );
+
+
+    const sort = getPaginationSubmitBoolean(
+
+      canSort.sort !== undefined
+
+        ? canSort.sort
+
+        : column.sort,
+
+      false
+
+    );
+
+
+    const columnID = String(
+
+      column.database_id ||
+
+      column.tbl_sys_paginations_col_ID ||
+
+      ''
+
+    ).trim();
+
+
+    const access = normalizePaginationAccessValues(
+
+      column.access
+
+    );
+
+
+    const props = $.extend(
+
+      true,
+
+      {},
+
+      currentProps
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Converte as configurações relacionais para props
+    |--------------------------------------------------------------------------
+    */
+
+    const relation = normalizePlainObject(
+
+      values.relation
+
+    );
+
+
+    if(
+      String(
+
+        column.type || ''
+
+      ).trim().toLowerCase() == 'relation' ||
+
+      Object.keys(relation).length >= 1
+    ) {
+
+
+      [
+
+        'type',
+        'mode',
+        'table',
+        'column',
+        'display',
+        'relational-table',
+        'relational-column',
+        'nullable',
+        'empty',
+
+      ].forEach(function(key) {
+
+
+        if(relation[key] === undefined) {
+
+          return;
+
+        }
+
+
+        props[key] = normalizePaginationSubmitValue(
+
+          relation[key]
+
+        );
+
+
+      });
+
+
+    }
+
+
     return {
 
       id:
 
-        column.database_id ||
+        columnID,
 
-        column.tbl_sys_paginations_col_ID ||
-
-        column.id ||
-
-        '',
 
       tbl_sys_paginations_col_ID:
 
-        column.database_id ||
+        columnID,
 
-        column.tbl_sys_paginations_col_ID ||
 
-        '',
+      tbl_sys_pagination_ID:
+
+        state.paginationID,
+
 
       tbl_sys_field_type_ID:
 
-        column.type_id ||
+        String(
 
-        column.tbl_sys_field_type_ID ||
+          column.type_id ||
 
-        '',
+          column.tbl_sys_field_type_ID ||
+
+          ''
+
+        ).trim(),
+
 
       tbl_sys_paginations_col_name:
 
-        column.name ||
+        String(
 
-        '',
+          column.name || ''
+
+        ).trim(),
+
 
       tbl_sys_paginations_col_title:
 
-        column.label ||
+        String(
 
-        column.title ||
+          column.label ||
 
-        '',
+          column.title ||
 
-      tbl_sys_paginations_col_ordem:
+          ''
 
-        order,
+        ).trim(),
+
+
+      tbl_sys_paginations_col_header:
+
+        normalizePaginationSubmitValue(
+
+          header
+
+        ),
+
+
+      tbl_sys_paginations_col_body:
+
+        normalizePaginationSubmitValue(
+
+          body
+
+        ),
+
+
+      tbl_sys_paginations_col_props:
+
+        normalizePaginationSubmitValue(
+
+          props
+
+        ),
+
 
       tbl_sys_paginations_col_attrs:
 
-        {
+        normalizePaginationSubmitValue(
 
-          configs: normalizePlainObject(
+          attrs
 
-            column.attrs &&
-            column.attrs.configs
+        ),
 
-              ? column.attrs.configs
 
-              : {}
+      tbl_sys_paginations_col_search:
 
-          ),
+        search,
 
-        },
+
+      tbl_sys_paginations_col_sort:
+
+        sort,
+
+
+      tbl_sys_paginations_col_ordem:
+
+        parseInt(
+
+          order,
+
+          10
+
+        ) || 0,
+
 
       tbl_sys_paginations_col_args:
 
-        normalizePlainObject(
+        normalizePaginationSubmitValue(
 
-          column.values
+          values
 
         ),
+
 
       access:
 
-        normalizePaginationAccessValues(
+        access,
 
-          column.access
-
-        ),
 
       user_types:
 
-        normalizePaginationAccessValues(
+        access,
 
-          column.access
 
-        ),
+      cols_access:
+
+        access,
+
 
       field_type:
 
-        column.type ||
+        String(
 
-        '',
+          column.type || ''
+
+        ).trim(),
+
 
       field_type_title:
 
-        column.type_title ||
+        String(
 
-        '',
+          column.type_title || ''
+
+        ).trim(),
+
 
       icon:
 
-        column.icon ||
+        String(
 
-        '',
+          column.icon || ''
+
+        ).trim(),
+
 
       is_action_buttons_column:
 
         column.isActionButtonsColumn === true,
+
 
       buttons:
 
@@ -17638,17 +21240,182 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
-  | Payload completo
+  | Serializa botões da paginação
   |--------------------------------------------------------------------------
   */
 
-  function serializePaginationEditor() {
+  function serializePaginationButtons(
+    scope = 'actions'
+  ) {
 
 
-    const payload = getPaginationSettingsData();
+    return getPaginationButtonsData(
+
+      scope
+
+    ).map(function(buttonData) {
+
+
+      buttonData = createPaginationButtonData(
+
+        buttonData
+
+      );
+
+
+      return {
+
+        type:
+
+          String(
+
+            buttonData.type || 'button'
+
+          ).trim(),
+
+
+        action:
+
+          String(
+
+            buttonData.action || ''
+
+          ).trim(),
+
+
+        id:
+
+          normalizePaginationButtonSlug(
+
+            buttonData.id
+
+          ),
+
+
+        class:
+
+          String(
+
+            buttonData.class || ''
+
+          ).trim(),
+
+
+        icon:
+
+          normalizePaginationButtonIcon(
+
+            buttonData.icon
+
+          ),
+
+
+        text:
+
+          String(
+
+            buttonData.text || ''
+
+          ).substring(
+
+            0,
+
+            255
+
+          ),
+
+
+        onclick:
+
+          String(
+
+            buttonData.onclick || ''
+
+          ),
+
+      };
+
+
+    });
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Formata os dados para envio ao controller
+  |--------------------------------------------------------------------------
+  */
+
+  function formatPaginationEditorSubmitData() {
+
+
+    const settings = normalizePlainObject(
+
+      getPaginationSettingsData()
+
+    );
+
+
+    const paginationID = String(
+
+      state.paginationID || ''
+
+    ).trim();
+
+
+    const tableName = String(
+
+      $(selectors.table).val() || ''
+
+    ).trim();
+
+
+    const indexName = String(
+
+      $(selectors.index).val() || ''
+
+    ).trim();
+
+
+    const actions = normalizePlainObject(
+
+      getActionsData()
+
+    );
+
+
+    const headerActions = serializePaginationButtons(
+
+      'header'
+
+    );
+
+
+    const listActions = serializePaginationButtons(
+
+      'actions'
+
+    );
 
 
     const columns = getColumnsData()
+      .filter(function(column) {
+
+
+        column = normalizePaginationColumnData(
+
+          column
+
+        );
+
+
+        return column.isActionButtonsColumn !== true;
+
+
+      })
       .map(function(
         column,
         index
@@ -17667,101 +21434,299 @@ window.SysAutomatorPaginationEditor = (function () {
       });
 
 
-    function serializeButtons(
-      scope
-    ) {
+    const pagination = {
+
+      tbl_sys_pagination_ID:
+
+        paginationID,
 
 
-      return getPaginationButtonsData(
+      tbl_sys_pagination_name:
 
-        scope
+        String(
 
-      ).map(function(buttonData) {
+          settings.tbl_sys_pagination_name || ''
+
+        ).trim(),
 
 
-        buttonData = createPaginationButtonData(
+      tbl_sys_pagination_route:
 
-          buttonData
+        String(
+
+          settings.tbl_sys_pagination_route || ''
+
+        ).trim(),
+
+
+      tbl_sys_pagination_title:
+
+        String(
+
+          settings.tbl_sys_pagination_title ||
+
+          $('#tbl_sys_pagination_title').val() ||
+
+          ''
+
+        ).trim(),
+
+
+      tbl_sys_pagination_table:
+
+        tableName,
+
+
+      tbl_sys_pagination_index:
+
+        indexName,
+
+
+      tbl_sys_pagination_locked:
+
+        getPaginationSubmitBoolean(
+
+          settings.tbl_sys_pagination_locked,
+
+          false
+
+        ),
+
+    };
+
+
+    const reservedSettings = [
+
+      'id',
+      'acao',
+      'paginationID',
+      'pagination_id',
+      'tbl_sys_pagination_ID',
+      'tbl_sys_pagination_name',
+      'tbl_sys_pagination_route',
+      'tbl_sys_pagination_title',
+      'tbl_sys_pagination_table',
+      'tbl_sys_pagination_index',
+      'tbl_sys_pagination_locked',
+      'actions',
+      'header_actions',
+      'list_actions',
+      'columns',
+      'cols',
+      'pagination',
+      'pagination_args',
+      'pagination_cols',
+
+    ];
+
+
+    const paginationArgs = {};
+
+
+    Object.keys(
+
+      settings
+
+    ).forEach(function(settingName) {
+
+
+      if(
+        reservedSettings.indexOf(
+          settingName
+        ) >= 0
+      ) {
+
+        return;
+
+      }
+
+
+      paginationArgs[settingName] =
+
+        normalizePaginationSubmitValue(
+
+          settings[settingName]
 
         );
 
 
-        return {
-
-          type: buttonData.type,
-
-          action: buttonData.action,
-
-          id: buttonData.id,
-
-          class: buttonData.class,
-
-          icon: normalizePaginationButtonIcon(
-
-            buttonData.icon
-
-          ),
-
-          text: buttonData.text,
-
-          onclick: buttonData.onclick,
-
-        };
+    });
 
 
-      });
+    paginationArgs.page_name = String(
 
+      paginationArgs.page_name ||
+
+      pagination.tbl_sys_pagination_route ||
+
+      pagination.tbl_sys_pagination_name ||
+
+      ''
+
+    ).trim();
+
+
+    paginationArgs.per_page = parseInt(
+
+      paginationArgs.per_page ||
+
+      settings.tbl_sys_pagination_per_page ||
+
+      settings.pagination_per_page ||
+
+      15,
+
+      10
+
+    );
+
+
+    if(
+      !Number.isFinite(
+        paginationArgs.per_page
+      ) ||
+      paginationArgs.per_page <= 0
+    ) {
+
+      paginationArgs.per_page = 15;
 
     }
 
 
-    payload.id = state.paginationID;
+    paginationArgs.actions = actions;
 
-    payload.tbl_sys_pagination_ID = state.paginationID;
+    paginationArgs.header_actions = headerActions;
 
-    payload.acao = state.acao;
-
-
-    payload.tbl_sys_pagination_table = String(
-
-      $(selectors.table).val() || ''
-
-    ).trim();
+    paginationArgs.list_actions = listActions;
 
 
-    payload.tbl_sys_pagination_index = String(
+    const payload = {
 
-      $(selectors.index).val() || ''
+      id:
 
-    ).trim();
-
-
-    payload.actions = getActionsData();
+        paginationID,
 
 
-    payload.header_actions = serializeButtons(
+      paginationID:
 
-      'header'
-
-    );
+        paginationID,
 
 
-    payload.list_actions = serializeButtons(
+      pagination_id:
 
-      'actions'
-
-    );
+        paginationID,
 
 
-    payload.columns = columns;
+      tbl_sys_pagination_ID:
 
-    payload.cols = columns;
+        paginationID,
+
+
+      acao:
+
+        state.isNew === true
+
+          ? 'store'
+
+          : 'update',
+
+
+      editorAction:
+
+        state.isNew === true
+
+          ? 'store'
+
+          : 'update',
+
+
+      pagination:
+
+        pagination,
+
+
+      pagination_args:
+
+        paginationArgs,
+
+
+      pagination_cols:
+
+        columns,
+
+
+      columns:
+
+        columns,
+
+
+      cols:
+
+        columns,
+
+    };
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com o formato plano atual
+    |--------------------------------------------------------------------------
+    */
+
+    Object.keys(
+
+      pagination
+
+    ).forEach(function(key) {
+
+
+      payload[key] = pagination[key];
+
+
+    });
+
+
+    Object.keys(
+
+      paginationArgs
+
+    ).forEach(function(key) {
+
+
+      payload[key] = paginationArgs[key];
+
+
+    });
+
+
+    payload.actions = actions;
+
+    payload.header_actions = headerActions;
+
+    payload.list_actions = listActions;
 
 
     return payload;
 
 
   }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Payload completo
+  |--------------------------------------------------------------------------
+  */
+
+  function serializePaginationEditor() {
+
+
+    return formatPaginationEditorSubmitData();
+
+
+  }
+
 
 
   function validatePaginationButtons(
@@ -17966,6 +21931,462 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
+  | Normaliza os valores recebidos de uma coluna
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationRecordColumnValues(
+    recordColumn = {}
+  ) {
+
+
+    recordColumn = normalizePlainObject(
+
+      recordColumn
+
+    );
+
+
+    const args = normalizePlainObject(
+
+      recordColumn.tbl_sys_paginations_col_args ||
+
+      recordColumn.args ||
+
+      recordColumn.values ||
+
+      {}
+
+    );
+
+
+    const header = normalizePlainObject(
+
+      recordColumn.tbl_sys_paginations_col_header ||
+
+      recordColumn.header ||
+
+      args.header ||
+
+      {}
+
+    );
+
+
+    const body = normalizePlainObject(
+
+      recordColumn.tbl_sys_paginations_col_body ||
+
+      recordColumn.body ||
+
+      args.body ||
+
+      {}
+
+    );
+
+
+    const props = normalizePlainObject(
+
+      recordColumn.tbl_sys_paginations_col_props ||
+
+      recordColumn.props ||
+
+      args.props ||
+
+      {}
+
+    );
+
+
+    const values = $.extend(
+
+      true,
+
+      {},
+
+      args
+
+    );
+
+
+    values.header = $.extend(
+
+      true,
+
+      {},
+
+      normalizePlainObject(
+
+        values.header
+
+      ),
+
+      header
+
+    );
+
+
+    values.body = $.extend(
+
+      true,
+
+      {},
+
+      normalizePlainObject(
+
+        values.body
+
+      ),
+
+      body
+
+    );
+
+
+    values.props = $.extend(
+
+      true,
+
+      {},
+
+      normalizePlainObject(
+
+        values.props
+
+      ),
+
+      props
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza as configurações relacionais
+    |--------------------------------------------------------------------------
+    |
+    | As paginações existentes armazenam as propriedades relacionais
+    | diretamente em tbl_sys_paginations_col_props. O editor utiliza o grupo
+    | values.relation, portanto os dois formatos precisam ser aceitos.
+    |
+    */
+
+    const currentRelation = normalizePlainObject(
+
+      values.relation
+
+    );
+
+
+    const propsRelation = normalizePlainObject(
+
+      props.relation
+
+    );
+
+
+    const relation = $.extend(
+
+      true,
+
+      {},
+
+      propsRelation,
+
+      currentRelation
+
+    );
+
+
+    const relationKeys = [
+
+      'type',
+      'mode',
+      'table',
+      'column',
+      'display',
+      'relational-table',
+      'relational-column',
+      'nullable',
+      'empty',
+
+    ];
+
+
+    relationKeys.forEach(function(key) {
+
+
+      if(
+        relation[key] !== undefined &&
+        relation[key] !== null &&
+        relation[key] !== ''
+      ) {
+
+        return;
+
+      }
+
+
+      if(
+        props[key] !== undefined &&
+        props[key] !== null
+      ) {
+
+        relation[key] = props[key];
+
+      }
+
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com nomes alternativos
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      relation.table === undefined ||
+      relation.table === null ||
+      relation.table === ''
+    ) {
+
+      relation.table =
+
+        props.table ||
+
+        props['relation-table'] ||
+
+        props.relational_table ||
+
+        '';
+
+    }
+
+
+    if(
+      relation.column === undefined ||
+      relation.column === null ||
+      relation.column === ''
+    ) {
+
+      relation.column =
+
+        props.column ||
+
+        props.value ||
+
+        props.key ||
+
+        props['relation-column'] ||
+
+        props.relational_column ||
+
+        '';
+
+    }
+
+
+    if(
+      relation.display === undefined ||
+      relation.display === null ||
+      relation.display === ''
+    ) {
+
+      relation.display =
+
+        props.display ||
+
+        props.label ||
+
+        props.title ||
+
+        props['display-column'] ||
+
+        '';
+
+    }
+
+
+    if(
+      relation['relational-table'] === undefined ||
+      relation['relational-table'] === null ||
+      relation['relational-table'] === ''
+    ) {
+
+      relation['relational-table'] =
+
+        props['relational-table'] ||
+
+        props.relational_table ||
+
+        props.label_table ||
+
+        '';
+
+    }
+
+
+    if(
+      relation['relational-column'] === undefined ||
+      relation['relational-column'] === null ||
+      relation['relational-column'] === ''
+    ) {
+
+      relation['relational-column'] =
+
+        props['relational-column'] ||
+
+        props.relational_column ||
+
+        props.label_column ||
+
+        props.label_value ||
+
+        '';
+
+    }
+
+
+    if(
+      relation.type === undefined ||
+      relation.type === null ||
+      relation.type === ''
+    ) {
+
+      relation.type =
+
+        props.type ||
+
+        'single';
+
+    }
+
+
+    if(
+      relation.mode === undefined ||
+      relation.mode === null ||
+      relation.mode === ''
+    ) {
+
+      relation.mode =
+
+        props.mode ||
+
+        'revert';
+
+    }
+
+
+    if(
+      relation.nullable === undefined &&
+      props.nullable !== undefined
+    ) {
+
+      relation.nullable = props.nullable;
+
+    }
+
+
+    if(
+      relation.empty === undefined &&
+      props.empty !== undefined
+    ) {
+
+      relation.empty = props.empty;
+
+    }
+
+
+    if(Object.keys(relation).length >= 1) {
+
+      values.relation = relation;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Busca
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      !values.canSearch ||
+      typeof values.canSearch !== 'object' ||
+      Array.isArray(values.canSearch)
+    ) {
+
+      values.canSearch = {};
+
+    }
+
+
+    if(
+      values.canSearch.search === undefined
+    ) {
+
+      values.canSearch.search = normalizeBooleanValue(
+
+        recordColumn.tbl_sys_paginations_col_search !== undefined
+
+          ? recordColumn.tbl_sys_paginations_col_search
+
+          : recordColumn.search,
+
+        false
+
+      );
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ordenação
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      !values.canSort ||
+      typeof values.canSort !== 'object' ||
+      Array.isArray(values.canSort)
+    ) {
+
+      values.canSort = {};
+
+    }
+
+
+    if(
+      values.canSort.sort === undefined
+    ) {
+
+      values.canSort.sort = normalizeBooleanValue(
+
+        recordColumn.tbl_sys_paginations_col_sort !== undefined
+
+          ? recordColumn.tbl_sys_paginations_col_sort
+
+          : recordColumn.sort,
+
+        false
+
+      );
+
+    }
+
+
+    return values;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Normaliza coluna recebida
   |--------------------------------------------------------------------------
   */
@@ -17994,15 +22415,9 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
-    const args = normalizePlainObject(
+    const values = normalizePaginationRecordColumnValues(
 
-      recordColumn.tbl_sys_paginations_col_args ||
-
-      recordColumn.args ||
-
-      recordColumn.values ||
-
-      {}
+      recordColumn
 
     );
 
@@ -18025,6 +22440,19 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    const typeName = String(
+
+      recordColumn.field_type ||
+
+      recordColumn.tbl_sys_field_type_name ||
+
+      recordColumn.type ||
+
+      ''
+
+    ).trim();
+
+
     return normalizePaginationColumnData({
 
       id:
@@ -18044,8 +22472,11 @@ window.SysAutomatorPaginationEditor = (function () {
         '-' +
 
         Math.floor(
+
           Math.random() * 999999
+
         ),
+
 
       database_id:
 
@@ -18055,6 +22486,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '',
 
+
       type_id:
 
         recordColumn.tbl_sys_field_type_ID ||
@@ -18063,13 +22495,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '',
 
+
       type:
 
-        recordColumn.field_type ||
+        typeName,
 
-        recordColumn.tbl_sys_field_type_name ||
-
-        '',
 
       icon:
 
@@ -18077,7 +22507,16 @@ window.SysAutomatorPaginationEditor = (function () {
 
         recordColumn.tbl_sys_field_type_icon ||
 
-        'table-columns',
+        (
+
+          typeName == 'relation'
+
+            ? 'sync-alt'
+
+            : 'table-columns'
+
+        ),
+
 
       type_title:
 
@@ -18085,9 +22524,12 @@ window.SysAutomatorPaginationEditor = (function () {
 
         recordColumn.tbl_sys_field_type_title ||
 
+        recordColumn.type_title ||
+
         recordColumn.title ||
 
         'Coluna',
+
 
       title:
 
@@ -18095,7 +22537,10 @@ window.SysAutomatorPaginationEditor = (function () {
 
         recordColumn.tbl_sys_field_type_title ||
 
+        recordColumn.type_title ||
+
         'Coluna',
+
 
       name:
 
@@ -18107,6 +22552,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '',
 
+
       label:
 
         recordColumn.tbl_sys_paginations_col_title ||
@@ -18117,17 +22563,21 @@ window.SysAutomatorPaginationEditor = (function () {
 
         'Coluna',
 
+
       pagination:
 
         fieldPagination,
 
+
       values:
 
-        args,
+        values,
+
 
       attrs:
 
         attrs,
+
 
       access:
 
@@ -18139,7 +22589,10 @@ window.SysAutomatorPaginationEditor = (function () {
 
         recordColumn.tbl_users_types ||
 
+        recordColumn.cols_access ||
+
         [],
+
 
       isActionButtonsColumn:
 
@@ -18152,6 +22605,7 @@ window.SysAutomatorPaginationEditor = (function () {
           false
 
         ),
+
 
       buttons:
 
@@ -18551,54 +23005,127 @@ window.SysAutomatorPaginationEditor = (function () {
   function getPaginationEditorSubmitURL() {
 
 
+    const action = normalizePaginationEditorSubmitAction(
+
+      state.acao,
+
+      state.isNew
+
+    );
+
+
+    state.acao = action;
+
+
     let url = '';
 
 
     if(
-      typeof window.AutomatorPaginationRoutes !== 'undefined'
+      typeof window.AutomatorPaginationRoutes !== 'undefined' &&
+      window.AutomatorPaginationRoutes
     ) {
 
 
-      url =
+      url = String(
 
         window.AutomatorPaginationRoutes[
-          state.acao
+          action
         ] ||
 
-        window.AutomatorPaginationRoutes[
-          state.isNew === true
-            ? 'store'
-            : 'update'
-        ] ||
+        (
 
-        '';
+          action == 'add'
+
+            ? window.AutomatorPaginationRoutes.store
+
+            : window.AutomatorPaginationRoutes.update
+
+        ) ||
+
+        ''
+
+      ).trim();
+
 
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com rotas globais específicas
+    |--------------------------------------------------------------------------
+    */
 
     if(
       url == '' &&
-      typeof window.AutomatorRoutes !== 'undefined'
+      typeof window.AutomatorRoutes !== 'undefined' &&
+      window.AutomatorRoutes
     ) {
 
 
-      url =
+      if(action == 'add') {
 
-        window.AutomatorRoutes.apiPaginations ||
 
-        window.AutomatorRoutes.apiPagination ||
+        url = String(
 
-        window.AutomatorRoutes.apiAdmin ||
+          window.AutomatorRoutes.apiPaginationsStore ||
 
-        '';
+          window.AutomatorRoutes.apiPaginationStore ||
+
+          ''
+
+        ).trim();
+
+
+      } else {
+
+
+        url = String(
+
+          window.AutomatorRoutes.apiPaginationsUpdate ||
+
+          window.AutomatorRoutes.apiPaginationUpdate ||
+
+          ''
+
+        ).trim();
+
+
+      }
+
 
     }
 
 
-    if(
-      state.paginationID != '' &&
-      url.indexOf('#ID#') >= 0
-    ) {
+    /*
+    |--------------------------------------------------------------------------
+    | Não utiliza apiAdmin como rota de salvamento
+    |--------------------------------------------------------------------------
+    |
+    | apiAdmin é uma rota administrativa genérica e não corresponde ao
+    | endpoint responsável por cadastrar ou atualizar uma paginação.
+    |
+    */
+
+    if(url == '') {
+
+      return '';
+
+    }
+
+
+    if(url.indexOf('#ID#') >= 0) {
+
+
+      if(
+        action == 'edit' &&
+        state.paginationID == ''
+      ) {
+
+        return '';
+
+      }
+
 
       url = url.replace(
 
@@ -18608,14 +23135,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
       );
 
+
     }
 
 
-    return String(
-
-      url || ''
-
-    );
+    return url;
 
 
   }
@@ -18687,7 +23211,7 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
-    const payload = serializePaginationEditor();
+    const payload = formatPaginationEditorSubmitData();
 
 
     if(
@@ -18707,6 +23231,19 @@ window.SysAutomatorPaginationEditor = (function () {
       return false;
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove tooltips antes de abrir a confirmação
+    |--------------------------------------------------------------------------
+    |
+    | Evita que uma instância de tooltip ainda ativa tente processar seus
+    | gatilhos internos durante a criação do segundo modal.
+    |
+    */
+
+    hideEditorTooltips();
 
 
     state.submitting = true;
@@ -18816,6 +23353,9 @@ window.SysAutomatorPaginationEditor = (function () {
                   );
 
 
+                  refreshTooltips();
+
+
                 },
 
 
@@ -18913,6 +23453,9 @@ window.SysAutomatorPaginationEditor = (function () {
           );
 
 
+          refreshTooltips();
+
+
         }
 
       );
@@ -18972,27 +23515,18 @@ window.SysAutomatorPaginationEditor = (function () {
         if(status === true) {
 
 
-          const editor = document.querySelector(
+          /*
+          |--------------------------------------------------------------------------
+          | A persistência foi concluída
+          |--------------------------------------------------------------------------
+          |
+          | Remove todos os observadores antes de criar o toast. Dessa maneira,
+          | tanto o fechamento manual do toast quanto seu fechamento automático
+          | podem recarregar a página sem apresentar confirmação de saída.
+          |
+          */
 
-            selectors.editor
-
-          );
-
-
-          if(editor) {
-
-            editor.setAttribute(
-
-              'data-automator-pagination-submit',
-
-              'true'
-
-            );
-
-          }
-
-
-          clearUnsavedChangesWarning();
+          clearPaginationEditorChangesAfterSubmit();
 
 
           AutomatorCreateAutoCloseToastAlert(
@@ -19022,6 +23556,30 @@ window.SysAutomatorPaginationEditor = (function () {
             false,
 
             function() {
+
+
+              removeBeforeUnloadWarning();
+
+
+              $(window).off(
+
+                'beforeunload.AutomatorModalFormChanged'
+
+              );
+
+
+              $(window).off(
+
+                'beforeunload.AutomatorPaginationEditorChanged'
+
+              );
+
+
+              $(window).off(
+
+                'beforeunload.AutomatorSetActionStatus'
+
+              );
 
 
               window.location.reload();
@@ -19103,6 +23661,9 @@ window.SysAutomatorPaginationEditor = (function () {
                   true
 
                 );
+
+
+                refreshTooltips();
 
 
               }
@@ -19203,6 +23764,9 @@ window.SysAutomatorPaginationEditor = (function () {
                 );
 
 
+                refreshTooltips();
+
+
               }
 
             );
@@ -19252,6 +23816,734 @@ window.SysAutomatorPaginationEditor = (function () {
     return value
       .replace(/[^a-zA-Z0-9_]/g, '')
       .replace(/^[0-9]+/, '');
+
+
+  }
+
+
+  function getPaginationActionNameSuggestions(
+    currentItem = null,
+    searchValue = ''
+  ) {
+
+
+    currentItem = $(currentItem);
+
+
+    searchValue = normalizeActionName(
+
+      searchValue
+
+    );
+
+
+    const defaultSuggestions = [
+
+      'get',
+      'add',
+      'edit',
+      'delete',
+
+    ];
+
+
+    const usedNames = [];
+
+
+    $(selectors.actionItem).each(function() {
+
+
+      const item = $(this);
+
+
+      if(
+        currentItem.length &&
+        item[0] === currentItem[0]
+      ) {
+
+        return;
+
+      }
+
+
+      const actionName = normalizeActionName(
+
+        item.find(
+          selectors.actionName
+        ).val()
+
+      );
+
+
+      if(actionName != '') {
+
+        usedNames.push(
+
+          actionName
+
+        );
+
+      }
+
+
+    });
+
+
+    return defaultSuggestions.filter(function(suggestion) {
+
+
+      if(
+        usedNames.indexOf(
+          suggestion
+        ) >= 0
+      ) {
+
+        return false;
+
+      }
+
+
+      if(
+        searchValue != '' &&
+        suggestion.indexOf(
+          searchValue
+        ) < 0
+      ) {
+
+        return false;
+
+      }
+
+
+      return true;
+
+
+    });
+
+
+  }
+
+
+  function ensurePaginationActionNameAutocomplete(
+    item
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const input = item.find(
+
+      selectors.actionName
+
+    ).first();
+
+
+    if(!input.length) {
+
+      return false;
+
+    }
+
+
+    let wrapper = input.closest(
+
+      '.automator-pagination-editor-action-name-wrapper'
+
+    );
+
+
+    if(!wrapper.length) {
+
+
+      input.wrap(
+
+        '<div class="' +
+
+          'position-relative ' +
+
+          'automator-pagination-editor-action-name-wrapper' +
+
+        '"></div>'
+
+      );
+
+
+      wrapper = input.closest(
+
+        '.automator-pagination-editor-action-name-wrapper'
+
+      );
+
+
+    }
+
+
+    if(
+      !wrapper.find(
+        '.automator-pagination-editor-action-name-results'
+      ).length
+    ) {
+
+
+      wrapper.append(
+
+        '<div class="' +
+
+          'automator-pagination-editor-action-name-results ' +
+
+          'position-absolute start-0 end-0 bg-white border ' +
+
+          'rounded shadow d-none' +
+
+        '" style="' +
+
+          'bottom: calc(100% + 4px); ' +
+
+          'max-height: 180px; ' +
+
+          'overflow-y: auto; ' +
+
+          'z-index: 1090;' +
+
+        '"></div>'
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  function renderPaginationActionNameSuggestions(
+    input
+  ) {
+
+
+    input = $(input);
+
+
+    const item = input.closest(
+
+      selectors.actionItem
+
+    );
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    ensurePaginationActionNameAutocomplete(
+
+      item
+
+    );
+
+
+    const results = item.find(
+
+      '.automator-pagination-editor-action-name-results'
+
+    ).first();
+
+
+    const searchValue = normalizeActionName(
+
+      input.val()
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Exibe sugestões somente após digitar ao menos um caractere
+    |--------------------------------------------------------------------------
+    */
+
+    if(searchValue.length < 1) {
+
+
+      results
+        .empty()
+        .addClass(
+          'd-none'
+        );
+
+
+      return false;
+
+
+    }
+
+
+    const suggestions = getPaginationActionNameSuggestions(
+
+      item,
+
+      searchValue
+
+    );
+
+
+    if(suggestions.length <= 0) {
+
+
+      results
+        .empty()
+        .addClass(
+          'd-none'
+        );
+
+
+      return false;
+
+
+    }
+
+
+    let html = '';
+
+
+    suggestions.forEach(function(suggestion) {
+
+
+      html +=
+
+        '<button ' +
+
+          'type="button" ' +
+
+          'class="' +
+
+            'btn btn-sm btn-light border-0 rounded-0 ' +
+
+            'w-100 text-start ' +
+
+            'automator-pagination-editor-action-name-result' +
+
+          '" ' +
+
+          'data-action-name="' +
+
+            escapeHtml(suggestion) +
+
+          '"' +
+
+        '>' +
+
+          escapeHtml(suggestion) +
+
+        '</button>';
+
+
+    });
+
+
+    results
+      .html(
+        html
+      )
+      .removeClass(
+        'd-none'
+      );
+
+
+    return true;
+
+
+  }
+
+
+  function bindPaginationActionNameAutocompleteEvents() {
+
+
+    $(document)
+      .off(
+        'keyup.automator-pagination-editor-action-name-autocomplete ' +
+        'input.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName
+      )
+      .on(
+        'keyup.automator-pagination-editor-action-name-autocomplete ' +
+        'input.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName,
+        function() {
+
+
+          renderPaginationActionNameSuggestions(
+
+            this
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'focus.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName
+      )
+      .on(
+        'focus.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName,
+        function() {
+
+
+          const input = $(this);
+
+
+          const searchValue = normalizeActionName(
+
+            input.val()
+
+          );
+
+
+          if(searchValue.length < 1) {
+
+
+            const item = input.closest(
+
+              selectors.actionItem
+
+            );
+
+
+            ensurePaginationActionNameAutocomplete(
+
+              item
+
+            );
+
+
+            item.find(
+
+              '.automator-pagination-editor-action-name-results'
+
+            )
+              .empty()
+              .addClass(
+                'd-none'
+              );
+
+
+          }
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'mousedown.automator-pagination-editor-action-name-result',
+        '.automator-pagination-editor-action-name-result'
+      )
+      .on(
+        'mousedown.automator-pagination-editor-action-name-result',
+        '.automator-pagination-editor-action-name-result',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          const result = $(this);
+
+
+          const item = result.closest(
+
+            selectors.actionItem
+
+          );
+
+
+          const manager = item.closest(
+
+            selectors.actionsManager
+
+          );
+
+
+          const input = item.find(
+
+            selectors.actionName
+
+          ).first();
+
+
+          const routeSelect = item.find(
+
+            selectors.actionRoute
+
+          ).first();
+
+
+          const selectedActionName = normalizeActionName(
+
+            result.attr(
+
+              'data-action-name'
+
+            ) || ''
+
+          );
+
+
+          if(
+            !item.length ||
+            !manager.length ||
+            !input.length ||
+            selectedActionName == ''
+          ) {
+
+            return false;
+
+          }
+
+
+          input.val(
+
+            selectedActionName
+
+          );
+
+
+          item.find(
+
+            '.automator-pagination-editor-action-name-results'
+
+          )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+          input.trigger(
+
+            'blur'
+
+          );
+
+
+          updatePaginationActionCardHeader(
+
+            item
+
+          );
+
+
+          const actionNameValid = validateActionName(
+
+            manager,
+
+            item
+
+          );
+
+
+          if(actionNameValid === true) {
+
+
+            item.attr(
+
+              'data-action-current-name',
+
+              selectedActionName
+
+            );
+
+
+          }
+
+
+          syncActionsValue(
+
+            manager
+
+          );
+
+
+          updatePaginationButtonActionOptions();
+
+          syncPaginationButtonsState();
+
+          syncEditorState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+          setTimeout(function() {
+
+
+            item.find(
+
+              '.automator-pagination-editor-action-name-results'
+
+            )
+              .empty()
+              .addClass(
+                'd-none'
+              );
+
+
+            if(
+              routeSelect.length &&
+              routeSelect.prop(
+                'disabled'
+              ) !== true
+            ) {
+
+              routeSelect.trigger(
+
+                'focus'
+
+              );
+
+            }
+
+
+          }, 0);
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-action-name-result',
+        '.automator-pagination-editor-action-name-result'
+      )
+      .on(
+        'click.automator-pagination-editor-action-name-result',
+        '.automator-pagination-editor-action-name-result',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'keydown.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName
+      )
+      .on(
+        'keydown.automator-pagination-editor-action-name-autocomplete',
+        selectors.actionName,
+        function(event) {
+
+
+          if(event.key !== 'Escape') {
+
+            return;
+
+          }
+
+
+          $(this)
+            .closest(
+              selectors.actionItem
+            )
+            .find(
+              '.automator-pagination-editor-action-name-results'
+            )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-action-name-outside'
+      )
+      .on(
+        'click.automator-pagination-editor-action-name-outside',
+        function(event) {
+
+
+          const target = $(
+
+            event.target
+
+          );
+
+
+          if(
+            target.closest(
+              '.automator-pagination-editor-action-name-wrapper'
+            ).length
+          ) {
+
+            return;
+
+          }
+
+
+          $(
+
+            '.automator-pagination-editor-action-name-results'
+
+          )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+        }
+      );
+
+
+    return true;
 
 
   }
@@ -19461,6 +24753,31 @@ window.SysAutomatorPaginationEditor = (function () {
     updatePaginationButtonActionOptions();
 
     updatePaginationActionsUsageState();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza elementos estáticos dependentes das ações
+    |--------------------------------------------------------------------------
+    |
+    | A existência da ação delete controla:
+    |
+    | - A coluna de seleção no início da tabela;
+    | - O checkbox de seleção geral;
+    | - O botão "Excluir Selecionado(s)".
+    |
+    | A atualização deve ocorrer na própria sincronização das ações, sem
+    | depender da criação ou atualização posterior de algum botão.
+    |
+    */
+
+    if(
+      $(selectors.preview).length
+    ) {
+
+      renderPaginationPreview();
+
+    }
 
 
     return actions;
@@ -20450,6 +25767,65 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
+  | Normaliza estado interno do tooltip
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizeTooltipInternalState(
+    tooltip
+  ) {
+
+
+    if(
+      !tooltip ||
+      typeof tooltip !== 'object'
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bootstrap utiliza Object.values(_activeTrigger)
+    |--------------------------------------------------------------------------
+    |
+    | Algumas instâncias podem permanecer registradas depois que o elemento
+    | do tooltip foi recriado ou alterado. Nesse cenário, _activeTrigger pode
+    | não existir mais e o método hide() gera:
+    |
+    | Cannot convert undefined or null to object
+    |
+    */
+
+    if(
+      !tooltip._activeTrigger ||
+      typeof tooltip._activeTrigger !== 'object'
+    ) {
+
+      tooltip._activeTrigger = {};
+
+    }
+
+
+    tooltip._activeTrigger = {
+
+      click:  false,
+      focus:  false,
+      hover:  false,
+
+    };
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Tooltips
   |--------------------------------------------------------------------------
   */
@@ -20489,18 +25865,56 @@ window.SysAutomatorPaginationEditor = (function () {
     if(tooltip) {
 
 
+      normalizeTooltipInternalState(
+
+        tooltip
+
+      );
+
+
       try {
+
 
         tooltip.hide();
 
-      } catch(e) {}
+
+      } catch(error) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | A instância será descartada abaixo
+        |--------------------------------------------------------------------------
+        */
+
+
+      }
+
+
+      normalizeTooltipInternalState(
+
+        tooltip
+
+      );
 
 
       try {
 
+
         tooltip.dispose();
 
-      } catch(e) {}
+
+      } catch(error) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remove manualmente qualquer referência visual restante
+        |--------------------------------------------------------------------------
+        */
+
+
+      }
 
 
     }
@@ -20533,13 +25947,43 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    document
+      .querySelectorAll(
+        '.tooltip.automator-pagination-editor-tooltip'
+      )
+      .forEach(function(tooltipElement) {
+
+
+        const tooltipID = String(
+
+          tooltipElement.id || ''
+
+        ).trim();
+
+
+        if(
+          tooltipID != '' &&
+          tooltipID == describedBy
+        ) {
+
+          tooltipElement.remove();
+
+        }
+
+
+      });
+
+
     return true;
 
 
   }
 
 
-  function createTooltip(element) {
+  function createTooltip(
+    element,
+    forceRecreate = false
+  ) {
 
 
     if(
@@ -20584,6 +26028,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
     if(title == '') {
 
+
       disposeTooltip(
 
         element
@@ -20593,10 +26038,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
       return false;
 
+
     }
 
 
-    const currentTooltip =
+    let currentTooltip =
 
       bootstrap.Tooltip.getInstance(
 
@@ -20608,21 +26054,64 @@ window.SysAutomatorPaginationEditor = (function () {
     if(currentTooltip) {
 
 
-      try {
+      normalizeTooltipInternalState(
+
+        currentTooltip
+
+      );
 
 
-        currentTooltip.setContent({
-
-          '.tooltip-inner': title,
-
-        });
+      if(forceRecreate === true) {
 
 
-      } catch(e) {}
+        disposeTooltip(
 
+          element
+
+        );
+
+
+        currentTooltip = null;
+
+
+      } else {
+
+
+        try {
+
+
+          currentTooltip.setContent({
+
+            '.tooltip-inner': title,
+
+          });
+
+
+        } catch(error) {
+
+
+          disposeTooltip(
+
+            element
+
+          );
+
+
+          currentTooltip = null;
+
+
+        }
+
+
+      }
+
+
+    }
+
+
+    if(currentTooltip) {
 
       return currentTooltip;
-
 
     }
 
@@ -20646,7 +26135,7 @@ window.SysAutomatorPaginationEditor = (function () {
     try {
 
 
-      return bootstrap.Tooltip.getOrCreateInstance(
+      const tooltip = new bootstrap.Tooltip(
 
         element,
 
@@ -20687,6 +26176,16 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+      normalizeTooltipInternalState(
+
+        tooltip
+
+      );
+
+
+      return tooltip;
+
+
     } catch(error) {
 
 
@@ -20706,7 +26205,6 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
   }
-
 
   function refreshTooltips() {
 
@@ -20807,6 +26305,12 @@ window.SysAutomatorPaginationEditor = (function () {
   |--------------------------------------------------------------------------
   */
 
+  /*
+  |--------------------------------------------------------------------------
+  | Oculta tooltips ativos do editor
+  |--------------------------------------------------------------------------
+  */
+
   function hideEditorTooltips() {
 
 
@@ -20852,16 +26356,49 @@ window.SysAutomatorPaginationEditor = (function () {
 
         if(!tooltip) {
 
+
+          element.removeAttribute(
+
+            'aria-describedby'
+
+          );
+
+
           return;
 
         }
 
 
+        normalizeTooltipInternalState(
+
+          tooltip
+
+        );
+
+
         try {
+
 
           tooltip.hide();
 
-        } catch(e) {}
+
+        } catch(error) {
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Remove a instância inválida sem interromper o clique do usuário
+          |--------------------------------------------------------------------------
+          */
+
+          disposeTooltip(
+
+            element
+
+          );
+
+
+        }
 
 
       });
@@ -20879,6 +26416,9 @@ window.SysAutomatorPaginationEditor = (function () {
           'show'
 
         );
+
+
+        tooltipElement.remove();
 
 
       });
@@ -21121,21 +26661,60 @@ function SysAutomatorConfigPaginationEditor(
     null;
 
 
-  const editorAction = String(
-
-    response.acao ||
+  let editorAction = String(
 
     response.editorAction ||
+
+    response.submitAction ||
+
+    response.acao ||
 
     (
 
       paginationID
-        ? 'update'
-        : 'store'
+        ? 'edit'
+        : 'add'
 
     )
 
-  ).trim();
+  )
+    .trim()
+    .toLowerCase();
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Compatibilidade com nomes antigos
+  |--------------------------------------------------------------------------
+  */
+
+  if(
+    editorAction == 'store' ||
+    editorAction == 'create'
+  ) {
+
+    editorAction = 'add';
+
+  }
+
+
+  if(editorAction == 'update') {
+
+    editorAction = 'edit';
+
+  }
+
+
+  if(
+    editorAction != 'add' &&
+    editorAction != 'edit'
+  ) {
+
+    editorAction = paginationID
+      ? 'edit'
+      : 'add';
+
+  }
 
 
   if(
@@ -21205,6 +26784,11 @@ function SysAutomatorConfigPaginationEditor(
 
 
     acao:
+
+      editorAction,
+
+
+    editorAction:
 
       editorAction,
 

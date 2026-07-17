@@ -1011,4 +1011,1781 @@ class PaginationsController extends Controller {
   }
 
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cadastra uma paginação
+  |--------------------------------------------------------------------------
+  */
+
+  public function storePagination(
+    Request $request
+  ) {
+
+
+    return $this->persistPaginationEditor(
+
+      $request,
+
+      null
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza uma paginação
+  |--------------------------------------------------------------------------
+  */
+
+  public function updatePagination(
+    Request $request,
+    $id = null
+  ) {
+
+
+    $paginationID = $this->resolvePaginationEditorID(
+
+      $request,
+
+      $id
+
+    );
+
+
+    if($paginationID === null) {
+
+
+      return response()->json([
+
+        'status' => false,
+
+        'result' => false,
+
+        'title' => SysAutomator::SysAutomatorGetTranslateWord(
+          'Paginação inválida'
+        ),
+
+        'message' => SysAutomator::SysAutomatorGetTranslateWord(
+          'O ID da paginação não foi informado ou é inválido.'
+        ),
+
+      ], 400);
+
+
+    }
+
+
+    return $this->persistPaginationEditor(
+
+      $request,
+
+      $paginationID
+
+    );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Compatibilidade com rotas REST
+  |--------------------------------------------------------------------------
+  */
+
+  public function store(
+    Request $request
+  ) {
+
+
+    return $this->storePagination(
+
+      $request
+
+    );
+
+
+  }
+
+
+  public function update(
+    Request $request,
+    $id = null
+  ) {
+
+
+    return $this->updatePagination(
+
+      $request,
+
+      $id
+
+    );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Persiste os dados do editor
+  |--------------------------------------------------------------------------
+  */
+
+  private function persistPaginationEditor(
+    Request $request,
+    ?int $paginationID = null
+  ) {
+
+
+    $payload = $this->normalizePaginationEditorPayload(
+
+      $request->all()
+
+    );
+
+
+    $validationErrors =
+
+      $this->validatePaginationEditorPayload(
+
+        $payload,
+
+        $paginationID
+
+      );
+
+
+    if(count($validationErrors) > 0) {
+
+
+      return response()->json([
+
+        'status' => false,
+
+        'result' => false,
+
+        'title' => SysAutomator::SysAutomatorGetTranslateWord(
+          'Configurações inválidas'
+        ),
+
+        'message' => implode(
+
+          "\n",
+
+          $validationErrors
+
+        ),
+
+        'errors' => $validationErrors,
+
+      ], 422);
+
+
+    }
+
+
+    try {
+
+
+      $pagination = DB::transaction(function() use (
+        $payload,
+        $paginationID
+      ) {
+
+
+        $paginationData = $payload[
+
+          'pagination'
+
+        ];
+
+
+        if($paginationID === null) {
+
+
+          unset(
+
+            $paginationData[
+              'tbl_sys_pagination_ID'
+            ]
+
+          );
+
+
+          $pagination = SysPagination::create(
+
+            $paginationData
+
+          );
+
+
+        } else {
+
+
+          $pagination = SysPagination::where(
+
+            'tbl_sys_pagination_ID',
+
+            $paginationID
+
+          )
+            ->lockForUpdate()
+            ->first();
+
+
+          if($pagination === null) {
+
+
+            return null;
+
+
+          }
+
+
+          $pagination->fill(
+
+            $paginationData
+
+          );
+
+
+          $pagination->save();
+
+
+        }
+
+
+        $this->persistPaginationEditorArguments(
+
+          $pagination,
+
+          $payload[
+            'pagination_args'
+          ]
+
+        );
+
+
+        $this->persistPaginationEditorColumns(
+
+          $pagination,
+
+          $payload[
+            'pagination_cols'
+          ]
+
+        );
+
+
+        return $pagination;
+
+
+      });
+
+
+      if($pagination === null) {
+
+
+        return response()->json([
+
+          'status' => false,
+
+          'result' => false,
+
+          'title' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Paginação não encontrada'
+          ),
+
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'A paginação que você está tentando atualizar não foi encontrada.'
+          ),
+
+        ], 404);
+
+
+      }
+
+
+      return response()->json([
+
+        'status' => true,
+
+        'result' => true,
+
+        'title' => SysAutomator::SysAutomatorGetTranslateWord(
+          $paginationID === null
+            ? 'Paginação cadastrada'
+            : 'Paginação atualizada'
+        ),
+
+        'message' => SysAutomator::SysAutomatorGetTranslateWord(
+          $paginationID === null
+            ? 'A paginação foi cadastrada com sucesso.'
+            : 'A paginação foi atualizada com sucesso.'
+        ),
+
+        'acao' => 'update',
+
+        'paginationID' =>
+
+          $pagination->tbl_sys_pagination_ID,
+
+        'pagination_id' =>
+
+          $pagination->tbl_sys_pagination_ID,
+
+        'tbl_sys_pagination_ID' =>
+
+          $pagination->tbl_sys_pagination_ID,
+
+        'data' =>
+
+          $this->preparePaginationEditorRecord(
+
+            $pagination->fresh()
+
+          ),
+
+      ], $paginationID === null ? 201 : 200);
+
+
+    } catch(\Throwable $exception) {
+
+
+      report(
+
+        $exception
+
+      );
+
+
+      return response()->json([
+
+        'status' => false,
+
+        'result' => false,
+
+        'title' => SysAutomator::SysAutomatorGetTranslateWord(
+          'Erro ao salvar paginação'
+        ),
+
+        'message' => SysAutomator::SysAutomatorGetTranslateWord(
+          'Não foi possível salvar a paginação.'
+        ),
+
+      ], 500);
+
+
+    }
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o payload recebido do editor
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorPayload(
+    array $payload
+  ): array {
+
+
+    $pagination =
+
+      $this->normalizePaginationEditorObject(
+
+        $payload['pagination'] ?? []
+
+      );
+
+
+    $paginationArgs =
+
+      $this->normalizePaginationEditorObject(
+
+        $payload['pagination_args'] ?? []
+
+      );
+
+
+    $paginationCols =
+
+      $this->normalizePaginationEditorList(
+
+        $payload['pagination_cols'] ??
+
+        $payload['columns'] ??
+
+        $payload['cols'] ??
+
+        []
+
+      );
+
+
+    $paginationFields = [
+
+      'tbl_sys_pagination_name',
+      'tbl_sys_pagination_route',
+      'tbl_sys_pagination_title',
+      'tbl_sys_pagination_table',
+      'tbl_sys_pagination_index',
+      'tbl_sys_pagination_locked',
+
+    ];
+
+
+    foreach($paginationFields as $fieldName) {
+
+
+      if(
+        !array_key_exists(
+          $fieldName,
+          $pagination
+        ) &&
+        array_key_exists(
+          $fieldName,
+          $payload
+        )
+      ) {
+
+        $pagination[$fieldName] =
+
+          $payload[$fieldName];
+
+
+      }
+
+
+    }
+
+
+    $pagination[
+
+      'tbl_sys_pagination_name'
+
+    ] = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_name'
+      ] ?? ''
+
+    ));
+
+
+    $pagination[
+
+      'tbl_sys_pagination_route'
+
+    ] = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_route'
+      ] ?? ''
+
+    ));
+
+
+    $pagination[
+
+      'tbl_sys_pagination_title'
+
+    ] = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_title'
+      ] ?? ''
+
+    ));
+
+
+    $pagination[
+
+      'tbl_sys_pagination_table'
+
+    ] = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_table'
+      ] ?? ''
+
+    ));
+
+
+    $pagination[
+
+      'tbl_sys_pagination_index'
+
+    ] = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_index'
+      ] ?? ''
+
+    ));
+
+
+    $pagination[
+
+      'tbl_sys_pagination_locked'
+
+    ] = $this->normalizePaginationEditorBoolean(
+
+      $pagination[
+        'tbl_sys_pagination_locked'
+      ] ?? false
+
+    );
+
+
+    $reservedFields = array_merge(
+
+      $paginationFields,
+
+      [
+
+        'id',
+        'acao',
+        'editorAction',
+        'paginationID',
+        'pagination_id',
+        'tbl_sys_pagination_ID',
+        'pagination',
+        'pagination_args',
+        'pagination_cols',
+        'columns',
+        'cols',
+
+      ]
+
+    );
+
+
+    foreach($payload as $key => $value) {
+
+
+      if(
+        in_array(
+          $key,
+          $reservedFields,
+          true
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      if(
+        !array_key_exists(
+          $key,
+          $paginationArgs
+        )
+      ) {
+
+        $paginationArgs[$key] =
+
+          $value;
+
+
+      }
+
+
+    }
+
+
+    $paginationArgs['page_name'] = trim((string) (
+
+      $paginationArgs['page_name'] ??
+
+      $pagination[
+        'tbl_sys_pagination_route'
+      ] ??
+
+      $pagination[
+        'tbl_sys_pagination_name'
+      ] ??
+
+      ''
+
+    ));
+
+
+    $paginationArgs['per_page'] = (int) (
+
+      $paginationArgs['per_page'] ?? 15
+
+    );
+
+
+    if($paginationArgs['per_page'] <= 0) {
+
+      $paginationArgs['per_page'] = 15;
+
+    }
+
+
+    $paginationArgs['actions'] =
+
+      $this->normalizePaginationEditorObject(
+
+        $paginationArgs['actions'] ??
+
+        $payload['actions'] ??
+
+        []
+
+      );
+
+
+    $paginationArgs['header_actions'] =
+
+      $this->normalizePaginationEditorList(
+
+        $paginationArgs['header_actions'] ??
+
+        $payload['header_actions'] ??
+
+        []
+
+      );
+
+
+    $paginationArgs['list_actions'] =
+
+      $this->normalizePaginationEditorList(
+
+        $paginationArgs['list_actions'] ??
+
+        $payload['list_actions'] ??
+
+        []
+
+      );
+
+
+    $normalizedColumns = [];
+
+
+    foreach($paginationCols as $columnIndex => $column) {
+
+
+      $column =
+
+        $this->normalizePaginationEditorObject(
+
+          $column
+
+        );
+
+
+      if(
+        $this->normalizePaginationEditorBoolean(
+
+          $column[
+            'is_action_buttons_column'
+          ] ??
+
+          $column[
+            'isActionButtonsColumn'
+          ] ??
+
+          false
+
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      $normalizedColumns[] =
+
+        $this->normalizePaginationEditorColumnPayload(
+
+          $column,
+
+          $columnIndex
+
+        );
+
+
+    }
+
+
+    return [
+
+      'pagination' => $pagination,
+
+      'pagination_args' => $paginationArgs,
+
+      'pagination_cols' => $normalizedColumns,
+
+    ];
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza uma coluna recebida do editor
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorColumnPayload(
+    array $column,
+    int $columnIndex
+  ): array {
+
+
+    $columnArgs =
+
+      $this->normalizePaginationEditorObject(
+
+        $column[
+          'tbl_sys_paginations_col_args'
+        ] ??
+
+        $column['values'] ??
+
+        []
+
+      );
+
+
+    $header =
+
+      $this->normalizePaginationEditorObject(
+
+        $column[
+          'tbl_sys_paginations_col_header'
+        ] ??
+
+        $columnArgs['header'] ??
+
+        []
+
+      );
+
+
+    $body =
+
+      $this->normalizePaginationEditorObject(
+
+        $column[
+          'tbl_sys_paginations_col_body'
+        ] ??
+
+        $columnArgs['body'] ??
+
+        []
+
+      );
+
+
+    $props =
+
+      $this->normalizePaginationEditorObject(
+
+        $column[
+          'tbl_sys_paginations_col_props'
+        ] ??
+
+        $columnArgs['props'] ??
+
+        []
+
+      );
+
+
+    $attrs =
+
+      $this->normalizePaginationEditorObject(
+
+        $column[
+          'tbl_sys_paginations_col_attrs'
+        ] ??
+
+        $column['attrs'] ??
+
+        []
+
+      );
+
+
+    $canSearch =
+
+      $this->normalizePaginationEditorObject(
+
+        $columnArgs['canSearch'] ?? []
+
+      );
+
+
+    $canSort =
+
+      $this->normalizePaginationEditorObject(
+
+        $columnArgs['canSort'] ?? []
+
+      );
+
+
+    $access =
+
+      $this->normalizePaginationEditorList(
+
+        $column['access'] ??
+
+        $column['user_types'] ??
+
+        $column['cols_access'] ??
+
+        []
+
+      );
+
+
+    $access = array_values(
+
+      array_unique(
+
+        array_filter(
+
+          array_map(function($userTypeID) {
+
+
+            return (int) $userTypeID;
+
+
+          }, $access),
+
+          function($userTypeID) {
+
+
+            return $userTypeID > 0;
+
+
+          }
+
+        )
+
+      )
+
+    );
+
+
+    return [
+
+      'tbl_sys_paginations_col_ID' =>
+
+        isset(
+          $column[
+            'tbl_sys_paginations_col_ID'
+          ]
+        ) &&
+        is_numeric(
+          $column[
+            'tbl_sys_paginations_col_ID'
+          ]
+        )
+
+          ? (int) $column[
+              'tbl_sys_paginations_col_ID'
+            ]
+
+          : null,
+
+
+      'tbl_sys_field_type_ID' =>
+
+        (int) (
+
+          $column[
+            'tbl_sys_field_type_ID'
+          ] ??
+
+          $column['type_id'] ??
+
+          0
+
+        ),
+
+
+      'tbl_sys_paginations_col_name' =>
+
+        trim((string) (
+
+          $column[
+            'tbl_sys_paginations_col_name'
+          ] ??
+
+          $column['name'] ??
+
+          ''
+
+        )),
+
+
+      'tbl_sys_paginations_col_title' =>
+
+        trim((string) (
+
+          $column[
+            'tbl_sys_paginations_col_title'
+          ] ??
+
+          $column['label'] ??
+
+          $column['title'] ??
+
+          ''
+
+        )),
+
+
+      'tbl_sys_paginations_col_header' =>
+
+        $header,
+
+
+      'tbl_sys_paginations_col_body' =>
+
+        $body,
+
+
+      'tbl_sys_paginations_col_props' =>
+
+        $props,
+
+
+      'tbl_sys_paginations_col_attrs' =>
+
+        $attrs,
+
+
+      'tbl_sys_paginations_col_search' =>
+
+        $this->normalizePaginationEditorBoolean(
+
+          $column[
+            'tbl_sys_paginations_col_search'
+          ] ??
+
+          $canSearch['search'] ??
+
+          false
+
+        ),
+
+
+      'tbl_sys_paginations_col_sort' =>
+
+        $this->normalizePaginationEditorBoolean(
+
+          $column[
+            'tbl_sys_paginations_col_sort'
+          ] ??
+
+          $canSort['sort'] ??
+
+          false
+
+        ),
+
+
+      'tbl_sys_paginations_col_ordem' =>
+
+        (int) (
+
+          $column[
+            'tbl_sys_paginations_col_ordem'
+          ] ??
+
+          $columnIndex
+
+        ),
+
+
+      'access' =>
+
+        $access,
+
+    ];
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Valida o payload do editor
+  |--------------------------------------------------------------------------
+  */
+
+  private function validatePaginationEditorPayload(
+    array $payload,
+    ?int $paginationID = null
+  ): array {
+
+
+    $errors = [];
+
+
+    $pagination =
+
+      $payload['pagination'] ?? [];
+
+
+    $columns =
+
+      $payload['pagination_cols'] ?? [];
+
+
+    $paginationName = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_name'
+      ] ?? ''
+
+    ));
+
+
+    $paginationRoute = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_route'
+      ] ?? ''
+
+    ));
+
+
+    $paginationTitle = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_title'
+      ] ?? ''
+
+    ));
+
+
+    $paginationTable = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_table'
+      ] ?? ''
+
+    ));
+
+
+    $paginationIndex = trim((string) (
+
+      $pagination[
+        'tbl_sys_pagination_index'
+      ] ?? ''
+
+    ));
+
+
+    if($paginationName === '') {
+
+      $errors[] =
+
+        'Informe o nome da paginação.';
+
+    }
+
+
+    if(
+      mb_strlen(
+        $paginationName
+      ) > 255
+    ) {
+
+      $errors[] =
+
+        'O nome da paginação deve possuir no máximo 255 caracteres.';
+
+    }
+
+
+    if($paginationRoute === '') {
+
+      $errors[] =
+
+        'Informe a rota da paginação.';
+
+    }
+
+
+    if($paginationTitle === '') {
+
+      $errors[] =
+
+        'Informe o título da paginação.';
+
+    }
+
+
+    if($paginationTable === '') {
+
+      $errors[] =
+
+        'Selecione a tabela da paginação.';
+
+    }
+
+
+    if($paginationIndex === '') {
+
+      $errors[] =
+
+        'Selecione a chave primária da paginação.';
+
+    }
+
+
+    $duplicatedPagination = SysPagination::where(
+
+      'tbl_sys_pagination_name',
+
+      $paginationName
+
+    );
+
+
+    if($paginationID !== null) {
+
+
+      $duplicatedPagination->where(
+
+        'tbl_sys_pagination_ID',
+
+        '!=',
+
+        $paginationID
+
+      );
+
+
+    }
+
+
+    if(
+      $paginationName !== '' &&
+      $duplicatedPagination->exists()
+    ) {
+
+      $errors[] =
+
+        'Já existe uma paginação cadastrada com este nome.';
+
+    }
+
+
+    if(count($columns) <= 0) {
+
+      $errors[] =
+
+        'Adicione pelo menos uma coluna à paginação.';
+
+    }
+
+
+    foreach($columns as $columnIndex => $column) {
+
+
+      $fieldTypeID = (int) (
+
+        $column[
+          'tbl_sys_field_type_ID'
+        ] ?? 0
+
+      );
+
+
+      $columnName = trim((string) (
+
+        $column[
+          'tbl_sys_paginations_col_name'
+        ] ?? ''
+
+      ));
+
+
+      $columnTitle = trim((string) (
+
+        $column[
+          'tbl_sys_paginations_col_title'
+        ] ?? ''
+
+      ));
+
+
+      if($fieldTypeID <= 0) {
+
+        $errors[] =
+
+          'O tipo da coluna ' .
+
+          ($columnIndex + 1) .
+
+          ' é inválido.';
+
+      }
+
+
+      if($columnName === '') {
+
+        $errors[] =
+
+          'Selecione a coluna do banco de dados no item ' .
+
+          ($columnIndex + 1) .
+
+          '.';
+
+      }
+
+
+      if($columnTitle === '') {
+
+        $errors[] =
+
+          'Informe o título da coluna no item ' .
+
+          ($columnIndex + 1) .
+
+          '.';
+
+      }
+
+
+      if(
+        mb_strlen(
+          $columnTitle
+        ) > 255
+      ) {
+
+        $errors[] =
+
+          'O título da coluna ' .
+
+          ($columnIndex + 1) .
+
+          ' deve possuir no máximo 255 caracteres.';
+
+      }
+
+
+      if(
+        $fieldTypeID > 0 &&
+        !SysFieldType::where(
+
+          'tbl_sys_field_type_ID',
+
+          $fieldTypeID
+
+        )->exists()
+      ) {
+
+        $errors[] =
+
+          'O tipo da coluna ' .
+
+          ($columnIndex + 1) .
+
+          ' não foi encontrado no sistema.';
+
+      }
+
+
+    }
+
+
+    return array_values(
+
+      array_unique(
+
+        $errors
+
+      )
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Persiste argumentos da paginação
+  |--------------------------------------------------------------------------
+  */
+
+  private function persistPaginationEditorArguments(
+    SysPagination $pagination,
+    array $arguments
+  ): void {
+
+
+    $argumentNames = [];
+
+
+    foreach($arguments as $argumentName => $argumentValue) {
+
+
+      $argumentName = trim((string)
+
+        $argumentName
+
+      );
+
+
+      if($argumentName === '') {
+
+        continue;
+
+      }
+
+
+      $argumentNames[] =
+
+        $argumentName;
+
+
+      SysPaginationsArg::updateOrCreate(
+
+        [
+
+          'tbl_sys_pagination_ID' =>
+
+            $pagination->tbl_sys_pagination_ID,
+
+          'tbl_sys_paginations_arg_name' =>
+
+            $argumentName,
+
+        ],
+
+        [
+
+          'tbl_sys_paginations_arg_value' =>
+
+            $this->encodePaginationEditorValue(
+
+              $argumentValue
+
+            ),
+
+        ]
+
+      );
+
+
+    }
+
+
+    $deleteArguments = SysPaginationsArg::where(
+
+      'tbl_sys_pagination_ID',
+
+      $pagination->tbl_sys_pagination_ID
+
+    );
+
+
+    if(count($argumentNames) > 0) {
+
+
+      $deleteArguments->whereNotIn(
+
+        'tbl_sys_paginations_arg_name',
+
+        $argumentNames
+
+      );
+
+
+    }
+
+
+    $deleteArguments->delete();
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Persiste colunas e permissões
+  |--------------------------------------------------------------------------
+  */
+
+  private function persistPaginationEditorColumns(
+    SysPagination $pagination,
+    array $columns
+  ): void {
+
+
+    $persistedColumnIDs = [];
+
+
+    foreach($columns as $columnIndex => $columnData) {
+
+
+      $columnID =
+
+        $columnData[
+          'tbl_sys_paginations_col_ID'
+        ] ?? null;
+
+
+      $column = null;
+
+
+      if(
+        $columnID !== null &&
+        $columnID > 0
+      ) {
+
+
+        $column = SysPaginationsCol::where(
+
+          'tbl_sys_paginations_col_ID',
+
+          $columnID
+
+        )
+          ->where(
+
+            'tbl_sys_pagination_ID',
+
+            $pagination->tbl_sys_pagination_ID
+
+          )
+          ->first();
+
+
+      }
+
+
+      if($column === null) {
+
+        $column = new SysPaginationsCol();
+
+      }
+
+
+      $column->fill([
+
+        'tbl_sys_pagination_ID' =>
+
+          $pagination->tbl_sys_pagination_ID,
+
+
+        'tbl_sys_field_type_ID' =>
+
+          $columnData[
+            'tbl_sys_field_type_ID'
+          ],
+
+
+        'tbl_sys_paginations_col_name' =>
+
+          $columnData[
+            'tbl_sys_paginations_col_name'
+          ],
+
+
+        'tbl_sys_paginations_col_title' =>
+
+          $columnData[
+            'tbl_sys_paginations_col_title'
+          ],
+
+
+        'tbl_sys_paginations_col_header' =>
+
+          $this->encodePaginationEditorValue(
+
+            $columnData[
+              'tbl_sys_paginations_col_header'
+            ]
+
+          ),
+
+
+        'tbl_sys_paginations_col_body' =>
+
+          $this->encodePaginationEditorValue(
+
+            $columnData[
+              'tbl_sys_paginations_col_body'
+            ]
+
+          ),
+
+
+        'tbl_sys_paginations_col_props' =>
+
+          $this->encodePaginationEditorValue(
+
+            $columnData[
+              'tbl_sys_paginations_col_props'
+            ]
+
+          ),
+
+
+        'tbl_sys_paginations_col_attrs' =>
+
+          $this->encodePaginationEditorValue(
+
+            $columnData[
+              'tbl_sys_paginations_col_attrs'
+            ]
+
+          ),
+
+
+        'tbl_sys_paginations_col_search' =>
+
+          $columnData[
+            'tbl_sys_paginations_col_search'
+          ],
+
+
+        'tbl_sys_paginations_col_sort' =>
+
+          $columnData[
+            'tbl_sys_paginations_col_sort'
+          ],
+
+
+        'tbl_sys_paginations_col_ordem' =>
+
+          $columnIndex,
+
+      ]);
+
+
+      $column->save();
+
+
+      $persistedColumnIDs[] =
+
+        $column->tbl_sys_paginations_col_ID;
+
+
+      $this->persistPaginationEditorColumnAccess(
+
+        $column,
+
+        $columnData['access'] ?? []
+
+      );
+
+
+    }
+
+
+    $columnsToDelete = SysPaginationsCol::where(
+
+      'tbl_sys_pagination_ID',
+
+      $pagination->tbl_sys_pagination_ID
+
+    );
+
+
+    if(count($persistedColumnIDs) > 0) {
+
+
+      $columnsToDelete->whereNotIn(
+
+        'tbl_sys_paginations_col_ID',
+
+        $persistedColumnIDs
+
+      );
+
+
+    }
+
+
+    $removedColumnIDs = $columnsToDelete
+      ->pluck(
+        'tbl_sys_paginations_col_ID'
+      )
+      ->toArray();
+
+
+    if(count($removedColumnIDs) > 0) {
+
+
+      SysPaginationsColsAccess::whereIn(
+
+        'tbl_sys_paginations_col_ID',
+
+        $removedColumnIDs
+
+      )->delete();
+
+
+      SysPaginationsCol::whereIn(
+
+        'tbl_sys_paginations_col_ID',
+
+        $removedColumnIDs
+
+      )->delete();
+
+
+    }
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Persiste permissões da coluna
+  |--------------------------------------------------------------------------
+  */
+
+  private function persistPaginationEditorColumnAccess(
+    SysPaginationsCol $column,
+    array $access
+  ): void {
+
+
+    $access = array_values(
+
+      array_unique(
+
+        array_filter(
+
+          array_map(function($userTypeID) {
+
+
+            return (int) $userTypeID;
+
+
+          }, $access),
+
+          function($userTypeID) {
+
+
+            return $userTypeID > 0;
+
+
+          }
+
+        )
+
+      )
+
+    );
+
+
+    SysPaginationsColsAccess::where(
+
+      'tbl_sys_paginations_col_ID',
+
+      $column->tbl_sys_paginations_col_ID
+
+    )->delete();
+
+
+    foreach($access as $userTypeID) {
+
+
+      SysPaginationsColsAccess::create([
+
+        'tbl_users_type_ID' =>
+
+          $userTypeID,
+
+        'tbl_sys_paginations_col_ID' =>
+
+          $column->tbl_sys_paginations_col_ID,
+
+      ]);
+
+
+    }
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Codifica valores estruturados para o banco
+  |--------------------------------------------------------------------------
+  */
+
+  private function encodePaginationEditorValue(
+    $value
+  ) {
+
+
+    if(
+      is_array($value) ||
+      is_object($value)
+    ) {
+
+
+      return json_encode(
+
+        $value,
+
+        JSON_UNESCAPED_UNICODE |
+
+        JSON_UNESCAPED_SLASHES
+
+      );
+
+
+    }
+
+
+    if(is_bool($value)) {
+
+      return $value ? '1' : '0';
+
+    }
+
+
+    if($value === null) {
+
+      return '';
+
+    }
+
+
+    return (string) $value;
+
+
+  }
+
 }

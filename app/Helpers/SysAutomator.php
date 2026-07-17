@@ -666,6 +666,7 @@
     }
 
 
+
     public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
 
 
@@ -692,12 +693,30 @@
 
       /*
       |--------------------------------------------------------------------------
-      | Remove <code>...</code> apenas quando envolve um shortcode
+      | Remove <code> somente quando envolve um shortcode
       |--------------------------------------------------------------------------
       */
 
-      $content = preg_replace('/<code>\s*(\[[^\]]+\])\s*<\/code>/i', '$1', $content);
+      $content = preg_replace_callback(
 
+        '/<code\b[^>]*>\s*(\[[^\]]+\])\s*<\/code>/i',
+
+        function($matches) {
+
+          return $matches[1] ?? '';
+
+        },
+
+        $content
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Busca os shortcodes cadastrados
+      |--------------------------------------------------------------------------
+      */
 
       $shortcodes = SysShortcode::get();
 
@@ -709,12 +728,29 @@
       }
 
 
+      /*
+      |--------------------------------------------------------------------------
+      | Indexa os shortcodes por código
+      |--------------------------------------------------------------------------
+      */
+
       $shortcodesByCode = [];
 
 
       foreach($shortcodes as $shortcodeConfig) {
 
-        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+        $shortcodeCode = trim(
+
+          (string) (
+
+            $shortcodeConfig->tbl_sys_shortcode_code
+
+            ?? ''
+
+          )
+
+        );
+
 
         if($shortcodeCode === '') {
 
@@ -723,10 +759,86 @@
         }
 
 
-        $shortcodesByCode[$shortcodeCode] = $shortcodeConfig;
+        $shortcodeCode = trim(
+
+          $shortcodeCode,
+
+          '[]'
+
+        );
+
+
+        $shortcodeCode = preg_replace(
+
+          '/\s+.*/',
+
+          '',
+
+          $shortcodeCode
+
+        );
+
+
+        $shortcodeCode = strtolower(
+
+          trim($shortcodeCode)
+
+        );
+
+
+        if($shortcodeCode === '') {
+
+          continue;
+
+        }
+
+
+        $shortcodesByCode[$shortcodeCode] =
+
+          $shortcodeConfig;
 
       }
 
+
+      /*
+      |--------------------------------------------------------------------------
+      | Funções internas do AutomatorController
+      |--------------------------------------------------------------------------
+      |
+      | Estas funções sempre devem continuar sendo executadas por:
+      |
+      | AutomatorController@getFunction
+      |
+      | Mesmo que exista outro registro com o mesmo nome em tbl_sys_shortcodes.
+      |
+      */
+
+      $automatorInternalFunctions = [
+
+        'pagination',
+        'getdata',
+        'get-data',
+        'getdatabytablemodel',
+        'get-data-by-table-model',
+        'getdatabytablemodelname',
+        'get-data-by-table-model-name',
+        'getdatabymodel',
+        'get-data-by-model',
+        'storedata',
+        'store-data',
+        'updatedata',
+        'update-data',
+        'deletedata',
+        'delete-data',
+
+      ];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve variáveis do shortcode
+      |--------------------------------------------------------------------------
+      */
 
       $resolveVars = function($attributes) use ($vars) {
 
@@ -734,22 +846,60 @@
         $resolvedVars = $vars;
 
 
-        if(isset($attributes['vars']) && trim($attributes['vars']) !== '') {
+        if(
 
-          $varsName = trim($attributes['vars']);
+          isset($attributes['vars']) &&
+
+          is_scalar($attributes['vars']) &&
+
+          trim((string) $attributes['vars']) !== ''
+
+        ) {
+
+          $varsName = trim(
+
+            (string) $attributes['vars']
+
+          );
+
 
           if(substr($varsName, 0, 1) === '$') {
 
-            $varsName = substr($varsName, 1);
+            $varsName = substr(
+
+              $varsName,
+
+              1
+
+            );
 
           }
 
 
-          if(isset($vars[$varsName]) && is_array($vars[$varsName])) {
+          if(
+
+            $varsName !== '' &&
+
+            array_key_exists(
+
+              $varsName,
+
+              $vars
+
+            )
+
+          ) {
 
             $resolvedVars = $vars[$varsName];
 
           }
+
+        }
+
+
+        if(is_object($resolvedVars)) {
+
+          $resolvedVars = (array) $resolvedVars;
 
         }
 
@@ -767,21 +917,231 @@
       };
 
 
-      $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route, $resolveVars) {
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza o retorno do shortcode
+      |--------------------------------------------------------------------------
+      */
+
+      $normalizeShortcodeResponse = function($response) {
 
 
-        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+        if(
+
+          $response instanceof
+
+          \Illuminate\Contracts\View\View
+
+        ) {
+
+          return $response->render();
+
+        }
+
+
+        if(
+
+          $response instanceof
+
+          \Illuminate\Http\JsonResponse
+
+        ) {
+
+          $responseData = $response->getData(true);
+
+
+          if(
+
+            is_array($responseData) &&
+
+            array_key_exists(
+
+              'html',
+
+              $responseData
+
+            )
+
+          ) {
+
+            $html = $responseData['html'];
+
+
+            return is_scalar($html)
+
+              ? (string) $html
+
+              : '';
+
+          }
+
+
+          return $response->getContent();
+
+        }
+
+
+        if(
+
+          $response instanceof
+
+          \Symfony\Component\HttpFoundation\Response
+
+        ) {
+
+          return $response->getContent();
+
+        }
+
+
+        if(is_array($response)) {
+
+
+          if(array_key_exists('html', $response)) {
+
+            $html = $response['html'];
+
+
+            return is_scalar($html)
+
+              ? (string) $html
+
+              : '';
+
+          }
+
+
+          if(
+
+            isset($response['status']) &&
+
+            $response['status'] === false
+
+          ) {
+
+            $message =
+
+              $response['message']
+
+              ?? 'Não foi possível renderizar o conteúdo.';
+
+
+            if(!is_scalar($message)) {
+
+              $message =
+
+                'Não foi possível renderizar o conteúdo.';
+
+            }
+
+
+            return '<div class="alert alert-warning">' .
+
+              e((string) $message) .
+
+            '</div>';
+
+          }
+
+
+          return '';
+
+        }
+
+
+        if($response === null) {
+
+          return '';
+
+        }
+
+
+        if(is_bool($response)) {
+
+          return $response ? '1' : '';
+
+        }
+
+
+        if(is_scalar($response)) {
+
+          return (string) $response;
+
+        }
+
+
+        if(
+
+          is_object($response) &&
+
+          method_exists($response, '__toString')
+
+        ) {
+
+          return (string) $response;
+
+        }
+
+
+        return '';
+
+
+      };
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Valida parâmetros obrigatórios
+      |--------------------------------------------------------------------------
+      */
+
+      $validateShortcodeParams = function(
+
+        $shortcodeConfig,
+
+        array $attributes
+
+      ) {
+
 
         $paramsRules = [];
 
-        $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
+        $paramsValue =
+
+          $shortcodeConfig->tbl_sys_shortcode_params
+
+          ?? [];
 
 
-        if($paramsJson !== '') {
+        if(is_object($paramsValue)) {
 
-          $decodedParams = json_decode($paramsJson, true);
+          $paramsValue = (array) $paramsValue;
 
-          if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
+        }
+
+
+        if(is_array($paramsValue)) {
+
+          $paramsRules = $paramsValue;
+
+        } elseif(
+
+          is_string($paramsValue) &&
+
+          trim($paramsValue) !== ''
+
+        ) {
+
+          $decodedParams = json_decode(
+
+            $paramsValue,
+
+            true
+
+          );
+
+
+          if(is_array($decodedParams)) {
 
             $paramsRules = $decodedParams;
 
@@ -790,35 +1150,146 @@
         }
 
 
-        if(count($paramsRules) >= 1) {
+        foreach($paramsRules as $paramName => $paramRule) {
 
-          foreach($paramsRules as $paramName => $paramRule) {
-
-            $required = false;
+          $required = false;
 
 
-            if($paramRule === true) {
+          if($paramRule === true) {
 
-              $required = true;
+            $required = true;
 
-            } elseif(is_array($paramRule) && isset($paramRule['required']) && $paramRule['required'] === true) {
+          } elseif(
 
-              $required = true;
+            is_array($paramRule) &&
 
-            }
+            array_key_exists(
 
+              'required',
 
-            if($required === true) {
+              $paramRule
 
-              if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
+            )
 
-                return $originalShortcode;
+          ) {
 
-              }
+            $required = in_array(
 
-            }
+              $paramRule['required'],
+
+              [
+
+                true,
+                1,
+                '1',
+                'true',
+                'TRUE',
+                'required',
+
+              ],
+
+              true
+
+            );
 
           }
+
+
+          if($required !== true) {
+
+            continue;
+
+          }
+
+
+          if(
+
+            !array_key_exists(
+
+              $paramName,
+
+              $attributes
+
+            ) ||
+
+            $attributes[$paramName] === null ||
+
+            $attributes[$paramName] === ''
+
+          ) {
+
+            return false;
+
+          }
+
+        }
+
+
+        return true;
+
+
+      };
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Executa um shortcode cadastrado
+      |--------------------------------------------------------------------------
+      */
+
+      $executeShortcodeConfig = function(
+
+        $shortcodeConfig,
+
+        array $attributes,
+
+        $originalShortcode
+
+      ) use (
+
+        $vars,
+
+        $route,
+
+        $resolveVars,
+
+        $normalizeShortcodeResponse,
+
+        $validateShortcodeParams
+
+      ) {
+
+
+        $shortcodeCode = strtolower(
+
+          trim(
+
+            (string) (
+
+              $shortcodeConfig->tbl_sys_shortcode_code
+
+              ?? ''
+
+            )
+
+          )
+
+        );
+
+
+        if(
+
+          $validateShortcodeParams(
+
+            $shortcodeConfig,
+
+            $attributes
+
+          ) !== true
+
+        ) {
+
+          return $originalShortcode;
 
         }
 
@@ -831,7 +1302,18 @@
 
         if($shortcodeCode === 'system-form') {
 
-          $formName = $attributes['form'] ?? '';
+          $formName = trim(
+
+            (string) (
+
+              $attributes['form']
+
+              ?? ''
+
+            )
+
+          );
+
 
           if($formName === '') {
 
@@ -840,7 +1322,11 @@
           }
 
 
-          $formID = self::SysAutomatorGetFormIDByName($formName);
+          $formID = self::SysAutomatorGetFormIDByName(
+
+            $formName
+
+          );
 
 
           if($formID === null || $formID === '') {
@@ -850,26 +1336,22 @@
           }
 
 
-          $resolvedVars = $resolveVars($attributes);
+          $formResponse =
 
-          $form = self::SysAutomatorRenderFormByID($formID, $resolvedVars);
+            self::SysAutomatorRenderFormByID(
 
+              $formID,
 
-          if(is_array($form)) {
+              $resolveVars($attributes)
 
-            return $form['html'] ?? '';
-
-          }
-
-
-          if($form === null) {
-
-            return '';
-
-          }
+            );
 
 
-          return (string) $form;
+          return $normalizeShortcodeResponse(
+
+            $formResponse
+
+          );
 
         }
 
@@ -882,49 +1364,95 @@
 
         if($shortcodeCode === 'system-pages') {
 
-          $view = $attributes['view'] ?? '';
+          $view = trim(
 
-          if($view === '') {
+            (string) (
+
+              $attributes['view']
+
+              ?? ''
+
+            )
+
+          );
+
+
+          if(
+
+            $view === '' ||
+
+            !View::exists($view)
+
+          ) {
 
             return '';
 
           }
 
 
-          if(!View::exists($view)) {
+          return view(
 
-            return '';
+            $view,
 
-          }
+            $resolveVars($attributes)
 
-
-          $resolvedVars = $resolveVars($attributes);
-
-          return view($view, $resolvedVars)->render();
+          )->render();
 
         }
 
 
         /*
         |--------------------------------------------------------------------------
-        | Execução padrão cadastrada em tbl_sys_shortcodes
+        | Classe e método cadastrados
         |--------------------------------------------------------------------------
         */
 
-        $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
-        $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
+        $className =
 
-        $class = self::SysAutomatorNormalizeShortcodeClass($class);
+          $shortcodeConfig->tbl_sys_shortcode_class
+
+          ?? '';
 
 
-        if(!$class || !$method) {
+        $methodName =
+
+          $shortcodeConfig->tbl_sys_shortcode_method
+
+          ?? '';
+
+
+        $className =
+
+          self::SysAutomatorNormalizeShortcodeClass(
+
+            $className
+
+          );
+
+
+        if(
+
+          $className === null ||
+
+          $methodName === null ||
+
+          trim((string) $methodName) === ''
+
+        ) {
 
           return $originalShortcode;
 
         }
 
 
-        if(!method_exists($class, $method)) {
+        $methodName = trim(
+
+          (string) $methodName
+
+        );
+
+
+        if(!method_exists($className, $methodName)) {
 
           return $originalShortcode;
 
@@ -936,80 +1464,176 @@
           $request = request();
 
 
-          $request->attributes->set('automator_shortcode_code', $shortcodeCode);
-          $request->attributes->set('automator_shortcode_params', $attributes);
-          $request->attributes->set('automator_shortcode_vars', $vars);
-          $request->attributes->set('automator_shortcode_route', $route);
-          $request->attributes->set('automator_shortcode_original', $originalShortcode);
+          /*
+          |--------------------------------------------------------------------------
+          | Contexto do shortcode
+          |--------------------------------------------------------------------------
+          */
+
+          $request->attributes->set(
+
+            'automator_shortcode_code',
+
+            $shortcodeCode
+
+          );
 
 
-          foreach($attributes as $attributeKey => $attributeValue) {
+          $request->attributes->set(
 
-            if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
+            'automator_shortcode_params',
 
-              $request->attributes->set($attributeKey, $attributeValue);
+            $attributes
 
-            }
-
-          }
+          );
 
 
-          $object = app($class);
+          $request->attributes->set(
+
+            'automator_shortcode_vars',
+
+            $vars
+
+          );
 
 
-          $renderedContent = call_user_func(
+          $request->attributes->set(
 
-            [$object, $method],
-            $request,
-            $attributes,
-            $vars,
-            $route,
+            'automator_shortcode_route',
+
+            $route
+
+          );
+
+
+          $request->attributes->set(
+
+            'automator_shortcode_original',
+
             $originalShortcode
 
           );
 
 
-          if($renderedContent instanceof \Illuminate\Contracts\View\View) {
+          foreach($attributes as $attributeKey => $attributeValue) {
 
-            return $renderedContent->render();
+            $request->attributes->set(
 
-          }
+              $attributeKey,
 
+              $attributeValue
 
-          if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
-
-            return $renderedContent->getContent();
-
-          }
-
-
-          if($renderedContent instanceof \Illuminate\Http\Response) {
-
-            return $renderedContent->getContent();
+            );
 
           }
 
 
-          if(is_array($renderedContent)) {
+          /*
+          |--------------------------------------------------------------------------
+          | Executa método estático do SysAutomator
+          |--------------------------------------------------------------------------
+          */
 
-            return $renderedContent['html'] ?? json_encode($renderedContent);
+          if($className === self::class) {
+
+            $renderedContent = call_user_func(
+
+              [
+
+                $className,
+
+                $methodName
+
+              ],
+
+              $attributes,
+
+              $resolveVars($attributes)
+
+            );
+
+          } else {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Executa controller ou outra classe pelo container
+            |--------------------------------------------------------------------------
+            */
+
+            $object = app($className);
+
+
+            $renderedContent = call_user_func(
+
+              [
+
+                $object,
+
+                $methodName
+
+              ],
+
+              $request,
+
+              $attributes
+
+            );
 
           }
 
 
-          if($renderedContent === null) {
+          return $normalizeShortcodeResponse(
 
-            return '';
+            $renderedContent
 
-          }
-
-
-          return (string) $renderedContent;
+          );
 
 
-        } catch(\Throwable $e) {
+        } catch(\Throwable $exception) {
 
-          return $originalShortcode;
+          /*
+          |--------------------------------------------------------------------------
+          | Registra contexto completo no log
+          |--------------------------------------------------------------------------
+          */
+
+          report($exception);
+
+
+          \Illuminate\Support\Facades\Log::error(
+
+            'Falha ao renderizar shortcode do Automator.',
+
+            [
+
+              'shortcode'  => $originalShortcode,
+              'code'       => $shortcodeCode,
+              'class'      => $className,
+              'method'     => $methodName,
+              'attributes' => $attributes,
+              'route'      => $route,
+              'exception'  => $exception->getMessage(),
+              'file'       => $exception->getFile(),
+              'line'       => $exception->getLine(),
+
+            ]
+
+          );
+
+
+          return '<div class="alert alert-danger">' .
+
+            e(
+
+              self::SysAutomatorGetTranslateWord(
+
+                'Não foi possível renderizar o shortcode.'
+
+              )
+
+            ) .
+
+          '</div>';
 
         }
 
@@ -1017,90 +1641,309 @@
       };
 
 
-      foreach($shortcodes as $shortcodeConfig) {
+      /*
+      |--------------------------------------------------------------------------
+      | Processa os shortcodes encontrados
+      |--------------------------------------------------------------------------
+      */
 
-        $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
-
-        if($shortcodeCode === '') {
-
-          continue;
-
-        }
+      $maximumPasses = 10;
 
 
-        $shortcodeCode = trim($shortcodeCode, '[]');
-        $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
+      for($pass = 0; $pass < $maximumPasses; $pass++) {
+
+        $contentBeforePass = $content;
 
 
-        if($shortcodeCode === '') {
+        /*
+        |--------------------------------------------------------------------------
+        | Processa primeiro [automator ...]
+        |--------------------------------------------------------------------------
+        */
 
-          continue;
+        if(isset($shortcodesByCode['automator'])) {
 
-        }
+          $automatorConfig =
 
-
-        $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
-
-
-        $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $shortcodesByCode, $renderShortcodeConfig) {
-
-
-          $originalShortcode = $matches[0] ?? '';
-
-          if($originalShortcode === '') {
-
-            return '';
-
-          }
+            $shortcodesByCode['automator'];
 
 
-          $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
+          $content = preg_replace_callback(
 
-          $currentShortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+            '/\[automator(?:\s+[^\]]*)?\]/i',
 
+            function($matches) use (
 
-          /*
-          |--------------------------------------------------------------------------
-          | Novo suporte sem quebrar o antigo:
-          |
-          | [automator function="system-form" ...]
-          | [automator function="system-pages" ...]
-          |
-          | Se a function apontar para um shortcode cadastrado, executa esse shortcode.
-          | Se não apontar, mantém o fluxo antigo do AutomatorController@getFunction,
-          | preservando [automator function="pagination" ...].
-          |--------------------------------------------------------------------------
-          */
+              $automatorConfig,
 
-          if($currentShortcodeCode === 'automator') {
+              $shortcodesByCode,
 
-            $dynamicFunction = trim($attributes['function'] ?? '');
+              $automatorInternalFunctions,
+
+              $executeShortcodeConfig
+
+            ) {
 
 
-            if($dynamicFunction !== '' && isset($shortcodesByCode[$dynamicFunction])) {
+              $originalShortcode =
 
-              $targetAttributes = $attributes;
+                $matches[0]
 
-              unset($targetAttributes['function']);
+                ?? '';
 
 
-              return $renderShortcodeConfig(
+              if($originalShortcode === '') {
 
-                $shortcodesByCode[$dynamicFunction],
-                $targetAttributes,
+                return '';
+
+              }
+
+
+              $attributes =
+
+                self::SysAutomatorGetShortcodeAttributes(
+
+                  $originalShortcode
+
+                );
+
+
+              $dynamicFunction = strtolower(
+
+                trim(
+
+                  (string) (
+
+                    $attributes['function']
+
+                    ?? ''
+
+                  )
+
+                )
+
+              );
+
+
+              if($dynamicFunction === '') {
+
+                return $originalShortcode;
+
+              }
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Função interna do AutomatorController
+              |--------------------------------------------------------------------------
+              |
+              | Mantém o atributo function e usa sempre o registro "automator".
+              |
+              | Isso corrige principalmente:
+              |
+              | [automator function="pagination" name="teste"]
+              |
+              */
+
+              if(
+
+                in_array(
+
+                  $dynamicFunction,
+
+                  $automatorInternalFunctions,
+
+                  true
+
+                )
+
+              ) {
+
+                return $executeShortcodeConfig(
+
+                  $automatorConfig,
+
+                  $attributes,
+
+                  $originalShortcode
+
+                );
+
+              }
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Shortcodes especiais chamados através de function
+              |--------------------------------------------------------------------------
+              |
+              | Exemplos:
+              |
+              | [automator function="system-pages" ...]
+              | [automator function="system-form" ...]
+              |
+              */
+
+              if(
+
+                isset(
+
+                  $shortcodesByCode[$dynamicFunction]
+
+                )
+
+              ) {
+
+                $targetAttributes = $attributes;
+
+
+                unset(
+
+                  $targetAttributes['function']
+
+                );
+
+
+                return $executeShortcodeConfig(
+
+                  $shortcodesByCode[$dynamicFunction],
+
+                  $targetAttributes,
+
+                  $originalShortcode
+
+                );
+
+              }
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Compatibilidade com qualquer função ainda não listada
+              |--------------------------------------------------------------------------
+              |
+              | Caso a função não represente outro shortcode cadastrado, continua
+              | sendo enviada para AutomatorController@getFunction.
+              |
+              */
+
+              return $executeShortcodeConfig(
+
+                $automatorConfig,
+
+                $attributes,
+
                 $originalShortcode
 
               );
 
-            }
+
+            },
+
+            $content
+
+          );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Processa shortcodes no formato direto
+        |--------------------------------------------------------------------------
+        */
+
+        foreach(
+
+          $shortcodesByCode
+
+          as $shortcodeCode => $shortcodeConfig
+
+        ) {
+
+          if($shortcodeCode === 'automator') {
+
+            continue;
 
           }
 
 
-          return $renderShortcodeConfig($shortcodeConfig, $attributes, $originalShortcode);
+          $pattern =
+
+            '/\[' .
+
+            preg_quote(
+
+              $shortcodeCode,
+
+              '/'
+
+            ) .
+
+            '(?:\s+[^\]]*)?\]/i';
 
 
-        }, $content);
+          $content = preg_replace_callback(
+
+            $pattern,
+
+            function($matches) use (
+
+              $shortcodeConfig,
+
+              $executeShortcodeConfig
+
+            ) {
+
+
+              $originalShortcode =
+
+                $matches[0]
+
+                ?? '';
+
+
+              if($originalShortcode === '') {
+
+                return '';
+
+              }
+
+
+              $attributes =
+
+                self::SysAutomatorGetShortcodeAttributes(
+
+                  $originalShortcode
+
+                );
+
+
+              return $executeShortcodeConfig(
+
+                $shortcodeConfig,
+
+                $attributes,
+
+                $originalShortcode
+
+              );
+
+
+            },
+
+            $content
+
+          );
+
+        }
+
+
+        if($content === $contentBeforePass) {
+
+          break;
+
+        }
 
       }
 
@@ -1109,6 +1952,452 @@
 
 
     }
+    // public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
+
+
+    //   if($content === null || $content === '') {
+
+    //     return '';
+
+    //   }
+
+
+    //   if(!is_array($vars)) {
+
+    //     $vars = [];
+
+    //   }
+
+
+    //   if(!is_array($route)) {
+
+    //     $route = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Remove <code>...</code> apenas quando envolve um shortcode
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $content = preg_replace('/<code>\s*(\[[^\]]+\])\s*<\/code>/i', '$1', $content);
+
+
+    //   $shortcodes = SysShortcode::get();
+
+
+    //   if($shortcodes->count() <= 0) {
+
+    //     return $content;
+
+    //   }
+
+
+    //   $shortcodesByCode = [];
+
+
+    //   foreach($shortcodes as $shortcodeConfig) {
+
+    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+
+    //     if($shortcodeCode === '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     $shortcodesByCode[$shortcodeCode] = $shortcodeConfig;
+
+    //   }
+
+
+    //   $resolveVars = function($attributes) use ($vars) {
+
+
+    //     $resolvedVars = $vars;
+
+
+    //     if(isset($attributes['vars']) && trim($attributes['vars']) !== '') {
+
+    //       $varsName = trim($attributes['vars']);
+
+    //       if(substr($varsName, 0, 1) === '$') {
+
+    //         $varsName = substr($varsName, 1);
+
+    //       }
+
+
+    //       if(isset($vars[$varsName]) && is_array($vars[$varsName])) {
+
+    //         $resolvedVars = $vars[$varsName];
+
+    //       }
+
+    //     }
+
+
+    //     if(!is_array($resolvedVars)) {
+
+    //       $resolvedVars = [];
+
+    //     }
+
+
+    //     return $resolvedVars;
+
+
+    //   };
+
+
+    //   $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route, $resolveVars) {
+
+
+    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+
+    //     $paramsRules = [];
+
+    //     $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
+
+
+    //     if($paramsJson !== '') {
+
+    //       $decodedParams = json_decode($paramsJson, true);
+
+    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
+
+    //         $paramsRules = $decodedParams;
+
+    //       }
+
+    //     }
+
+
+    //     if(count($paramsRules) >= 1) {
+
+    //       foreach($paramsRules as $paramName => $paramRule) {
+
+    //         $required = false;
+
+
+    //         if($paramRule === true) {
+
+    //           $required = true;
+
+    //         } elseif(is_array($paramRule) && isset($paramRule['required']) && $paramRule['required'] === true) {
+
+    //           $required = true;
+
+    //         }
+
+
+    //         if($required === true) {
+
+    //           if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
+
+    //             return $originalShortcode;
+
+    //           }
+
+    //         }
+
+    //       }
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Compatibilidade direta: system-form
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     if($shortcodeCode === 'system-form') {
+
+    //       $formName = $attributes['form'] ?? '';
+
+    //       if($formName === '') {
+
+    //         return '';
+
+    //       }
+
+
+    //       $formID = self::SysAutomatorGetFormIDByName($formName);
+
+
+    //       if($formID === null || $formID === '') {
+
+    //         return '';
+
+    //       }
+
+
+    //       $resolvedVars = $resolveVars($attributes);
+
+    //       $form = self::SysAutomatorRenderFormByID($formID, $resolvedVars);
+
+
+    //       if(is_array($form)) {
+
+    //         return $form['html'] ?? '';
+
+    //       }
+
+
+    //       if($form === null) {
+
+    //         return '';
+
+    //       }
+
+
+    //       return (string) $form;
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Compatibilidade direta: system-pages
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     if($shortcodeCode === 'system-pages') {
+
+    //       $view = $attributes['view'] ?? '';
+
+    //       if($view === '') {
+
+    //         return '';
+
+    //       }
+
+
+    //       if(!View::exists($view)) {
+
+    //         return '';
+
+    //       }
+
+
+    //       $resolvedVars = $resolveVars($attributes);
+
+    //       return view($view, $resolvedVars)->render();
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Execução padrão cadastrada em tbl_sys_shortcodes
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
+    //     $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
+
+    //     $class = self::SysAutomatorNormalizeShortcodeClass($class);
+
+
+    //     if(!$class || !$method) {
+
+    //       return $originalShortcode;
+
+    //     }
+
+
+    //     if(!method_exists($class, $method)) {
+
+    //       return $originalShortcode;
+
+    //     }
+
+
+    //     try {
+
+    //       $request = request();
+
+
+    //       $request->attributes->set('automator_shortcode_code', $shortcodeCode);
+    //       $request->attributes->set('automator_shortcode_params', $attributes);
+    //       $request->attributes->set('automator_shortcode_vars', $vars);
+    //       $request->attributes->set('automator_shortcode_route', $route);
+    //       $request->attributes->set('automator_shortcode_original', $originalShortcode);
+
+
+    //       foreach($attributes as $attributeKey => $attributeValue) {
+
+    //         if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
+
+    //           $request->attributes->set($attributeKey, $attributeValue);
+
+    //         }
+
+    //       }
+
+
+    //       $object = app($class);
+
+
+    //       $renderedContent = call_user_func(
+
+    //         [$object, $method],
+    //         $request,
+    //         $attributes,
+    //         $vars,
+    //         $route,
+    //         $originalShortcode
+
+    //       );
+
+
+    //       if($renderedContent instanceof \Illuminate\Contracts\View\View) {
+
+    //         return $renderedContent->render();
+
+    //       }
+
+
+    //       if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
+
+    //         return $renderedContent->getContent();
+
+    //       }
+
+
+    //       if($renderedContent instanceof \Illuminate\Http\Response) {
+
+    //         return $renderedContent->getContent();
+
+    //       }
+
+
+    //       if(is_array($renderedContent)) {
+
+    //         return $renderedContent['html'] ?? json_encode($renderedContent);
+
+    //       }
+
+
+    //       if($renderedContent === null) {
+
+    //         return '';
+
+    //       }
+
+
+    //       return (string) $renderedContent;
+
+
+    //     } catch(\Throwable $e) {
+
+    //       return $originalShortcode;
+
+    //     }
+
+
+    //   };
+
+
+    //   foreach($shortcodes as $shortcodeConfig) {
+
+    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+
+    //     if($shortcodeCode === '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     $shortcodeCode = trim($shortcodeCode, '[]');
+    //     $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
+
+
+    //     if($shortcodeCode === '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
+
+
+    //     $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $shortcodesByCode, $renderShortcodeConfig) {
+
+
+    //       $originalShortcode = $matches[0] ?? '';
+
+    //       if($originalShortcode === '') {
+
+    //         return '';
+
+    //       }
+
+
+    //       $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
+
+    //       $currentShortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Novo suporte sem quebrar o antigo:
+    //       |
+    //       | [automator function="system-form" ...]
+    //       | [automator function="system-pages" ...]
+    //       |
+    //       | Se a function apontar para um shortcode cadastrado, executa esse shortcode.
+    //       | Se não apontar, mantém o fluxo antigo do AutomatorController@getFunction,
+    //       | preservando [automator function="pagination" ...].
+    //       |--------------------------------------------------------------------------
+    //       */
+
+    //       if($currentShortcodeCode === 'automator') {
+
+    //         $dynamicFunction = trim($attributes['function'] ?? '');
+
+
+    //         if($dynamicFunction !== '' && isset($shortcodesByCode[$dynamicFunction])) {
+
+    //           $targetAttributes = $attributes;
+
+    //           unset($targetAttributes['function']);
+
+
+    //           return $renderShortcodeConfig(
+
+    //             $shortcodesByCode[$dynamicFunction],
+    //             $targetAttributes,
+    //             $originalShortcode
+
+    //           );
+
+    //         }
+
+    //       }
+
+
+    //       return $renderShortcodeConfig($shortcodeConfig, $attributes, $originalShortcode);
+
+
+    //     }, $content);
+
+    //   }
+
+
+    //   return $content;
+
+
+    // }
+
+
+
     // public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
 
 

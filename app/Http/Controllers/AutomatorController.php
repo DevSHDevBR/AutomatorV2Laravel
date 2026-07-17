@@ -740,44 +740,69 @@
     }
 
 
-
     public function getFunction(Request $request, $shortcodeParams = []) {
 
 
-      // return $request;
       /*
       |--------------------------------------------------------------------------
-      | Quando vier de um shortcode
+      | Recupera os parâmetros do shortcode
       |--------------------------------------------------------------------------
-      |
-      | Exemplo:
-      | [automator function="pagination" name="shortcodes-pagination"]
-      |
-      | O shortcode é cadastrado no banco como:
-      | class  = AutomatorController
-      | method = getFunction
-      |
-      | Então esta função precisa identificar o atributo "function" e chamar
-      | a função correspondente dentro deste mesmo controller.
-      |
       */
 
-      if(!is_array($shortcodeParams) || count($shortcodeParams) <= 0) {
+      if(!is_array($shortcodeParams)) {
 
-        $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+        $shortcodeParams = [];
 
       }
 
 
+      if(count($shortcodeParams) <= 0) {
 
-      if(is_array($shortcodeParams) && count($shortcodeParams) >= 1 && isset($shortcodeParams['function'])) {
+        $requestShortcodeParams = $request->attributes->get(
+
+          'automator_shortcode_params',
+
+          []
+
+        );
 
 
-        // return $shortcodeParams;
-        $function = trim($shortcodeParams['function']);
+        if(is_array($requestShortcodeParams)) {
+
+          $shortcodeParams = $requestShortcodeParams;
+
+        }
+
+      }
 
 
-        if($function == '') {
+      /*
+      |--------------------------------------------------------------------------
+      | Executa uma função informada no shortcode
+      |--------------------------------------------------------------------------
+      |
+      | Exemplo:
+      |
+      | [automator function="pagination" name="teste"]
+      |
+      */
+
+      if(
+
+        isset($shortcodeParams['function']) &&
+
+        is_scalar($shortcodeParams['function'])
+
+      ) {
+
+        $function = trim(
+
+          (string) $shortcodeParams['function']
+
+        );
+
+
+        if($function === '') {
 
           return '';
 
@@ -786,7 +811,7 @@
 
         /*
         |--------------------------------------------------------------------------
-        | Normaliza nomes com hífen
+        | Normaliza nomes em kebab-case
         |--------------------------------------------------------------------------
         |
         | pagination  => pagination
@@ -797,19 +822,17 @@
         |
         */
 
-        $method = Str::camel($function);
+        $method = Str::camel(
 
-        // return $method;
+          $function
+
+        );
 
 
         /*
         |--------------------------------------------------------------------------
-        | Lista de funções permitidas para shortcode automator
+        | Métodos permitidos pelo shortcode automator
         |--------------------------------------------------------------------------
-        |
-        | Evita que qualquer método público do controller seja chamado apenas
-        | alterando o conteúdo do shortcode no banco.
-        |
         */
 
         $allowedMethods = [
@@ -826,7 +849,7 @@
         ];
 
 
-        if(!in_array($method, $allowedMethods)) {
+        if(!in_array($method, $allowedMethods, true)) {
 
           return '';
 
@@ -840,45 +863,197 @@
         }
 
 
-        return $this->{$method}($request, $shortcodeParams);
+        return $this->{$method}(
 
+          $request,
+
+          $shortcodeParams
+
+        );
 
       }
 
 
       /*
       |--------------------------------------------------------------------------
-      | Quando vier diretamente da rota
+      | Execução direta da rota
       |--------------------------------------------------------------------------
-      |
-      | Exemplo:
-      | rota admin-shortcodes chama AutomatorController@getFunction.
-      | Nesse caso, renderiza o conteúdo da rota e processa os shortcodes
-      | cadastrados dentro da coluna tbl_sys_route_content.
-      |
       */
 
       $slug = $request->route('pageSlug');
 
-      // return $slug;
 
-      return SysAutomator::SysAutomatorSearchShortcode($slug, [
+      if($slug === null || $slug === '') {
 
-        'request' => $request
+        return '';
 
-      ]);
+      }
+
+
+      return SysAutomator::SysAutomatorSearchShortcode(
+
+        $slug,
+
+        [
+
+          'request' => $request
+
+        ]
+
+      );
 
 
     }
+    // public function getFunction(Request $request, $shortcodeParams = []) {
+
+
+    //   // return $request;
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Quando vier de um shortcode
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Exemplo:
+    //   | [automator function="pagination" name="shortcodes-pagination"]
+    //   |
+    //   | O shortcode é cadastrado no banco como:
+    //   | class  = AutomatorController
+    //   | method = getFunction
+    //   |
+    //   | Então esta função precisa identificar o atributo "function" e chamar
+    //   | a função correspondente dentro deste mesmo controller.
+    //   |
+    //   */
+
+    //   if(!is_array($shortcodeParams) || count($shortcodeParams) <= 0) {
+
+    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+
+    //   }
+
+
+
+    //   if(is_array($shortcodeParams) && count($shortcodeParams) >= 1 && isset($shortcodeParams['function'])) {
+
+
+    //     // return $shortcodeParams;
+    //     $function = trim($shortcodeParams['function']);
+
+
+    //     if($function == '') {
+
+    //       return '';
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Normaliza nomes com hífen
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | pagination  => pagination
+    //     | get-data    => getData
+    //     | store-data  => storeData
+    //     | update-data => updateData
+    //     | delete-data => deleteData
+    //     |
+    //     */
+
+    //     $method = Str::camel($function);
+
+    //     // return $method;
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Lista de funções permitidas para shortcode automator
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | Evita que qualquer método público do controller seja chamado apenas
+    //     | alterando o conteúdo do shortcode no banco.
+    //     |
+    //     */
+
+    //     $allowedMethods = [
+
+    //       'pagination',
+    //       'getData',
+    //       'getDataByTableModel',
+    //       'getDataByTableModelName',
+    //       'getDataByModel',
+    //       'storeData',
+    //       'updateData',
+    //       'deleteData',
+
+    //     ];
+
+
+    //     if(!in_array($method, $allowedMethods)) {
+
+    //       return '';
+
+    //     }
+
+
+    //     if(!method_exists($this, $method)) {
+
+    //       return '';
+
+    //     }
+
+
+    //     return $this->{$method}($request, $shortcodeParams);
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Quando vier diretamente da rota
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Exemplo:
+    //   | rota admin-shortcodes chama AutomatorController@getFunction.
+    //   | Nesse caso, renderiza o conteúdo da rota e processa os shortcodes
+    //   | cadastrados dentro da coluna tbl_sys_route_content.
+    //   |
+    //   */
+
+    //   $slug = $request->route('pageSlug');
+
+    //   // return $slug;
+
+    //   return SysAutomator::SysAutomatorSearchShortcode($slug, [
+
+    //     'request' => $request
+
+    //   ]);
+
+
+    // }
 
 
 
     public function pagination(Request $request, $shortcodeParams = []) {
 
 
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza os parâmetros
+      |--------------------------------------------------------------------------
+      */
+
       if(!is_array($shortcodeParams)) {
 
-        $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+        $shortcodeParams = $request->attributes->get(
+
+          'automator_shortcode_params',
+
+          []
+
+        );
 
       }
 
@@ -890,20 +1065,71 @@
       }
 
 
-      $name = $shortcodeParams['name'] ?? $request->get('name') ?? null;
+      /*
+      |--------------------------------------------------------------------------
+      | Nome da paginação
+      |--------------------------------------------------------------------------
+      */
+
+      $name =
+
+        $shortcodeParams['name']
+
+        ?? $request->attributes->get('name')
+
+        ?? $request->input('name')
+
+        ?? $request->query('name')
+
+        ?? null;
 
 
-      if($name === null || $name === '') {
+      if(
+
+        $name === null ||
+
+        !is_scalar($name) ||
+
+        trim((string) $name) === ''
+
+      ) {
 
         return '';
 
       }
 
 
+      $name = trim(
+
+        (string) $name
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Argumentos da requisição
+      |--------------------------------------------------------------------------
+      */
+
       $requestArgs = $request->all();
 
 
+      if(!is_array($requestArgs)) {
+
+        $requestArgs = [];
+
+      }
+
+
       foreach($shortcodeParams as $paramKey => $paramValue) {
+
+        if($paramKey === 'function') {
+
+          continue;
+
+        }
+
 
         if(!array_key_exists($paramKey, $requestArgs)) {
 
@@ -913,28 +1139,89 @@
 
       }
 
-      // dd($requestArgs);
-      $response = SysAutomator::SysAutomatorRenderPaginationByName($name, $requestArgs);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Renderiza a paginação
+      |--------------------------------------------------------------------------
+      */
+
+      $response = SysAutomator::SysAutomatorRenderPaginationByName(
+
+        $name,
+
+        $requestArgs
+
+      );
 
 
-      if(is_array($response) && isset($response['html'])) {
+      /*
+      |--------------------------------------------------------------------------
+      | Retorno HTML válido
+      |--------------------------------------------------------------------------
+      */
 
-        return $response['html'];
+      if(is_array($response)) {
 
-      } else {
 
-        if($response['status'] == false) {
-          
+        if(
+
+          isset($response['html']) &&
+
+          is_scalar($response['html'])
+
+        ) {
+
+          return (string) $response['html'];
+
+        }
+
+
+        if(
+
+          isset($response['status']) &&
+
+          $response['status'] === false
+
+        ) {
+
+          $message =
+
+            $response['message']
+
+            ?? 'A configuração desta paginação não foi encontrada.';
+
+
           $html = '<div class="text-center py-10">' . "\n";
 
-            $html .= '<h2 class="text-3xl font-bold text-gray-800 mb-4">' . $response['message'] . '</h2>' . "\n";
-            $html .= '<p class="text-gray-600">A página utiliza a automação de paginação de resultados <strong>' . $name . '</strong> porem a configuração desta página não foi encontrada ou não está disponível.</p>' . "\n";
-            $html .= '<p class="text-gray-600">Por favor, verifique o endereço ou entre em contato com o suporte.</p>' . "\n";
-            
+            $html .= '<h2 class="text-3xl font-bold text-gray-800 mb-4">' . e($message) . '</h2>' . "\n";
+
+            $html .= '<p class="text-gray-600">A página utiliza a automação de paginação de resultados <strong>' . e($name) . '</strong>, porém a configuração desta paginação não foi encontrada ou não está disponível.</p>' . "\n";
+
+            $html .= '<p class="text-gray-600">Verifique o nome registrado ou as configurações da paginação.</p>' . "\n";
+
           $html .= '</div>' . "\n";
+
+
           return $html;
 
         }
+
+
+        return '';
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Compatibilidade com retorno direto em HTML
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_scalar($response)) {
+
+        return (string) $response;
 
       }
 
@@ -943,6 +1230,76 @@
 
 
     }
+    // public function pagination(Request $request, $shortcodeParams = []) {
+
+
+    //   if(!is_array($shortcodeParams)) {
+
+    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+
+    //   }
+
+
+    //   if(!is_array($shortcodeParams)) {
+
+    //     $shortcodeParams = [];
+
+    //   }
+
+
+    //   $name = $shortcodeParams['name'] ?? $request->get('name') ?? null;
+
+
+    //   if($name === null || $name === '') {
+
+    //     return '';
+
+    //   }
+
+
+    //   $requestArgs = $request->all();
+
+
+    //   foreach($shortcodeParams as $paramKey => $paramValue) {
+
+    //     if(!array_key_exists($paramKey, $requestArgs)) {
+
+    //       $requestArgs[$paramKey] = $paramValue;
+
+    //     }
+
+    //   }
+
+    //   // dd($requestArgs);
+    //   $response = SysAutomator::SysAutomatorRenderPaginationByName($name, $requestArgs);
+
+
+    //   if(is_array($response) && isset($response['html'])) {
+
+    //     return $response['html'];
+
+    //   } else {
+
+    //     if($response['status'] == false) {
+          
+    //       $html = '<div class="text-center py-10">' . "\n";
+
+    //         $html .= '<h2 class="text-3xl font-bold text-gray-800 mb-4">' . $response['message'] . '</h2>' . "\n";
+    //         $html .= '<p class="text-gray-600">A página utiliza a automação de paginação de resultados <strong>' . $name . '</strong> porem a configuração desta página não foi encontrada ou não está disponível.</p>' . "\n";
+    //         $html .= '<p class="text-gray-600">Por favor, verifique o endereço ou entre em contato com o suporte.</p>' . "\n";
+            
+    //       $html .= '</div>' . "\n";
+    //       return $html;
+
+    //     }
+
+    //   }
+
+
+    //   return '';
+
+
+    // }
 
 
 

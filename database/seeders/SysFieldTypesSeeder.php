@@ -2975,7 +2975,121 @@
               "description" => 'Exibição simples de dados relacionados entre tabelas do banco de dados.',
               'args' => [
 
-                "header"      => [
+                "relation" => [
+
+                  'label'  => 'Relacionamento',
+                  'fields' => [
+
+                    "type" => [
+
+                      "label"       => "Tipo",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "single",
+                      "values"      => [
+
+                        "single"   => "Unico",
+                        "multiple" => "Multiplo"
+
+                      ]
+
+                    ],
+
+                    "mode" => [
+
+                      "label"       => "Modo",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "revert",
+                      "values"      => [
+
+                        "revert"     => "Reverso",
+                        "relational" => "Relacional"
+
+                      ]
+
+                    ],
+
+                    "table" => [
+
+                      "label"       => "Tabela",
+                      "type"        => "dynamic-table-list",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "",
+                      "values"      => []
+
+                    ],
+
+                    "column" => [
+
+                      "label"       => "Coluna",
+                      "type"        => "dynamic-column-list",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "",
+                      "values"      => []
+
+                    ],
+
+                    "display" => [
+
+                      "label"       => "Display",
+                      "type"        => "dynamic-column-list",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "",
+                      "values"      => []
+
+                    ],
+
+                    "relational-table" => [
+
+                      "label"       => "Tabela Relacional",
+                      "type"        => "dynamic-table-list",
+                      "required"    => "true",
+                      "nullable"    => "true",
+                      "description" => "",
+                      "default"     => "",
+                      "values"      => []
+
+                    ],
+
+                    "relational-column" => [
+
+                      "label"       => "Coluna Relacional",
+                      "type"        => "dynamic-column-list",
+                      "required"    => "false",
+                      "nullable"    => "true",
+                      "description" => "",
+                      "default"     => "",
+                      "values"      => []
+
+                    ],
+
+                    "empty" => [
+
+                      "label"       => "Vazio",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "",
+                      "default"     => "- - -",
+
+                    ],
+
+                  ]
+
+                ],
+                "header"  => [
                   
                   'label'  => 'Cabeçalho',
                   'fields' => [
