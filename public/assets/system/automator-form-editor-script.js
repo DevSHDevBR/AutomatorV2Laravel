@@ -36,6 +36,12 @@ window.SysAutomatorFormEditor = (function () {
   let formComponents = {};
   let previewSnapshot = null;
 
+  let formEditorLoaderShownAt = 0;
+  let formEditorLoaderHideTimer = null;
+
+  const formEditorLoaderMinimumTime = 250;
+  const formEditorLoaderAnimationTime = 200;
+
   const selectors = {
     modal: '#automator-editor-modal',
     canvas: '#automator-editor-canvas-container-content',
@@ -57,7 +63,7 @@ window.SysAutomatorFormEditor = (function () {
   |--------------------------------------------------------------------------
   */
 
-    
+
   function config(data = {}, callback = null) {
 
     destroy(false);
@@ -81,6 +87,7 @@ window.SysAutomatorFormEditor = (function () {
     clearUnsavedChangesWarning();
 
     prepareSidebarItems();
+    initSidebarTooltips();
 
     bindSidebarBlocks();
     bindHeaderSlugSync();
@@ -93,6 +100,8 @@ window.SysAutomatorFormEditor = (function () {
       renderFormSecurityPanel();
 
       loadSidebarComponents(function () {
+
+        initSidebarTooltips();
 
         if (typeof callback === 'function') {
           callback();
@@ -180,6 +189,9 @@ window.SysAutomatorFormEditor = (function () {
         syncEditorViewportSpacing();
         syncCanvasDeviceViewport();
 
+        prepareSidebarItems();
+        initSidebarTooltips();
+
         if (typeof callback === 'function') {
           callback();
         }
@@ -195,53 +207,123 @@ window.SysAutomatorFormEditor = (function () {
 
   function destroy(resetState = true) {
 
-    const currentEditor = grapesEditor;
+    const currentEditor =
+      grapesEditor;
 
     clearUnsavedChangesWarning();
 
-    if (window.__automatorFormEditorCloseCaptureHandler) {
+    destroySidebarTooltips();
+
+    if (formEditorLoaderHideTimer) {
+
+      clearTimeout(
+        formEditorLoaderHideTimer
+      );
+
+      formEditorLoaderHideTimer =
+        null;
+
+    }
+
+    formEditorLoaderShownAt =
+      0;
+
+    if (
+      window.__automatorFormEditorCloseCaptureHandler
+    ) {
+
       document.removeEventListener(
         'click',
         window.__automatorFormEditorCloseCaptureHandler,
         true
       );
 
-      window.__automatorFormEditorCloseCaptureHandler = null;
+      window.__automatorFormEditorCloseCaptureHandler =
+        null;
+
     }
 
-    grapesEditor = null;
+    grapesEditor =
+      null;
 
-    $(document).off('.automator-form-editor');
-    $(document).off('.AutomatorFormEditorCloseButton');
-    $(document).off('hide.bs.modal.AutomatorFormEditorChanged');
-    $(document).off('hidden.bs.modal.AutomatorFormEditorChanged');
+    $(document)
+      .off(
+        '.automator-form-editor'
+      );
+
+    $(document)
+      .off(
+        '.AutomatorFormEditorCloseButton'
+      );
+
+    $(document)
+      .off(
+        'hide.bs.modal.AutomatorFormEditorChanged'
+      );
+
+    $(document)
+      .off(
+        'hidden.bs.modal.AutomatorFormEditorChanged'
+      );
 
     if (currentEditor) {
 
       try {
+
         currentEditor.destroy();
-      } catch (e) {
-        console.warn('GrapesJS do editor de formulários já estava destruído.', e);
+
+      } catch (error) {
+
+        console.warn(
+          'GrapesJS do editor de formulários já estava destruído.',
+          error
+        );
+
       }
 
     }
 
     try {
-      $(selectors.canvas).empty();
-      $(selectors.structureList).empty();
-    } catch (e) {}
 
-    if ($(selectors.rightContent).length) {
-      $(selectors.rightContent).html(
-        '<div class="text-center p-3">Selecione um campo para editar.</div>'
-      );
+      $(selectors.canvas)
+        .empty();
+
+      $(selectors.structureList)
+        .empty();
+
+    } catch (error) {}
+
+    if (
+      $(selectors.rightContent).length
+    ) {
+
+      $(selectors.rightContent)
+        .html(
+          '<div class="text-center p-3">Selecione um campo para editar.</div>'
+        );
+
     }
 
-    if (resetState === true) {
-      state = $.extend(true, {}, defaultState);
-      formFields = [];
-      formComponents = {};
-      previewSnapshot = null;
+    if (
+      resetState === true
+    ) {
+
+      state =
+        $.extend(
+          true,
+          {},
+          defaultState
+        );
+
+      formFields =
+        [];
+
+      formComponents =
+        {};
+
+      previewSnapshot =
+        null;
+
     }
 
     return true;
@@ -1969,161 +2051,994 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
+  function getSidebarItemTooltipDescription(
+    item,
+    componentData = null
+  ) {
 
-  function prepareSidebarItems() {
+    const element =
+      $(item);
 
-    $(selectors.inserterList)
-      .find('[data-block-type-id]')
-      .each(function () {
+    let description =
+      '';
 
-        const item = $(this);
+    /*
+    |--------------------------------------------------------------------------
+    | Prioridade 1: dados normalizados carregados da API
+    |--------------------------------------------------------------------------
+    */
 
-        item.removeAttr('onclick');
-        item.removeAttr('draggable');
-        item.removeAttr('data-bs-toggle');
-        item.removeAttr('data-component-loading');
-        item.removeAttr('data-component-loaded');
+    if (
+      componentData &&
+      typeof componentData === 'object'
+    ) {
 
-        item.css('opacity', '1');
+      description =
 
-      });
+        componentData.description ||
 
-  }
+        getFormFieldValue(
+          componentData.raw,
+          'tbl_sys_field_type_description'
+        ) ||
 
+        getFormFieldValue(
+          componentData.raw,
+          'description'
+        ) ||
 
-  function loadSidebarComponents(callback = null) {
-
-    const items =
-      $(selectors.inserterList).find('[data-block-type-id]');
-
-    formComponents = {};
-
-    if (!items.length) {
-
-      state.componentsLoaded = true;
-      state.componentsLoading = false;
-
-      if (typeof callback === 'function') {
-        callback();
-      }
-
-      return;
+        '';
 
     }
 
-    state.componentsLoaded = false;
-    state.componentsLoading = true;
+    /*
+    |--------------------------------------------------------------------------
+    | Prioridade 2: descrição já armazenada no próprio item
+    |--------------------------------------------------------------------------
+    |
+    | O atributo data-automator-field-description é preenchido após a resposta
+    | da API. Ele não deve receber o nome ou o título do componente.
+    |
+    */
 
-    const requests = [];
+    if (
+      String(
+        description ||
+        ''
+      ).trim() === ''
+    ) {
 
-    items.each(function () {
+      description =
+        element.attr(
+          'data-automator-field-description'
+        ) ||
+        '';
 
-      const item = $(this);
-      const fieldTypeID = String(item.attr('data-block-type-id') || '');
+    }
 
-      if (!fieldTypeID) {
-        return;
-      }
-
-      item.attr('data-component-loading', 'true');
-
-      const request = $.ajax({
-        url: window.AutomatorRoutes.apiEditor || '',
-        type: 'POST',
-        headers: {
-          'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-          'Accept': 'application/json'
-        },
-        data: {
-          fieldTypeID: fieldTypeID,
-          mode: 'form'
-        },
-        dataType: 'json'
-      })
-      .done(function (response) {
-
-        const campo =
-          response && response.campo
-            ? response.campo
-            : (
-                response && response.fieldType
-                  ? response.fieldType
-                  : null
-              );
-
-        formComponents[fieldTypeID] =
-          normalizeFormComponentResponse(
-            fieldTypeID,
-            campo,
-            item
-          );
-
-        item
-          .removeAttr('data-component-loading')
-          .attr('data-component-loaded', 'true');
-
-      })
-      .fail(function () {
-
-        formComponents[fieldTypeID] =
-          normalizeFormComponentResponse(
-            fieldTypeID,
-            null,
-            item
-          );
-
-        item
-          .removeAttr('data-component-loading')
-          .attr('data-component-loaded', 'false');
-
-      });
-
-      requests.push(request);
-
-    });
-
-    $.when.apply($, requests).always(function () {
-
-      state.componentsLoaded = true;
-      state.componentsLoading = false;
-
-      if (typeof callback === 'function') {
-        callback();
-      }
-
-    });
+    return String(
+      description ||
+      ''
+    ).trim();
 
   }
 
 
-  function normalizeFormComponentResponse(fieldTypeID, campo, item) {
+  function prepareSidebarItems() {
+
+    const items =
+      $(selectors.inserterList)
+        .find(
+          '[data-block-type-id]'
+        );
+
+    if (
+      !items.length
+    ) {
+
+      return false;
+
+    }
+
+    items.each(function () {
+
+      const item =
+        $(this);
+
+      const fieldTypeID =
+        String(
+          item.attr(
+            'data-block-type-id'
+          ) ||
+          ''
+        );
+
+      const componentData =
+        fieldTypeID &&
+        formComponents[fieldTypeID]
+
+          ? formComponents[fieldTypeID]
+
+          : null;
+
+      item.removeAttr(
+        'onclick'
+      );
+
+      item.removeAttr(
+        'draggable'
+      );
+
+      item.removeAttr(
+        'data-component-loading'
+      );
+
+      item.removeAttr(
+        'data-component-loaded'
+      );
+
+      /*
+      |--------------------------------------------------------------------------
+      | Obtém exclusivamente a descrição do tipo do campo
+      |--------------------------------------------------------------------------
+      |
+      | Não utiliza:
+      | - nome do componente;
+      | - título do componente;
+      | - conteúdo do span;
+      | - aria-label;
+      |
+      | O tooltip deve usar somente tbl_sys_field_type_description.
+      |
+      */
+
+      const tooltipText =
+        getSidebarItemTooltipDescription(
+          item,
+          componentData
+        );
+
+      if (
+        tooltipText !== ''
+      ) {
+
+        item.attr(
+          'data-automator-field-description',
+          tooltipText
+        );
+
+        item.attr(
+          'data-bs-toggle',
+          'tooltip'
+        );
+
+        item.attr(
+          'data-bs-title',
+          tooltipText
+        );
+
+        item.attr(
+          'data-tooltip',
+          tooltipText
+        );
+
+        item.attr(
+          'title',
+          tooltipText
+        );
+
+        if (
+          !item.attr(
+            'data-bs-placement'
+          )
+        ) {
+
+          item.attr(
+            'data-bs-placement',
+            'right'
+          );
+
+        }
+
+      } else {
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sem descrição não deve haver tooltip
+        |--------------------------------------------------------------------------
+        */
+
+        item.removeAttr(
+          'data-automator-field-description'
+        );
+
+        item.removeAttr(
+          'data-bs-toggle'
+        );
+
+        item.removeAttr(
+          'data-bs-title'
+        );
+
+        item.removeAttr(
+          'data-tooltip'
+        );
+
+        item.removeAttr(
+          'title'
+        );
+
+        item.removeAttr(
+          'aria-describedby'
+        );
+
+      }
+
+      item.css({
+        opacity:
+          '1'
+      });
+
+    });
+
+    return true;
+
+  }
+
+
+  function destroySidebarTooltips() {
+
+    const items =
+      $(selectors.inserterList)
+        .find('[data-block-type-id]');
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove elementos residuais renderizados no body
+    |--------------------------------------------------------------------------
+    */
+
+    $('.tooltip[data-automator-form-editor-tooltip="true"]')
+      .remove();
+
+    if (
+      typeof bootstrap === 'undefined' ||
+      typeof bootstrap.Tooltip === 'undefined'
+    ) {
+
+      return false;
+
+    }
+
+    items.each(function () {
+
+      const item = this;
+
+      try {
+
+        const instance =
+          bootstrap.Tooltip.getInstance(
+            item
+          );
+
+        if (instance) {
+
+          instance.dispose();
+
+        }
+
+      } catch (error) {
+
+        console.warn(
+          'Não foi possível remover uma instância de tooltip da sidebar.',
+          error
+        );
+
+      }
+
+      item.removeAttribute(
+        'data-automator-form-editor-tooltip-initialized'
+      );
+
+    });
+
+    return true;
+
+  }
+
+
+  function initSidebarTooltips() {
+
+    const items =
+      $(selectors.inserterList)
+        .find(
+          '[data-block-type-id]'
+        );
+
+    if (
+      !items.length
+    ) {
+
+      return false;
+
+    }
+
+    if (
+      typeof bootstrap ===
+        'undefined' ||
+
+      typeof bootstrap.Tooltip ===
+        'undefined'
+    ) {
+
+      return false;
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove somente as instâncias pertencentes à sidebar
+    |--------------------------------------------------------------------------
+    */
+
+    destroySidebarTooltips();
+
+    items.each(function () {
+
+      const item =
+        this;
+
+      const element =
+        $(item);
+
+      /*
+      |--------------------------------------------------------------------------
+      | O tooltip utiliza somente a descrição retornada pela API
+      |--------------------------------------------------------------------------
+      */
+
+      const tooltipText =
+        String(
+          element.attr(
+            'data-automator-field-description'
+          ) ||
+          ''
+        ).trim();
+
+      if (
+        tooltipText === ''
+      ) {
+
+        element.removeAttr(
+          'data-bs-toggle'
+        );
+
+        element.removeAttr(
+          'data-bs-title'
+        );
+
+        element.removeAttr(
+          'data-tooltip'
+        );
+
+        element.removeAttr(
+          'title'
+        );
+
+        element.removeAttr(
+          'aria-describedby'
+        );
+
+        return;
+
+      }
+
+      element.attr({
+
+        'data-bs-toggle':
+          'tooltip',
+
+        'data-bs-title':
+          tooltipText,
+
+        'data-tooltip':
+          tooltipText,
+
+        'title':
+          tooltipText
+
+      });
+
+      try {
+
+        const instance =
+          new bootstrap.Tooltip(
+            item,
+            {
+
+              container:
+                'body',
+
+              boundary:
+                'window',
+
+              placement:
+                element.attr(
+                  'data-bs-placement'
+                ) ||
+                'right',
+
+              trigger:
+                'hover focus',
+
+              html:
+                false,
+
+              title:
+                tooltipText,
+
+              delay: {
+
+                show:
+                  180,
+
+                hide:
+                  80
+
+              }
+
+            }
+          );
+
+        element.attr(
+          'data-automator-form-editor-tooltip-initialized',
+          'true'
+        );
+
+        item.addEventListener(
+          'inserted.bs.tooltip',
+          function () {
+
+            const tooltipID =
+              item.getAttribute(
+                'aria-describedby'
+              );
+
+            if (
+              !tooltipID
+            ) {
+
+              return;
+
+            }
+
+            const tooltipEl =
+              document.getElementById(
+                tooltipID
+              );
+
+            if (
+              tooltipEl
+            ) {
+
+              tooltipEl.setAttribute(
+                'data-automator-form-editor-tooltip',
+                'true'
+              );
+
+            }
+
+          }
+        );
+
+        item.__automatorFormEditorTooltip =
+          instance;
+
+      } catch (
+        error
+      ) {
+
+        console.warn(
+          'Não foi possível inicializar o tooltip do componente da sidebar.',
+          error
+        );
+
+      }
+
+    });
+
+    return true;
+
+  }
+
+
+  function refreshSidebarTooltips(
+    delay = 60
+  ) {
+
+    delay =
+      parseInt(
+        delay,
+        10
+      );
+
+    if (
+      Number.isNaN(
+        delay
+      ) ||
+      delay < 0
+    ) {
+
+      delay =
+        60;
+
+    }
+
+    setTimeout(function () {
+
+      if (
+        !document.querySelector(
+          selectors.modal
+        )
+      ) {
+
+        return;
+
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | prepareSidebarItems não cria descrição por conta própria
+      |--------------------------------------------------------------------------
+      |
+      | Ele apenas reutiliza a descrição carregada e armazenada em
+      | data-automator-field-description.
+      |
+      */
+
+      prepareSidebarItems();
+      initSidebarTooltips();
+
+    }, delay);
+
+    return true;
+
+  }
+
+
+  function loadSidebarComponents(
+    callback = null
+  ) {
+
+    const items =
+      $(selectors.inserterList)
+        .find(
+          '[data-block-type-id]'
+        );
+
+    formComponents =
+      {};
+
+    if (
+      !items.length
+    ) {
+
+      state.componentsLoaded =
+        true;
+
+      state.componentsLoading =
+        false;
+
+      prepareSidebarItems();
+      initSidebarTooltips();
+
+      if (
+        typeof callback ===
+        'function'
+      ) {
+
+        callback();
+
+      }
+
+      return false;
+
+    }
+
+    state.componentsLoaded =
+      false;
+
+    state.componentsLoading =
+      true;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Limpa tooltips antigos enquanto os dados corretos são carregados
+    |--------------------------------------------------------------------------
+    */
+
+    destroySidebarTooltips();
+
+    items.each(function () {
+
+      const item =
+        $(this);
+
+      item.removeAttr(
+        'data-automator-field-description'
+      );
+
+      item.removeAttr(
+        'data-bs-toggle'
+      );
+
+      item.removeAttr(
+        'data-bs-title'
+      );
+
+      item.removeAttr(
+        'data-tooltip'
+      );
+
+      item.removeAttr(
+        'title'
+      );
+
+      item.removeAttr(
+        'aria-describedby'
+      );
+
+    });
+
+    const requests =
+      [];
+
+    items.each(function () {
+
+      const item =
+        $(this);
+
+      const fieldTypeID =
+        String(
+          item.attr(
+            'data-block-type-id'
+          ) ||
+          ''
+        );
+
+      if (
+        !fieldTypeID
+      ) {
+
+        return;
+
+      }
+
+      item.attr(
+        'data-component-loading',
+        'true'
+      );
+
+      const request =
+        $.ajax({
+
+          url:
+            window.AutomatorRoutes.apiEditor ||
+            '',
+
+          type:
+            'POST',
+
+          headers: {
+
+            'X-CSRF-TOKEN':
+              $('meta[name="csrf-token"]')
+                .attr(
+                  'content'
+                ),
+
+            'Accept':
+              'application/json'
+
+          },
+
+          data: {
+
+            fieldTypeID:
+              fieldTypeID,
+
+            mode:
+              'form'
+
+          },
+
+          dataType:
+            'json'
+
+        })
+        .done(function (
+          response
+        ) {
+
+          const campo =
+
+            response &&
+            response.campo
+
+              ? response.campo
+
+              : (
+
+                  response &&
+                  response.fieldType
+
+                    ? response.fieldType
+
+                    : null
+
+                );
+
+          const componentData =
+            normalizeFormComponentResponse(
+              fieldTypeID,
+              campo,
+              item
+            );
+
+          formComponents[fieldTypeID] =
+            componentData;
+
+          /*
+          |--------------------------------------------------------------------------
+          | Armazena a descrição correta no item da sidebar
+          |--------------------------------------------------------------------------
+          */
+
+          if (
+            componentData.description !==
+            ''
+          ) {
+
+            item.attr(
+              'data-automator-field-description',
+              componentData.description
+            );
+
+          } else {
+
+            item.removeAttr(
+              'data-automator-field-description'
+            );
+
+          }
+
+          item
+            .removeAttr(
+              'data-component-loading'
+            )
+            .attr(
+              'data-component-loaded',
+              'true'
+            );
+
+        })
+        .fail(function () {
+
+          formComponents[fieldTypeID] =
+            normalizeFormComponentResponse(
+              fieldTypeID,
+              null,
+              item
+            );
+
+          /*
+          |--------------------------------------------------------------------------
+          | Em caso de falha não utiliza o nome como descrição
+          |--------------------------------------------------------------------------
+          */
+
+          item.removeAttr(
+            'data-automator-field-description'
+          );
+
+          item
+            .removeAttr(
+              'data-component-loading'
+            )
+            .attr(
+              'data-component-loaded',
+              'false'
+            );
+
+        });
+
+      requests.push(
+        request
+      );
+
+    });
+
+    $.when
+      .apply(
+        $,
+        requests
+      )
+      .always(function () {
+
+        state.componentsLoaded =
+          true;
+
+        state.componentsLoading =
+          false;
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aplica os tooltips somente depois que todas as descrições chegaram
+        |--------------------------------------------------------------------------
+        */
+
+        prepareSidebarItems();
+
+        refreshSidebarTooltips(
+          50
+        );
+
+        if (
+          typeof callback ===
+          'function'
+        ) {
+
+          callback();
+
+        }
+
+      });
+
+    return true;
+
+  }
+
+
+  function normalizeFormComponentResponse(
+    fieldTypeID,
+    campo,
+    item
+  ) {
+
+    item =
+      $(item);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nome visual do componente
+    |--------------------------------------------------------------------------
+    |
+    | Utilizado:
+    | - no bloco da sidebar;
+    | - no título inicial do campo;
+    | - na estrutura do editor.
+    |
+    | Não é utilizado como tooltip.
+    |
+    */
 
     const title =
-      item.attr('data-bs-title') ||
-      item.find('span').first().text() ||
-      getFormFieldValue(campo, 'tbl_sys_field_type_title') ||
-      getFormFieldValue(campo, 'title') ||
+
+      getFormFieldValue(
+        campo,
+        'tbl_sys_field_type_title'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'title'
+      ) ||
+
+      item.attr(
+        'data-block-title'
+      ) ||
+
+      item.find(
+        'span'
+      ).first().text() ||
+
       'Campo';
 
-    const icon =
-      item.attr('data-block-icon') ||
-      getFormFieldValue(campo, 'tbl_sys_field_type_icon') ||
-      getFormFieldValue(campo, 'icon') ||
-      'cube';
 
-    const type =
-      item.attr('data-block-type') ||
-      getFormFieldValue(campo, 'tbl_sys_field_type_name') ||
-      getFormFieldValue(campo, 'type') ||
+    /*
+    |--------------------------------------------------------------------------
+    | Descrição exclusiva do tooltip
+    |--------------------------------------------------------------------------
+    |
+    | Não possui fallback para title, name ou conteúdo do item.
+    |
+    */
+
+    const description =
+
+      getFormFieldValue(
+        campo,
+        'tbl_sys_field_type_description'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'description'
+      ) ||
+
       '';
 
+
+    const icon =
+
+      item.attr(
+        'data-block-icon'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'tbl_sys_field_type_icon'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'icon'
+      ) ||
+
+      'cube';
+
+
+    const type =
+
+      item.attr(
+        'data-block-type'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'tbl_sys_field_type_name'
+      ) ||
+
+      getFormFieldValue(
+        campo,
+        'type'
+      ) ||
+
+      '';
+
+
     return {
-      id: String(fieldTypeID),
-      title: title,
-      icon: icon,
-      type: type,
-      loaded: !!campo,
-      raw: campo || null
+
+      id:
+        String(
+          fieldTypeID
+        ),
+
+      title:
+        String(
+          title ||
+          'Campo'
+        ).trim(),
+
+      description:
+        String(
+          description ||
+          ''
+        ).trim(),
+
+      icon:
+        icon,
+
+      type:
+        type,
+
+      loaded:
+        !!campo,
+
+      raw:
+        campo ||
+        null
+
     };
 
   }
@@ -2429,6 +3344,308 @@ window.SysAutomatorFormEditor = (function () {
 
   }
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Escapa conteúdo da pré-visualização JSON
+  |--------------------------------------------------------------------------
+  */
+
+  function AutomatorJsonEditorPreviewEscapeHtml(
+    value = ''
+  ) {
+
+
+    return String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    )
+      .replace(
+        /&/g,
+        '&amp;'
+      )
+      .replace(
+        /</g,
+        '&lt;'
+      )
+      .replace(
+        />/g,
+        '&gt;'
+      )
+      .replace(
+        /"/g,
+        '&quot;'
+      )
+      .replace(
+        /'/g,
+        '&#039;'
+      );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Pré-visualização do campo JSON
+  |--------------------------------------------------------------------------
+  |
+  | O editor completo é inicializado somente quando o formulário é renderizado.
+  | No editor de formulários é exibida uma representação visual estática.
+  |
+  */
+
+  function buildJsonFieldPreviewComponents(
+    fieldData
+  ) {
+
+
+    const props =
+
+      getFieldProps(
+
+        fieldData
+
+      );
+
+
+    const title = String(
+
+      fieldData.tbl_sys_forms_field_title ||
+
+      'JSON'
+
+    );
+
+
+    let defaultValue =
+
+      fieldData.tbl_sys_forms_field_default ||
+
+      {};
+
+
+    if(typeof defaultValue === 'string') {
+
+
+      try {
+
+        defaultValue = JSON.parse(
+
+          defaultValue
+
+        );
+
+      } catch(error) {
+
+        defaultValue = {};
+
+      }
+
+
+    }
+
+
+    if(
+
+      !defaultValue ||
+
+      typeof defaultValue !== 'object'
+
+    ) {
+
+      defaultValue = {};
+
+    }
+
+
+    const previewValue = JSON.stringify(
+
+      defaultValue,
+
+      null,
+
+      2
+
+    );
+
+
+    return [
+
+      {
+
+        type: 'default',
+
+        tagName: 'label',
+
+        classes: [
+
+          'form-label',
+          'fw-semibold',
+
+        ],
+
+        draggable: false,
+        droppable: false,
+        editable: false,
+        selectable: false,
+        hoverable: false,
+        highlightable: false,
+        copyable: false,
+        removable: false,
+
+        components: [
+
+          {
+
+            type: 'text',
+
+            content: title,
+
+          },
+
+        ],
+
+      },
+
+      {
+
+        type: 'default',
+
+        tagName: 'div',
+
+        classes: [
+
+          'border',
+          'rounded',
+          'bg-white',
+
+        ],
+
+        draggable: false,
+        droppable: false,
+        editable: false,
+        selectable: false,
+        hoverable: false,
+        highlightable: false,
+        copyable: false,
+        removable: false,
+
+        components: [
+
+          {
+
+            type: 'default',
+
+            tagName: 'div',
+
+            classes: [
+
+              'border-bottom',
+              'p-2',
+              'small',
+              'text-muted',
+
+            ],
+
+            draggable: false,
+            droppable: false,
+            editable: false,
+            selectable: false,
+            hoverable: false,
+            highlightable: false,
+            copyable: false,
+            removable: false,
+
+            components: [
+
+              {
+
+                type: 'text',
+
+                content:
+
+                  '<i class="fa fa-code me-1"></i>' +
+
+                  'Editor de estrutura JSON',
+
+              },
+
+            ],
+
+          },
+
+          {
+
+            type: 'default',
+
+            tagName: 'pre',
+
+            classes: [
+
+              'm-0',
+              'p-2',
+              'small',
+              'bg-light',
+
+            ],
+
+            style: {
+
+              'min-height': '90px',
+              'max-height': '180px',
+              'overflow': 'hidden',
+              'white-space': 'pre-wrap',
+              'word-break': 'break-word',
+
+            },
+
+            draggable: false,
+            droppable: false,
+            editable: false,
+            selectable: false,
+            hoverable: false,
+            highlightable: false,
+            copyable: false,
+            removable: false,
+
+            components: [
+
+              {
+
+                type: 'text',
+
+                content:
+
+                  AutomatorJsonEditorPreviewEscapeHtml(
+
+                    previewValue
+
+                  ),
+
+              },
+
+            ],
+
+          },
+
+        ],
+
+      },
+
+    ];
+
+
+  }
+
+
   function buildFieldPreviewComponents(fieldData) {
 
     const type =
@@ -2447,6 +3664,24 @@ window.SysAutomatorFormEditor = (function () {
       type === 'password' &&
       fieldHasPasswordButton(fieldData);
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Campo JSON
+    |--------------------------------------------------------------------------
+    */
+
+    if(type === 'json') {
+
+      return buildJsonFieldPreviewComponents(
+
+        fieldData
+
+      );
+
+    }
+
+    
     /*
     |--------------------------------------------------------------------------
     | Componentes que não possuem conteúdo interno
@@ -7749,36 +8984,144 @@ window.SysAutomatorFormEditor = (function () {
 
   function showFormEditorLoader(callback = null) {
 
-    if (typeof AutomatorPageLoader === 'function') {
-      AutomatorPageLoader('show');
+    if (formEditorLoaderHideTimer) {
+
+      clearTimeout(
+        formEditorLoaderHideTimer
+      );
+
+      formEditorLoaderHideTimer =
+        null;
+
     }
 
-    setTimeout(function() {
+    formEditorLoaderShownAt =
+      Date.now();
+
+    if (
+      typeof AutomatorPageLoader ===
+      'function'
+    ) {
+
+      AutomatorPageLoader(
+        'show',
+        function() {
+
+          /*
+          |--------------------------------------------------------------------------
+          | Pequeno intervalo para garantir que o navegador tenha renderizado
+          |--------------------------------------------------------------------------
+          */
+
+          setTimeout(function () {
+
+            if (typeof callback === 'function') {
+
+              callback();
+
+            }
+
+          }, 40);
+
+        },
+        formEditorLoaderAnimationTime
+      );
+
+      return true;
+
+    }
+
+    setTimeout(function () {
+
       if (typeof callback === 'function') {
+
         callback();
+
       }
-    }, 80);
+
+    }, 40);
+
+    return true;
 
   }
 
 
   function hideFormEditorLoader(callback = null) {
 
-    if (typeof AutomatorPageLoader === 'function') {
+    if (formEditorLoaderHideTimer) {
 
-      AutomatorPageLoader('hide', function() {
-        if (typeof callback === 'function') {
-          callback();
+      clearTimeout(
+        formEditorLoaderHideTimer
+      );
+
+      formEditorLoaderHideTimer =
+        null;
+
+    }
+
+    const elapsed =
+      formEditorLoaderShownAt > 0
+
+        ? Date.now() -
+          formEditorLoaderShownAt
+
+        : formEditorLoaderMinimumTime;
+
+    const remainingTime =
+      Math.max(
+        0,
+        formEditorLoaderMinimumTime -
+        elapsed
+      );
+
+    formEditorLoaderHideTimer =
+      setTimeout(function () {
+
+        formEditorLoaderHideTimer =
+          null;
+
+        if (
+          typeof AutomatorPageLoader ===
+          'function'
+        ) {
+
+          AutomatorPageLoader(
+            'hide',
+            function() {
+
+              formEditorLoaderShownAt =
+                0;
+
+              if (
+                typeof callback ===
+                'function'
+              ) {
+
+                callback();
+
+              }
+
+            },
+            formEditorLoaderAnimationTime
+          );
+
+          return;
+
         }
-      });
 
-      return true;
+        formEditorLoaderShownAt =
+          0;
 
-    }
+        if (
+          typeof callback ===
+          'function'
+        ) {
 
-    if (typeof callback === 'function') {
-      callback();
-    }
+          callback();
+
+        }
+
+      }, remainingTime);
 
     return true;
 
@@ -8519,198 +9862,1044 @@ window.SysAutomatorFormEditor = (function () {
   }
 
 
-  /*
-  |--------------------------------------------------------------------------
-  | Ações
-  |--------------------------------------------------------------------------
-  */
+  function submitFormEditorPayload(
+    formEl,
+    payload
+  ) {
 
+    if (
+      !formEl ||
+      !formEl.action ||
+      !payload
+    ) {
 
-  function save() {
+      $(selectors.modal)
+        .removeAttr(
+          'data-automator-form-submit'
+        );
 
-    if (state.previewMode === true) {
-      return false;
-    }
+      state.hasChanges = true;
 
-    const formEl = syncEditorSubmitForm();
+      setSaveState(true);
 
-    if (!formEl || !formEl.action) {
+      $('#page-loader').css(
+        'z-index',
+        ''
+      );
 
-      AutomatorCreateAutoCloseToastAlert(
-        'automator-form-editor-save-route-error',
-        'center',
-        'middle',
-        true,
-        true,
-        'Erro',
-        'A rota dinâmica para salvar este formulário não foi encontrada.',
-        null,
-        false,
-        null,
-        5000
+      AutomatorPageLoader(
+        'hide',
+        function() {
+
+          AutomatorSetActionStatus(
+            false
+          );
+
+        }
       );
 
       return false;
 
     }
 
-    let payload = captureData();
 
-    payload = normalizeEditorPayloadBeforeSubmit(payload);
+    /*
+    |--------------------------------------------------------------------------
+    | Mantém o bloqueio da página durante o envio final
+    |--------------------------------------------------------------------------
+    */
 
-    $(formEl).find('[name="id"]').val(payload.id || '');
-    $(formEl).find('[name="tbl_sys_form_ID"]').val(payload.tbl_sys_form_ID || '');
-    $(formEl).find('[name="payload"]').val(JSON.stringify(payload));
+    AutomatorSetActionStatus(
+      true
+    );
 
-    $(selectors.modal).attr('data-automator-form-submit', 'true');
-    formEl.setAttribute('data-submit', 'false');
+    $('#page-loader').css(
+      'z-index',
+      '1085'
+    );
 
-    setSaveState(false);
+    AutomatorPageLoader(
+      'show',
+      function() {
 
-    AutomatorGetActionStatus(function(actionStatus) {
 
-      if (actionStatus === true || actionStatus === 'true') {
-        setSaveState(true);
-        $(selectors.modal).removeAttr('data-automator-form-submit');
-        return false;
-      }
+        /*
+        |--------------------------------------------------------------------------
+        | Envia os dados para a rota dinâmica do editor
+        |--------------------------------------------------------------------------
+        */
 
-      AutomatorSetActionStatus(true, function() {
+        $.ajax({
 
-        AutomatorPageLoader('show', function() {
+          url:
+            formEl.action,
 
-          $('#page-loader').css('z-index', '1085');
+          type:
+            String(
+              formEl.method ||
+              'POST'
+            ).toUpperCase(),
 
-          $.ajax({
-            url: formEl.action,
-            type: String(formEl.method || 'POST').toUpperCase(),
-            data: JSON.stringify(payload),
-            contentType: 'application/json; charset=UTF-8',
-            processData: false,
-            headers: {
-              'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-              'Accept': 'application/json'
-            },
-            dataType: 'json',
+          data:
+            JSON.stringify(
+              payload
+            ),
 
-            success: function(response) {
+          contentType:
+            'application/json; charset=UTF-8',
 
-              const status = (
-                response &&
-                (
-                  response.status === true ||
-                  response.status === 'true' ||
-                  response.result === true ||
-                  response.result === 'true'
-                )
+          processData:
+            false,
+
+          headers: {
+
+            'X-CSRF-TOKEN':
+              $('meta[name="csrf-token"]')
+                .attr(
+                  'content'
+                ),
+
+            'Accept':
+              'application/json'
+
+          },
+
+          dataType:
+            'json',
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Resposta recebida
+          |--------------------------------------------------------------------------
+          */
+
+          success: function(
+            response
+          ) {
+
+            const status = (
+
+              response &&
+
+              (
+
+                response.status === true ||
+                response.status === 'true' ||
+
+                response.result === true ||
+                response.result === 'true'
+
+              )
+
+            );
+
+
+            const title =
+
+              response &&
+              response.title
+
+                ? response.title
+
+                : (
+
+                    status
+
+                      ? 'Sucesso'
+
+                      : 'Atenção'
+
+                  );
+
+
+            const message =
+
+              response &&
+              response.message
+
+                ? response.message
+
+                : (
+
+                    status
+
+                      ? 'Formulário salvo com sucesso.'
+
+                      : 'Não foi possível salvar o formulário.'
+
+                  );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Formulário salvo
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+              status === true
+            ) {
+
+              formEl.setAttribute(
+                'data-submit',
+                'true'
               );
 
-              const title = response && response.title ? response.title : (status ? 'Sucesso' : 'Atenção');
-              const message = response && response.message ? response.message : (status ? 'Formulário salvo com sucesso.' : 'Não foi possível salvar o formulário.');
+              formEl.setAttribute(
+                'data-automator-form-changed',
+                'false'
+              );
 
-              if (status === true) {
 
-                formEl.setAttribute('data-submit', 'true');
-                formEl.setAttribute('data-automator-form-changed', 'false');
+              /*
+              |--------------------------------------------------------------------------
+              | Remove os alertas de alterações não salvas
+              |--------------------------------------------------------------------------
+              */
 
-                clearUnsavedChangesWarning();
+              clearUnsavedChangesWarning();
 
-                AutomatorCreateAutoCloseToastAlert(
-                  'automator-form-editor-save-success',
-                  'center',
-                  'middle',
-                  true,
-                  true,
-                  title,
-                  message,
-                  null,
-                  false,
-                  function() {
-                    AutomatorSetActionStatus(false);
-                    window.location.reload();
-                  },
-                  3000
+
+              /*
+              |--------------------------------------------------------------------------
+              | Mantém o loader até o reload
+              |--------------------------------------------------------------------------
+              */
+
+              $('#page-loader').css(
+                'z-index',
+                '1085'
+              );
+
+
+              let reloadExecuted =
+                false;
+
+
+              AutomatorCreateAutoCloseToastAlert(
+
+                'automator-form-editor-save-success-' +
+                Date.now(),
+
+                'center',
+
+                'middle',
+
+                true,
+
+                true,
+
+                title,
+
+                message,
+
+                null,
+
+                false,
+
+                function() {
+
+                  if (
+                    reloadExecuted === true
+                  ) {
+
+                    return false;
+
+                  }
+
+
+                  reloadExecuted =
+                    true;
+
+
+                  AutomatorSetActionStatus(
+                    false
+                  );
+
+
+                  window.location.reload();
+
+
+                  return true;
+
+                },
+
+                3000
+
+              );
+
+
+              return true;
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | A API respondeu, mas não salvou
+            |--------------------------------------------------------------------------
+            */
+
+            $(selectors.modal)
+              .removeAttr(
+                'data-automator-form-submit'
+              );
+
+
+            formEl.setAttribute(
+              'data-submit',
+              'false'
+            );
+
+
+            state.hasChanges =
+              true;
+
+
+            setSaveState(
+              true
+            );
+
+
+            AutomatorCreateAutoCloseToastAlert(
+
+              'automator-form-editor-save-error-' +
+              Date.now(),
+
+              'center',
+
+              'middle',
+
+              true,
+
+              true,
+
+              title,
+
+              message,
+
+              null,
+
+              false,
+
+              function() {
+
+                $('#page-loader').css(
+                  'z-index',
+                  ''
                 );
 
-                return true;
 
-              }
+                AutomatorPageLoader(
+                  'hide',
+                  function() {
 
-              $(selectors.modal).removeAttr('data-automator-form-submit');
+                    AutomatorSetActionStatus(
+                      false
+                    );
 
-              state.hasChanges = true;
-              setSaveState(true);
+                  }
+                );
 
-              AutomatorCreateAutoCloseToastAlert(
-                'automator-form-editor-save-error',
-                'center',
-                'middle',
-                true,
-                true,
-                title,
-                message,
-                null,
-                false,
-                function() {
-                  $('#page-loader').css('z-index', '');
-                  AutomatorPageLoader('hide', function() {
-                    AutomatorSetActionStatus(false);
-                  });
-                },
-                5000
+              },
+
+              5000
+
+            );
+
+
+            return false;
+
+          },
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Erro na requisição
+          |--------------------------------------------------------------------------
+          */
+
+          error: function(
+            xhr
+          ) {
+
+            let title =
+              'Erro';
+
+            let message =
+              'Não foi possível salvar o formulário.';
+
+
+            if (
+              xhr.responseJSON
+            ) {
+
+              title =
+
+                xhr.responseJSON.title ||
+
+                title;
+
+
+              message =
+
+                xhr.responseJSON.message ||
+
+                message;
+
+            } else if (
+              xhr.responseText
+            ) {
+
+              message =
+                xhr.responseText;
+
+            }
+
+
+            $(selectors.modal)
+              .removeAttr(
+                'data-automator-form-submit'
               );
 
-              return false;
 
-            },
+            formEl.setAttribute(
+              'data-submit',
+              'false'
+            );
 
-            error: function(xhr) {
 
-              let title = 'Erro';
-              let message = 'Não foi possível salvar o formulário.';
+            state.hasChanges =
+              true;
 
-              if (xhr.responseJSON) {
-                title = xhr.responseJSON.title || title;
-                message = xhr.responseJSON.message || message;
-              } else if (xhr.responseText) {
-                message = xhr.responseText;
-              }
 
-              $(selectors.modal).removeAttr('data-automator-form-submit');
+            setSaveState(
+              true
+            );
 
-              state.hasChanges = true;
-              setSaveState(true);
 
-              AutomatorCreateAutoCloseToastAlert(
-                'automator-form-editor-save-request-error',
-                'center',
-                'middle',
-                true,
-                true,
-                title,
-                message,
-                null,
-                false,
-                function() {
-                  $('#page-loader').css('z-index', '');
-                  AutomatorPageLoader('hide', function() {
-                    AutomatorSetActionStatus(false);
-                  });
+            AutomatorCreateAutoCloseToastAlert(
+
+              'automator-form-editor-save-request-error-' +
+              Date.now(),
+
+              'center',
+
+              'middle',
+
+              true,
+
+              true,
+
+              title,
+
+              message,
+
+              null,
+
+              false,
+
+              function() {
+
+                $('#page-loader').css(
+                  'z-index',
+                  ''
+                );
+
+
+                AutomatorPageLoader(
+                  'hide',
+                  function() {
+
+                    AutomatorSetActionStatus(
+                      false
+                    );
+
+                  }
+                );
+
+              },
+
+              5000
+
+            );
+
+
+            return false;
+
+          }
+
+        });
+
+      }
+
+    );
+
+
+    return true;
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Ações
+  |--------------------------------------------------------------------------
+  */
+
+  function save() {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Não permite salvar durante o preview
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      state.previewMode === true
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Impede envio sem alterações
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      state.hasChanges !== true
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Localiza e sincroniza o formulário interno do editor
+    |--------------------------------------------------------------------------
+    */
+
+    const formEl =
+      syncEditorSubmitForm();
+
+
+    if (
+      !formEl ||
+      !formEl.action
+    ) {
+
+      AutomatorCreateAutoCloseToastAlert(
+
+        'automator-form-editor-save-route-error',
+
+        'center',
+
+        'middle',
+
+        true,
+
+        true,
+
+        'Erro',
+
+        'A rota dinâmica para salvar este formulário não foi encontrada.',
+
+        null,
+
+        false,
+
+        null,
+
+        5000
+
+      );
+
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Captura e normaliza os dados antes da confirmação
+    |--------------------------------------------------------------------------
+    |
+    | O conteúdo é capturado neste momento para garantir que exatamente o estado
+    | confirmado pelo usuário seja enviado após a validação da senha.
+    |
+    */
+
+    let payload =
+      captureData();
+
+
+    payload =
+      normalizeEditorPayloadBeforeSubmit(
+        payload
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza os campos internos auxiliares
+    |--------------------------------------------------------------------------
+    */
+
+    $(formEl)
+      .find(
+        '[name="id"]'
+      )
+      .val(
+        payload.id ||
+        ''
+      );
+
+
+    $(formEl)
+      .find(
+        '[name="tbl_sys_form_ID"]'
+      )
+      .val(
+        payload.tbl_sys_form_ID ||
+        ''
+      );
+
+
+    $(formEl)
+      .find(
+        '[name="payload"]'
+      )
+      .val(
+        JSON.stringify(
+          payload
+        )
+      );
+
+
+    formEl.setAttribute(
+      'data-submit',
+      'false'
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Valida disponibilidade das funções do sistema
+    |--------------------------------------------------------------------------
+    */
+
+    if (
+      typeof AutomatorCreateSecurityConfirmationModal !==
+      'function'
+    ) {
+
+      AutomatorCreateAutoCloseToastAlert(
+
+        'automator-form-editor-security-function-error',
+
+        'center',
+
+        'middle',
+
+        true,
+
+        true,
+
+        'Erro',
+
+        'A função de confirmação de segurança não foi encontrada.',
+
+        null,
+
+        false,
+
+        null,
+
+        5000
+
+      );
+
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Bloqueia novos cliques enquanto a confirmação estiver aberta
+    |--------------------------------------------------------------------------
+    */
+
+    setSaveState(
+      false
+    );
+
+
+    $(selectors.modal)
+      .attr(
+        'data-automator-form-submit',
+        'true'
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Confirma disponibilidade para iniciar a ação
+    |--------------------------------------------------------------------------
+    */
+
+    AutomatorGetActionStatus(
+      function(
+        actionStatus
+      ) {
+
+        if (
+          actionStatus === true ||
+          actionStatus === 'true'
+        ) {
+
+          setSaveState(
+            true
+          );
+
+
+          $(selectors.modal)
+            .removeAttr(
+              'data-automator-form-submit'
+            );
+
+
+          return false;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reserva o estado da ação para abrir o modal de segurança
+        |--------------------------------------------------------------------------
+        */
+
+        AutomatorSetActionStatus(
+          true,
+          function() {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Solicita confirmação da senha
+            |--------------------------------------------------------------------------
+            */
+
+            const confirmationModal =
+              AutomatorCreateSecurityConfirmationModal({
+
+                type:
+                  'automator-form-editor-save',
+
+                title:
+                  'Confirmar salvamento',
+
+                message:
+                  'Para salvar as alterações realizadas no formulário, confirme sua senha. Após a validação, os dados serão enviados e atualizados no sistema.',
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Ao abrir o modal, libera o estado para a própria validação
+                |--------------------------------------------------------------------------
+                |
+                | A função de confirmação também utiliza AutomatorSetActionStatus.
+                | Por isso ela precisa receber o estado liberado enquanto aguarda o
+                | preenchimento da senha.
+                |
+                */
+
+                resetActionStatusOnShown:
+                  true,
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Cancelamento
+                |--------------------------------------------------------------------------
+                */
+
+                resetActionStatusOnCancel:
+                  true,
+
+                keepPageLoaderOnCancel:
+                  false,
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Confirmação aprovada
+                |--------------------------------------------------------------------------
+                |
+                | Não exibe um toast intermediário de "credenciais validadas".
+                | O modal fecha e o POST final é iniciado imediatamente.
+                |
+                */
+
+                skipSuccessToast:
+                  true,
+
+                keepPageLoaderOnSuccess:
+                  true,
+
+                resetActionStatusOnSuccess:
+                  false,
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Usuário cancelou a confirmação
+                |--------------------------------------------------------------------------
+                */
+
+                cancelCallback: function() {
+
+                  $('#page-loader').css(
+                    'z-index',
+                    ''
+                  );
+
+
+                  $(selectors.modal)
+                    .removeAttr(
+                      'data-automator-form-submit'
+                    );
+
+
+                  formEl.setAttribute(
+                    'data-submit',
+                    'false'
+                  );
+
+
+                  state.hasChanges =
+                    true;
+
+
+                  setSaveState(
+                    true
+                  );
+
+
+                  AutomatorSetActionStatus(
+                    false
+                  );
+
+
+                  return true;
+
                 },
-                5000
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Senha validada
+                |--------------------------------------------------------------------------
+                */
+
+                successCallback: function(
+                  context,
+                  securityResponse
+                ) {
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Garante que o editor ainda existe
+                  |--------------------------------------------------------------------------
+                  */
+
+                  const editorModal =
+                    document.querySelector(
+                      selectors.modal
+                    );
+
+
+                  if (
+                    !editorModal ||
+                    !document.body.contains(
+                      formEl
+                    )
+                  ) {
+
+                    $('#page-loader').css(
+                      'z-index',
+                      ''
+                    );
+
+
+                    AutomatorPageLoader(
+                      'hide',
+                      function() {
+
+                        AutomatorSetActionStatus(
+                          false
+                        );
+
+                      }
+                    );
+
+
+                    return false;
+
+                  }
+
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Confirma que as credenciais foram validadas
+                  |--------------------------------------------------------------------------
+                  */
+
+                  const accessValidated = (
+
+                    securityResponse &&
+
+                    (
+
+                      securityResponse.status === true ||
+                      securityResponse.status === 'true' ||
+                      securityResponse.status === 1 ||
+                      securityResponse.status === '1'
+
+                    )
+
+                  );
+
+
+                  if (
+                    accessValidated !== true
+                  ) {
+
+                    $(selectors.modal)
+                      .removeAttr(
+                        'data-automator-form-submit'
+                      );
+
+
+                    state.hasChanges =
+                      true;
+
+
+                    setSaveState(
+                      true
+                    );
+
+
+                    $('#page-loader').css(
+                      'z-index',
+                      ''
+                    );
+
+
+                    AutomatorPageLoader(
+                      'hide',
+                      function() {
+
+                        AutomatorSetActionStatus(
+                          false
+                        );
+
+                      }
+                    );
+
+
+                    return false;
+
+                  }
+
+
+                  /*
+                  |--------------------------------------------------------------------------
+                  | Executa o POST final somente depois da validação
+                  |--------------------------------------------------------------------------
+                  */
+
+                  return submitFormEditorPayload(
+
+                    formEl,
+
+                    payload
+
+                  );
+
+                }
+
+              });
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Falha ao criar o modal de segurança
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+              !confirmationModal
+            ) {
+
+              $(selectors.modal)
+                .removeAttr(
+                  'data-automator-form-submit'
+                );
+
+
+              state.hasChanges =
+                true;
+
+
+              setSaveState(
+                true
               );
+
+
+              $('#page-loader').css(
+                'z-index',
+                ''
+              );
+
+
+              AutomatorPageLoader(
+                'hide',
+                function() {
+
+                  AutomatorSetActionStatus(
+                    false
+                  );
+
+                }
+              );
+
 
               return false;
 
             }
 
-          });
 
-        });
+            return true;
 
-      });
+          }
 
-    });
+        );
+
+      }
+
+    );
+
 
     return false;
 

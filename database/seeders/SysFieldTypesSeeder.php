@@ -4478,6 +4478,17 @@
                     "default"     => "",
 
                   ],
+                  'placeholder' => [
+
+                    'label'       => 'Texto auxiliar',
+                    'type'        => 'text',
+                    'nullable'    => 'true',
+                    'required'    => 'false',
+                    'placeholder' => 'Adicione propriedades ao documento JSON.',
+                    'description' => 'Texto auxiliar associado ao editor JSON.',
+                    'default'     => 'Adicione propriedades ao documento JSON.',
+
+                  ],
 
                 ]
 
@@ -4487,19 +4498,402 @@
                 'label'  => 'Avançado',
                 'fields' => [
 
-                  'minlenght' => [
+                  'root-type' => [
 
-                    'label'    => 'Minímo de caracteres',
-                    'field'    => "input[type='number']",
+                    'label'       => 'Tipo da estrutura principal',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Define a estrutura inicial esperada para o documento JSON.',
+                    'default'     => 'object',
+                    'values'      => [
+
+                      'object' => 'Objeto',
+                      'array'  => 'Array',
+
+                    ],
+
+                  ],
+
+                  'allow-object' => [
+
+                    'label'       => 'Permitir objetos',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite adicionar objetos dentro da estrutura JSON.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                  'allow-array' => [
+
+                    'label'       => 'Permitir arrays',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite adicionar arrays dentro da estrutura JSON.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                  'allow-string' => [
+
+                    'label'       => 'Permitir textos',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite utilizar valores do tipo texto.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                  'allow-number' => [
+
+                    'label'       => 'Permitir números',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite utilizar valores numéricos.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                  'allow-boolean' => [
+
+                    'label'       => 'Permitir booleanos',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite utilizar valores true ou false.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                  'allow-null' => [
+
+                    'label'       => 'Permitir valores nulos',
+                    'type'        => 'select',
+                    'nullable'    => 'false',
+                    'required'    => 'true',
+                    'description' => 'Permite utilizar valores do tipo null.',
+                    'default'     => 'true',
+                    'values'      => [
+
+                      'false' => 'Não',
+                      'true'  => 'Sim',
+
+                    ],
+
+                  ],
+
+                ]
+
+              ],
+              'aparencia' => [
+                  
+                'label'  => 'Aparência',
+                'fields' => [
+
+                  'class'  => [
+
+                    'label'   => 'Classes Adicionais',
+                    'field'   => 'text',
+                    'default' => ''
+
+                  ],
+
+                  'style'  => [
+
+                    'label'   => 'Estilo adicional',
+                    'field'   => 'editor-css',
+                    'class'   => 'textarea-css-editor',
+                    'default' => ''
+
+                  ]
+
+                ]
+
+              ]
+
+            ]),
+
+          ],
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 6,
+            'tbl_sys_field_type_name'        => 'datetime',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldDateTime',
+            'tbl_sys_field_type_icon'        => 'calendar',
+            'tbl_sys_field_type_title'       => 'Data e Hora',
+            'tbl_sys_field_type_description' => 'Uma entrada de data e hora, útil para armazenar valores com data e hora em formatos desejados.',
+            'tbl_sys_field_type_layout'      => false,
+            'tbl_sys_field_type_configs'     => '',
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados do tipo data e hora.',
+              'args' => [
+
+                "attrs" => [
+
+                  'label'  => 'Formatação',
+                  'fields' => [
+
+                    "format" => [
+
+                      "label"       => "Formato dos dados",
+                      "type"        => "text",
+                      "nullable"    => "false",
+                      'required'    => "true",
+                      "placeholder" => "Y-m-d H:i:s",
+                      "description" => "",
+                      "default"     => "Y-m-d H:i:s",
+
+                    ],
+
+                    "display" => [
+
+                      "label"       => "Formato de exibição",
+                      "type"        => "text",
+                      "nullable"    => "false",
+                      'required'    => "true",
+                      "placeholder" => "Y-m-d H:i:s",
+                      "description" => "",
+                      "default"     => "Y-m-d H:i:s",
+
+                    ],
+
+                  ]
+
+                ],
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
+            'tbl_sys_field_type_params' => json_encode([
+
+              'wrapper' => [
+
+                'label'  => 'Tamanho do campo',
+                'fields' => [
+
+                  'column-xs' => [
+                    'label'   => 'Tamanho XS',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-sm' => [
+                    'label'   => 'Tamanho SM',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-md' => [
+                    'label'   => 'Tamanho MD',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-lg' => [
+                    'label'   => 'Tamanho LG',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xl' => [
+                    'label'   => 'Tamanho XL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xxl' => [
+                    'label'   => 'Tamanho XXL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                ]
+
+              ],
+              "configs"    => [
+                
+                'label'  => 'Configurações',
+                'fields' => [
+
+                  "required" => [
+
+                    "label"       => "Obrigatório",
+                    "type"        => "select",
+                    "required"    => "true",
+                    "nullable"    => "false",
+                    "description" => "Campo Obrigatório.",
+                    "default"     => "false",
+                    "values"      => [
+
+                      "false" => "Não",
+                      "true"  => "Sim"
+
+                    ]
+
+                  ],
+
+                ]
+
+              ],
+              "advanced" => [
+
+                'label'  => 'Avançado',
+                'fields' => [
+
+                  'min' => [
+
+                    'label'    => 'Data Minima',
+                    'field'    => "input[type='date']",
                     'default'  => "",
                     "nullable" => "true",
                     'required' => "false"
 
                   ],
-                  'maxlenght' => [
+                  'max' => [
 
-                    'label'    => 'Máximo de caracteres',
-                    'field'    => "input[type='number']",
+                    'label'    => 'Data Máxima',
+                    'field'    => "input[type='date']",
                     'default'  => "",
                     "nullable" => "true",
                     'required' => "false"
@@ -4536,7 +4930,7 @@
               ]
 
             ]),
-
+          
           ],
 
         // Avançado - END

@@ -42,6 +42,9 @@ window.SysAutomatorPaginationEditor = (function () {
     applyingRecordData:     false,
     submitting:             false,
 
+    actionBuilderForms:          {},
+    actionBuilderAvailableForms: [],
+
     validation: {
 
       valid:  false,
@@ -194,7 +197,6 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
-
   /*
   |--------------------------------------------------------------------------
   | Configuração
@@ -289,9 +291,21 @@ window.SysAutomatorPaginationEditor = (function () {
     |--------------------------------------------------------------------------
     */
 
+
     applyPaginationEditorSecurityResponse(
 
       state.editorResponse
+
+    );
+
+
+    applyPaginationEditorSecurityResponse(
+
+      normalizePlainObject(
+
+        state.editorResponse.data
+
+      )
 
     );
 
@@ -314,6 +328,49 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Carrega os formulários auxiliares do editor de ações
+    |--------------------------------------------------------------------------
+    */
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      state.editorResponse
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      normalizePlainObject(
+
+        state.editorResponse.data
+
+      )
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      normalizePlainObject(
+
+        state.editorResponse.dados
+
+      )
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      state.recordData
+
+    );
+
+
     clearUnsavedChangesWarning();
 
 
@@ -330,6 +387,10863 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza um formulário auxiliar do editor de ações
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationButtonActionBuilderFormData(
+    formData = {}
+  ) {
+
+
+    formData = normalizePlainObject(
+
+      formData
+
+    );
+
+
+    const formID = String(
+
+      formData.id ||
+
+      formData.formID ||
+
+      formData.form_id ||
+
+      formData.tbl_sys_form_ID ||
+
+      ''
+
+    ).trim();
+
+
+    const formName = String(
+
+      formData.name ||
+
+      formData.formName ||
+
+      formData.form_name ||
+
+      formData.tbl_sys_form_name ||
+
+      ''
+
+    ).trim();
+
+
+    const formTitle = String(
+
+      formData.title ||
+
+      formData.formTitle ||
+
+      formData.form_title ||
+
+      formData.tbl_sys_form_title ||
+
+      ''
+
+    ).trim();
+
+
+    if(
+      formID == '' &&
+      formName == ''
+    ) {
+
+      return {};
+
+    }
+
+
+    return {
+
+      id: formID,
+
+      name: formName,
+
+      title: formTitle,
+
+      tbl_sys_form_ID: formID,
+
+      tbl_sys_form_name: formName,
+
+      tbl_sys_form_title: formTitle,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o tipo do construtor pelo nome do formulário
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonActionBuilderModeByFormName(
+    formName = ''
+  ) {
+
+
+    formName = String(
+
+      formName || ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    const formNames = {
+
+      'admin-open-form-modal': 'modal-form',
+
+      'admin-open-view-modal': 'modal-view',
+
+    };
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        formNames,
+
+        formName
+
+      )
+    ) {
+
+      return formNames[formName];
+
+    }
+
+
+    return '';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Registra um formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function registerPaginationButtonActionBuilderForm(
+    mode = '',
+    formData = {}
+  ) {
+
+
+    mode = String(
+
+      mode || ''
+
+    ).trim();
+
+
+    formData = normalizePaginationButtonActionBuilderFormData(
+
+      formData
+
+    );
+
+
+    if(mode == '') {
+
+
+      mode = getPaginationButtonActionBuilderModeByFormName(
+
+        formData.name ||
+
+        ''
+
+      );
+
+
+    }
+
+
+    if(
+      mode != 'modal-form' &&
+      mode != 'modal-view'
+    ) {
+
+      return false;
+
+    }
+
+
+    if(
+      String(
+        formData.id || ''
+      ).trim() == ''
+    ) {
+
+      return false;
+
+    }
+
+
+    state.actionBuilderForms[mode] = $.extend(
+
+      true,
+
+      {},
+
+      state.actionBuilderForms[mode] || {},
+
+      formData
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Registra a lista de formulários disponíveis
+  |--------------------------------------------------------------------------
+  */
+
+
+  function registerPaginationButtonActionBuilderAvailableForms(
+    availableForms = []
+  ) {
+
+
+    if(
+      availableForms &&
+      typeof availableForms === 'object' &&
+      !Array.isArray(availableForms)
+    ) {
+
+      availableForms = Object.keys(
+
+        availableForms
+
+      ).map(function(formKey) {
+
+
+        const formData = normalizePlainObject(
+
+          availableForms[formKey]
+
+        );
+
+
+        if(
+          !formData.name &&
+          !formData.tbl_sys_form_name
+        ) {
+
+          formData.name = formKey;
+
+        }
+
+
+        return formData;
+
+
+      });
+
+    }
+
+
+    if(!Array.isArray(availableForms)) {
+
+      return false;
+
+    }
+
+
+    availableForms.forEach(function(formData) {
+
+
+      formData = normalizePaginationButtonActionBuilderFormData(
+
+        formData
+
+      );
+
+
+      if(
+        String(
+          formData.id || ''
+        ).trim() == '' &&
+        String(
+          formData.name || ''
+        ).trim() == ''
+      ) {
+
+        return;
+
+      }
+
+
+      const existingIndex =
+
+        state.actionBuilderAvailableForms
+          .findIndex(function(existingFormData) {
+
+
+            existingFormData =
+
+              normalizePaginationButtonActionBuilderFormData(
+
+                existingFormData
+
+              );
+
+
+            if(
+              formData.id != '' &&
+              existingFormData.id == formData.id
+            ) {
+
+              return true;
+
+            }
+
+
+            return (
+
+              formData.name != '' &&
+              existingFormData.name == formData.name
+
+            );
+
+
+          });
+
+
+      if(existingIndex >= 0) {
+
+
+        state.actionBuilderAvailableForms[existingIndex] =
+
+          $.extend(
+
+            true,
+
+            {},
+
+            state.actionBuilderAvailableForms[existingIndex],
+
+            formData
+
+          );
+
+
+      } else {
+
+
+        state.actionBuilderAvailableForms.push(
+
+          formData
+
+        );
+
+
+      }
+
+
+      registerPaginationButtonActionBuilderForm(
+
+        '',
+
+        formData
+
+      );
+
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Reconstrói o mapa dos formulários auxiliares
+  |--------------------------------------------------------------------------
+  */
+
+
+  function resolvePaginationButtonActionBuilderForms() {
+
+
+    registerPaginationButtonActionBuilderAvailableForms(
+
+      state.actionBuilderAvailableForms
+
+    );
+
+
+    Object.keys(
+
+      state.actionBuilderForms
+
+    ).forEach(function(mode) {
+
+
+      registerPaginationButtonActionBuilderForm(
+
+        mode,
+
+        state.actionBuilderForms[mode]
+
+      );
+
+
+    });
+
+
+    return (
+
+      String(
+
+        normalizePlainObject(
+
+          state.actionBuilderForms['modal-form']
+
+        ).id || ''
+
+      ).trim() != '' ||
+
+      String(
+
+        normalizePlainObject(
+
+          state.actionBuilderForms['modal-view']
+
+        ).id || ''
+
+      ).trim() != ''
+
+    );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Configuração dos formulários auxiliares das ações dos botões
+  |--------------------------------------------------------------------------
+  */
+
+
+  function applyPaginationButtonActionBuilderResponse(
+    response = {}
+  ) {
+
+
+    response = normalizePlainObject(
+
+      response
+
+    );
+
+
+    const sources = [];
+
+
+    function addSource(source = {}) {
+
+
+      source = normalizePlainObject(
+
+        source
+
+      );
+
+
+      if(
+        Object.keys(
+          source
+        ).length <= 0
+      ) {
+
+        return;
+
+      }
+
+
+      sources.push(
+
+        source
+
+      );
+
+
+    }
+
+
+    addSource(
+
+      response
+
+    );
+
+
+    addSource(
+
+      response.paginationActionBuilder
+
+    );
+
+
+    addSource(
+
+      response.pagination_action_builder
+
+    );
+
+
+    addSource(
+
+      response.actionBuilder
+
+    );
+
+
+    addSource(
+
+      response.action_builder
+
+    );
+
+
+    addSource(
+
+      response.data
+
+    );
+
+
+    addSource(
+
+      response.dados
+
+    );
+
+
+    const responseData = normalizePlainObject(
+
+      response.data
+
+    );
+
+
+    addSource(
+
+      responseData.paginationActionBuilder
+
+    );
+
+
+    addSource(
+
+      responseData.pagination_action_builder
+
+    );
+
+
+    addSource(
+
+      responseData.actionBuilder
+
+    );
+
+
+    addSource(
+
+      responseData.action_builder
+
+    );
+
+
+    const responseDados = normalizePlainObject(
+
+      response.dados
+
+    );
+
+
+    addSource(
+
+      responseDados.paginationActionBuilder
+
+    );
+
+
+    addSource(
+
+      responseDados.pagination_action_builder
+
+    );
+
+
+    addSource(
+
+      responseDados.actionBuilder
+
+    );
+
+
+    addSource(
+
+      responseDados.action_builder
+
+    );
+
+
+    sources.forEach(function(source) {
+
+
+      source = normalizePlainObject(
+
+        source
+
+      );
+
+
+      const builderForms = normalizePlainObject(
+
+        source.forms ||
+
+        source.builderForms ||
+
+        source.builder_forms ||
+
+        source.actionBuilderForms ||
+
+        source.action_builder_forms ||
+
+        {}
+
+      );
+
+
+      Object.keys(
+
+        builderForms
+
+      ).forEach(function(builderFormKey) {
+
+
+        const builderForm = normalizePlainObject(
+
+          builderForms[builderFormKey]
+
+        );
+
+
+        let builderMode = String(
+
+          builderFormKey || ''
+
+        ).trim();
+
+
+        if(
+          builderMode != 'modal-form' &&
+          builderMode != 'modal-view'
+        ) {
+
+          builderMode =
+
+            getPaginationButtonActionBuilderModeByFormName(
+
+              builderForm.name ||
+
+              builderForm.tbl_sys_form_name ||
+
+              builderFormKey
+
+            );
+
+        }
+
+
+        registerPaginationButtonActionBuilderForm(
+
+          builderMode,
+
+          builderForm
+
+        );
+
+
+      });
+
+
+      const directBuilderForms = [
+
+        source.modalForm,
+
+        source.modal_form,
+
+        source.formModal,
+
+        source.form_modal,
+
+      ];
+
+
+      directBuilderForms.forEach(function(builderForm) {
+
+
+        registerPaginationButtonActionBuilderForm(
+
+          'modal-form',
+
+          builderForm
+
+        );
+
+
+      });
+
+
+      const directViewBuilderForms = [
+
+        source.modalView,
+
+        source.modal_view,
+
+        source.viewModal,
+
+        source.view_modal,
+
+      ];
+
+
+      directViewBuilderForms.forEach(function(builderForm) {
+
+
+        registerPaginationButtonActionBuilderForm(
+
+          'modal-view',
+
+          builderForm
+
+        );
+
+
+      });
+
+
+      const availableForms =
+
+        source.availableForms ||
+
+        source.available_forms ||
+
+        source.formsAvailable ||
+
+        source.forms_available ||
+
+        source.allForms ||
+
+        source.all_forms ||
+
+        source.formsList ||
+
+        source.forms_list ||
+
+        [];
+
+
+      registerPaginationButtonActionBuilderAvailableForms(
+
+        availableForms
+
+      );
+
+
+    });
+
+
+    resolvePaginationButtonActionBuilderForms();
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o formulário auxiliar de uma ação
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonActionBuilderForm(
+    mode = ''
+  ) {
+
+
+    mode = String(
+
+      mode || ''
+
+    ).trim();
+
+
+    resolvePaginationButtonActionBuilderForms();
+
+
+    let builderForm =
+
+      normalizePaginationButtonActionBuilderFormData(
+
+        state.actionBuilderForms[mode]
+
+      );
+
+
+    if(
+      String(
+        builderForm.id || ''
+      ).trim() != ''
+    ) {
+
+      return builderForm;
+
+    }
+
+
+    const expectedFormName =
+
+      mode == 'modal-form'
+
+        ? 'admin-open-form-modal'
+
+        : mode == 'modal-view'
+
+          ? 'admin-open-view-modal'
+
+          : '';
+
+
+    if(expectedFormName == '') {
+
+      return {};
+
+    }
+
+
+    state.actionBuilderAvailableForms
+      .some(function(formData) {
+
+
+        formData = normalizePaginationButtonActionBuilderFormData(
+
+          formData
+
+        );
+
+
+        if(
+          String(
+            formData.name || ''
+          ).trim() != expectedFormName
+        ) {
+
+          return false;
+
+        }
+
+
+        builderForm = formData;
+
+
+        registerPaginationButtonActionBuilderForm(
+
+          mode,
+
+          formData
+
+        );
+
+
+        return true;
+
+
+      });
+
+
+    return builderForm;
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Detecta o tipo de ação pelo conteúdo atual do onclick
+  |--------------------------------------------------------------------------
+  */
+
+
+  function detectPaginationButtonClickMode(
+    onclickValue = ''
+  ) {
+
+
+    onclickValue = String(
+
+      onclickValue || ''
+
+    ).trim();
+
+
+    if(onclickValue == '') {
+
+      return '';
+
+    }
+
+
+    if(
+      onclickValue.indexOf(
+        'AutomatorPaginationCreateModalForm'
+      ) >= 0
+    ) {
+
+      return 'modal-form';
+
+    }
+
+
+    if(
+      onclickValue.indexOf(
+        'AutomatorCreateViewModal'
+      ) >= 0
+    ) {
+
+      return 'modal-view';
+
+    }
+
+
+    return 'manual';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza tamanho utilizado pelos dois tipos de modal
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationButtonModalSize(
+    size = 'lg'
+  ) {
+
+
+    size = String(
+
+      size || ''
+
+    ).trim();
+
+
+    size = size.replace(
+
+      /^modal-/,
+
+      ''
+
+    );
+
+
+    const allowedSizes = [
+
+      'sm',
+      'md',
+      'lg',
+      'xl',
+      'fullscreen',
+      'fullscreen-sm-down',
+      'fullscreen-md-down',
+      'fullscreen-lg-down',
+      'fullscreen-xl-down',
+      'fullscreen-xxl-down',
+
+    ];
+
+
+    if(
+      allowedSizes.indexOf(
+        size
+      ) < 0
+    ) {
+
+      return 'lg';
+
+    }
+
+
+    return size;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Escapa texto para string JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function escapePaginationButtonJavascriptString(
+    value = ''
+  ) {
+
+
+    return String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    )
+      .replace(
+        /\\/g,
+        '\\\\'
+      )
+      .replace(
+        /'/g,
+        "\\'"
+      )
+      .replace(
+        /\r/g,
+        '\\r'
+      )
+      .replace(
+        /\n/g,
+        '\\n'
+      );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o ID de um formulário a partir do nome
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonFormIDByName(
+    formName = ''
+  ) {
+
+
+    formName = String(
+
+      formName || ''
+
+    ).trim();
+
+
+    if(formName == '') {
+
+      return '';
+
+    }
+
+
+    let formID = '';
+
+
+    state.actionBuilderAvailableForms
+      .some(function(formData) {
+
+
+        formData = normalizePlainObject(
+
+          formData
+
+        );
+
+
+        const currentName = String(
+
+          formData.name ||
+
+          formData.tbl_sys_form_name ||
+
+          ''
+
+        ).trim();
+
+
+        if(currentName != formName) {
+
+          return false;
+
+        }
+
+
+        formID = String(
+
+          formData.id ||
+
+          formData.tbl_sys_form_ID ||
+
+          ''
+
+        ).trim();
+
+
+        return true;
+
+
+      });
+
+
+    return formID;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o nome de um formulário a partir do ID
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonFormNameByID(
+    formID = ''
+  ) {
+
+
+    formID = String(
+
+      formID || ''
+
+    ).trim();
+
+
+    if(formID == '') {
+
+      return '';
+
+    }
+
+
+    let formName = '';
+
+
+    state.actionBuilderAvailableForms
+      .some(function(formData) {
+
+
+        formData = normalizePlainObject(
+
+          formData
+
+        );
+
+
+        const currentID = String(
+
+          formData.id ||
+
+          formData.tbl_sys_form_ID ||
+
+          ''
+
+        ).trim();
+
+
+        if(currentID != formID) {
+
+          return false;
+
+        }
+
+
+        formName = String(
+
+          formData.name ||
+
+          formData.tbl_sys_form_name ||
+
+          ''
+
+        ).trim();
+
+
+        return true;
+
+
+      });
+
+
+    return formName;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna a ação configurada para uma rota
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonActionNameByRoute(
+    routeName = ''
+  ) {
+
+
+    routeName = String(
+
+      routeName || ''
+
+    ).trim();
+
+
+    if(routeName == '') {
+
+      return '';
+
+    }
+
+
+    const actions = getActionsData();
+
+
+    let actionName = '';
+
+
+    Object.keys(
+
+      actions
+
+    ).some(function(currentActionName) {
+
+
+      const actionData = normalizePlainObject(
+
+        actions[currentActionName]
+
+      );
+
+
+      if(
+        String(
+          actionData.route || ''
+        ).trim() != routeName
+      ) {
+
+        return false;
+
+      }
+
+
+      actionName = String(
+
+        currentActionName
+
+      ).trim();
+
+
+      return true;
+
+
+    });
+
+
+    return actionName;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna a rota configurada para uma ação
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonRouteByActionName(
+    actionName = ''
+  ) {
+
+
+    actionName = String(
+
+      actionName || ''
+
+    ).trim();
+
+
+    if(actionName == '') {
+
+      return '';
+
+    }
+
+
+    const actions = getActionsData();
+
+
+    const actionData = normalizePlainObject(
+
+      actions[actionName]
+
+    );
+
+
+    return String(
+
+      actionData.route || ''
+
+    ).trim();
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Extrai um argumento simples de uma chamada JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonJavascriptArguments(
+    javascript = '',
+    functionName = ''
+  ) {
+
+
+    javascript = String(
+
+      javascript || ''
+
+    );
+
+
+    functionName = String(
+
+      functionName || ''
+
+    ).trim();
+
+
+    if(
+      javascript == '' ||
+      functionName == ''
+    ) {
+
+      return [];
+
+    }
+
+
+    const functionPosition = javascript.indexOf(
+
+      functionName + '('
+
+    );
+
+
+    if(functionPosition < 0) {
+
+      return [];
+
+    }
+
+
+    const startPosition =
+
+      functionPosition +
+
+      functionName.length +
+
+      1;
+
+
+    let currentValue = '';
+
+    let quote = '';
+
+    let escaped = false;
+
+    let parenthesisDepth = 0;
+
+    let bracesDepth = 0;
+
+    let bracketsDepth = 0;
+
+    const args = [];
+
+
+    for(
+      let index = startPosition;
+      index < javascript.length;
+      index++
+    ) {
+
+
+      const char = javascript.charAt(
+
+        index
+
+      );
+
+
+      if(escaped === true) {
+
+        currentValue += char;
+
+        escaped = false;
+
+        continue;
+
+      }
+
+
+      if(
+        quote != '' &&
+        char == '\\'
+      ) {
+
+        currentValue += char;
+
+        escaped = true;
+
+        continue;
+
+      }
+
+
+      if(quote != '') {
+
+        currentValue += char;
+
+
+        if(char == quote) {
+
+          quote = '';
+
+        }
+
+
+        continue;
+
+      }
+
+
+      if(
+        char == "'" ||
+        char == '"' ||
+        char == '`'
+      ) {
+
+        quote = char;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '(') {
+
+        parenthesisDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ')') {
+
+
+        if(
+          parenthesisDepth <= 0 &&
+          bracesDepth <= 0 &&
+          bracketsDepth <= 0
+        ) {
+
+          args.push(
+
+            currentValue.trim()
+
+          );
+
+
+          break;
+
+        }
+
+
+        parenthesisDepth--;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '{') {
+
+        bracesDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '}') {
+
+        bracesDepth--;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '[') {
+
+        bracketsDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ']') {
+
+        bracketsDepth--;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(
+        char == ',' &&
+        parenthesisDepth <= 0 &&
+        bracesDepth <= 0 &&
+        bracketsDepth <= 0
+      ) {
+
+        args.push(
+
+          currentValue.trim()
+
+        );
+
+
+        currentValue = '';
+
+        continue;
+
+      }
+
+
+      currentValue += char;
+
+
+    }
+
+
+    return args;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Remove aspas externas de um argumento
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationButtonJavascriptArgument(
+    value = ''
+  ) {
+
+
+    value = String(
+
+      value || ''
+
+    ).trim();
+
+
+    if(
+      value.length >= 2 &&
+      (
+        (
+          value.charAt(0) == "'" &&
+          value.charAt(value.length - 1) == "'"
+        ) ||
+        (
+          value.charAt(0) == '"' &&
+          value.charAt(value.length - 1) == '"'
+        ) ||
+        (
+          value.charAt(0) == '`' &&
+          value.charAt(value.length - 1) == '`'
+        )
+      )
+    ) {
+
+      value = value.substring(
+
+        1,
+
+        value.length - 1
+
+      );
+
+    }
+
+
+    return value
+      .replace(
+        /\\'/g,
+        "'"
+      )
+      .replace(
+        /\\"/g,
+        '"'
+      )
+      .replace(
+        /\\\\/g,
+        '\\'
+      );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte valor JavaScript para boolean
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parsePaginationButtonJavascriptBoolean(
+    value,
+    defaultValue = false
+  ) {
+
+
+    value = String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    if(
+      value == 'true' ||
+      value == '1'
+    ) {
+
+      return true;
+
+    }
+
+
+    if(
+      value == 'false' ||
+      value == '0'
+    ) {
+
+      return false;
+
+    }
+
+
+    return defaultValue;
+
+
+  }
+
+
+  function getPaginationButtonJavascriptObjectProperties(
+    javascript = ''
+  ) {
+
+
+    javascript = String(
+
+      javascript || ''
+
+    ).trim();
+
+
+    if(javascript == '') {
+
+      return {};
+
+    }
+
+
+    if(
+      javascript.charAt(0) == '{' &&
+      javascript.charAt(
+        javascript.length - 1
+      ) == '}'
+    ) {
+
+      javascript = javascript.substring(
+
+        1,
+
+        javascript.length - 1
+
+      );
+
+    }
+
+
+    const properties = {};
+
+
+    let currentProperty = '';
+
+    let currentValue = '';
+
+    let readingProperty = true;
+
+    let quote = '';
+
+    let escaped = false;
+
+    let parenthesisDepth = 0;
+
+    let bracesDepth = 0;
+
+    let bracketsDepth = 0;
+
+
+    function saveProperty() {
+
+
+      let propertyName = String(
+
+        currentProperty || ''
+
+      ).trim();
+
+
+      let propertyValue = String(
+
+        currentValue || ''
+
+      ).trim();
+
+
+      if(
+        propertyName.length >= 2 &&
+        (
+          (
+            propertyName.charAt(0) == "'" &&
+            propertyName.charAt(
+              propertyName.length - 1
+            ) == "'"
+          ) ||
+          (
+            propertyName.charAt(0) == '"' &&
+            propertyName.charAt(
+              propertyName.length - 1
+            ) == '"'
+          ) ||
+          (
+            propertyName.charAt(0) == '`' &&
+            propertyName.charAt(
+              propertyName.length - 1
+            ) == '`'
+          )
+        )
+      ) {
+
+        propertyName = propertyName.substring(
+
+          1,
+
+          propertyName.length - 1
+
+        );
+
+      }
+
+
+      if(propertyName != '') {
+
+        properties[propertyName] = propertyValue;
+
+      }
+
+
+      currentProperty = '';
+
+      currentValue = '';
+
+      readingProperty = true;
+
+
+    }
+
+
+    for(
+      let index = 0;
+      index < javascript.length;
+      index++
+    ) {
+
+
+      const char = javascript.charAt(
+
+        index
+
+      );
+
+
+      if(escaped === true) {
+
+
+        if(readingProperty === true) {
+
+          currentProperty += char;
+
+        } else {
+
+          currentValue += char;
+
+        }
+
+
+        escaped = false;
+
+        continue;
+
+      }
+
+
+      if(
+        quote != '' &&
+        char == '\\'
+      ) {
+
+
+        if(readingProperty === true) {
+
+          currentProperty += char;
+
+        } else {
+
+          currentValue += char;
+
+        }
+
+
+        escaped = true;
+
+        continue;
+
+      }
+
+
+      if(quote != '') {
+
+
+        if(readingProperty === true) {
+
+          currentProperty += char;
+
+        } else {
+
+          currentValue += char;
+
+        }
+
+
+        if(char == quote) {
+
+          quote = '';
+
+        }
+
+
+        continue;
+
+      }
+
+
+      if(
+        char == "'" ||
+        char == '"' ||
+        char == '`'
+      ) {
+
+        quote = char;
+
+
+        if(readingProperty === true) {
+
+          currentProperty += char;
+
+        } else {
+
+          currentValue += char;
+
+        }
+
+
+        continue;
+
+      }
+
+
+      if(readingProperty === true) {
+
+
+        if(char == ':') {
+
+          readingProperty = false;
+
+          continue;
+
+        }
+
+
+        currentProperty += char;
+
+        continue;
+
+      }
+
+
+      if(char == '(') {
+
+        parenthesisDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ')') {
+
+        parenthesisDepth = Math.max(
+
+          0,
+
+          parenthesisDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '{') {
+
+        bracesDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '}') {
+
+        bracesDepth = Math.max(
+
+          0,
+
+          bracesDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '[') {
+
+        bracketsDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ']') {
+
+        bracketsDepth = Math.max(
+
+          0,
+
+          bracketsDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(
+        char == ',' &&
+        parenthesisDepth <= 0 &&
+        bracesDepth <= 0 &&
+        bracketsDepth <= 0
+      ) {
+
+        saveProperty();
+
+        continue;
+
+      }
+
+
+      currentValue += char;
+
+
+    }
+
+
+    saveProperty();
+
+
+    return properties;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Lê uma propriedade simples de objeto JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationButtonJavascriptObjectValue(
+    javascript = '',
+    propertyName = '',
+    normalizeValue = true
+  ) {
+
+
+    propertyName = String(
+
+      propertyName || ''
+
+    ).trim();
+
+
+    if(propertyName == '') {
+
+      return '';
+
+    }
+
+
+    const properties =
+
+      getPaginationButtonJavascriptObjectProperties(
+
+        javascript
+
+      );
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        properties,
+
+        propertyName
+
+      ) !== true
+    ) {
+
+      return '';
+
+    }
+
+
+    const propertyValue = String(
+
+      properties[propertyName] || ''
+
+    ).trim();
+
+
+    if(normalizeValue !== true) {
+
+      return propertyValue;
+
+    }
+
+
+    return normalizePaginationButtonJavascriptArgument(
+
+      propertyValue
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Separa as instruções de um callback JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function splitPaginationButtonJavascriptStatements(
+    javascript = ''
+  ) {
+
+
+    javascript = String(
+
+      javascript || ''
+
+    ).trim();
+
+
+    if(javascript == '') {
+
+      return [];
+
+    }
+
+
+    const statements = [];
+
+
+    let currentValue = '';
+
+    let quote = '';
+
+    let escaped = false;
+
+    let parenthesisDepth = 0;
+
+    let bracesDepth = 0;
+
+    let bracketsDepth = 0;
+
+
+    for(
+      let index = 0;
+      index < javascript.length;
+      index++
+    ) {
+
+
+      const char = javascript.charAt(
+
+        index
+
+      );
+
+
+      if(escaped === true) {
+
+        currentValue += char;
+
+        escaped = false;
+
+        continue;
+
+      }
+
+
+      if(
+        quote != '' &&
+        char == '\\'
+      ) {
+
+        currentValue += char;
+
+        escaped = true;
+
+        continue;
+
+      }
+
+
+      if(quote != '') {
+
+        currentValue += char;
+
+
+        if(char == quote) {
+
+          quote = '';
+
+        }
+
+
+        continue;
+
+      }
+
+
+      if(
+        char == "'" ||
+        char == '"' ||
+        char == '`'
+      ) {
+
+        quote = char;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '(') {
+
+        parenthesisDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ')') {
+
+        parenthesisDepth = Math.max(
+
+          0,
+
+          parenthesisDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '{') {
+
+        bracesDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '}') {
+
+        bracesDepth = Math.max(
+
+          0,
+
+          bracesDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '[') {
+
+        bracketsDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ']') {
+
+        bracketsDepth = Math.max(
+
+          0,
+
+          bracketsDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(
+        char == ';' &&
+        parenthesisDepth <= 0 &&
+        bracesDepth <= 0 &&
+        bracketsDepth <= 0
+      ) {
+
+
+        const statement = String(
+
+          currentValue || ''
+
+        ).trim();
+
+
+        if(statement != '') {
+
+          statements.push(
+
+            statement + ';'
+
+          );
+
+        }
+
+
+        currentValue = '';
+
+        continue;
+
+      }
+
+
+      currentValue += char;
+
+
+    }
+
+
+    const remainingStatement = String(
+
+      currentValue || ''
+
+    ).trim();
+
+
+    if(remainingStatement != '') {
+
+      statements.push(
+
+        remainingStatement
+
+      );
+
+    }
+
+
+    return statements;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Separa os argumentos de uma chamada JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function splitPaginationButtonJavascriptArguments(
+    argumentsValue = ''
+  ) {
+
+
+    argumentsValue = String(
+
+      argumentsValue || ''
+
+    ).trim();
+
+
+    if(argumentsValue == '') {
+
+      return [];
+
+    }
+
+
+    const argumentsList = [];
+
+
+    let currentValue = '';
+
+    let quote = '';
+
+    let escaped = false;
+
+    let parenthesisDepth = 0;
+
+    let bracesDepth = 0;
+
+    let bracketsDepth = 0;
+
+
+    for(
+      let index = 0;
+      index < argumentsValue.length;
+      index++
+    ) {
+
+
+      const char = argumentsValue.charAt(
+
+        index
+
+      );
+
+
+      if(escaped === true) {
+
+        currentValue += char;
+
+        escaped = false;
+
+        continue;
+
+      }
+
+
+      if(
+        quote != '' &&
+        char == '\\'
+      ) {
+
+        currentValue += char;
+
+        escaped = true;
+
+        continue;
+
+      }
+
+
+      if(quote != '') {
+
+        currentValue += char;
+
+
+        if(char == quote) {
+
+          quote = '';
+
+        }
+
+
+        continue;
+
+      }
+
+
+      if(
+        char == "'" ||
+        char == '"' ||
+        char == '`'
+      ) {
+
+        quote = char;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '(') {
+
+        parenthesisDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ')') {
+
+        parenthesisDepth = Math.max(
+
+          0,
+
+          parenthesisDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '{') {
+
+        bracesDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '}') {
+
+        bracesDepth = Math.max(
+
+          0,
+
+          bracesDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == '[') {
+
+        bracketsDepth++;
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(char == ']') {
+
+        bracketsDepth = Math.max(
+
+          0,
+
+          bracketsDepth - 1
+
+        );
+
+
+        currentValue += char;
+
+        continue;
+
+      }
+
+
+      if(
+        char == ',' &&
+        parenthesisDepth <= 0 &&
+        bracesDepth <= 0 &&
+        bracketsDepth <= 0
+      ) {
+
+
+        argumentsList.push(
+
+          String(
+
+            currentValue || ''
+
+          ).trim()
+
+        );
+
+
+        currentValue = '';
+
+        continue;
+
+      }
+
+
+      currentValue += char;
+
+
+    }
+
+
+    if(
+      String(
+        currentValue || ''
+      ).trim() != ''
+    ) {
+
+      argumentsList.push(
+
+        String(
+
+          currentValue || ''
+
+        ).trim()
+
+      );
+
+    }
+
+
+    return argumentsList;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Interpreta um valor JavaScript sem executar o código
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parsePaginationButtonJavascriptValue(
+    value = ''
+  ) {
+
+
+    value = String(
+
+      value || ''
+
+    ).trim();
+
+
+    if(value == '') {
+
+      return {
+
+        type: 'raw',
+
+        value: '',
+
+      };
+
+    }
+
+
+    if(
+      value.length >= 2 &&
+      (
+        (
+          value.charAt(0) == "'" &&
+          value.charAt(
+            value.length - 1
+          ) == "'"
+        ) ||
+        (
+          value.charAt(0) == '"' &&
+          value.charAt(
+            value.length - 1
+          ) == '"'
+        ) ||
+        (
+          value.charAt(0) == '`' &&
+          value.charAt(
+            value.length - 1
+          ) == '`'
+        )
+      )
+    ) {
+
+      return {
+
+        type: 'string',
+
+        value:
+
+          normalizePaginationButtonJavascriptArgument(
+
+            value
+
+          ),
+
+      };
+
+    }
+
+
+    if(value == 'true') {
+
+      return {
+
+        type: 'boolean',
+
+        value: true,
+
+      };
+
+    }
+
+
+    if(value == 'false') {
+
+      return {
+
+        type: 'boolean',
+
+        value: false,
+
+      };
+
+    }
+
+
+    if(value == 'null') {
+
+      return {
+
+        type: 'null',
+
+        value: null,
+
+      };
+
+    }
+
+
+    if(value == 'undefined') {
+
+      return {
+
+        type: 'undefined',
+
+        value: 'undefined',
+
+      };
+
+    }
+
+
+    if(
+      /^-?(?:\d+|\d*\.\d+)$/.test(
+        value
+      )
+    ) {
+
+      return {
+
+        type: 'number',
+
+        value: Number(value),
+
+      };
+
+    }
+
+
+    return {
+
+      type: 'raw',
+
+      value: value,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte uma instrução JavaScript em uma estrutura JSON
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parsePaginationButtonJavascriptStatement(
+    statement = ''
+  ) {
+
+
+    statement = String(
+
+      statement || ''
+
+    ).trim();
+
+
+    if(statement == '') {
+
+      return null;
+
+    }
+
+
+    const statementWithoutSemicolon = statement.replace(
+
+      /;\s*$/,
+
+      ''
+
+    ).trim();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atribuição
+    |--------------------------------------------------------------------------
+    */
+
+
+    const assignmentMatch =
+
+      statementWithoutSemicolon.match(
+
+        /^([a-zA-Z_$][a-zA-Z0-9_$]*(?:(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)|(?:\[[^\]]+\]))*)\s*=\s*([\s\S]+)$/
+
+      );
+
+
+    if(assignmentMatch) {
+
+
+      const parsedValue =
+
+        parsePaginationButtonJavascriptValue(
+
+          assignmentMatch[2]
+
+        );
+
+
+      return {
+
+        type: 'assignment',
+
+        target: String(
+
+          assignmentMatch[1] || ''
+
+        ).trim(),
+
+        valueType:
+
+          parsedValue.type,
+
+        value:
+
+          parsedValue.value,
+
+        code: statement,
+
+      };
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Chamada de função
+    |--------------------------------------------------------------------------
+    */
+
+
+    const functionCallMatch =
+
+      statementWithoutSemicolon.match(
+
+        /^([a-zA-Z_$][a-zA-Z0-9_$]*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)*)\s*\(([\s\S]*)\)$/
+
+      );
+
+
+    if(functionCallMatch) {
+
+
+      const functionArguments =
+
+        splitPaginationButtonJavascriptArguments(
+
+          functionCallMatch[2] || ''
+
+        );
+
+
+      return {
+
+        type: 'function',
+
+        function: String(
+
+          functionCallMatch[1] || ''
+
+        ).trim(),
+
+        arguments:
+
+          functionArguments.map(function(argumentValue) {
+
+
+            const parsedArgument =
+
+              parsePaginationButtonJavascriptValue(
+
+                argumentValue
+
+              );
+
+
+            return {
+
+              type:
+
+                parsedArgument.type,
+
+              value:
+
+                parsedArgument.value,
+
+              code:
+
+                argumentValue,
+
+            };
+
+
+          }),
+
+        code: statement,
+
+      };
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorno
+    |--------------------------------------------------------------------------
+    */
+
+
+    const returnMatch = statementWithoutSemicolon.match(
+
+      /^return(?:\s+([\s\S]+))?$/
+
+    );
+
+
+    if(returnMatch) {
+
+
+      const parsedReturnValue =
+
+        parsePaginationButtonJavascriptValue(
+
+          returnMatch[1] || ''
+
+        );
+
+
+      return {
+
+        type: 'return',
+
+        valueType:
+
+          parsedReturnValue.type,
+
+        value:
+
+          parsedReturnValue.value,
+
+        code: statement,
+
+      };
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Código não reconhecido
+    |--------------------------------------------------------------------------
+    */
+
+
+    return {
+
+      type: 'raw',
+
+      code: statement,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte um callback JavaScript para a árvore JSON do formulário
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parseJavascriptCallbackToJson(
+    callbackValue = ''
+  ) {
+
+
+    callbackValue = String(
+
+      callbackValue || ''
+
+    ).trim();
+
+
+    if(
+      callbackValue == '' ||
+      callbackValue == 'null' ||
+      callbackValue == 'undefined'
+    ) {
+
+      return {};
+
+    }
+
+
+    const callbackBody =
+
+      normalizePaginationButtonActionBuilderFunctionValue(
+
+        callbackValue
+
+      );
+
+
+    if(callbackBody == '') {
+
+      return {};
+
+    }
+
+
+    const statements =
+
+      splitPaginationButtonJavascriptStatements(
+
+        callbackBody
+
+      )
+      .map(function(statement) {
+
+
+        return parsePaginationButtonJavascriptStatement(
+
+          statement
+
+        );
+
+
+      })
+      .filter(function(statement) {
+
+
+        return (
+
+          statement !== null &&
+          typeof statement === 'object'
+
+        );
+
+
+      });
+
+
+    return {
+
+      type: 'javascript-callback',
+
+      parameters: [
+
+        'response',
+        'modalEl',
+        'modal',
+        'recordData',
+
+      ],
+
+      statements: statements,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o conteúdo retornado pelo campo JSON
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationButtonCallbackJsonValue(
+    value = {}
+  ) {
+
+
+    if(
+      value === null ||
+      value === undefined ||
+      value === ''
+    ) {
+
+      return {};
+
+    }
+
+
+    if(
+      value &&
+      typeof value === 'object'
+    ) {
+
+      return value;
+
+    }
+
+
+    const stringValue = String(
+
+      value || ''
+
+    ).trim();
+
+
+    if(stringValue == '') {
+
+      return {};
+
+    }
+
+
+    try {
+
+
+      const decodedValue = JSON.parse(
+
+        stringValue
+
+      );
+
+
+      if(
+        decodedValue &&
+        typeof decodedValue === 'object'
+      ) {
+
+        return decodedValue;
+
+      }
+
+
+    } catch(error) {}
+
+
+    return {
+
+      value: stringValue,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte um valor estruturado novamente para JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function buildPaginationButtonJavascriptValue(
+    value,
+    valueType = 'raw'
+  ) {
+
+
+    valueType = String(
+
+      valueType || 'raw'
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    if(valueType == 'string') {
+
+      return (
+
+        '\'' +
+
+        escapePaginationButtonJavascriptString(
+
+          value === null ||
+          value === undefined
+
+            ? ''
+
+            : value
+
+        ) +
+
+        '\''
+
+      );
+
+    }
+
+
+    if(valueType == 'boolean') {
+
+      return AutomatorNormalizeBoolean(
+
+        value
+
+      ) === true
+
+        ? 'true'
+
+        : 'false';
+
+    }
+
+
+    if(valueType == 'number') {
+
+
+      const numberValue = Number(
+
+        value
+
+      );
+
+
+      return Number.isFinite(
+
+        numberValue
+
+      )
+
+        ? String(numberValue)
+
+        : '0';
+
+    }
+
+
+    if(valueType == 'null') {
+
+      return 'null';
+
+    }
+
+
+    if(valueType == 'undefined') {
+
+      return 'undefined';
+
+    }
+
+
+    if(
+      value &&
+      typeof value === 'object'
+    ) {
+
+
+      try {
+
+
+        return JSON.stringify(
+
+          value
+
+        );
+
+
+      } catch(error) {
+
+
+        return '{}';
+
+
+      }
+
+
+    }
+
+
+    return String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte uma instrução da árvore JSON novamente para JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function buildPaginationButtonJavascriptStatement(
+    statement = {}
+  ) {
+
+
+    statement = normalizePlainObject(
+
+      statement
+
+    );
+
+
+    const statementType = String(
+
+      statement.type || ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Preserva o código original quando ele ainda corresponde à instrução
+    |--------------------------------------------------------------------------
+    */
+
+
+    const originalCode = String(
+
+      statement.code || ''
+
+    ).trim();
+
+
+    if(
+      statementType == 'raw' &&
+      originalCode != ''
+    ) {
+
+      return originalCode;
+
+    }
+
+
+    if(statementType == 'assignment') {
+
+
+      const target = String(
+
+        statement.target || ''
+
+      ).trim();
+
+
+      if(target == '') {
+
+        return originalCode;
+
+      }
+
+
+      return (
+
+        target +
+
+        ' = ' +
+
+        buildPaginationButtonJavascriptValue(
+
+          statement.value,
+
+          statement.valueType ||
+
+          'raw'
+
+        ) +
+
+        ';'
+
+      );
+
+    }
+
+
+    if(statementType == 'function') {
+
+
+      const functionName = String(
+
+        statement.function || ''
+
+      ).trim();
+
+
+      if(functionName == '') {
+
+        return originalCode;
+
+      }
+
+
+      let functionArguments = statement.arguments;
+
+
+      if(!Array.isArray(functionArguments)) {
+
+        functionArguments = [];
+
+      }
+
+
+      const argumentValues =
+
+        functionArguments.map(function(argumentData) {
+
+
+          if(
+            argumentData === null ||
+            argumentData === undefined
+          ) {
+
+            return '';
+
+          }
+
+
+          if(
+            typeof argumentData !== 'object'
+          ) {
+
+            return String(
+
+              argumentData
+
+            );
+
+          }
+
+
+          const argumentCode = String(
+
+            argumentData.code || ''
+
+          ).trim();
+
+
+          if(
+            argumentData.type == 'raw' &&
+            argumentCode != ''
+          ) {
+
+            return argumentCode;
+
+          }
+
+
+          return buildPaginationButtonJavascriptValue(
+
+            argumentData.value,
+
+            argumentData.type ||
+
+            'raw'
+
+          );
+
+
+        });
+
+
+      return (
+
+        functionName +
+
+        '(' +
+
+        argumentValues.join(
+
+          ', '
+
+        ) +
+
+        ');'
+
+      );
+
+    }
+
+
+    if(statementType == 'return') {
+
+
+      const returnValue =
+
+        buildPaginationButtonJavascriptValue(
+
+          statement.value,
+
+          statement.valueType ||
+
+          'raw'
+
+        );
+
+
+      return (
+
+        returnValue != ''
+
+          ? 'return ' + returnValue + ';'
+
+          : 'return;'
+
+      );
+
+    }
+
+
+    return originalCode;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Converte a árvore JSON do formulário novamente para callback JavaScript
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parseJsonToJavascriptCallback(
+    value = {}
+  ) {
+
+
+    const callbackData =
+
+      normalizePaginationButtonCallbackJsonValue(
+
+        value
+
+      );
+
+
+    if(
+      Object.keys(
+        callbackData
+      ).length <= 0
+    ) {
+
+      return '';
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com o formato antigo { value: "código" }
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        callbackData,
+
+        'value'
+
+      ) &&
+      !Array.isArray(
+        callbackData.statements
+      )
+    ) {
+
+      return String(
+
+        callbackData.value || ''
+
+      ).trim();
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com callbacks que ainda estejam em uma propriedade code
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      !Array.isArray(
+        callbackData.statements
+      ) &&
+      String(
+        callbackData.code || ''
+      ).trim() != ''
+    ) {
+
+      return String(
+
+        callbackData.code || ''
+
+      ).trim();
+
+    }
+
+
+    let statements = callbackData.statements;
+
+
+    if(!Array.isArray(statements)) {
+
+      return '';
+
+    }
+
+
+    return statements
+      .map(function(statement) {
+
+
+        return buildPaginationButtonJavascriptStatement(
+
+          statement
+
+        );
+
+
+      })
+      .filter(function(statement) {
+
+
+        return String(
+
+          statement || ''
+
+        ).trim() != '';
+
+
+      })
+      .join(
+
+        ' '
+
+      )
+      .trim();
+
+
+  }
+
+  function normalizePaginationButtonActionBuilderFunctionValue(
+    value = ''
+  ) {
+
+
+    value = String(
+
+      value || ''
+
+    ).trim();
+
+
+    if(
+      value == '' ||
+      value == 'null' ||
+      value == 'undefined'
+    ) {
+
+      return '';
+
+    }
+
+
+    const functionBodyMatch = value.match(
+
+      /^(?:async\s+)?function(?:\s+[a-zA-Z_$][a-zA-Z0-9_$]*)?\s*\([^)]*\)\s*\{([\s\S]*)\}$/i
+
+    );
+
+
+    if(functionBodyMatch) {
+
+      return String(
+
+        functionBodyMatch[1] || ''
+
+      ).trim();
+
+    }
+
+
+    const arrowFunctionBodyMatch = value.match(
+
+      /^(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_$][a-zA-Z0-9_$]*)\s*=>\s*\{([\s\S]*)\}$/i
+
+    );
+
+
+    if(arrowFunctionBodyMatch) {
+
+      return String(
+
+        arrowFunctionBodyMatch[1] || ''
+
+      ).trim();
+
+    }
+
+
+    const arrowFunctionExpressionMatch = value.match(
+
+      /^(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_$][a-zA-Z0-9_$]*)\s*=>\s*([\s\S]+)$/i
+
+    );
+
+
+    if(arrowFunctionExpressionMatch) {
+
+      return (
+
+        'return ' +
+
+        String(
+
+          arrowFunctionExpressionMatch[1] || ''
+
+        ).trim() +
+
+        ';'
+
+      );
+
+    }
+
+
+    return value;
+
+
+  }
+
+
+  function extractPaginationButtonModalFormCallbackData(
+    callbackValue = ''
+  ) {
+
+
+    callbackValue = String(
+
+      callbackValue || ''
+
+    ).trim();
+
+
+    const response = {
+
+      method:   'POST',
+      action:   '',
+      callback: '',
+
+    };
+
+
+    if(
+      callbackValue == '' ||
+      callbackValue == 'null' ||
+      callbackValue == 'undefined'
+    ) {
+
+      return response;
+
+    }
+
+
+    let callbackBody =
+
+      normalizePaginationButtonActionBuilderFunctionValue(
+
+        callbackValue
+
+      );
+
+
+    const nativeCallbackExpression =
+
+      /AutomatorPaginationCreateModalFormCallBack\s*\(\s*\[\s*\{([\s\S]*?)\}\s*\]\s*\)\s*;?/i;
+
+
+    const nativeCallbackMatch = callbackBody.match(
+
+      nativeCallbackExpression
+
+    );
+
+
+    if(nativeCallbackMatch) {
+
+
+      const nativeCallbackProperties =
+
+        getPaginationButtonJavascriptObjectProperties(
+
+          '{' +
+
+          String(
+
+            nativeCallbackMatch[1] || ''
+
+          ) +
+
+          '}'
+
+        );
+
+
+      if(
+        Object.prototype.hasOwnProperty.call(
+
+          nativeCallbackProperties,
+
+          'method'
+
+        )
+      ) {
+
+        response.method = String(
+
+          normalizePaginationButtonJavascriptArgument(
+
+            nativeCallbackProperties.method
+
+          ) || 'POST'
+
+        )
+          .trim()
+          .toUpperCase();
+
+      }
+
+
+      if(
+        Object.prototype.hasOwnProperty.call(
+
+          nativeCallbackProperties,
+
+          'action'
+
+        )
+      ) {
+
+        response.action = String(
+
+          normalizePaginationButtonJavascriptArgument(
+
+            nativeCallbackProperties.action
+
+          ) || ''
+
+        ).trim();
+
+      }
+
+
+      callbackBody = callbackBody.replace(
+
+        nativeCallbackExpression,
+
+        ''
+
+      ).trim();
+
+
+    }
+
+
+    response.callback = callbackBody;
+
+
+    return response;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Interpreta AutomatorPaginationCreateModalForm
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parsePaginationButtonModalFormOnclick(
+    onclickValue = ''
+  ) {
+
+
+    const args = getPaginationButtonJavascriptArguments(
+
+      onclickValue,
+
+      'AutomatorPaginationCreateModalForm'
+
+    );
+
+
+    if(args.length <= 0) {
+
+      return {};
+
+    }
+
+
+    const size = normalizePaginationButtonModalSize(
+
+      normalizePaginationButtonJavascriptArgument(
+
+        args[0] || 'lg'
+
+      )
+
+    );
+
+
+    const title = normalizePaginationButtonJavascriptArgument(
+
+      args[1] || ''
+
+    );
+
+
+    const formID = normalizePaginationButtonJavascriptArgument(
+
+      args[2] || ''
+
+    );
+
+
+    const loadAction = normalizePaginationButtonJavascriptArgument(
+
+      args[3] || ''
+
+    );
+
+
+    const callbackData =
+
+      extractPaginationButtonModalFormCallbackData(
+
+        args[5] || ''
+
+      );
+
+
+    let formName = getPaginationButtonFormNameByID(
+
+      formID
+
+    );
+
+
+    if(formName == '') {
+
+      formName = formID;
+
+    }
+
+
+    let loadRoute = getPaginationButtonRouteByActionName(
+
+      loadAction
+
+    );
+
+
+    if(loadRoute == '') {
+
+      loadRoute = loadAction;
+
+    }
+
+
+    let submitRoute = getPaginationButtonRouteByActionName(
+
+      callbackData.action
+
+    );
+
+
+    if(submitRoute == '') {
+
+      submitRoute = callbackData.action;
+
+    }
+
+
+    return {
+
+      form: formName,
+
+      title: title,
+
+      loadMethod: 'GET',
+
+      loadRoute: loadRoute,
+
+      submitMethod:
+
+        callbackData.method ||
+
+        'POST',
+
+      submitRoute: submitRoute,
+
+      size: size,
+
+      backdrop: true,
+
+      keyboard: false,
+
+      scrollable: true,
+
+      callback:
+
+        parseJavascriptCallbackToJson(
+
+          callbackData.callback ||
+
+          ''
+
+        ),
+
+      beforeShow: {},
+
+      afterHide: {},
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Interpreta AutomatorCreateViewModal
+  |--------------------------------------------------------------------------
+  */
+
+
+  function parsePaginationButtonModalViewOnclick(
+    onclickValue = ''
+  ) {
+
+
+    const args = getPaginationButtonJavascriptArguments(
+
+      onclickValue,
+
+      'AutomatorCreateViewModal'
+
+    );
+
+
+    if(args.length <= 0) {
+
+      return {};
+
+    }
+
+
+    const payload = String(
+
+      args[0] || ''
+
+    );
+
+
+    const options = String(
+
+      args[1] || ''
+
+    );
+
+
+    const callbackValue = getPaginationButtonJavascriptObjectValue(
+
+      options,
+
+      'callback',
+
+      false
+
+    );
+
+
+    const beforeShowValue = getPaginationButtonJavascriptObjectValue(
+
+      options,
+
+      'beforeShow',
+
+      false
+
+    );
+
+
+    let afterHideValue = getPaginationButtonJavascriptObjectValue(
+
+      options,
+
+      'afterHideOn',
+
+      false
+
+    );
+
+
+    if(afterHideValue == '') {
+
+      afterHideValue = getPaginationButtonJavascriptObjectValue(
+
+        options,
+
+        'afterHide',
+
+        false
+
+      );
+
+    }
+
+
+    return {
+
+      view:
+
+        getPaginationButtonJavascriptObjectValue(
+
+          payload,
+
+          'view'
+
+        ),
+
+      title:
+
+        getPaginationButtonJavascriptObjectValue(
+
+          payload,
+
+          'title'
+
+        ),
+
+      size:
+
+        normalizePaginationButtonModalSize(
+
+          getPaginationButtonJavascriptObjectValue(
+
+            options,
+
+            'size'
+
+          ) || 'lg'
+
+        ),
+
+      backdrop:
+
+        parsePaginationButtonJavascriptBoolean(
+
+          getPaginationButtonJavascriptObjectValue(
+
+            options,
+
+            'backdrop'
+
+          ),
+
+          true
+
+        ),
+
+      keyboard:
+
+        parsePaginationButtonJavascriptBoolean(
+
+          getPaginationButtonJavascriptObjectValue(
+
+            options,
+
+            'keyboard'
+
+          ),
+
+          false
+
+        ),
+
+      scrollable:
+
+        parsePaginationButtonJavascriptBoolean(
+
+          getPaginationButtonJavascriptObjectValue(
+
+            options,
+
+            'scrollable'
+
+          ),
+
+          true
+
+        ),
+
+      callback:
+
+        parseJavascriptCallbackToJson(
+
+          callbackValue
+
+        ),
+
+      beforeShow:
+
+        parseJavascriptCallbackToJson(
+
+          beforeShowValue
+
+        ),
+
+      afterHide:
+
+        parseJavascriptCallbackToJson(
+
+          afterHideValue
+
+        ),
+
+    };
+
+
+  }
+
+
+  function normalizePaginationButtonActionBuilderSelectOptions(
+    modalEl
+  ) {
+
+
+    modalEl = $(modalEl);
+
+
+    if(!modalEl.length) {
+
+      return false;
+
+    }
+
+
+    modalEl.find(
+
+      'select'
+
+    ).each(function() {
+
+
+      const select = $(this);
+
+
+      const currentValue = String(
+
+        select.val() === null ||
+        select.val() === undefined
+
+          ? ''
+
+          : select.val()
+
+      );
+
+
+      const required =
+
+        select.prop('required') === true ||
+
+        select.attr('required') !== undefined;
+
+
+      let emptyOption = select.find(
+
+        'option[value=""]'
+
+      ).first();
+
+
+      if(!emptyOption.length) {
+
+
+        emptyOption = $(
+
+          '<option value="">- Selecione -</option>'
+
+        );
+
+
+        select.prepend(
+
+          emptyOption
+
+        );
+
+
+      } else {
+
+
+        emptyOption.text(
+
+          '- Selecione -'
+
+        );
+
+
+        emptyOption.prependTo(
+
+          select
+
+        );
+
+
+      }
+
+
+      emptyOption.prop(
+
+        'disabled',
+
+        required === true
+
+      );
+
+
+      if(currentValue == '') {
+
+
+        select.val(
+
+          ''
+
+        );
+
+
+        emptyOption.prop(
+
+          'selected',
+
+          true
+
+        );
+
+
+      } else {
+
+
+        emptyOption.prop(
+
+          'selected',
+
+          false
+
+        );
+
+
+        select.val(
+
+          currentValue
+
+        );
+
+
+      }
+
+
+    });
+
+
+    return true;
+
+
+  }
+
+  function getPaginationButtonActionBuilderFieldCandidates(
+    fieldName = '',
+    value = ''
+  ) {
+
+
+    fieldName = String(
+
+      fieldName || ''
+
+    ).trim();
+
+
+    const candidates = [];
+
+
+    function addCandidate(candidateValue) {
+
+
+      if(
+        candidateValue === null ||
+        candidateValue === undefined
+      ) {
+
+        return;
+
+      }
+
+
+      candidateValue = String(
+
+        candidateValue
+
+      );
+
+
+      if(
+        candidates.indexOf(
+          candidateValue
+        ) < 0
+      ) {
+
+        candidates.push(
+
+          candidateValue
+
+        );
+
+      }
+
+
+    }
+
+
+    addCandidate(
+
+      value
+
+    );
+
+
+    if(
+      value === true ||
+      value === 1 ||
+      value === '1' ||
+      value === 'true'
+    ) {
+
+      addCandidate('1');
+
+      addCandidate('true');
+
+      addCandidate('sim');
+
+      addCandidate('yes');
+
+    }
+
+
+    if(
+      value === false ||
+      value === 0 ||
+      value === '0' ||
+      value === 'false'
+    ) {
+
+      addCandidate('0');
+
+      addCandidate('false');
+
+      addCandidate('não');
+
+      addCandidate('nao');
+
+      addCandidate('no');
+
+    }
+
+
+    if(fieldName == 'form') {
+
+
+      const formID = getPaginationButtonFormIDByName(
+
+        value
+
+      );
+
+
+      const formName = getPaginationButtonFormNameByID(
+
+        value
+
+      );
+
+
+      addCandidate(
+
+        formID
+
+      );
+
+
+      addCandidate(
+
+        formName
+
+      );
+
+
+    }
+
+
+    return candidates;
+
+
+  }
+
+
+  function setPaginationButtonActionBuilderTextareaValue(
+    field,
+    value = ''
+  ) {
+
+
+    field = $(field);
+
+
+    if(!field.length) {
+
+      return false;
+
+    }
+
+
+    value = String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    );
+
+
+    field.val(
+
+      value
+
+    );
+
+
+    const editorID = String(
+
+      field.attr(
+        'data-automator-editor-id'
+      ) ||
+
+      field.attr('id') ||
+
+      ''
+
+    ).trim();
+
+
+    if(
+      editorID != '' &&
+      window.AutomatorEditors &&
+      window.AutomatorEditors[editorID]
+    ) {
+
+
+      const editorInstance =
+
+        window.AutomatorEditors[editorID];
+
+
+      if(
+        editorInstance.visual &&
+        editorInstance.visual.length
+      ) {
+
+        editorInstance.visual.html(
+
+          value
+
+        );
+
+      }
+
+
+      if(
+        editorInstance.code &&
+        editorInstance.code.length
+      ) {
+
+        editorInstance.code.val(
+
+          value
+
+        );
+
+      }
+
+
+      if(
+        editorInstance.source &&
+        editorInstance.source.length
+      ) {
+
+        editorInstance.source.val(
+
+          value
+
+        );
+
+      }
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Preenche um campo JSON do formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function setPaginationButtonActionBuilderJsonValue(
+    field,
+    value = {}
+  ) {
+
+
+    field = $(field);
+
+
+    if(!field.length) {
+
+      return false;
+
+    }
+
+
+    const editor = field.closest(
+
+      '[data-automator-json-editor="true"]'
+
+    ).first();
+
+
+    if(!editor.length) {
+
+      return false;
+
+    }
+
+
+    if(
+      typeof AutomatorJsonEditorSetValue ===
+      'function'
+    ) {
+
+
+      return AutomatorJsonEditorSetValue(
+
+        editor,
+
+        value,
+
+        false
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade caso o script global ainda não esteja disponível
+    |--------------------------------------------------------------------------
+    */
+
+
+    let normalizedValue = value;
+
+
+    if(
+      normalizedValue === null ||
+      normalizedValue === undefined ||
+      normalizedValue === ''
+    ) {
+
+      normalizedValue = {};
+
+    }
+
+
+    if(typeof normalizedValue !== 'string') {
+
+
+      try {
+
+
+        normalizedValue = JSON.stringify(
+
+          normalizedValue
+
+        );
+
+
+      } catch(error) {
+
+
+        normalizedValue = '{}';
+
+
+      }
+
+
+    }
+
+
+    field.val(
+
+      normalizedValue
+
+    );
+
+
+    editor.removeAttr(
+
+      'data-automator-json-initialized'
+
+    );
+
+
+    if(
+      typeof AutomatorJsonEditorInitializeAll ===
+      'function'
+    ) {
+
+
+      AutomatorJsonEditorInitializeAll(
+
+        editor[0]
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+
+  function setPaginationButtonActionBuilderFieldValue(
+    field,
+    fieldName = '',
+    value = ''
+  ) {
+
+
+    field = $(field);
+
+
+    if(!field.length) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Campo JSON
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      field.is(
+        '[data-automator-json-value="true"]'
+      ) ||
+      field.hasClass(
+        'automator-json-editor-value'
+      )
+    ) {
+
+
+      return setPaginationButtonActionBuilderJsonValue(
+
+        field,
+
+        value
+
+      );
+
+
+    }
+
+
+    const candidates = getPaginationButtonActionBuilderFieldCandidates(
+
+      fieldName,
+
+      value
+
+    );
+
+
+    if(field.is(':checkbox')) {
+
+
+      field.prop(
+
+        'checked',
+
+        candidates.indexOf(
+
+          String(
+            field.val()
+          )
+
+        ) >= 0
+
+      );
+
+
+      return true;
+
+    }
+
+
+    if(field.is(':radio')) {
+
+
+      field.prop(
+
+        'checked',
+
+        candidates.indexOf(
+
+          String(
+            field.val()
+          )
+
+        ) >= 0
+
+      );
+
+
+      return true;
+
+    }
+
+
+    if(field.is('select')) {
+
+
+      if(field.prop('multiple') === true) {
+
+
+        const selectedValues = Array.isArray(value)
+
+          ? value.map(String)
+
+          : candidates;
+
+
+        field.find(
+
+          'option'
+
+        ).each(function() {
+
+
+          $(this).prop(
+
+            'selected',
+
+            selectedValues.indexOf(
+
+              String(
+                $(this).val()
+              )
+
+            ) >= 0
+
+          );
+
+
+        });
+
+
+        return true;
+
+      }
+
+
+      let selectedValue = '';
+
+
+      candidates.some(function(candidateValue) {
+
+
+        const option = field.find(
+
+          'option'
+
+        ).filter(function() {
+
+
+          return String(
+
+            $(this).val()
+
+          ) == String(candidateValue);
+
+
+        }).first();
+
+
+        if(!option.length) {
+
+          return false;
+
+        }
+
+
+        selectedValue = String(
+
+          option.val()
+
+        );
+
+
+        return true;
+
+
+      });
+
+
+      if(selectedValue == '') {
+
+
+        const normalizedValue = String(
+
+          value === null ||
+          value === undefined
+
+            ? ''
+
+            : value
+
+        )
+          .trim()
+          .toLowerCase();
+
+
+        field.find(
+
+          'option'
+
+        ).each(function() {
+
+
+          const option = $(this);
+
+
+          const normalizedOptionText = String(
+
+            option.text() || ''
+
+          )
+            .trim()
+            .toLowerCase();
+
+
+          if(normalizedOptionText == normalizedValue) {
+
+
+            selectedValue = String(
+
+              option.val()
+
+            );
+
+
+            return false;
+
+
+          }
+
+
+        });
+
+
+      }
+
+
+      field.val(
+
+        selectedValue
+
+      );
+
+
+      return true;
+
+    }
+
+
+    if(field.is('textarea')) {
+
+
+      return setPaginationButtonActionBuilderTextareaValue(
+
+        field,
+
+        value
+
+      );
+
+
+    }
+
+
+    field.val(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna os dados a serem enviados ao formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationButtonActionBuilderValues(
+    mode = '',
+    onclickValue = ''
+  ) {
+
+
+    if(mode == 'modal-form') {
+
+      return parsePaginationButtonModalFormOnclick(
+
+        onclickValue
+
+      );
+
+    }
+
+
+    if(mode == 'modal-view') {
+
+      return parsePaginationButtonModalViewOnclick(
+
+        onclickValue
+
+      );
+
+    }
+
+
+    return {};
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Preenche o formulário auxiliar sem alterar o modal global
+  |--------------------------------------------------------------------------
+  */
+
+
+  function populatePaginationButtonActionBuilderForm(
+    modalEl,
+    values = {}
+  ) {
+
+
+    modalEl = $(modalEl);
+
+
+    if(!modalEl.length) {
+
+      return false;
+
+    }
+
+
+    values = normalizePlainObject(
+
+      values
+
+    );
+
+
+    normalizePaginationButtonActionBuilderSelectOptions(
+
+      modalEl
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Garante a inicialização dos editores JSON inseridos dinamicamente
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      typeof AutomatorJsonEditorInitializeAll ===
+      'function'
+    ) {
+
+
+      AutomatorJsonEditorInitializeAll(
+
+        modalEl[0]
+
+      );
+
+
+    }
+
+
+    Object.keys(
+
+      values
+
+    ).forEach(function(fieldName) {
+
+
+      const value = values[fieldName];
+
+
+      const fields = modalEl.find(
+
+        '[name="' +
+
+        fieldName +
+
+        '"], [name="' +
+
+        fieldName +
+
+        '[]"], [data-automator-field-name="' +
+
+        fieldName +
+
+        '"]'
+
+      );
+
+
+      fields.each(function() {
+
+
+        setPaginationButtonActionBuilderFieldValue(
+
+          this,
+
+          fieldName,
+
+          value
+
+        );
+
+
+      });
+
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mantém a opção vazia sincronizada nos selects
+    |--------------------------------------------------------------------------
+    */
+
+
+    modalEl.find(
+
+      'select'
+
+    ).each(function() {
+
+
+      const select = $(this);
+
+
+      const emptyOption = select.find(
+
+        'option[value=""]'
+
+      ).first();
+
+
+      if(!emptyOption.length) {
+
+        return;
+
+      }
+
+
+      emptyOption.prop(
+
+        'selected',
+
+        String(
+          select.val() || ''
+        ) == ''
+
+      );
+
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza somente campos comuns
+    |--------------------------------------------------------------------------
+    |
+    | O editor JSON já foi sincronizado por AutomatorJsonEditorSetValue().
+    | Disparar change novamente no input hidden poderia marcar o formulário
+    | como alterado durante sua abertura.
+    |--------------------------------------------------------------------------
+    */
+
+
+    modalEl
+      .find(
+        'input[name], select[name], textarea[name]'
+      )
+      .not(
+        '[data-automator-json-value="true"]'
+      )
+      .trigger(
+
+        'change'
+
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Garante uma última sincronização dos editores JSON
+    |--------------------------------------------------------------------------
+    */
+
+
+    modalEl.find(
+
+      '[data-automator-json-editor="true"]'
+
+    ).each(function() {
+
+
+      const editor = $(this);
+
+
+      const valueInput = editor.find(
+
+        '.automator-json-editor-value'
+
+      ).first();
+
+
+      if(
+        !valueInput.length ||
+        typeof AutomatorJsonEditorSetValue !==
+        'function'
+      ) {
+
+        return;
+
+      }
+
+
+      AutomatorJsonEditorSetValue(
+
+        editor,
+
+        valueInput.val(),
+
+        false
+
+      );
+
+
+    });
+
+
+    const formEl = modalEl.find(
+
+      'form'
+
+    ).first();
+
+
+    if(formEl.length) {
+
+
+      if(
+        typeof AutomatorFormSerializeCurrentState ===
+        'function'
+      ) {
+
+
+        formEl.attr(
+
+          'data-automator-initial-state',
+
+          AutomatorFormSerializeCurrentState(
+
+            formEl[0]
+
+          )
+
+        );
+
+
+      }
+
+
+      formEl.attr(
+
+        'data-automator-form-changed',
+
+        'false'
+
+      );
+
+
+    }
+
+
+    modalEl.find(
+
+      '.js-automator-pagination-modal-submit'
+
+    ).prop(
+
+      'disabled',
+
+      false
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function preparePaginationButtonActionBuilderModalStack(
+    modalEl
+  ) {
+
+
+    if(!modalEl) {
+
+      return false;
+
+    }
+
+
+    const openedModals = Array.from(
+
+      document.querySelectorAll(
+
+        '.modal.show'
+
+      )
+
+    ).filter(function(currentModal) {
+
+
+      return currentModal !== modalEl;
+
+
+    });
+
+
+    let highestModalZIndex = 1055;
+
+
+    openedModals.forEach(function(currentModal) {
+
+
+      const currentZIndex = parseInt(
+
+        window
+          .getComputedStyle(
+            currentModal
+          )
+          .zIndex,
+
+        10
+
+      );
+
+
+      if(
+        !isNaN(currentZIndex) &&
+        currentZIndex > highestModalZIndex
+      ) {
+
+        highestModalZIndex = currentZIndex;
+
+      }
+
+
+    });
+
+
+    const backdropZIndex =
+
+      highestModalZIndex + 10;
+
+
+    const modalZIndex =
+
+      backdropZIndex + 5;
+
+
+    modalEl.style.zIndex = String(
+
+      modalZIndex
+
+    );
+
+
+    modalEl.setAttribute(
+
+      'data-automator-pagination-action-builder-modal',
+
+      'true'
+
+    );
+
+
+    const backdrops = document.querySelectorAll(
+
+      '.modal-backdrop'
+
+    );
+
+
+    if(backdrops.length >= 1) {
+
+
+      const currentBackdrop =
+
+        backdrops[backdrops.length - 1];
+
+
+      currentBackdrop.style.zIndex = String(
+
+        backdropZIndex
+
+      );
+
+
+      currentBackdrop.setAttribute(
+
+        'data-automator-pagination-action-builder-backdrop',
+
+        modalEl.id || ''
+
+      );
+
+
+    }
+
+
+    modalEl.addEventListener(
+
+      'hidden.bs.modal',
+
+      function() {
+
+
+        document
+          .querySelectorAll(
+            '[data-automator-pagination-action-builder-backdrop="' +
+            (
+              modalEl.id || ''
+            ) +
+            '"]'
+          )
+          .forEach(function(backdrop) {
+
+
+            backdrop.remove();
+
+
+          });
+
+
+        if(
+          document.querySelectorAll(
+            '.modal.show'
+          ).length >= 1
+        ) {
+
+          document.body.classList.add(
+
+            'modal-open'
+
+          );
+
+
+          document.body.style.overflow =
+
+            'hidden';
+
+        }
+
+
+      },
+
+      {
+
+        once: true,
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function focusPaginationButtonEditorItem(
+    item,
+    openItem = true,
+    scrollToItem = false
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const buttonsPanel = $(
+
+      selectors.buttonsPanel
+
+    );
+
+
+    const currentScrollTop = buttonsPanel.length
+
+      ? buttonsPanel.scrollTop()
+
+      : 0;
+
+
+    switchLeftTab(
+
+      'buttons'
+
+    );
+
+
+    showRightPanel(
+
+      'pagination'
+
+    );
+
+
+    openRightConfigTab(
+
+      'pagination-settings'
+
+    );
+
+
+    setSidebarOpen(
+
+      'left',
+
+      true
+
+    );
+
+
+    setSidebarOpen(
+
+      'right',
+
+      true
+
+    );
+
+
+    $(selectors.paginationButtonItem)
+      .removeClass(
+        'border-primary shadow-sm'
+      );
+
+
+    item.addClass(
+
+      'border-primary shadow-sm'
+
+    );
+
+
+    if(openItem === true) {
+
+
+      const collapseEl = item.find(
+
+        '.accordion-collapse'
+
+      ).first()[0];
+
+
+      if(
+        collapseEl &&
+        typeof bootstrap !== 'undefined' &&
+        bootstrap.Collapse
+      ) {
+
+
+        const collapse =
+
+          bootstrap.Collapse.getOrCreateInstance(
+
+            collapseEl,
+
+            {
+
+              toggle: false,
+
+            }
+
+          );
+
+
+        collapse.show();
+
+
+      }
+
+
+    }
+
+
+    if(
+      buttonsPanel.length &&
+      scrollToItem !== true
+    ) {
+
+
+      requestAnimationFrame(function() {
+
+
+        buttonsPanel.scrollTop(
+
+          currentScrollTop
+
+        );
+
+
+      });
+
+
+      return true;
+
+
+    }
+
+
+    if(
+      buttonsPanel.length &&
+      scrollToItem === true
+    ) {
+
+
+      setTimeout(function() {
+
+
+        const panelOffset =
+
+          buttonsPanel.offset();
+
+
+        const itemOffset =
+
+          item.offset();
+
+
+        if(
+          !panelOffset ||
+          !itemOffset
+        ) {
+
+          return;
+
+        }
+
+
+        const itemTop =
+
+          itemOffset.top -
+
+          panelOffset.top +
+
+          buttonsPanel.scrollTop();
+
+
+        const itemBottom =
+
+          itemTop +
+
+          item.outerHeight();
+
+
+        const visibleTop =
+
+          buttonsPanel.scrollTop();
+
+
+        const visibleBottom =
+
+          visibleTop +
+
+          buttonsPanel.innerHeight();
+
+
+        if(
+          itemTop >= visibleTop &&
+          itemBottom <= visibleBottom
+        ) {
+
+          return;
+
+        }
+
+
+        buttonsPanel.stop(
+
+          true,
+
+          false
+
+        ).animate(
+
+          {
+
+            scrollTop:
+
+              Math.max(
+
+                0,
+
+                itemTop - 15
+
+              ),
+
+          },
+
+          200
+
+        );
+
+
+      }, 50);
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  function startPaginationButtonActionBuilderLoaderHold() {
+
+
+    if(
+      window.__automatorPaginationActionBuilderLoaderHold &&
+      window.__automatorPaginationActionBuilderLoaderHold.active === true
+    ) {
+
+      return window.__automatorPaginationActionBuilderLoaderHold;
+
+    }
+
+
+    if(
+      typeof window.AutomatorPageLoader !==
+      'function'
+    ) {
+
+      return null;
+
+    }
+
+
+    const originalLoader =
+
+      window.AutomatorPageLoader;
+
+
+    const loaderHold = {
+
+      active: true,
+
+      originalLoader: originalLoader,
+
+      release: function(callback = null) {
+
+
+        if(loaderHold.active !== true) {
+
+
+          if(typeof callback === 'function') {
+
+            callback();
+
+          }
+
+
+          return false;
+
+        }
+
+
+        loaderHold.active = false;
+
+
+        window.AutomatorPageLoader =
+
+          originalLoader;
+
+
+        window.__automatorPaginationActionBuilderLoaderHold =
+
+          null;
+
+
+        requestAnimationFrame(function() {
+
+
+          requestAnimationFrame(function() {
+
+
+            $('#page-loader').css(
+
+              'z-index',
+
+              ''
+
+            );
+
+
+            originalLoader(
+
+              'hide',
+
+              function() {
+
+
+                if(typeof callback === 'function') {
+
+                  callback();
+
+                }
+
+
+              }
+
+            );
+
+
+          });
+
+
+        });
+
+
+        return true;
+
+
+      },
+
+    };
+
+
+    window.__automatorPaginationActionBuilderLoaderHold =
+
+      loaderHold;
+
+
+    window.AutomatorPageLoader = function(
+      action = 'show',
+      callback = null,
+      time = 500
+    ) {
+
+
+      action = String(
+
+        action || 'show'
+
+      )
+        .trim()
+        .toLowerCase();
+
+
+      if(
+        loaderHold.active === true &&
+        action == 'hide'
+      ) {
+
+
+        if(typeof callback === 'function') {
+
+          callback();
+
+        }
+
+
+        return true;
+
+      }
+
+
+      return originalLoader(
+
+        action,
+
+        callback,
+
+        time
+
+      );
+
+
+    };
+
+
+    originalLoader(
+
+      'show',
+
+      function() {
+
+
+        $('#page-loader').css(
+
+          'z-index',
+
+          '3005'
+
+        );
+
+
+      }
+
+    );
+
+
+    return loaderHold;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Serializa o formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function serializePaginationButtonActionBuilderForm(
+    formEl
+  ) {
+
+
+    formEl = $(formEl);
+
+
+    const values = {};
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Sincroniza os editores JSON antes da leitura
+    |--------------------------------------------------------------------------
+    */
+
+
+    formEl.find(
+
+      '[data-automator-json-editor="true"]'
+
+    ).each(function() {
+
+
+      if(
+        typeof AutomatorJsonEditorSyncValue ===
+        'function'
+      ) {
+
+
+        AutomatorJsonEditorSyncValue(
+
+          this,
+
+          false
+
+        );
+
+
+      }
+
+
+    });
+
+
+    formEl.find(
+
+      'input[name], select[name], textarea[name]'
+
+    ).each(function() {
+
+
+      const field = $(this);
+
+
+      let fieldName = String(
+
+        field.attr('name') || ''
+
+      );
+
+
+      if(fieldName == '') {
+
+        return;
+
+      }
+
+
+      fieldName = fieldName.replace(
+
+        /\[\]$/,
+
+        ''
+
+      );
+
+
+      if(field.is(':checkbox')) {
+
+
+        if(field.prop('checked') !== true) {
+
+          return;
+
+        }
+
+
+        if(
+          Object.prototype.hasOwnProperty.call(
+            values,
+            fieldName
+          ) !== true
+        ) {
+
+          values[fieldName] = [];
+
+        }
+
+
+        values[fieldName].push(
+
+          field.val()
+
+        );
+
+
+        return;
+
+      }
+
+
+      if(
+        field.is(':radio') &&
+        field.prop('checked') !== true
+      ) {
+
+        return;
+
+      }
+
+
+      values[fieldName] = field.val();
+
+
+    });
+
+
+    return values;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Gera a chamada AutomatorPaginationCreateModalForm
+  |--------------------------------------------------------------------------
+  */
+
+
+  function buildPaginationButtonModalFormOnclick(
+    values = {}
+  ) {
+
+
+    values = normalizePlainObject(
+
+      values
+
+    );
+
+
+    const formName = String(
+
+      values.form || ''
+
+    ).trim();
+
+
+    const formID = getPaginationButtonFormIDByName(
+
+      formName
+
+    );
+
+
+    if(formID == '') {
+
+      return '';
+
+    }
+
+
+    const title = escapePaginationButtonJavascriptString(
+
+      values.title || ''
+
+    );
+
+
+    const size = normalizePaginationButtonModalSize(
+
+      values.size || 'lg'
+
+    );
+
+
+    const loadAction = getPaginationButtonActionNameByRoute(
+
+      values.loadRoute || ''
+
+    );
+
+
+    const submitAction = getPaginationButtonActionNameByRoute(
+
+      values.submitRoute || ''
+
+    );
+
+
+    const submitMethod = String(
+
+      values.submitMethod || 'POST'
+
+    )
+      .trim()
+      .toUpperCase();
+
+
+    let idValue = 'null';
+
+
+    if(loadAction != '') {
+
+      idValue = '{id}';
+
+    }
+
+
+    let callbackBody = '';
+
+
+    if(submitAction != '') {
+
+
+      callbackBody +=
+
+        'AutomatorPaginationCreateModalFormCallBack([' +
+
+          '{ method: \'' +
+
+            escapePaginationButtonJavascriptString(
+
+              submitMethod
+
+            ) +
+
+          '\', action: \'' +
+
+            escapePaginationButtonJavascriptString(
+
+              submitAction
+
+            ) +
+
+          '\' }' +
+
+        ']);';
+
+
+    }
+
+
+    const customCallback =
+
+      parseJsonToJavascriptCallback(
+
+        values.callback
+
+      );
+
+
+    if(customCallback != '') {
+
+
+      if(callbackBody != '') {
+
+        callbackBody += ' ';
+
+      }
+
+
+      callbackBody += customCallback;
+
+
+    }
+
+
+    let callbackValue = 'null';
+
+
+    if(callbackBody != '') {
+
+
+      callbackValue =
+
+        'function(response, modalEl, modal, recordData) { ' +
+
+          callbackBody +
+
+        ' }';
+
+
+    }
+
+
+    return (
+
+      'AutomatorPaginationCreateModalForm(' +
+
+        '\'modal-' +
+
+          escapePaginationButtonJavascriptString(
+
+            size
+
+          ) +
+
+        '\', ' +
+
+        '\'' +
+
+          title +
+
+        '\', ' +
+
+        formID +
+
+        ', ' +
+
+        (
+
+          loadAction != ''
+
+            ? '\'' +
+
+                escapePaginationButtonJavascriptString(
+
+                  loadAction
+
+                ) +
+
+              '\''
+
+            : "''"
+
+        ) +
+
+        ', ' +
+
+        idValue +
+
+        ', ' +
+
+        callbackValue +
+
+      ');'
+
+    );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza função escrita no formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationButtonActionBuilderFunction(
+    value = ''
+  ) {
+
+
+    value = String(
+
+      value || ''
+
+    ).trim();
+
+
+    if(value == '') {
+
+      return '';
+
+    }
+
+
+    if(
+      /^function\s*\(/.test(
+        value
+      ) ||
+      /^\([^)]*\)\s*=>/.test(
+        value
+      ) ||
+      /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(
+        value
+      )
+    ) {
+
+      return value;
+
+    }
+
+
+    return (
+
+      'function(response, modalEl, modal, recordData) { ' +
+
+        value +
+
+      ' }'
+
+    );
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Gera a chamada AutomatorCreateViewModal
+  |--------------------------------------------------------------------------
+  */
+
+
+  function buildPaginationButtonModalViewOnclick(
+    values = {}
+  ) {
+
+
+    values = normalizePlainObject(
+
+      values
+
+    );
+
+
+    const viewName = String(
+
+      values.view || ''
+
+    ).trim();
+
+
+    if(viewName == '') {
+
+      return '';
+
+    }
+
+
+    const title = String(
+
+      values.title || ''
+
+    ).trim();
+
+
+    const size = normalizePaginationButtonModalSize(
+
+      values.size || 'lg'
+
+    );
+
+
+    const backdrop = AutomatorNormalizeBoolean(
+
+      values.backdrop
+
+    );
+
+
+    const keyboard = AutomatorNormalizeBoolean(
+
+      values.keyboard
+
+    );
+
+
+    const scrollable = AutomatorNormalizeBoolean(
+
+      values.scrollable
+
+    );
+
+
+    const callbackBody =
+
+      parseJsonToJavascriptCallback(
+
+        values.callback
+
+      );
+
+
+    const beforeShowBody =
+
+      parseJsonToJavascriptCallback(
+
+        values.beforeShow
+
+      );
+
+
+    const afterHideBody =
+
+      parseJsonToJavascriptCallback(
+
+        values.afterHide
+
+      );
+
+
+    const callback =
+
+      normalizePaginationButtonActionBuilderFunction(
+
+        callbackBody
+
+      );
+
+
+    const beforeShow =
+
+      normalizePaginationButtonActionBuilderFunction(
+
+        beforeShowBody
+
+      );
+
+
+    const afterHide =
+
+      normalizePaginationButtonActionBuilderFunction(
+
+        afterHideBody
+
+      );
+
+
+    const payloadItems = [
+
+      "view: '" +
+
+        escapePaginationButtonJavascriptString(
+
+          viewName
+
+        ) +
+
+      "'",
+
+    ];
+
+
+    if(title != '') {
+
+
+      payloadItems.push(
+
+        "title: '" +
+
+          escapePaginationButtonJavascriptString(
+
+            title
+
+          ) +
+
+        "'"
+
+      );
+
+
+    }
+
+
+    const optionItems = [
+
+      "size: '" +
+
+        escapePaginationButtonJavascriptString(
+
+          size
+
+        ) +
+
+      "'",
+
+      'backdrop: ' +
+
+        (
+
+          backdrop === true
+
+            ? 'true'
+
+            : 'false'
+
+        ),
+
+      'keyboard: ' +
+
+        (
+
+          keyboard === true
+
+            ? 'true'
+
+            : 'false'
+
+        ),
+
+      'scrollable: ' +
+
+        (
+
+          scrollable === true
+
+            ? 'true'
+
+            : 'false'
+
+        ),
+
+    ];
+
+
+    if(callback != '') {
+
+      optionItems.push(
+
+        'callback: ' +
+
+        callback
+
+      );
+
+    }
+
+
+    if(beforeShow != '') {
+
+      optionItems.push(
+
+        'beforeShow: ' +
+
+        beforeShow
+
+      );
+
+    }
+
+
+    if(afterHide != '') {
+
+      optionItems.push(
+
+        'afterHideOn: ' +
+
+        afterHide
+
+      );
+
+    }
+
+
+    return (
+
+      'AutomatorCreateViewModal(' +
+
+        '{ ' +
+
+          payloadItems.join(', ') +
+
+        ' }, ' +
+
+        '{ ' +
+
+          optionItems.join(', ') +
+
+        ' }' +
+
+      ');'
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Gera o onclick pelo formulário auxiliar
+  |--------------------------------------------------------------------------
+  */
+
+
+  function buildPaginationButtonActionOnclick(
+    mode = '',
+    values = {}
+  ) {
+
+
+    if(mode == 'modal-form') {
+
+      return buildPaginationButtonModalFormOnclick(
+
+        values
+
+      );
+
+    }
+
+
+    if(mode == 'modal-view') {
+
+      return buildPaginationButtonModalViewOnclick(
+
+        values
+
+      );
+
+    }
+
+
+    return '';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza a aparência do campo Click
+  |--------------------------------------------------------------------------
+  */
+
+
+  function updatePaginationButtonClickFieldLayout(
+    item,
+    focusInput = false
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const modeSelect = item.find(
+
+      '.automator-pagination-editor-button-click-mode'
+
+    ).first();
+
+
+    const clickInput = item.find(
+
+      selectors.paginationButtonOnclick
+
+    ).first();
+
+
+    const editButton = item.find(
+
+      '.automator-pagination-editor-button-click-edit'
+
+    ).first();
+
+
+    const mode = String(
+
+      modeSelect.val() || ''
+
+    ).trim();
+
+
+    if(mode == '') {
+
+
+      clickInput
+        .prop(
+          'disabled',
+          true
+        )
+        .prop(
+          'readonly',
+          false
+        );
+
+
+      editButton.addClass(
+
+        'd-none'
+
+      );
+
+
+      return true;
+
+
+    }
+
+
+    clickInput.prop(
+
+      'disabled',
+
+      false
+
+    );
+
+
+    if(mode == 'manual') {
+
+
+      clickInput.prop(
+
+        'readonly',
+
+        false
+
+      );
+
+
+      editButton.addClass(
+
+        'd-none'
+
+      );
+
+
+      if(focusInput === true) {
+
+
+        setTimeout(function() {
+
+
+          clickInput.trigger(
+
+            'focus'
+
+          );
+
+
+        }, 30);
+
+
+      }
+
+
+      return true;
+
+
+    }
+
+
+    clickInput.prop(
+
+      'readonly',
+
+      true
+
+    );
+
+
+    editButton.removeClass(
+
+      'd-none'
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Acrescenta seletor e botão ao campo Click já renderizado
+  |--------------------------------------------------------------------------
+  */
+
+
+  function enhancePaginationButtonClickEditor(
+    item
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const clickInput = item.find(
+
+      selectors.paginationButtonOnclick
+
+    ).first();
+
+
+    if(!clickInput.length) {
+
+      return false;
+
+    }
+
+
+    if(
+      item.find(
+        '.automator-pagination-editor-button-click-mode'
+      ).length
+    ) {
+
+      updatePaginationButtonClickFieldLayout(
+
+        item,
+
+        false
+
+      );
+
+
+      return true;
+
+    }
+
+
+    const currentValue = String(
+
+      clickInput.val() || ''
+
+    );
+
+
+    const currentMode = detectPaginationButtonClickMode(
+
+      currentValue
+
+    );
+
+
+    const clickContainer = clickInput.closest(
+
+      '.mb-3'
+
+    );
+
+
+    clickContainer.empty();
+
+
+    const uniqueID = String(
+
+      item.attr(
+        'data-button-uid'
+      ) || Date.now()
+
+    );
+
+
+    const modeID =
+
+      'automator-pagination-button-click-mode-' +
+
+      uniqueID;
+
+
+    const inputID =
+
+      'automator-pagination-button-click-value-' +
+
+      uniqueID;
+
+
+    const modeWrapper = $(
+
+      '<div class="form-floating mb-2">' +
+
+        '<select ' +
+
+          'id="' +
+
+            escapeHtml(
+
+              modeID
+
+            ) +
+
+          '" ' +
+
+          'class="' +
+
+            'form-select form-select-sm ' +
+
+            'automator-pagination-editor-button-click-mode' +
+
+          '"' +
+
+        '>' +
+
+          '<option value=""' +
+
+            (
+
+              currentMode == ''
+
+                ? ' selected'
+
+                : ''
+
+            ) +
+
+          ' disabled>' +
+
+            '- Selecione -' +
+
+          '</option>' +
+
+          '<option value="manual"' +
+
+            (
+
+              currentMode == 'manual'
+
+                ? ' selected'
+
+                : ''
+
+            ) +
+
+          '>' +
+
+            'Manual' +
+
+          '</option>' +
+
+          '<option value="modal-form"' +
+
+            (
+
+              currentMode == 'modal-form'
+
+                ? ' selected'
+
+                : ''
+
+            ) +
+
+          '>' +
+
+            'Formulário' +
+
+          '</option>' +
+
+          '<option value="modal-view"' +
+
+            (
+
+              currentMode == 'modal-view'
+
+                ? ' selected'
+
+                : ''
+
+            ) +
+
+          '>' +
+
+            'Carregador de View' +
+
+          '</option>' +
+
+        '</select>' +
+
+        '<label for="' +
+
+          escapeHtml(
+
+            modeID
+
+          ) +
+
+        '">' +
+
+          'Tipo do Click' +
+
+        '</label>' +
+
+      '</div>'
+
+    );
+
+
+    const inputGroup = $(
+
+      '<div class="input-group input-group-sm">' +
+
+        '<div class="form-floating">' +
+
+          '<input ' +
+
+            'type="text" ' +
+
+            'id="' +
+
+              escapeHtml(
+
+                inputID
+
+              ) +
+
+            '" ' +
+
+            'class="' +
+
+              'form-control form-control-sm ' +
+
+              'automator-pagination-editor-button-onclick' +
+
+            '" ' +
+
+            'placeholder="Click" ' +
+
+            'value="' +
+
+              escapeHtml(
+
+                currentValue
+
+              ) +
+
+            '" ' +
+
+          '/>' +
+
+          '<label for="' +
+
+            escapeHtml(
+
+              inputID
+
+            ) +
+
+          '">' +
+
+            'Click' +
+
+          '</label>' +
+
+        '</div>' +
+
+        '<button ' +
+
+          'type="button" ' +
+
+          'class="' +
+
+            'btn btn-outline-secondary ' +
+
+            'd-flex align-items-center justify-content-center ' +
+
+            'automator-pagination-editor-button-click-edit ' +
+
+            'd-none' +
+
+          '" ' +
+
+          'style="' +
+
+            'min-width: 40px; ' +
+
+            'width: 40px; ' +
+
+            'padding-left: 0; ' +
+
+            'padding-right: 0;' +
+
+          '" ' +
+
+          'data-bs-toggle="tooltip" ' +
+
+          'data-bs-placement="top" ' +
+
+          'data-bs-title="Editar Ação" ' +
+
+          'title="Editar Ação"' +
+
+        '>' +
+
+          '<i class="fa fa-mouse"></i>' +
+
+        '</button>' +
+
+      '</div>'
+
+    );
+
+
+    clickContainer.append(
+
+      modeWrapper
+
+    );
+
+
+    clickContainer.append(
+
+      inputGroup
+
+    );
+
+
+    updatePaginationButtonClickFieldLayout(
+
+      item,
+
+      false
+
+    );
+
+
+    refreshTooltips();
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Fecha o formulário auxiliar sem submetê-lo ao backend
+  |--------------------------------------------------------------------------
+  */
+
+
+  function closePaginationButtonActionBuilderModal(
+    modalEl
+  ) {
+
+
+    if(!modalEl) {
+
+      return false;
+
+    }
+
+
+    const formEl = modalEl.querySelector(
+
+      'form'
+
+    );
+
+
+    if(formEl) {
+
+
+      formEl.setAttribute(
+
+        'data-submit',
+
+        'true'
+
+      );
+
+
+      formEl.setAttribute(
+
+        'data-automator-form-changed',
+
+        'false'
+
+      );
+
+
+    }
+
+
+    const modalInstance =
+
+      bootstrap.Modal.getInstance(
+
+        modalEl
+
+      );
+
+
+    if(modalInstance) {
+
+      modalInstance.hide();
+
+    } else {
+
+      modalEl.remove();
+
+    }
+
+
+    return true;
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Abre o formulário auxiliar do campo Click
+  |--------------------------------------------------------------------------
+  */
+
+
+  function openPaginationButtonActionBuilder(
+    item
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    focusPaginationButtonEditorItem(
+
+      item,
+
+      true,
+
+      false
+
+    );
+
+
+    const mode = String(
+
+      item.find(
+        '.automator-pagination-editor-button-click-mode'
+      ).val() || ''
+
+    ).trim();
+
+
+    if(
+      mode != 'modal-form' &&
+      mode != 'modal-view'
+    ) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Reprocessa os dados recebidos antes de procurar o formulário
+    |--------------------------------------------------------------------------
+    */
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      state.editorResponse
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      normalizePlainObject(
+
+        state.editorResponse.data
+
+      )
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      normalizePlainObject(
+
+        state.editorResponse.dados
+
+      )
+
+    );
+
+
+    applyPaginationButtonActionBuilderResponse(
+
+      state.recordData
+
+    );
+
+
+    const builderForm =
+
+      getPaginationButtonActionBuilderForm(
+
+        mode
+
+      );
+
+
+    const builderFormID = String(
+
+      builderForm.id ||
+
+      builderForm.tbl_sys_form_ID ||
+
+      ''
+
+    ).trim();
+
+
+    if(builderFormID == '') {
+
+
+      const expectedFormName =
+
+        mode == 'modal-form'
+
+          ? 'admin-open-form-modal'
+
+          : 'admin-open-view-modal';
+
+
+      AutomatorCreateAutoCloseToastAlert(
+
+        'automator-pagination-action-builder-form-not-found',
+
+        'center',
+
+        'middle',
+
+        true,
+
+        true,
+
+        'Formulário não encontrado',
+
+        'O formulário ' +
+
+        expectedFormName +
+
+        ' não foi enviado nos dados de inicialização do editor de paginação.',
+
+        null,
+
+        false,
+
+        null,
+
+        5000
+
+      );
+
+
+      return false;
+
+
+    }
+
+
+    const clickInput = item.find(
+
+      selectors.paginationButtonOnclick
+
+    ).first();
+
+
+    const values = getPaginationButtonActionBuilderValues(
+
+      mode,
+
+      clickInput.val()
+
+    );
+
+
+    const loaderHold =
+
+      startPaginationButtonActionBuilderLoaderHold();
+
+
+    AutomatorPaginationCreateModalForm(
+
+      'modal-lg',
+
+      'Editar Ação',
+
+      builderFormID,
+
+      '',
+
+      null,
+
+      function(
+        response,
+        modalEl,
+        modal,
+        recordData
+      ) {
+
+
+        preparePaginationButtonActionBuilderModalStack(
+
+          modalEl
+
+        );
+
+
+        normalizePaginationButtonActionBuilderSelectOptions(
+
+          modalEl
+
+        );
+
+
+        populatePaginationButtonActionBuilderForm(
+
+          modalEl,
+
+          values
+
+        );
+
+
+        const formEl = modalEl.querySelector(
+
+          'form'
+
+        );
+
+
+        if(!formEl) {
+
+
+          if(
+            loaderHold &&
+            typeof loaderHold.release === 'function'
+          ) {
+
+            loaderHold.release();
+
+          }
+
+
+          return false;
+
+        }
+
+
+        const submitHandler = function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          const builderValues =
+
+            serializePaginationButtonActionBuilderForm(
+
+              formEl
+
+            );
+
+
+          const onclickValue =
+
+            buildPaginationButtonActionOnclick(
+
+              mode,
+
+              builderValues
+
+            );
+
+
+          if(onclickValue == '') {
+
+
+            AutomatorCreateAutoCloseToastAlert(
+
+              'automator-pagination-action-builder-invalid',
+
+              'center',
+
+              'middle',
+
+              true,
+
+              true,
+
+              'Configuração incompleta',
+
+              'Preencha os campos obrigatórios antes de gerar a ação.',
+
+              null,
+
+              false,
+
+              null,
+
+              5000
+
+            );
+
+
+            return false;
+
+          }
+
+
+          clickInput.val(
+
+            onclickValue
+
+          );
+
+
+          syncPaginationButtonsState();
+
+
+          setSaveState(
+
+            true
+
+          );
+
+
+          closePaginationButtonActionBuilderModal(
+
+            modalEl
+
+          );
+
+
+          return false;
+
+
+        };
+
+
+        formEl.addEventListener(
+
+          'submit',
+
+          submitHandler,
+
+          true
+
+        );
+
+
+        const submitButton = modalEl.querySelector(
+
+          '.js-automator-pagination-modal-submit'
+
+        );
+
+
+        if(submitButton) {
+
+
+          submitButton.innerHTML =
+
+            '<i class="fa fa-code me-1"></i>' +
+
+            'Gerar Código';
+
+
+          submitButton.disabled = false;
+
+
+        }
+
+
+        if(
+          typeof AutomatorInitBootstrapTooltips ===
+          'function'
+        ) {
+
+          AutomatorInitBootstrapTooltips(
+
+            modalEl
+
+          );
+
+        }
+
+
+        requestAnimationFrame(function() {
+
+
+          requestAnimationFrame(function() {
+
+
+            if(
+              typeof AutomatorFormSerializeCurrentState ===
+              'function'
+            ) {
+
+              formEl.setAttribute(
+
+                'data-automator-initial-state',
+
+                AutomatorFormSerializeCurrentState(
+
+                  formEl
+
+                )
+
+              );
+
+            }
+
+
+            formEl.setAttribute(
+
+              'data-automator-form-changed',
+
+              'false'
+
+            );
+
+
+            if(
+              loaderHold &&
+              typeof loaderHold.release === 'function'
+            ) {
+
+              loaderHold.release(function() {
+
+
+                AutomatorSetActionStatus(
+
+                  false
+
+                );
+
+
+              });
+
+            } else {
+
+
+              $('#page-loader').css(
+
+                'z-index',
+
+                ''
+
+              );
+
+
+              AutomatorPageLoader(
+
+                'hide',
+
+                function() {
+
+
+                  AutomatorSetActionStatus(
+
+                    false
+
+                  );
+
+
+                }
+
+              );
+
+
+            }
+
+
+          });
+
+
+        });
+
+
+        return true;
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Eventos do seletor e botão do campo Click
+  |--------------------------------------------------------------------------
+  */
+
+
+  function bindPaginationButtonClickBuilderEvents() {
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-focus',
+        selectors.paginationButtonItem
+      )
+      .on(
+        'click.automator-pagination-editor-button-focus',
+        selectors.paginationButtonItem,
+        function(event) {
+
+
+          const target = $(
+
+            event.target
+
+          );
+
+
+          const item = $(this);
+
+
+          const interactiveElement = target.closest(
+
+            [
+
+              'input',
+              'select',
+              'textarea',
+              'option',
+              'label',
+              'button',
+              'a',
+              '.dropdown-menu',
+              '.automator-pagination-editor-button-icon-results',
+              '.automator-pagination-editor-button-class-autocomplete',
+
+            ].join(', ')
+
+          );
+
+
+          if(interactiveElement.length) {
+
+            return true;
+
+          }
+
+
+          focusPaginationButtonEditorItem(
+
+            item,
+
+            true,
+
+            false
+
+          );
+
+
+          return true;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-header-focus',
+        selectors.paginationButtonItem +
+        ' .accordion-header, ' +
+        selectors.paginationButtonItem +
+        ' .accordion-button'
+      )
+      .on(
+        'click.automator-pagination-editor-button-header-focus',
+        selectors.paginationButtonItem +
+        ' .accordion-header, ' +
+        selectors.paginationButtonItem +
+        ' .accordion-button',
+        function() {
+
+
+          const item = $(this).closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          focusPaginationButtonEditorItem(
+
+            item,
+
+            false,
+
+            false
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'focusin.automator-pagination-editor-button-field-focus',
+        selectors.paginationButtonItem +
+        ' input, ' +
+        selectors.paginationButtonItem +
+        ' select, ' +
+        selectors.paginationButtonItem +
+        ' textarea'
+      )
+      .on(
+        'focusin.automator-pagination-editor-button-field-focus',
+        selectors.paginationButtonItem +
+        ' input, ' +
+        selectors.paginationButtonItem +
+        ' select, ' +
+        selectors.paginationButtonItem +
+        ' textarea',
+        function() {
+
+
+          const item = $(this).closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          $(selectors.paginationButtonItem)
+            .removeClass(
+              'border-primary shadow-sm'
+            );
+
+
+          item.addClass(
+
+            'border-primary shadow-sm'
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'change.automator-pagination-editor-button-click-mode',
+        '.automator-pagination-editor-button-click-mode'
+      )
+      .on(
+        'change.automator-pagination-editor-button-click-mode',
+        '.automator-pagination-editor-button-click-mode',
+        function() {
+
+
+          const select = $(this);
+
+
+          const item = select.closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          const clickInput = item.find(
+
+            selectors.paginationButtonOnclick
+
+          ).first();
+
+
+          focusPaginationButtonEditorItem(
+
+            item,
+
+            true,
+
+            false
+
+          );
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | A alteração manual do tipo sempre inicia uma nova configuração
+          |--------------------------------------------------------------------------
+          */
+
+
+          clickInput.val(
+
+            ''
+
+          );
+
+
+          updatePaginationButtonClickFieldLayout(
+
+            item,
+
+            true
+
+          );
+
+
+          syncPaginationButtonsState();
+
+
+          setSaveState(
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-click-edit',
+        '.automator-pagination-editor-button-click-edit'
+      )
+      .on(
+        'click.automator-pagination-editor-button-click-edit',
+        '.automator-pagination-editor-button-click-edit',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          const item = $(this).closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          focusPaginationButtonEditorItem(
+
+            item,
+
+            true,
+
+            false
+
+          );
+
+
+          openPaginationButtonActionBuilder(
+
+            item
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cria a seção de filtros de consultas
+  |--------------------------------------------------------------------------
+  */
+
+
+  function initializePaginationQueryFiltersSection() {
+
+
+    const settingsContainer = $(
+
+      '#automator-pagination-editor-aside-right-tabs-container-pagination-settings'
+
+    );
+
+
+    if(!settingsContainer.length) {
+
+      return false;
+
+    }
+
+
+    let section = $(
+
+      '#automator-pagination-editor-query-filters'
+
+    );
+
+
+    if(section.length) {
+
+      return section;
+
+    }
+
+
+    section = $(
+
+      '<section ' +
+
+        'id="automator-pagination-editor-query-filters" ' +
+
+        'class="border-top mt-3"' +
+
+      '>' +
+
+        '<div class="p-3 border-bottom bg-light">' +
+
+          '<h6 class="mb-1 fw-bold">' +
+
+            'Filtro de Consultas' +
+
+          '</h6>' +
+
+          '<p class="small text-muted mb-0">' +
+
+            'Filtre os dados da paginação através das condições abaixo' +
+
+          '</p>' +
+
+        '</div>' +
+
+        '<div ' +
+
+          'class="' +
+
+            'automator-pagination-editor-query-filters-disabled-message ' +
+
+            'small text-muted text-center border-bottom p-3' +
+
+          '"' +
+
+        '>' +
+
+          '<i class="fa fa-lock me-1"></i>' +
+
+          'Selecione uma tabela e uma chave primária para configurar os filtros.' +
+
+        '</div>' +
+
+        '<div ' +
+
+          'class="automator-pagination-editor-query-filters-content p-3"' +
+
+        '>' +
+
+          '<div ' +
+
+            'class="automator-pagination-editor-query-filters-list" ' +
+
+            'data-empty="Nenhum filtro adicionado."' +
+
+          '></div>' +
+
+          '<button ' +
+
+            'type="button" ' +
+
+            'class="' +
+
+              'btn btn-sm btn-outline-primary w-100 ' +
+
+              'automator-pagination-editor-query-filter-add' +
+
+            '"' +
+
+          '>' +
+
+            '<i class="fa fa-plus me-1"></i>' +
+
+            'Adicionar Filtro' +
+
+          '</button>' +
+
+        '</div>' +
+
+      '</section>'
+
+    );
+
+
+    settingsContainer.append(
+
+      section
+
+    );
+
+
+    updatePaginationQueryFiltersEmptyState();
+
+    updatePaginationQueryFiltersAvailability();
+
+
+    return section;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o comparador lógico do filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationQueryFilterConnector(
+    connector = 'AND'
+  ) {
+
+
+    connector = String(
+
+      connector || 'AND'
+
+    )
+      .trim()
+      .toUpperCase();
+
+
+    return connector == 'OR'
+
+      ? 'OR'
+
+      : 'AND';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza um filtro da paginação
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationQueryFilter(
+    filter = {},
+    index = 0
+  ) {
+
+
+    let column = '';
+
+    let operator = '==';
+
+    let value = '';
+
+    let connector = 'AND';
+
+
+    if(Array.isArray(filter)) {
+
+
+      column = String(
+
+        filter[0] || ''
+
+      ).trim();
+
+
+      operator = String(
+
+        filter[1] || '=='
+
+      ).trim();
+
+
+      value =
+
+        filter[2] === null ||
+        filter[2] === undefined
+
+          ? ''
+
+          : String(
+
+              filter[2]
+
+            );
+
+
+      connector = normalizePaginationQueryFilterConnector(
+
+        filter[3] || 'AND'
+
+      );
+
+
+    } else {
+
+
+      filter = normalizePlainObject(
+
+        filter
+
+      );
+
+
+      column = String(
+
+        filter.column ||
+
+        filter.key ||
+
+        filter.field ||
+
+        filter.name ||
+
+        filter[0] ||
+
+        ''
+
+      ).trim();
+
+
+      operator = String(
+
+        filter.operator ||
+
+        filter.compare ||
+
+        filter.comparison ||
+
+        filter[1] ||
+
+        '=='
+
+      ).trim();
+
+
+      value =
+
+        filter.value !== undefined
+
+          ? filter.value
+
+          : filter[2] !== undefined
+
+            ? filter[2]
+
+            : '';
+
+
+      value =
+
+        value === null ||
+        value === undefined
+
+          ? ''
+
+          : String(value);
+
+
+      connector = normalizePaginationQueryFilterConnector(
+
+        filter.connector ||
+
+        filter.boolean ||
+
+        filter.logical ||
+
+        filter.comparator ||
+
+        filter[3] ||
+
+        'AND'
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Converte operadores do banco para as opções visuais do editor
+    |--------------------------------------------------------------------------
+    */
+
+
+    const visualOperators = {
+
+      '=':   '==',
+
+      '==':  '==',
+
+      '===': '==',
+
+      '!=':  '!=',
+
+      '<>':  '!=',
+
+      '!==': '!=',
+
+    };
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        visualOperators,
+
+        operator
+
+      )
+    ) {
+
+      operator = visualOperators[operator];
+
+    }
+
+
+    if(index <= 0) {
+
+      connector = 'AND';
+
+    }
+
+
+    return {
+
+      column: column,
+
+      operator:
+
+        operator != ''
+
+          ? operator
+
+          : '==',
+
+      value: value,
+
+      connector: connector,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza a lista de filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationQueryFilters(
+    filters = []
+  ) {
+
+
+    if(
+      filters === null ||
+      filters === undefined ||
+      filters === ''
+    ) {
+
+      return [];
+
+    }
+
+
+    if(typeof filters === 'string') {
+
+
+      try {
+
+
+        filters = JSON.parse(
+
+          filters
+
+        );
+
+
+      } catch(error) {
+
+
+        return [];
+
+
+      }
+
+
+    }
+
+
+    if(
+      filters &&
+      typeof filters === 'object' &&
+      !Array.isArray(filters)
+    ) {
+
+      filters = Object.keys(
+
+        filters
+
+      ).map(function(key) {
+
+
+        return filters[key];
+
+
+      });
+
+
+    }
+
+
+    if(!Array.isArray(filters)) {
+
+      return [];
+
+    }
+
+
+    return filters.map(function(
+      filter,
+      index
+    ) {
+
+
+      return normalizePaginationQueryFilter(
+
+        filter,
+
+        index
+
+      );
+
+
+    });
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Opções de colunas disponíveis para o filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationQueryFilterColumnOptions(
+    selectedColumn = ''
+  ) {
+
+
+    selectedColumn = String(
+
+      selectedColumn || ''
+
+    ).trim();
+
+
+    const columns = getAvailableTableColumns();
+
+
+    let html =
+
+      '<option value="" disabled' +
+
+        (
+
+          selectedColumn == ''
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+      '>' +
+
+        '- Selecione -' +
+
+      '</option>';
+
+
+    Object.keys(
+
+      columns
+
+    ).forEach(function(columnName) {
+
+
+      html +=
+
+        '<option value="' +
+
+          escapeHtml(
+
+            columnName
+
+          ) +
+
+        '"' +
+
+        (
+
+          columnName == selectedColumn
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+        '>' +
+
+          escapeHtml(
+
+            columns[columnName]
+
+          ) +
+
+        '</option>';
+
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mantém uma coluna antiga que não esteja mais na resposta atual
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      selectedColumn != '' &&
+      !Object.prototype.hasOwnProperty.call(
+        columns,
+        selectedColumn
+      )
+    ) {
+
+
+      html +=
+
+        '<option value="' +
+
+          escapeHtml(
+
+            selectedColumn
+
+          ) +
+
+        '" selected>' +
+
+          escapeHtml(
+
+            selectedColumn
+
+          ) +
+
+        '</option>';
+
+
+    }
+
+
+    return html;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Opções de operadores dos filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationQueryFilterOperatorOptions(
+    selectedOperator = '=='
+  ) {
+
+
+    selectedOperator = String(
+
+      selectedOperator || '=='
+
+    ).trim();
+
+
+    const operators = {
+
+      '==': 'É igual a',
+
+      '!=': 'Não é igual',
+
+    };
+
+
+    let html =
+
+      '<option value="" disabled' +
+
+        (
+
+          selectedOperator == ''
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+      '>' +
+
+        '- Selecione -' +
+
+      '</option>';
+
+
+    if(
+      selectedOperator != '' &&
+      !Object.prototype.hasOwnProperty.call(
+        operators,
+        selectedOperator
+      )
+    ) {
+
+
+      html +=
+
+        '<option value="' +
+
+          escapeHtml(
+
+            selectedOperator
+
+          ) +
+
+        '" selected>' +
+
+          escapeHtml(
+
+            selectedOperator
+
+          ) +
+
+        '</option>';
+
+
+    }
+
+
+    Object.keys(
+
+      operators
+
+    ).forEach(function(operator) {
+
+
+      html +=
+
+        '<option value="' +
+
+          escapeHtml(
+
+            operator
+
+          ) +
+
+        '"' +
+
+        (
+
+          operator == selectedOperator
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+        '>' +
+
+          escapeHtml(
+
+            operators[operator]
+
+          ) +
+
+        '</option>';
+
+
+    });
+
+
+    return html;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Opções de comparação lógica
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationQueryFilterConnectorOptions(
+    selectedConnector = 'AND'
+  ) {
+
+
+    selectedConnector = normalizePaginationQueryFilterConnector(
+
+      selectedConnector
+
+    );
+
+
+    return (
+
+      '<option value="AND"' +
+
+        (
+
+          selectedConnector == 'AND'
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+      '>' +
+
+        'E' +
+
+      '</option>' +
+
+      '<option value="OR"' +
+
+        (
+
+          selectedConnector == 'OR'
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+      '>' +
+
+        'Ou' +
+
+      '</option>'
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Renderiza um card de filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function renderPaginationQueryFilterCard(
+    filter = {},
+    openCard = true
+  ) {
+
+
+    filter = normalizePaginationQueryFilter(
+
+      filter
+
+    );
+
+
+    const filterUID =
+
+      'automator-pagination-query-filter-' +
+
+      Date.now() +
+
+      '-' +
+
+      Math.floor(
+
+        Math.random() * 999999
+
+      );
+
+
+    const card = $(
+
+      '<div ' +
+
+        'class="' +
+
+          'card shadow-sm mb-3 ' +
+
+          'automator-pagination-editor-query-filter-item' +
+
+        '" ' +
+
+        'data-filter-uid="' +
+
+          escapeHtml(
+
+            filterUID
+
+          ) +
+
+        '"' +
+
+      '>' +
+
+        '<div class="card-header p-0 bg-white">' +
+
+          '<div class="d-flex align-items-center">' +
+
+            '<button ' +
+
+              'type="button" ' +
+
+              'class="' +
+
+                'btn border-0 px-3 py-2 ' +
+
+                'automator-pagination-editor-query-filter-sort-handle' +
+
+              '" ' +
+
+              'title="Ordenar filtro"' +
+
+            '>' +
+
+              '<i class="fa fa-grip-vertical text-muted"></i>' +
+
+            '</button>' +
+
+            '<button ' +
+
+              'type="button" ' +
+
+              'class="' +
+
+                'btn border-0 text-start flex-grow-1 py-2 ' +
+
+                'automator-pagination-editor-query-filter-collapse' +
+
+                (
+
+                  openCard === true
+
+                    ? ''
+
+                    : ' collapsed'
+
+                ) +
+
+              '" ' +
+
+              'data-bs-toggle="collapse" ' +
+
+              'data-bs-target="#' +
+
+                escapeHtml(
+
+                  filterUID
+
+                ) +
+
+              '-body" ' +
+
+              'aria-expanded="' +
+
+                (
+
+                  openCard === true
+
+                    ? 'true'
+
+                    : 'false'
+
+                ) +
+
+              '"' +
+
+            '>' +
+
+              '<span class="' +
+
+                'fw-semibold small ' +
+
+                'automator-pagination-editor-query-filter-title' +
+
+              '">' +
+
+                'Filtro' +
+
+              '</span>' +
+
+              '<i class="' +
+
+                'fa float-end mt-1 ' +
+
+                (
+
+                  openCard === true
+
+                    ? 'fa-chevron-up'
+
+                    : 'fa-chevron-down'
+
+                ) +
+
+              '"></i>' +
+
+            '</button>' +
+
+          '</div>' +
+
+        '</div>' +
+
+        '<div ' +
+
+          'id="' +
+
+            escapeHtml(
+
+              filterUID
+
+            ) +
+
+          '-body" ' +
+
+          'class="' +
+
+            'collapse automator-pagination-editor-query-filter-body' +
+
+            (
+
+              openCard === true
+
+                ? ' show'
+
+                : ''
+
+            ) +
+
+          '"' +
+
+        '>' +
+
+          '<div class="card-body p-2">' +
+
+            '<div class="mb-2">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                'Coluna <span class="text-danger">*</span>' +
+
+              '</label>' +
+
+              '<select ' +
+
+                'class="' +
+
+                  'form-select form-select-sm ' +
+
+                  'automator-pagination-editor-query-filter-column' +
+
+                '" ' +
+
+                'required' +
+
+              '>' +
+
+                getPaginationQueryFilterColumnOptions(
+
+                  filter.column
+
+                ) +
+
+              '</select>' +
+
+            '</div>' +
+
+            '<div class="mb-2">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                'Condição <span class="text-danger">*</span>' +
+
+              '</label>' +
+
+              '<select ' +
+
+                'class="' +
+
+                  'form-select form-select-sm ' +
+
+                  'automator-pagination-editor-query-filter-operator' +
+
+                '" ' +
+
+                'required' +
+
+              '>' +
+
+                getPaginationQueryFilterOperatorOptions(
+
+                  filter.operator
+
+                ) +
+
+              '</select>' +
+
+            '</div>' +
+
+            '<div class="mb-2">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                'Valor' +
+
+              '</label>' +
+
+              '<input ' +
+
+                'type="text" ' +
+
+                'class="' +
+
+                  'form-control form-control-sm ' +
+
+                  'automator-pagination-editor-query-filter-value' +
+
+                '" ' +
+
+                'autocomplete="off" ' +
+
+                'value="' +
+
+                  escapeHtml(
+
+                    filter.value
+
+                  ) +
+
+                '"' +
+
+              '/>' +
+
+            '</div>' +
+
+            '<div class="mb-2">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                'Comparador <span class="text-danger">*</span>' +
+
+              '</label>' +
+
+              '<select ' +
+
+                'class="' +
+
+                  'form-select form-select-sm ' +
+
+                  'automator-pagination-editor-query-filter-connector' +
+
+                '" ' +
+
+                'required' +
+
+              '>' +
+
+                getPaginationQueryFilterConnectorOptions(
+
+                  filter.connector
+
+                ) +
+
+              '</select>' +
+
+            '</div>' +
+
+            '<button ' +
+
+              'type="button" ' +
+
+              'class="' +
+
+                'btn btn-sm btn-outline-danger w-100 ' +
+
+                'automator-pagination-editor-query-filter-delete' +
+
+              '"' +
+
+            '>' +
+
+              '<i class="fa fa-trash me-1"></i>' +
+
+              'Excluir Filtro' +
+
+            '</button>' +
+
+          '</div>' +
+
+        '</div>' +
+
+      '</div>'
+
+    );
+
+
+    return card;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza o ícone do collapse do filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function updatePaginationQueryFilterCollapseIcon(
+    card,
+    opened = null
+  ) {
+
+
+    card = $(card);
+
+
+    if(!card.length) {
+
+      return false;
+
+    }
+
+
+    const collapseButton = card.find(
+
+      '.automator-pagination-editor-query-filter-collapse'
+
+    ).first();
+
+
+    const body = card.find(
+
+      '.automator-pagination-editor-query-filter-body'
+
+    ).first();
+
+
+    if(
+      !collapseButton.length ||
+      !body.length
+    ) {
+
+      return false;
+
+    }
+
+
+    if(opened === null) {
+
+      opened = body.hasClass(
+
+        'show'
+
+      );
+
+    }
+
+
+    collapseButton
+      .toggleClass(
+
+        'collapsed',
+
+        opened !== true
+
+      )
+      .attr(
+
+        'aria-expanded',
+
+        opened === true
+
+          ? 'true'
+
+          : 'false'
+
+      );
+
+
+    collapseButton
+      .find('i')
+      .removeClass(
+
+        'fa-chevron-up fa-chevron-down'
+
+      )
+      .addClass(
+
+        opened === true
+
+          ? 'fa-chevron-up'
+
+          : 'fa-chevron-down'
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Estado vazio da lista de filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function updatePaginationQueryFiltersEmptyState() {
+
+
+    const list = $(
+
+      '.automator-pagination-editor-query-filters-list'
+
+    );
+
+
+    if(!list.length) {
+
+      return false;
+
+    }
+
+
+    list.find(
+
+      '.automator-pagination-editor-query-filters-empty'
+
+    ).remove();
+
+
+    if(
+      list.find(
+        '.automator-pagination-editor-query-filter-item'
+      ).length <= 0
+    ) {
+
+
+      list.append(
+
+        '<div class="' +
+
+          'automator-pagination-editor-query-filters-empty ' +
+
+          'small text-muted text-center border rounded ' +
+
+          'p-3 mb-3' +
+
+        '" style="' +
+
+          'border-style: dashed !important;' +
+
+        '">' +
+
+          'Nenhum filtro adicionado.' +
+
+        '</div>'
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza as colunas disponíveis nos filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function refreshPaginationQueryFilterColumnOptions() {
+
+
+    $(
+
+      '.automator-pagination-editor-query-filter-column'
+
+    ).each(function() {
+
+
+      const select = $(this);
+
+
+      const currentValue = String(
+
+        select.val() || ''
+
+      ).trim();
+
+
+      select.html(
+
+        getPaginationQueryFilterColumnOptions(
+
+          currentValue
+
+        )
+
+      );
+
+
+      if(currentValue != '') {
+
+        select.val(
+
+          currentValue
+
+        );
+
+      }
+
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza posição, título e comparador dos filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationQueryFilterPositions() {
+
+
+    const cards = $(
+
+      '.automator-pagination-editor-query-filter-item'
+
+    );
+
+
+    cards.each(function(index) {
+
+
+      const card = $(this);
+
+
+      card.find(
+
+        '.automator-pagination-editor-query-filter-title'
+
+      ).text(
+
+        'Filtro ' +
+
+        (
+
+          index + 1
+
+        )
+
+      );
+
+
+      const connectorSelect = card.find(
+
+        '.automator-pagination-editor-query-filter-connector'
+
+      ).first();
+
+
+      if(index <= 0) {
+
+
+        connectorSelect
+          .val(
+            'AND'
+          )
+          .prop(
+            'disabled',
+            true
+          )
+          .addClass(
+            'bg-light'
+          );
+
+
+      } else {
+
+
+        connectorSelect
+          .prop(
+            'disabled',
+            false
+          )
+          .removeClass(
+            'bg-light'
+          );
+
+
+      }
+
+
+    });
+
+
+    if(cards.length == 1) {
+
+
+      cards
+        .first()
+        .find(
+          '.automator-pagination-editor-query-filter-connector'
+        )
+        .val(
+          'AND'
+        );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Verifica se existem filtros cadastrados
+  |--------------------------------------------------------------------------
+  */
+
+
+  function hasPaginationQueryFilters() {
+
+
+    return (
+
+      $(
+
+        '.automator-pagination-editor-query-filter-item'
+
+      ).length >= 1
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Libera ou bloqueia a seção de filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function updatePaginationQueryFiltersAvailability() {
+
+
+    const section = $(
+
+      '#automator-pagination-editor-query-filters'
+
+    );
+
+
+    if(!section.length) {
+
+      return false;
+
+    }
+
+
+    const hasTable = String(
+
+      $(selectors.table).val() || ''
+
+    ).trim() != '';
+
+
+    const hasIndex = String(
+
+      $(selectors.index).val() || ''
+
+    ).trim() != '';
+
+
+    const enabled =
+
+      hasTable === true &&
+
+      hasIndex === true;
+
+
+    section.find(
+
+      '.automator-pagination-editor-query-filters-disabled-message'
+
+    ).toggleClass(
+
+      'd-none',
+
+      enabled === true
+
+    );
+
+
+    section.find(
+
+      '.automator-pagination-editor-query-filters-content'
+
+    )
+      .toggleClass(
+
+        'opacity-50',
+
+        enabled !== true
+
+      )
+      .css(
+
+        'pointer-events',
+
+        enabled === true
+
+          ? ''
+
+          : 'none'
+
+      );
+
+
+    section.find(
+
+      '.automator-pagination-editor-query-filter-add'
+
+    ).prop(
+
+      'disabled',
+
+      enabled !== true
+
+    );
+
+
+    section.find(
+
+      '.automator-pagination-editor-query-filter-column, ' +
+
+      '.automator-pagination-editor-query-filter-operator, ' +
+
+      '.automator-pagination-editor-query-filter-value, ' +
+
+      '.automator-pagination-editor-query-filter-delete, ' +
+
+      '.automator-pagination-editor-query-filter-sort-handle'
+
+    ).prop(
+
+      'disabled',
+
+      enabled !== true
+
+    );
+
+
+    normalizePaginationQueryFilterPositions();
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o operador para armazenamento e execução no backend
+  |--------------------------------------------------------------------------
+  */
+
+
+  function normalizePaginationQueryFilterOperatorForStorage(
+    operator = '=='
+  ) {
+
+
+    operator = String(
+
+      operator || '=='
+
+    ).trim();
+
+
+    const operators = {
+
+      '==':  '=',
+
+      '===': '=',
+
+      '=':   '=',
+
+      '!=':  '!=',
+
+      '!==': '!=',
+
+      '<>':  '!=',
+
+      '>':   '>',
+
+      '>=':  '>=',
+
+      '<':   '<',
+
+      '<=':  '<=',
+
+      'like': 'like',
+
+      'LIKE': 'like',
+
+    };
+
+
+    if(
+      Object.prototype.hasOwnProperty.call(
+
+        operators,
+
+        operator
+
+      )
+    ) {
+
+      return operators[operator];
+
+    }
+
+
+    return '=';
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna os filtros na ordem visual
+  |--------------------------------------------------------------------------
+  */
+
+
+  function getPaginationQueryFiltersData() {
+
+
+    const filters = [];
+
+
+    $(
+
+      '.automator-pagination-editor-query-filter-item'
+
+    ).each(function(index) {
+
+
+      const card = $(this);
+
+
+      const column = String(
+
+        card.find(
+          '.automator-pagination-editor-query-filter-column'
+        ).val() || ''
+
+      ).trim();
+
+
+      const operator =
+
+        normalizePaginationQueryFilterOperatorForStorage(
+
+          card.find(
+            '.automator-pagination-editor-query-filter-operator'
+          ).val() || '=='
+
+        );
+
+
+      const valueInput = card.find(
+
+        '.automator-pagination-editor-query-filter-value'
+
+      ).first();
+
+
+      const value = String(
+
+        valueInput.val() === null ||
+        valueInput.val() === undefined
+
+          ? ''
+
+          : valueInput.val()
+
+      );
+
+
+      let connector = normalizePaginationQueryFilterConnector(
+
+        card.find(
+          '.automator-pagination-editor-query-filter-connector'
+        ).val() || 'AND'
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | O primeiro filtro sempre inicia o grupo com AND
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(index <= 0) {
+
+        connector = 'AND';
+
+      }
+
+
+      filters.push([
+
+        column,
+
+        operator,
+
+        value,
+
+        connector,
+
+      ]);
+
+
+    });
+
+
+    return filters;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Valida os filtros da consulta
+  |--------------------------------------------------------------------------
+  */
+
+
+  function validatePaginationQueryFilters(
+    errors = []
+  ) {
+
+
+    $(
+
+      '.automator-pagination-editor-query-filter-item'
+
+    ).each(function(index) {
+
+
+      const card = $(this);
+
+
+      const columnSelect = card.find(
+
+        '.automator-pagination-editor-query-filter-column'
+
+      ).first();
+
+
+      const operatorSelect = card.find(
+
+        '.automator-pagination-editor-query-filter-operator'
+
+      ).first();
+
+
+      const connectorSelect = card.find(
+
+        '.automator-pagination-editor-query-filter-connector'
+
+      ).first();
+
+
+      const column = String(
+
+        columnSelect.val() || ''
+
+      ).trim();
+
+
+      const operator = String(
+
+        operatorSelect.val() || ''
+
+      ).trim();
+
+
+      let connector = normalizePaginationQueryFilterConnector(
+
+        connectorSelect.val() || 'AND'
+
+      );
+
+
+      if(index <= 0) {
+
+        connector = 'AND';
+
+        connectorSelect.val(
+
+          'AND'
+
+        );
+
+      }
+
+
+      const columnValid =
+
+        column != '';
+
+
+      const operatorValid =
+
+        operator != '';
+
+
+      const connectorValid =
+
+        [
+
+          'AND',
+          'OR',
+
+        ].indexOf(
+
+          connector
+
+        ) >= 0;
+
+
+      columnSelect.toggleClass(
+
+        'is-invalid',
+
+        columnValid !== true
+
+      );
+
+
+      operatorSelect.toggleClass(
+
+        'is-invalid',
+
+        operatorValid !== true
+
+      );
+
+
+      connectorSelect.toggleClass(
+
+        'is-invalid',
+
+        connectorValid !== true
+
+      );
+
+
+      if(columnValid !== true) {
+
+        errors.push(
+
+          'Selecione a coluna do filtro ' +
+
+          (
+
+            index + 1
+
+          ) +
+
+          '.'
+
+        );
+
+      }
+
+
+      if(operatorValid !== true) {
+
+        errors.push(
+
+          'Selecione a condição do filtro ' +
+
+          (
+
+            index + 1
+
+          ) +
+
+          '.'
+
+        );
+
+      }
+
+
+      if(connectorValid !== true) {
+
+        errors.push(
+
+          'Selecione o comparador do filtro ' +
+
+          (
+
+            index + 1
+
+          ) +
+
+          '.'
+
+        );
+
+      }
+
+
+    });
+
+
+    return errors;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Sortable dos filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function initializePaginationQueryFiltersSortable() {
+
+
+    const list = document.querySelector(
+
+      '.automator-pagination-editor-query-filters-list'
+
+    );
+
+
+    if(!list) {
+
+      return false;
+
+    }
+
+
+    const currentSortable = $(list).data(
+
+      'automator-pagination-query-filters-sortable'
+
+    );
+
+
+    if(currentSortable) {
+
+
+      try {
+
+        currentSortable.destroy();
+
+      } catch(error) {}
+
+
+      $(list).removeData(
+
+        'automator-pagination-query-filters-sortable'
+
+      );
+
+
+    }
+
+
+    if(
+      typeof Sortable === 'undefined'
+    ) {
+
+      return false;
+
+    }
+
+
+    const sortable = new Sortable(
+
+      list,
+
+      {
+
+        animation: 150,
+
+        handle:
+
+          '.automator-pagination-editor-query-filter-sort-handle',
+
+        draggable:
+
+          '.automator-pagination-editor-query-filter-item',
+
+        ghostClass:
+
+          'border border-primary bg-light',
+
+        chosenClass:
+
+          'shadow',
+
+        onStart: function() {
+
+
+          hideEditorTooltips();
+
+
+        },
+
+        onEnd: function() {
+
+
+          normalizePaginationQueryFilterPositions();
+
+          updatePaginationQueryFiltersEmptyState();
+
+          syncEditorState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+        },
+
+      }
+
+    );
+
+
+    $(list).data(
+
+      'automator-pagination-query-filters-sortable',
+
+      sortable
+
+    );
+
+
+    return sortable;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Adiciona um filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function addPaginationQueryFilter(
+    filter = {},
+    openCard = true,
+    markChanged = true
+  ) {
+
+
+    const list = $(
+
+      '.automator-pagination-editor-query-filters-list'
+
+    );
+
+
+    if(!list.length) {
+
+      return false;
+
+    }
+
+
+    list.find(
+
+      '.automator-pagination-editor-query-filters-empty'
+
+    ).remove();
+
+
+    const card = renderPaginationQueryFilterCard(
+
+      filter,
+
+      openCard
+
+    );
+
+
+    list.append(
+
+      card
+
+    );
+
+
+    normalizePaginationQueryFilterPositions();
+
+    updatePaginationQueryFiltersEmptyState();
+
+    initializePaginationQueryFiltersSortable();
+
+    updatePaginationQueryFiltersAvailability();
+
+
+    if(markChanged === true) {
+
+
+      syncEditorState();
+
+      setSaveState(
+
+        true
+
+      );
+
+
+      setTimeout(function() {
+
+
+        card.find(
+
+          '.automator-pagination-editor-query-filter-column'
+
+        ).first().trigger(
+
+          'focus'
+
+        );
+
+
+      }, 30);
+
+
+    }
+
+
+    return card;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inicializa os filtros do registro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function initializePaginationQueryFilters(
+    recordData = {}
+  ) {
+
+
+    initializePaginationQueryFiltersSection();
+
+
+    const list = $(
+
+      '.automator-pagination-editor-query-filters-list'
+
+    );
+
+
+    if(!list.length) {
+
+      return false;
+
+    }
+
+
+    list.empty();
+
+
+    const filters = normalizePaginationQueryFilters(
+
+      getPaginationRecordValue(
+
+        recordData,
+
+        [
+
+          'where',
+
+          'pagination_where',
+
+          'tbl_sys_pagination_where',
+
+          'pagination_args.where',
+
+        ],
+
+        []
+
+      )
+
+    );
+
+
+    filters.forEach(function(
+      filter,
+      index
+    ) {
+
+
+      addPaginationQueryFilter(
+
+        filter,
+
+        index === 0,
+
+        false
+
+      );
+
+
+    });
+
+
+    updatePaginationQueryFiltersEmptyState();
+
+    normalizePaginationQueryFilterPositions();
+
+    initializePaginationQueryFiltersSortable();
+
+    refreshPaginationQueryFilterColumnOptions();
+
+    updatePaginationQueryFiltersAvailability();
+
+
+    return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Eventos dos filtros
+  |--------------------------------------------------------------------------
+  */
+
+
+  function bindPaginationQueryFiltersEvents() {
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-query-filter-add',
+        '.automator-pagination-editor-query-filter-add'
+      )
+      .on(
+        'click.automator-pagination-editor-query-filter-add',
+        '.automator-pagination-editor-query-filter-add',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          if(
+            String(
+              $(selectors.table).val() || ''
+            ).trim() == '' ||
+            String(
+              $(selectors.index).val() || ''
+            ).trim() == ''
+          ) {
+
+            return false;
+
+          }
+
+
+          addPaginationQueryFilter(
+
+            {
+
+              column: '',
+
+              operator: '==',
+
+              value: '',
+
+              connector:
+
+                hasPaginationQueryFilters()
+
+                  ? 'AND'
+
+                  : 'AND',
+
+            },
+
+            true,
+
+            true
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-query-filter-delete',
+        '.automator-pagination-editor-query-filter-delete'
+      )
+      .on(
+        'click.automator-pagination-editor-query-filter-delete',
+        '.automator-pagination-editor-query-filter-delete',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          $(this)
+            .closest(
+              '.automator-pagination-editor-query-filter-item'
+            )
+            .remove();
+
+
+          normalizePaginationQueryFilterPositions();
+
+          updatePaginationQueryFiltersEmptyState();
+
+          initializePaginationQueryFiltersSortable();
+
+          syncEditorState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'input.automator-pagination-editor-query-filter ' +
+        'change.automator-pagination-editor-query-filter',
+        [
+
+          '.automator-pagination-editor-query-filter-column',
+
+          '.automator-pagination-editor-query-filter-operator',
+
+          '.automator-pagination-editor-query-filter-value',
+
+          '.automator-pagination-editor-query-filter-connector',
+
+        ].join(', ')
+      )
+      .on(
+        'input.automator-pagination-editor-query-filter ' +
+        'change.automator-pagination-editor-query-filter',
+        [
+
+          '.automator-pagination-editor-query-filter-column',
+
+          '.automator-pagination-editor-query-filter-operator',
+
+          '.automator-pagination-editor-query-filter-value',
+
+          '.automator-pagination-editor-query-filter-connector',
+
+        ].join(', '),
+        function() {
+
+
+          normalizePaginationQueryFilterPositions();
+
+          validatePaginationQueryFilters(
+
+            []
+
+          );
+
+          syncEditorState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'shown.bs.collapse.automator-pagination-editor-query-filter',
+        '.automator-pagination-editor-query-filter-body'
+      )
+      .on(
+        'shown.bs.collapse.automator-pagination-editor-query-filter',
+        '.automator-pagination-editor-query-filter-body',
+        function() {
+
+
+          updatePaginationQueryFilterCollapseIcon(
+
+            $(this).closest(
+              '.automator-pagination-editor-query-filter-item'
+            ),
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'hidden.bs.collapse.automator-pagination-editor-query-filter',
+        '.automator-pagination-editor-query-filter-body'
+      )
+      .on(
+        'hidden.bs.collapse.automator-pagination-editor-query-filter',
+        '.automator-pagination-editor-query-filter-body',
+        function() {
+
+
+          updatePaginationQueryFilterCollapseIcon(
+
+            $(this).closest(
+              '.automator-pagination-editor-query-filter-item'
+            ),
+
+            false
+
+          );
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
   /*
   |--------------------------------------------------------------------------
   | Inicialização
@@ -360,6 +11274,8 @@ window.SysAutomatorPaginationEditor = (function () {
 
     initializePaginationModalScroll();
 
+    initializePaginationQueryFiltersSection();
+
 
     bindTableEvents();
 
@@ -379,6 +11295,8 @@ window.SysAutomatorPaginationEditor = (function () {
 
     bindPaginationActionNameAutocompleteEvents();
 
+    bindPaginationSlugEvents();
+
     bindColumnsEvents();
 
     bindPaginationPreviewSettingsEvents();
@@ -391,7 +11309,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
     bindPaginationButtonIconSelectionEvents();
 
+    bindPaginationButtonClassAutocompleteEvents();
+
     bindPaginationActionRolesEvents();
+
+    bindPaginationQueryFiltersEvents();
 
 
     initializePanels();
@@ -401,6 +11323,8 @@ window.SysAutomatorPaginationEditor = (function () {
     initializeActions();
 
     initializePaginationButtons();
+
+    initializePaginationButtonClassAutocomplete();
 
     initializeStructureSortable();
 
@@ -419,7 +11343,9 @@ window.SysAutomatorPaginationEditor = (function () {
           [
 
             'tbl_sys_pagination_table',
+
             'table',
+
             'pagination_table',
 
           ],
@@ -440,7 +11366,9 @@ window.SysAutomatorPaginationEditor = (function () {
           [
 
             'tbl_sys_pagination_index',
+
             'index',
+
             'pagination_index',
 
           ],
@@ -535,6 +11463,70 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     return true;
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza valor para slug
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationSlug(
+    value = ''
+  ) {
+
+
+    value = String(
+
+      value || ''
+
+    );
+
+
+    if(
+      typeof value.normalize === 'function'
+    ) {
+
+
+      value = value
+        .normalize(
+          'NFD'
+        )
+        .replace(
+          /[\u0300-\u036f]/g,
+          ''
+        );
+
+
+    }
+
+
+    return value
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9\s_-]/g,
+        ''
+      )
+      .replace(
+        /[\s_]+/g,
+        '-'
+      )
+      .replace(
+        /-+/g,
+        '-'
+      )
+      .replace(
+        /^-+/g,
+        ''
+      )
+      .substring(
+        0,
+        255
+      );
 
 
   }
@@ -1394,7 +12386,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
       '<div class="' +
 
-        'card mb-2 ' +
+        'card shadow-sm mb-3 ' +
 
         'automator-pagination-editor-action-role-row' +
 
@@ -1538,6 +12530,109 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza o ícone de expansão da ação
+  |--------------------------------------------------------------------------
+  */
+
+  function updatePaginationActionCollapseIcon(
+    item,
+    opened = null
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const button = item.find(
+
+      selectors.actionCollapse
+
+    ).first();
+
+
+    const body = item.find(
+
+      selectors.actionBody
+
+    ).first();
+
+
+    if(
+      !button.length ||
+      !body.length
+    ) {
+
+      return false;
+
+    }
+
+
+    if(opened === null) {
+
+      opened = body.hasClass(
+
+        'show'
+
+      );
+
+    }
+
+
+    opened = opened === true;
+
+
+    button
+      .toggleClass(
+        'collapsed',
+        opened !== true
+      )
+      .attr(
+        'aria-expanded',
+        opened === true
+
+          ? 'true'
+
+          : 'false'
+      );
+
+
+    button.find(
+
+      'i'
+
+    )
+      .removeClass(
+
+        'fa-chevron-up fa-chevron-down'
+
+      )
+      .addClass(
+
+        opened === true
+
+          ? 'fa-chevron-up'
+
+          : 'fa-chevron-down'
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+
   function updatePaginationActionRolesEmptyState(
     item
   ) {
@@ -1558,6 +12653,21 @@ window.SysAutomatorPaginationEditor = (function () {
       return false;
 
     }
+
+
+    list
+      .addClass(
+
+        'small'
+
+      )
+      .attr(
+
+        'data-empty',
+
+        'Nenhuma regra de uso adicionada.'
+
+      );
 
 
     list.find(
@@ -1582,7 +12692,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
           'small text-muted text-center border rounded ' +
 
-          'border-dashed p-3 mb-2' +
+          'p-3 mb-2' +
+
+        '" style="' +
+
+          'border-style: dashed !important;' +
 
         '">' +
 
@@ -2375,6 +13489,17 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     applyPaginationSettingsDefaultValues();
+
+
+    initializePaginationQueryFiltersSection();
+
+
+    initializePaginationQueryFilters(
+
+      state.recordData
+
+    );
+
 
     updateStructureEmptyState();
 
@@ -4329,27 +15454,36 @@ window.SysAutomatorPaginationEditor = (function () {
 
     $(document)
       .off(
-        'keyup.automator-pagination-editor-button-id input.automator-pagination-editor-button-id',
+        'keyup.automator-pagination-editor-button-id ' +
+        'input.automator-pagination-editor-button-id ' +
+        'change.automator-pagination-editor-button-id',
         selectors.paginationButtonID
       )
       .on(
-        'keyup.automator-pagination-editor-button-id input.automator-pagination-editor-button-id',
+        'keyup.automator-pagination-editor-button-id ' +
+        'input.automator-pagination-editor-button-id ' +
+        'change.automator-pagination-editor-button-id',
         selectors.paginationButtonID,
         function() {
 
 
-          const normalizedValue =
-
-            normalizePaginationButtonSlug(
-
-              $(this).val()
-
-            );
+          const input = $(this);
 
 
-          if($(this).val() != normalizedValue) {
+          const normalizedValue = normalizePaginationSlug(
 
-            $(this).val(
+            input.val()
+
+          );
+
+
+          if(
+            String(
+              input.val() || ''
+            ) != normalizedValue
+          ) {
+
+            input.val(
 
               normalizedValue
 
@@ -4360,7 +15494,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
           syncPaginationButtonsState();
 
-          setSaveState(true);
+          setSaveState(
+
+            true
+
+          );
 
 
         }
@@ -4369,7 +15507,57 @@ window.SysAutomatorPaginationEditor = (function () {
 
     $(document)
       .off(
-        'input.automator-pagination-editor-button-field change.automator-pagination-editor-button-field',
+        'blur.automator-pagination-editor-button-id',
+        selectors.paginationButtonID
+      )
+      .on(
+        'blur.automator-pagination-editor-button-id',
+        selectors.paginationButtonID,
+        function() {
+
+
+          const input = $(this);
+
+
+          const normalizedValue = normalizePaginationButtonSlug(
+
+            input.val()
+
+          );
+
+
+          if(
+            String(
+              input.val() || ''
+            ) != normalizedValue
+          ) {
+
+            input.val(
+
+              normalizedValue
+
+            );
+
+
+            syncPaginationButtonsState();
+
+            setSaveState(
+
+              true
+
+            );
+
+          }
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'input.automator-pagination-editor-button-field ' +
+        'change.automator-pagination-editor-button-field',
         [
 
           selectors.paginationButtonType,
@@ -4381,7 +15569,8 @@ window.SysAutomatorPaginationEditor = (function () {
         ].join(', ')
       )
       .on(
-        'input.automator-pagination-editor-button-field change.automator-pagination-editor-button-field',
+        'input.automator-pagination-editor-button-field ' +
+        'change.automator-pagination-editor-button-field',
         [
 
           selectors.paginationButtonType,
@@ -4396,7 +15585,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
           syncPaginationButtonsState();
 
-          setSaveState(true);
+          setSaveState(
+
+            true
+
+          );
 
 
         }
@@ -4405,11 +15598,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
     $(document)
       .off(
-        'keyup.automator-pagination-editor-button-icon-search input.automator-pagination-editor-button-icon-search',
+        'keyup.automator-pagination-editor-button-icon-search ' +
+        'input.automator-pagination-editor-button-icon-search',
         selectors.paginationButtonIconSearch
       )
       .on(
-        'keyup.automator-pagination-editor-button-icon-search input.automator-pagination-editor-button-icon-search',
+        'keyup.automator-pagination-editor-button-icon-search ' +
+        'input.automator-pagination-editor-button-icon-search',
         selectors.paginationButtonIconSearch,
         function() {
 
@@ -4436,100 +15631,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
     $(document)
       .off(
-        'click.automator-pagination-editor-button-icon-result',
-        '.automator-pagination-editor-button-icon-result'
-      )
-      .on(
-        'click.automator-pagination-editor-button-icon-result',
-        '.automator-pagination-editor-button-icon-result',
-        function(event) {
-
-
-          event.preventDefault();
-
-          event.stopPropagation();
-
-
-          const result = $(this);
-
-
-          const item = result.closest(
-
-            selectors.paginationButtonItem
-
-          );
-
-
-          const iconName = normalizePaginationButtonIcon(
-
-            result.attr(
-              'data-icon'
-            )
-
-          );
-
-
-          item.find(
-
-            selectors.paginationButtonIconHidden
-
-          ).val(
-
-            iconName
-
-          );
-
-
-          item.find(
-
-            selectors.paginationButtonIconSearch
-
-          ).val('');
-
-
-          item.find(
-
-            selectors.paginationButtonIconPreview
-
-          ).html(
-
-            '<i class="fa fa-' +
-
-            escapeHtml(iconName || 'icons') +
-
-            '"></i>'
-
-          );
-
-
-          item.find(
-
-            selectors.paginationButtonIconResults
-
-          )
-            .empty()
-            .addClass('d-none');
-
-
-          syncPaginationButtonsState();
-
-          setSaveState(true);
-
-
-          return false;
-
-
-        }
-      );
-
-
-    $(document)
-      .off(
-        'click.automator-pagination-editor-button-delete',
+        'click.automator-pagination-editor-button-icon-delete',
         selectors.paginationButtonDelete
       )
       .on(
-        'click.automator-pagination-editor-button-delete',
+        'click.automator-pagination-editor-button-icon-delete',
         selectors.paginationButtonDelete,
         function(event) {
 
@@ -4569,7 +15675,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
           updatePaginationActionsUsageState();
 
-          setSaveState(true);
+          setSaveState(
+
+            true
+
+          );
 
 
           return false;
@@ -4604,7 +15714,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
           $(selectors.paginationButtonIconResults)
             .empty()
-            .addClass('d-none');
+            .addClass(
+              'd-none'
+            );
 
 
         }
@@ -4612,6 +15724,1010 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza classes do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationButtonClasses(
+    value = ''
+  ) {
+
+
+    const classes = [];
+
+
+    String(
+
+      value || ''
+
+    )
+      .split(
+        /\s+/
+      )
+      .map(function(className) {
+
+
+        return String(
+
+          className || ''
+
+        ).trim();
+
+
+      })
+      .filter(function(className) {
+
+
+        return className != '';
+
+
+      })
+      .forEach(function(className) {
+
+
+        if(
+          classes.indexOf(
+            className
+          ) < 0
+        ) {
+
+          classes.push(
+
+            className
+
+          );
+
+        }
+
+
+      });
+
+
+    return classes;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Prepara autocomplete das classes do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function ensurePaginationButtonClassAutocomplete(
+    item
+  ) {
+
+
+    item = $(item);
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const input = item.find(
+
+      selectors.paginationButtonClass
+
+    ).first();
+
+
+    if(!input.length) {
+
+      return false;
+
+    }
+
+
+    let wrapper = input.closest(
+
+      '.automator-pagination-editor-button-class-wrapper'
+
+    );
+
+
+    if(!wrapper.length) {
+
+
+      input.wrap(
+
+        '<div class="' +
+
+          'position-relative ' +
+
+          'automator-pagination-editor-button-class-wrapper' +
+
+        '"></div>'
+
+      );
+
+
+      wrapper = input.closest(
+
+        '.automator-pagination-editor-button-class-wrapper'
+
+      );
+
+
+    }
+
+
+    let results = wrapper.find(
+
+      '.automator-pagination-editor-button-class-results'
+
+    ).first();
+
+
+    if(!results.length) {
+
+
+      results = $(
+
+        '<div class="' +
+
+          'automator-pagination-editor-button-class-results ' +
+
+          'position-absolute start-0 end-0 bg-white border ' +
+
+          'rounded shadow d-none' +
+
+        '" style="' +
+
+          'top: calc(100% + 4px); ' +
+
+          'max-height: 190px; ' +
+
+          'overflow-y: auto; ' +
+
+          'z-index: 1090;' +
+
+        '"></div>'
+
+      );
+
+
+      wrapper.append(
+
+        results
+
+      );
+
+
+    }
+
+
+    input.attr(
+
+      'autocomplete',
+
+      'off'
+
+    );
+
+
+    return wrapper;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Inicializa autocomplete das classes
+  |--------------------------------------------------------------------------
+  */
+
+  function initializePaginationButtonClassAutocomplete() {
+
+
+    $(selectors.paginationButtonItem).each(function() {
+
+
+      ensurePaginationButtonClassAutocomplete(
+
+        this
+
+      );
+
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o termo atual da busca de classes
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationButtonClassSearchValue(
+    input
+  ) {
+
+
+    input = $(input);
+
+
+    if(!input.length) {
+
+      return '';
+
+    }
+
+
+    const value = String(
+
+      input.val() || ''
+
+    );
+
+
+    const parts = value.split(
+
+      /\s+/
+
+    );
+
+
+    return String(
+
+      parts.pop() || ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Renderiza sugestões de classes do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function renderPaginationButtonClassSuggestions(
+    input
+  ) {
+
+
+    input = $(input);
+
+
+    if(!input.length) {
+
+      return false;
+
+    }
+
+
+    const item = input.closest(
+
+      selectors.paginationButtonItem
+
+    );
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    const wrapper = ensurePaginationButtonClassAutocomplete(
+
+      item
+
+    );
+
+
+    if(
+      !wrapper ||
+      !wrapper.length
+    ) {
+
+      return false;
+
+    }
+
+
+    const results = wrapper.find(
+
+      '.automator-pagination-editor-button-class-results'
+
+    ).first();
+
+
+    if(!results.length) {
+
+      return false;
+
+    }
+
+
+    const searchValue = getPaginationButtonClassSearchValue(
+
+      input
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | A lista só deve aparecer depois de pelo menos um caractere digitado
+    |--------------------------------------------------------------------------
+    */
+
+    if(searchValue.length < 1) {
+
+
+      results
+        .empty()
+        .addClass(
+          'd-none'
+        );
+
+
+      return false;
+
+    }
+
+
+    const currentClasses = normalizePaginationButtonClasses(
+
+      input.val()
+
+    );
+
+
+    const suggestions = getPaginationButtonClassSuggestions()
+      .filter(function(className) {
+
+
+        className = String(
+
+          className || ''
+
+        ).trim();
+
+
+        if(className == '') {
+
+          return false;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Não repete classes já utilizadas no mesmo input
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+          currentClasses.indexOf(
+            className
+          ) >= 0
+        ) {
+
+          return false;
+
+        }
+
+
+        return className
+          .toLowerCase()
+          .indexOf(
+            searchValue
+          ) >= 0;
+
+
+      })
+      .slice(
+        0,
+        100
+      );
+
+
+    let html = '';
+
+
+    suggestions.forEach(function(className) {
+
+
+      html +=
+
+        '<button ' +
+
+          'type="button" ' +
+
+          'class="' +
+
+            'btn btn-sm btn-light border-0 rounded-0 ' +
+
+            'w-100 text-start ' +
+
+            'automator-pagination-editor-button-class-result' +
+
+          '" ' +
+
+          'data-class-name="' +
+
+            escapeHtml(
+
+              className
+
+            ) +
+
+          '"' +
+
+        '>' +
+
+          '<span class="font-monospace">' +
+
+            escapeHtml(
+
+              className
+
+            ) +
+
+          '</span>' +
+
+        '</button>';
+
+
+    });
+
+
+    if(html == '') {
+
+
+      html =
+
+        '<div class="small text-muted p-2">' +
+
+          'Nenhuma classe encontrada.' +
+
+        '</div>';
+
+
+    }
+
+
+    results
+      .html(
+
+        html
+
+      )
+      .removeClass(
+
+        'd-none'
+
+      );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Adiciona uma classe ao campo do botão
+  |--------------------------------------------------------------------------
+  */
+
+  function addPaginationButtonClassToInput(
+    input,
+    className = ''
+  ) {
+
+
+    input = $(input);
+
+
+    className = String(
+
+      className || ''
+
+    ).trim();
+
+
+    if(
+      !input.length ||
+      className == ''
+    ) {
+
+      return false;
+
+    }
+
+
+    let currentValue = String(
+
+      input.val() || ''
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove o termo incompleto digitado no final
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      currentValue != '' &&
+      !/\s$/.test(
+        currentValue
+      )
+    ) {
+
+
+      const lastSpaceIndex = currentValue.lastIndexOf(
+
+        ' '
+
+      );
+
+
+      if(lastSpaceIndex >= 0) {
+
+        currentValue = currentValue.substring(
+
+          0,
+
+          lastSpaceIndex + 1
+
+        );
+
+      } else {
+
+        currentValue = '';
+
+      }
+
+
+    }
+
+
+    let classes = normalizePaginationButtonClasses(
+
+      currentValue
+
+    );
+
+
+    if(
+      classes.indexOf(
+        className
+      ) < 0
+    ) {
+
+      classes.push(
+
+        className
+
+      );
+
+    }
+
+
+    input.val(
+
+      classes.join(
+
+        ' '
+
+      ) +
+
+      ' '
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Eventos do autocomplete das classes dos botões
+  |--------------------------------------------------------------------------
+  */
+
+  function bindPaginationButtonClassAutocompleteEvents() {
+
+
+    $(document)
+      .off(
+        'input.automator-pagination-editor-button-class-autocomplete ' +
+        'keyup.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass
+      )
+      .on(
+        'input.automator-pagination-editor-button-class-autocomplete ' +
+        'keyup.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass,
+        function() {
+
+
+          renderPaginationButtonClassSuggestions(
+
+            this
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'focus.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass
+      )
+      .on(
+        'focus.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass,
+        function() {
+
+
+          const input = $(this);
+
+
+          ensurePaginationButtonClassAutocomplete(
+
+            input.closest(
+              selectors.paginationButtonItem
+            )
+
+          );
+
+
+          if(
+            getPaginationButtonClassSearchValue(
+              input
+            ).length >= 1
+          ) {
+
+            renderPaginationButtonClassSuggestions(
+
+              input
+
+            );
+
+          }
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'mousedown.automator-pagination-editor-button-class-result',
+        '.automator-pagination-editor-button-class-result'
+      )
+      .on(
+        'mousedown.automator-pagination-editor-button-class-result',
+        '.automator-pagination-editor-button-class-result',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          const result = $(this);
+
+
+          const item = result.closest(
+
+            selectors.paginationButtonItem
+
+          );
+
+
+          const input = item.find(
+
+            selectors.paginationButtonClass
+
+          ).first();
+
+
+          const className = String(
+
+            result.attr(
+              'data-class-name'
+            ) || ''
+
+          ).trim();
+
+
+          if(
+            !input.length ||
+            className == ''
+          ) {
+
+            return false;
+
+          }
+
+
+          addPaginationButtonClassToInput(
+
+            input,
+
+            className
+
+          );
+
+
+          item.find(
+
+            '.automator-pagination-editor-button-class-results'
+
+          )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+          syncPaginationButtonsState();
+
+          setSaveState(
+
+            true
+
+          );
+
+
+          setTimeout(function() {
+
+
+            input.trigger(
+
+              'focus'
+
+            );
+
+
+          }, 0);
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-class-result',
+        '.automator-pagination-editor-button-class-result'
+      )
+      .on(
+        'click.automator-pagination-editor-button-class-result',
+        '.automator-pagination-editor-button-class-result',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          return false;
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'keydown.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass
+      )
+      .on(
+        'keydown.automator-pagination-editor-button-class-autocomplete',
+        selectors.paginationButtonClass,
+        function(event) {
+
+
+          if(event.key !== 'Escape') {
+
+            return;
+
+          }
+
+
+          $(this)
+            .closest(
+              selectors.paginationButtonItem
+            )
+            .find(
+              '.automator-pagination-editor-button-class-results'
+            )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'click.automator-pagination-editor-button-class-outside'
+      )
+      .on(
+        'click.automator-pagination-editor-button-class-outside',
+        function(event) {
+
+
+          const target = $(
+
+            event.target
+
+          );
+
+
+          if(
+            target.closest(
+              '.automator-pagination-editor-button-class-wrapper'
+            ).length
+          ) {
+
+            return;
+
+          }
+
+
+          $(
+
+            '.automator-pagination-editor-button-class-results'
+
+          )
+            .empty()
+            .addClass(
+              'd-none'
+            );
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Classes disponíveis para os botões da paginação
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationButtonClassSuggestions() {
+
+
+    return [
+
+      'btn',
+      'btn-primary',
+      'btn-secondary',
+      'btn-success',
+      'btn-danger',
+      'btn-warning',
+      'btn-info',
+      'btn-light',
+      'btn-dark',
+      'btn-link',
+
+      'btn-outline-primary',
+      'btn-outline-secondary',
+      'btn-outline-success',
+      'btn-outline-danger',
+      'btn-outline-warning',
+      'btn-outline-info',
+      'btn-outline-light',
+      'btn-outline-dark',
+
+      'btn-sm',
+      'btn-lg',
+
+      'text-primary',
+      'text-secondary',
+      'text-success',
+      'text-danger',
+      'text-warning',
+      'text-info',
+      'text-light',
+      'text-dark',
+      'text-white',
+      'text-black',
+      'text-muted',
+
+      'bg-primary',
+      'bg-secondary',
+      'bg-success',
+      'bg-danger',
+      'bg-warning',
+      'bg-info',
+      'bg-light',
+      'bg-dark',
+      'bg-white',
+      'bg-transparent',
+
+      'border',
+      'border-0',
+      'border-primary',
+      'border-secondary',
+      'border-success',
+      'border-danger',
+      'border-warning',
+      'border-info',
+      'border-light',
+      'border-dark',
+      'border-white',
+
+      'rounded',
+      'rounded-0',
+      'rounded-pill',
+      'rounded-circle',
+
+      'shadow',
+      'shadow-sm',
+      'shadow-lg',
+      'shadow-none',
+
+      'w-100',
+      'd-inline-flex',
+      'align-items-center',
+      'justify-content-center',
+      'text-decoration-none',
+      'fw-bold',
+      'fw-semibold',
+
+    ];
 
 
   }
@@ -4694,6 +16810,20 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    ensurePaginationButtonClassAutocomplete(
+
+      item
+
+    );
+
+
+    enhancePaginationButtonClickEditor(
+
+      item
+
+    );
+
+
     initializePaginationButtonsSortables();
 
 
@@ -4702,6 +16832,7 @@ window.SysAutomatorPaginationEditor = (function () {
     | Sincroniza sem provocar duas renderizações consecutivas
     |--------------------------------------------------------------------------
     */
+
 
     syncPaginationButtonsState(
 
@@ -5337,51 +17468,138 @@ window.SysAutomatorPaginationEditor = (function () {
   ) {
 
 
-    value = String(
+    return normalizePaginationSlug(
 
-      value || ''
+      value
 
-    );
-
-
-    if(
-      typeof value.normalize === 'function'
-    ) {
-
-
-      value = value
-        .normalize('NFD')
-        .replace(
-          /[\u0300-\u036f]/g,
-          ''
-        );
-
-
-    }
-
-
-    return value
-      .toLowerCase()
+    )
       .replace(
-        /[^a-z0-9\s-]/g,
+        /-+$/g,
         ''
-      )
-      .replace(
-        /\s+/g,
-        '-'
-      )
-      .replace(
-        /-+/g,
-        '-'
-      )
-      .replace(
-        /^-+|-+$/g,
-        ''
-      )
-      .substring(
-        0,
-        255
       );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Eventos dos campos com formato slug
+  |--------------------------------------------------------------------------
+  */
+
+  function bindPaginationSlugEvents() {
+
+
+    const paginationNameSelector =
+
+      selectors.editor +
+
+      ' [name="tbl_sys_pagination_name"]';
+
+
+    $(document)
+      .off(
+        'input.automator-pagination-editor-pagination-name-slug ' +
+        'keyup.automator-pagination-editor-pagination-name-slug ' +
+        'paste.automator-pagination-editor-pagination-name-slug',
+        paginationNameSelector
+      )
+      .on(
+        'input.automator-pagination-editor-pagination-name-slug ' +
+        'keyup.automator-pagination-editor-pagination-name-slug',
+        paginationNameSelector,
+        function() {
+
+
+          const input = $(this);
+
+
+          const normalizedValue = normalizePaginationSlug(
+
+            input.val()
+
+          );
+
+
+          if(
+            String(
+              input.val() || ''
+            ) != normalizedValue
+          ) {
+
+            input.val(
+
+              normalizedValue
+
+            );
+
+          }
+
+
+          setSaveState(
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    $(document)
+      .off(
+        'blur.automator-pagination-editor-pagination-name-slug',
+        paginationNameSelector
+      )
+      .on(
+        'blur.automator-pagination-editor-pagination-name-slug',
+        paginationNameSelector,
+        function() {
+
+
+          const input = $(this);
+
+
+          const normalizedValue = normalizePaginationSlug(
+
+            input.val()
+
+          )
+            .replace(
+              /-+$/g,
+              ''
+            );
+
+
+          if(
+            String(
+              input.val() || ''
+            ) != normalizedValue
+          ) {
+
+            input.val(
+
+              normalizedValue
+
+            );
+
+
+            setSaveState(
+
+              true
+
+            );
+
+          }
+
+
+        }
+      );
+
+
+    return true;
 
 
   }
@@ -6292,6 +18510,9 @@ window.SysAutomatorPaginationEditor = (function () {
     preparePaginationButtonsContainers();
 
 
+    bindPaginationButtonClickBuilderEvents();
+
+
     if(
       recordData === null ||
       recordData === undefined
@@ -6493,6 +18714,20 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+      ensurePaginationButtonClassAutocomplete(
+
+        item
+
+      );
+
+
+      enhancePaginationButtonClickEditor(
+
+        item
+
+      );
+
+
     });
 
 
@@ -6501,6 +18736,9 @@ window.SysAutomatorPaginationEditor = (function () {
       list
 
     );
+
+
+    refreshTooltips();
 
 
     return true;
@@ -8020,6 +20258,13 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
+    validatePaginationQueryFilters(
+
+      errors
+
+    );
+
+
     validatePaginationColumns(
 
       errors
@@ -9277,8 +21522,11 @@ window.SysAutomatorPaginationEditor = (function () {
       hasTable === false ||
 
       (
+
         hasDependentData === true &&
+
         hasIndex === true
+
       )
 
     );
@@ -9295,7 +21543,11 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
-    setEditorActionsEnabled(hasIndex);
+    setEditorActionsEnabled(
+
+      hasIndex
+
+    );
 
 
     setProprietiesEnabled(
@@ -9304,7 +21556,9 @@ window.SysAutomatorPaginationEditor = (function () {
       hasSelectedColumn === true,
 
       hasIndex === true
+
         ? 'Nenhuma coluna foi selecionada.'
+
         : 'Selecione uma tabela e um índice antes de editar propriedades.'
 
     );
@@ -9317,6 +21571,11 @@ window.SysAutomatorPaginationEditor = (function () {
       hasActions
 
     );
+
+
+    refreshPaginationQueryFilterColumnOptions();
+
+    updatePaginationQueryFiltersAvailability();
 
 
     if(hasIndex !== true) {
@@ -9332,7 +21591,11 @@ window.SysAutomatorPaginationEditor = (function () {
         state.activeLeftTab == 'buttons'
       ) {
 
-        switchLeftTab('structure');
+        switchLeftTab(
+
+          'structure'
+
+        );
 
       }
 
@@ -9342,7 +21605,9 @@ window.SysAutomatorPaginationEditor = (function () {
       ) {
 
         openRightConfigTab(
+
           'pagination-settings'
+
         );
 
       }
@@ -9352,7 +21617,11 @@ window.SysAutomatorPaginationEditor = (function () {
         state.activeRightPanel == 'proprieties'
       ) {
 
-        showRightPanel('pagination');
+        showRightPanel(
+
+          'pagination'
+
+        );
 
       }
 
@@ -16401,7 +28670,9 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
-  function disposeTooltipsInside(container) {
+  function disposeTooltipsInside(
+    container
+  ) {
 
 
     if(!container) {
@@ -16411,12 +28682,36 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    if(
+      container.matches &&
+      container.matches(
+        '[data-bs-toggle="tooltip"]'
+      )
+    ) {
+
+
+      disposeTooltip(
+
+        container
+
+      );
+
+
+    }
+
+
     container
-      .querySelectorAll('[data-bs-toggle="tooltip"]')
+      .querySelectorAll(
+        '[data-bs-toggle="tooltip"]'
+      )
       .forEach(function(element) {
 
 
-        disposeTooltip(element);
+        disposeTooltip(
+
+          element
+
+        );
 
 
       });
@@ -16460,13 +28755,22 @@ window.SysAutomatorPaginationEditor = (function () {
       .length;
 
 
+    const queryFilterItems = $(
+
+      '.automator-pagination-editor-query-filter-item'
+
+    ).length;
+
+
     return (
 
       structureItems > 0 ||
 
       buttonItems > 0 ||
 
-      actionItems > 0
+      actionItems > 0 ||
+
+      queryFilterItems > 0
 
     );
 
@@ -16918,6 +29222,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
   }
+
 
   /*
   |--------------------------------------------------------------------------
@@ -18289,6 +30594,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
   }
 
+
   function updatePaginationActionCardHeader(
     item
   ) {
@@ -18329,6 +30635,54 @@ window.SysAutomatorPaginationEditor = (function () {
     ).first();
 
 
+    const body = item.find(
+
+      selectors.actionBody
+
+    ).first();
+
+
+    item
+      .addClass(
+
+        'shadow-sm mb-4'
+
+      )
+      .removeClass(
+
+        'mb-3'
+
+      );
+
+
+    item.find(
+
+      selectors.actionRolesList
+
+    ).addClass(
+
+      'small'
+
+    );
+
+
+    item.find(
+
+      selectors.actionRoleAdd
+
+    )
+      .removeClass(
+
+        'btn-outline-primary'
+
+      )
+      .addClass(
+
+        'btn-outline-secondary'
+
+      );
+
+
     headerTitle.text(
 
       actionName != ''
@@ -18365,13 +30719,6 @@ window.SysAutomatorPaginationEditor = (function () {
     if(actionName == '') {
 
 
-      const body = item.find(
-
-        selectors.actionBody
-
-      ).first();
-
-
       body.addClass(
 
         'show'
@@ -18379,17 +30726,18 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
-      collapseButton
-        .removeClass(
-          'collapsed'
-        )
-        .attr(
-          'aria-expanded',
-          'true'
-        );
-
-
     }
+
+
+    updatePaginationActionCollapseIcon(
+
+      item,
+
+      body.hasClass(
+        'show'
+      )
+
+    );
 
 
     return true;
@@ -18510,17 +30858,13 @@ window.SysAutomatorPaginationEditor = (function () {
             );
 
 
-            button
-              .toggleClass(
-                'collapsed',
-                opened === true
-              )
-              .attr(
-                'aria-expanded',
-                opened === true
-                  ? 'false'
-                  : 'true'
-              );
+            updatePaginationActionCollapseIcon(
+
+              item,
+
+              opened !== true
+
+            );
 
 
           }
@@ -18556,29 +30900,18 @@ window.SysAutomatorPaginationEditor = (function () {
           );
 
 
-          const button = item.find(
-
-            selectors.actionCollapse
-
-          ).first();
-
-
           const opened =
 
             event.type == 'shown';
 
 
-          button
-            .toggleClass(
-              'collapsed',
-              opened !== true
-            )
-            .attr(
-              'aria-expanded',
-              opened === true
-                ? 'true'
-                : 'false'
-            );
+          updatePaginationActionCollapseIcon(
+
+            item,
+
+            opened
+
+          );
 
 
         }
@@ -20746,6 +33079,16 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Filtros da consulta
+    |--------------------------------------------------------------------------
+    */
+
+
+    settings.where = getPaginationQueryFiltersData();
 
 
     return settings;
@@ -25791,31 +38134,75 @@ window.SysAutomatorPaginationEditor = (function () {
     | Bootstrap utiliza Object.values(_activeTrigger)
     |--------------------------------------------------------------------------
     |
-    | Algumas instâncias podem permanecer registradas depois que o elemento
-    | do tooltip foi recriado ou alterado. Nesse cenário, _activeTrigger pode
-    | não existir mais e o método hide() gera:
-    |
-    | Cannot convert undefined or null to object
-    |
+    | A propriedade não deve ser recriada depois que a instância já tiver sido
+    | descartada. Nessa situação, outras propriedades internas também estarão
+    | nulas e a instância não poderá mais ser reutilizada.
+    |--------------------------------------------------------------------------
     */
+
+
+    if(
+      tooltip._element === null ||
+      tooltip._element === undefined
+    ) {
+
+      return false;
+
+    }
+
 
     if(
       !tooltip._activeTrigger ||
       typeof tooltip._activeTrigger !== 'object'
     ) {
 
-      tooltip._activeTrigger = {};
+      tooltip._activeTrigger = {
+
+        click: false,
+
+        focus: false,
+
+        hover: false,
+
+      };
 
     }
 
 
-    tooltip._activeTrigger = {
+    if(
+      !Object.prototype.hasOwnProperty.call(
+        tooltip._activeTrigger,
+        'click'
+      )
+    ) {
 
-      click:  false,
-      focus:  false,
-      hover:  false,
+      tooltip._activeTrigger.click = false;
 
-    };
+    }
+
+
+    if(
+      !Object.prototype.hasOwnProperty.call(
+        tooltip._activeTrigger,
+        'focus'
+      )
+    ) {
+
+      tooltip._activeTrigger.focus = false;
+
+    }
+
+
+    if(
+      !Object.prototype.hasOwnProperty.call(
+        tooltip._activeTrigger,
+        'hover'
+      )
+    ) {
+
+      tooltip._activeTrigger.hover = false;
+
+    }
 
 
     return true;
@@ -25826,105 +38213,32 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
-  | Tooltips
+  | Remove somente a representação visual de um tooltip
   |--------------------------------------------------------------------------
   */
 
-  function disposeTooltip(element) {
+  function removePaginationTooltipVisualElement(
+    element,
+    describedBy = ''
+  ) {
 
 
-    if(
-      !element ||
-      typeof bootstrap === 'undefined' ||
-      typeof bootstrap.Tooltip === 'undefined'
-    ) {
+    if(element) {
 
-      return false;
+      element.removeAttribute(
+
+        'aria-describedby'
+
+      );
 
     }
 
 
-    const describedBy = String(
+    describedBy = String(
 
-      element.getAttribute(
-        'aria-describedby'
-      ) || ''
+      describedBy || ''
 
     ).trim();
-
-
-    const tooltip =
-
-      bootstrap.Tooltip.getInstance(
-
-        element
-
-      );
-
-
-    if(tooltip) {
-
-
-      normalizeTooltipInternalState(
-
-        tooltip
-
-      );
-
-
-      try {
-
-
-        tooltip.hide();
-
-
-      } catch(error) {
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | A instância será descartada abaixo
-        |--------------------------------------------------------------------------
-        */
-
-
-      }
-
-
-      normalizeTooltipInternalState(
-
-        tooltip
-
-      );
-
-
-      try {
-
-
-        tooltip.dispose();
-
-
-      } catch(error) {
-
-
-        /*
-        |--------------------------------------------------------------------------
-        | Remove manualmente qualquer referência visual restante
-        |--------------------------------------------------------------------------
-        */
-
-
-      }
-
-
-    }
-
-
-    element.removeAttribute(
-
-      'aria-describedby'
-
-    );
 
 
     if(describedBy != '') {
@@ -25961,9 +38275,39 @@ window.SysAutomatorPaginationEditor = (function () {
         ).trim();
 
 
+        const ownerExists =
+
+          tooltipID != ''
+
+            ? document.querySelector(
+
+                '[aria-describedby="' +
+
+                tooltipID.replace(
+
+                  /\\/g,
+
+                  '\\\\'
+
+                ).replace(
+
+                  /"/g,
+
+                  '\\"'
+
+                ) +
+
+                '"]'
+
+              )
+
+            : null;
+
+
         if(
-          tooltipID != '' &&
-          tooltipID == describedBy
+          tooltipID == '' ||
+          tooltipID == describedBy ||
+          !ownerExists
         ) {
 
           tooltipElement.remove();
@@ -25972,6 +38316,147 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       });
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Descarta um tooltip sem iniciar transição de ocultação
+  |--------------------------------------------------------------------------
+  */
+
+  function disposeTooltip(
+    element
+  ) {
+
+
+    if(!element) {
+
+      return false;
+
+    }
+
+
+    const describedBy = String(
+
+      element.getAttribute(
+        'aria-describedby'
+      ) || ''
+
+    ).trim();
+
+
+    if(
+      typeof bootstrap === 'undefined' ||
+      typeof bootstrap.Tooltip === 'undefined'
+    ) {
+
+
+      removePaginationTooltipVisualElement(
+
+        element,
+
+        describedBy
+
+      );
+
+
+      return false;
+
+    }
+
+
+    let tooltip = null;
+
+
+    try {
+
+
+      tooltip = bootstrap.Tooltip.getInstance(
+
+        element
+
+      );
+
+
+    } catch(error) {
+
+
+      tooltip = null;
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Não chama tooltip.hide() antes de dispose()
+    |--------------------------------------------------------------------------
+    |
+    | hide() inicia uma transição assíncrona. Se dispose() for executado antes
+    | do fim da transição, o Bootstrap limpa _activeTrigger e o callback ainda
+    | pendente tenta executar Object.values(null).
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(tooltip) {
+
+
+      try {
+
+
+        if(tooltip._timeout) {
+
+          clearTimeout(
+
+            tooltip._timeout
+
+          );
+
+
+          tooltip._timeout = null;
+
+        }
+
+
+      } catch(error) {}
+
+
+      try {
+
+
+        tooltip.dispose();
+
+
+      } catch(error) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | A limpeza visual e dos atributos ainda será realizada abaixo
+        |--------------------------------------------------------------------------
+        */
+
+
+      }
+
+
+    }
+
+
+    removePaginationTooltipVisualElement(
+
+      element,
+
+      describedBy
+
+    );
 
 
     return true;
@@ -26042,26 +38527,44 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
-    let currentTooltip =
+    let currentTooltip = null;
 
-      bootstrap.Tooltip.getInstance(
+
+    try {
+
+
+      currentTooltip = bootstrap.Tooltip.getInstance(
 
         element
 
       );
 
 
+    } catch(error) {
+
+
+      currentTooltip = null;
+
+
+    }
+
+
     if(currentTooltip) {
 
 
-      normalizeTooltipInternalState(
+      const currentTooltipValid =
 
-        currentTooltip
+        normalizeTooltipInternalState(
 
-      );
+          currentTooltip
+
+        );
 
 
-      if(forceRecreate === true) {
+      if(
+        forceRecreate === true ||
+        currentTooltipValid !== true
+      ) {
 
 
         disposeTooltip(
@@ -26080,11 +38583,20 @@ window.SysAutomatorPaginationEditor = (function () {
         try {
 
 
-          currentTooltip.setContent({
+          if(
+            typeof currentTooltip.setContent ===
+            'function'
+          ) {
 
-            '.tooltip-inner': title,
 
-          });
+            currentTooltip.setContent({
+
+              '.tooltip-inner': title,
+
+            });
+
+
+          }
 
 
         } catch(error) {
@@ -26189,6 +38701,17 @@ window.SysAutomatorPaginationEditor = (function () {
     } catch(error) {
 
 
+      removePaginationTooltipVisualElement(
+
+        element,
+
+        element.getAttribute(
+          'aria-describedby'
+        ) || ''
+
+      );
+
+
       console.warn(
 
         'Não foi possível inicializar o tooltip do editor de paginações.',
@@ -26205,6 +38728,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
   }
+
 
   function refreshTooltips() {
 
@@ -26225,9 +38749,10 @@ window.SysAutomatorPaginationEditor = (function () {
 
     /*
     |--------------------------------------------------------------------------
-    | Remove somente elementos visuais órfãos
+    | Remove somente tooltips visuais órfãos
     |--------------------------------------------------------------------------
     */
+
 
     document
       .querySelectorAll(
@@ -26236,14 +38761,14 @@ window.SysAutomatorPaginationEditor = (function () {
       .forEach(function(tooltipElement) {
 
 
-        const describedBy = String(
+        const tooltipID = String(
 
           tooltipElement.id || ''
 
         ).trim();
 
 
-        if(describedBy == '') {
+        if(tooltipID == '') {
 
           tooltipElement.remove();
 
@@ -26256,9 +38781,18 @@ window.SysAutomatorPaginationEditor = (function () {
 
           '[aria-describedby="' +
 
-          describedBy.replace(
+          tooltipID.replace(
+
+            /\\/g,
+
+            '\\\\'
+
+          ).replace(
+
             /"/g,
+
             '\\"'
+
           ) +
 
           '"]'
@@ -26285,7 +38819,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
         createTooltip(
 
-          element
+          element,
+
+          false
 
         );
 
@@ -26301,13 +38837,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
-  | Oculta tooltips ativos do editor
-  |--------------------------------------------------------------------------
-  */
-
-  /*
-  |--------------------------------------------------------------------------
-  | Oculta tooltips ativos do editor
+  | Oculta e descarta tooltips ativos do editor
   |--------------------------------------------------------------------------
   */
 
@@ -26335,70 +38865,11 @@ window.SysAutomatorPaginationEditor = (function () {
       .forEach(function(element) {
 
 
-        if(
-          typeof bootstrap === 'undefined' ||
-          typeof bootstrap.Tooltip === 'undefined'
-        ) {
+        disposeTooltip(
 
-          return;
-
-        }
-
-
-        const tooltip =
-
-          bootstrap.Tooltip.getInstance(
-
-            element
-
-          );
-
-
-        if(!tooltip) {
-
-
-          element.removeAttribute(
-
-            'aria-describedby'
-
-          );
-
-
-          return;
-
-        }
-
-
-        normalizeTooltipInternalState(
-
-          tooltip
+          element
 
         );
-
-
-        try {
-
-
-          tooltip.hide();
-
-
-        } catch(error) {
-
-
-          /*
-          |--------------------------------------------------------------------------
-          | Remove a instância inválida sem interromper o clique do usuário
-          |--------------------------------------------------------------------------
-          */
-
-          disposeTooltip(
-
-            element
-
-          );
-
-
-        }
 
 
       });
@@ -26406,16 +38877,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
     document
       .querySelectorAll(
-        '.tooltip.automator-pagination-editor-tooltip.show'
+        '.tooltip.automator-pagination-editor-tooltip'
       )
       .forEach(function(tooltipElement) {
-
-
-        tooltipElement.classList.remove(
-
-          'show'
-
-        );
 
 
         tooltipElement.remove();

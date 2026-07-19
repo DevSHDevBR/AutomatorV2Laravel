@@ -1869,12 +1869,13 @@
 
                 'pagintarionArgs-page_name' => [
 
-                  'type'     => 'text',
-                  'name'     => 'page_name',
-                  'class'    => 'form-floating mb-3',
-                  'label'    => SysAutomator::SysAutomatorGetTranslateWord('Nome da página'),
-                  'value'    => '',
-                  'required' => true
+                  'type'        => 'text',
+                  'name'        => 'page_name',
+                  'class'       => 'form-floating mb-3',
+                  'label'       => SysAutomator::SysAutomatorGetTranslateWord('Nome da página'),
+                  'value'       => '',
+                  'placeholder' => '@replace($route["tbl_sys_route_name"])',
+                  'required'    => true
 
                 ],
 
@@ -2076,45 +2077,92 @@
         $paginationEditorSecurityData = $this->preparePaginationEditorSecurityData();
 
 
-        $views['system-pagination-editor'] = [
+        $paginationEditorData = array_merge(
 
-          'view'      => 'system.modals.system-pagination-editor',
-          'title'     => $modalPagination['title'],
-          'acao'      => (($paginationID != null) ? 'update' : 'store'),
-          'view_data' => $dadosPaginationEditor,
-          'dados'     => [
+          [
 
             'form'       => $pagination,
             'pagination' => $pagination,
             'fields'     => $dadosPaginationEditor['fields'],
             'blocks'     => $paginationBlocks,
-            'userTypes' =>
-
-              $paginationEditorSecurityData[
-                'userTypes'
-              ],
-
-            'user_types' =>
-
-              $paginationEditorSecurityData[
-                'user_types'
-              ],
-
-            'currentUser' =>
-
-              $paginationEditorSecurityData[
-                'currentUser'
-              ],
 
           ],
-          'classes' => [
 
-            'modal-body' => 'p-0'
+          $paginationEditorSecurityData
+
+        );
+
+
+        $views['system-pagination-editor'] = [
+
+          'view'  => 'system.modals.system-pagination-editor',
+          'title' => $modalPagination['title'],
+          'acao'  =>
+
+            (
+
+              $paginationID != null
+
+                ? 'update'
+
+                : 'store'
+
+            ),
+
+          'view_data' => $dadosPaginationEditor,
+          'dados'     => $paginationEditorData,
+          'classes'   => [
+
+            'modal-body' => 'p-0',
 
           ],
+
           'footer' => null,
 
         ];
+
+        // $paginationEditorSecurityData = $this->preparePaginationEditorSecurityData();
+
+
+        // $views['system-pagination-editor'] = [
+
+        //   'view'      => 'system.modals.system-pagination-editor',
+        //   'title'     => $modalPagination['title'],
+        //   'acao'      => (($paginationID != null) ? 'update' : 'store'),
+        //   'view_data' => $dadosPaginationEditor,
+        //   'dados'     => [
+
+        //     'form'       => $pagination,
+        //     'pagination' => $pagination,
+        //     'fields'     => $dadosPaginationEditor['fields'],
+        //     'blocks'     => $paginationBlocks,
+        //     'userTypes' =>
+
+        //       $paginationEditorSecurityData[
+        //         'userTypes'
+        //       ],
+
+        //     'user_types' =>
+
+        //       $paginationEditorSecurityData[
+        //         'user_types'
+        //       ],
+
+        //     'currentUser' =>
+
+        //       $paginationEditorSecurityData[
+        //         'currentUser'
+        //       ],
+
+        //   ],
+        //   'classes' => [
+
+        //     'modal-body' => 'p-0'
+
+        //   ],
+        //   'footer' => null,
+
+        // ];
 
       }
 
@@ -2314,7 +2362,6 @@
     }
 
 
-
     private function preparePaginationEditorSecurityData(): array {
 
 
@@ -2423,6 +2470,227 @@
       }
 
 
+      /*
+      |--------------------------------------------------------------------------
+      | Formulários auxiliares do editor de ações
+      |--------------------------------------------------------------------------
+      */
+
+
+      $actionBuilderFormNames = [
+
+        'modal-form' =>
+
+          'admin-open-form-modal',
+
+        'modal-view' =>
+
+          'admin-open-view-modal',
+
+      ];
+
+
+      $actionBuilderForms = [];
+
+
+      $actionBuilderFormsQuery = SysForm::query()
+        ->select([
+
+          'tbl_sys_form_ID',
+
+          'tbl_sys_form_name',
+
+          'tbl_sys_form_title',
+
+        ])
+        ->whereIn(
+
+          'tbl_sys_form_name',
+
+          array_values(
+
+            $actionBuilderFormNames
+
+          )
+
+        )
+        ->get();
+
+
+      foreach(
+        $actionBuilderFormNames as
+        $actionBuilderType =>
+        $actionBuilderFormName
+      ) {
+
+
+        $actionBuilderForm =
+
+          $actionBuilderFormsQuery->firstWhere(
+
+            'tbl_sys_form_name',
+
+            $actionBuilderFormName
+
+          );
+
+
+        if($actionBuilderForm === null) {
+
+          continue;
+
+        }
+
+
+        $formID =
+
+          (string) $actionBuilderForm->tbl_sys_form_ID;
+
+
+        $formName =
+
+          (string) $actionBuilderForm->tbl_sys_form_name;
+
+
+        $formTitle =
+
+          (string) $actionBuilderForm->tbl_sys_form_title;
+
+
+        $actionBuilderForms[$actionBuilderType] = [
+
+          'id' =>
+
+            $formID,
+
+          'name' =>
+
+            $formName,
+
+          'title' =>
+
+            $formTitle,
+
+          'tbl_sys_form_ID' =>
+
+            $formID,
+
+          'tbl_sys_form_name' =>
+
+            $formName,
+
+          'tbl_sys_form_title' =>
+
+            $formTitle,
+
+        ];
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formulários disponíveis
+      |--------------------------------------------------------------------------
+      |
+      | Esta lista permite converter:
+      |
+      | nome do formulário
+      |     ↓
+      | ID numérico utilizado por AutomatorPaginationCreateModalForm()
+      |
+      |--------------------------------------------------------------------------
+      */
+
+
+      $availableForms = SysForm::query()
+        ->select([
+
+          'tbl_sys_form_ID',
+
+          'tbl_sys_form_name',
+
+          'tbl_sys_form_title',
+
+        ])
+        ->orderBy(
+
+          'tbl_sys_form_title',
+
+          'asc'
+
+        )
+        ->get()
+        ->map(function($form) {
+
+
+          $formID =
+
+            (string) $form->tbl_sys_form_ID;
+
+
+          $formName =
+
+            (string) $form->tbl_sys_form_name;
+
+
+          $formTitle =
+
+            (string) $form->tbl_sys_form_title;
+
+
+          return [
+
+            'id' =>
+
+              $formID,
+
+            'name' =>
+
+              $formName,
+
+            'title' =>
+
+              $formTitle,
+
+            'tbl_sys_form_ID' =>
+
+              $formID,
+
+            'tbl_sys_form_name' =>
+
+              $formName,
+
+            'tbl_sys_form_title' =>
+
+              $formTitle,
+
+          ];
+
+
+        })
+        ->values()
+        ->toArray();
+
+
+      $paginationActionBuilder = [
+
+        'forms' =>
+
+          $actionBuilderForms,
+
+        'availableForms' =>
+
+          $availableForms,
+
+        'available_forms' =>
+
+          $availableForms,
+
+      ];
+
+
       return [
 
         'userTypes' =>
@@ -2469,10 +2737,180 @@
 
         ],
 
+
+        'paginationActionBuilder' =>
+
+          $paginationActionBuilder,
+
+
+        'pagination_action_builder' =>
+
+          $paginationActionBuilder,
+
       ];
 
 
     }
+
+
+    // private function preparePaginationEditorSecurityData(): array {
+
+
+    //   $userTypes = UsersType::query()
+    //     ->orderBy(
+    //       'tbl_users_type_ID',
+    //       'asc'
+    //     )
+    //     ->get()
+    //     ->map(function($userType) {
+
+
+    //       $userTypeID =
+
+    //         (string) $userType->tbl_users_type_ID;
+
+
+    //       $userTypeName =
+
+    //         (string) $userType->tbl_users_type_name;
+
+
+    //       return [
+
+    //         'id' =>
+
+    //           $userTypeID,
+
+
+    //         'name' =>
+
+    //           $userTypeName,
+
+
+    //         'tbl_users_type_ID' =>
+
+    //           $userTypeID,
+
+
+    //         'tbl_users_type_name' =>
+
+    //           $userTypeName,
+
+
+    //         'isDeveloper' =>
+
+    //           mb_strtolower(
+
+    //             trim(
+
+    //               $userTypeName
+
+    //             )
+
+    //           ) === 'desenvolvedor',
+
+    //       ];
+
+
+    //     })
+    //     ->values()
+    //     ->toArray();
+
+
+    //   $currentUser = Auth::user();
+
+
+    //   $currentUserTypeID = null;
+
+    //   $currentUserTypeName = '';
+
+
+    //   if($currentUser !== null) {
+
+
+    //     $currentUserTypeID =
+
+    //       $currentUser->tbl_users_type_ID ??
+
+    //       $currentUser->tbl_user_type_ID ??
+
+    //       null;
+
+
+    //     if($currentUserTypeID !== null) {
+
+
+    //       $currentUserTypeName =
+
+    //         (string) UsersType::where(
+
+    //           'tbl_users_type_ID',
+
+    //           $currentUserTypeID
+
+    //         )->value(
+
+    //           'tbl_users_type_name'
+
+    //         );
+
+
+    //     }
+
+
+    //   }
+
+
+    //   return [
+
+    //     'userTypes' =>
+
+    //       $userTypes,
+
+
+    //     'user_types' =>
+
+    //       $userTypes,
+
+
+    //     'currentUser' => [
+
+    //       'id' =>
+
+    //         $currentUser->tbl_user_ID ??
+
+    //         $currentUser->id ??
+
+    //         null,
+
+
+    //       'userTypeID' =>
+
+    //         $currentUserTypeID !== null
+
+    //           ? (string) $currentUserTypeID
+
+    //           : null,
+
+
+    //       'isDeveloper' =>
+
+    //         mb_strtolower(
+
+    //           trim(
+
+    //             $currentUserTypeName
+
+    //           )
+
+    //         ) === 'desenvolvedor',
+
+    //     ],
+
+    //   ];
+
+
+    // }
 
 
 

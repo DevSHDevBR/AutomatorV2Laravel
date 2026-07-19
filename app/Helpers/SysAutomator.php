@@ -4392,135 +4392,1039 @@
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza operadores utilizados nos filtros da paginação
+    |--------------------------------------------------------------------------
+    */
 
-    public static function SysAutomatorPaginationData(array $params, Request $request) {
-        
+    public static function SysAutomatorNormalizePaginationWhereOperator(
+      $operator
+    ): string {
+
+
+      $operator = trim(
+
+        (string) $operator
+
+      );
+
+
+      $operators = [
+
+        '=='  => '=',
+
+        '===' => '=',
+
+        '='   => '=',
+
+        '!='  => '!=',
+
+        '!==' => '!=',
+
+        '<>'  => '!=',
+
+        '>'   => '>',
+
+        '>='  => '>=',
+
+        '<'   => '<',
+
+        '<='  => '<=',
+
+        'like' => 'like',
+
+        'LIKE' => 'like',
+
+      ];
+
+
+      if(
+        array_key_exists(
+
+          $operator,
+
+          $operators
+
+        )
+      ) {
+
+        return $operators[$operator];
+
+      }
+
+
+      return '=';
+
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza o comparador lógico da condição
+    |--------------------------------------------------------------------------
+    */
+
+    public static function SysAutomatorNormalizePaginationWhereBoolean(
+      $boolean
+    ): string {
+
+
+      $boolean = strtolower(
+
+        trim(
+
+          (string) $boolean
+
+        )
+
+      );
+
+
+      return $boolean === 'or'
+
+        ? 'or'
+
+        : 'and';
+
+
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza as condições where recebidas pela paginação
+    |--------------------------------------------------------------------------
+    */
+
+    public static function SysAutomatorNormalizePaginationWhereConditions(
+      $where
+    ): array {
+
+
+      if(is_string($where)) {
+
+
+        $decodedWhere = json_decode(
+
+          $where,
+
+          true
+
+        );
+
+
+        if(
+          json_last_error() === JSON_ERROR_NONE &&
+          is_array($decodedWhere)
+        ) {
+
+          $where = $decodedWhere;
+
+        } else {
+
+          return [];
+
+        }
+
+
+      }
+
+
+      if(!is_array($where)) {
+
+        return [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Aceita uma única condição sem array externo
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(
+        isset($where[0]) &&
+        !is_array($where[0]) &&
+        !is_object($where[0])
+      ) {
+
+        $where = [
+
+          $where
+
+        ];
+
+      }
+
+
+      $normalizedConditions = [];
+
+
+      foreach(
+        array_values($where)
+        as $conditionIndex => $condition
+      ) {
+
+
+        if(is_object($condition)) {
+
+          $condition = (array) $condition;
+
+        }
+
+
+        if(!is_array($condition)) {
+
+          continue;
+
+        }
+
+
+        $column = '';
+
+        $operator = '=';
+
+        $value = null;
+
+        $boolean = 'and';
+
+
+        if(array_is_list($condition)) {
+
+
+          if(count($condition) === 2) {
+
+
+            $column = trim(
+
+              (string) (
+
+                $condition[0] ?? ''
+
+              )
+
+            );
+
+
+            $value =
+
+              $condition[1] ?? null;
+
+
+          } else {
+
+
+            $column = trim(
+
+              (string) (
+
+                $condition[0] ?? ''
+
+              )
+
+            );
+
+
+            $operator =
+
+              $condition[1] ?? '=';
+
+
+            $value =
+
+              $condition[2] ?? null;
+
+
+            $boolean =
+
+              $condition[3] ?? 'and';
+
+
+          }
+
+
+        } else {
+
+
+          $column = trim(
+
+            (string) (
+
+              $condition['column'] ??
+
+              $condition['field'] ??
+
+              $condition['key'] ??
+
+              $condition['name'] ??
+
+              ''
+
+            )
+
+          );
+
+
+          $operator =
+
+            $condition['operator'] ??
+
+            $condition['compare'] ??
+
+            $condition['comparison'] ??
+
+            '=';
+
+
+          $value =
+
+            array_key_exists(
+              'value',
+              $condition
+            )
+
+              ? $condition['value']
+
+              : null;
+
+
+          $boolean =
+
+            $condition['boolean'] ??
+
+            $condition['connector'] ??
+
+            $condition['logical'] ??
+
+            'and';
+
+
+        }
+
+
+        if($column === '') {
+
+          continue;
+
+        }
+
+
+        $operator =
+
+          self::SysAutomatorNormalizePaginationWhereOperator(
+
+            $operator
+
+          );
+
+
+        $boolean =
+
+          self::SysAutomatorNormalizePaginationWhereBoolean(
+
+            $boolean
+
+          );
+
+
+        if($conditionIndex === 0) {
+
+          $boolean = 'and';
+
+        }
+
+
+        $normalizedConditions[] = [
+
+          'column' => $column,
+
+          'operator' => $operator,
+
+          'value' => $value,
+
+          'boolean' => $boolean,
+
+        ];
+
+
+      }
+
+
+      return $normalizedConditions;
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Aplica as condições where na consulta da paginação
+    |--------------------------------------------------------------------------
+    */
+
+    public static function SysAutomatorApplyPaginationWhere(
+      $query,
+      $where
+    ) {
+
+
+      if(is_callable($where)) {
+
+
+        $callbackQuery = $where(
+
+          $query
+
+        );
+
+
+        return $callbackQuery ?? $query;
+
+
+      }
+
+
+      $conditions =
+
+        self::SysAutomatorNormalizePaginationWhereConditions(
+
+          $where
+
+        );
+
+
+      if(count($conditions) <= 0) {
+
+        return $query;
+
+      }
+
+
+      $query->where(function($whereQuery) use (
+        $conditions
+      ) {
+
+
+        foreach(
+          $conditions
+          as $conditionIndex => $condition
+        ) {
+
+
+          $column =
+
+            $condition['column'];
+
+
+          $operator =
+
+            $condition['operator'];
+
+
+          $value =
+
+            $condition['value'];
+
+
+          $boolean =
+
+            $conditionIndex === 0
+
+              ? 'and'
+
+              : $condition['boolean'];
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Primeira condição ou comparador AND
+          |--------------------------------------------------------------------------
+          */
+
+
+          if($boolean !== 'or') {
+
+
+            $whereQuery->where(
+
+              $column,
+
+              $operator,
+
+              $value
+
+            );
+
+
+            continue;
+
+          }
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Comparador OR
+          |--------------------------------------------------------------------------
+          */
+
+
+          $whereQuery->orWhere(
+
+            $column,
+
+            $operator,
+
+            $value
+
+          );
+
+
+        }
+
+
+      });
+
+
+      return $query;
+
+
+    }
+
+    
+
+    public static function SysAutomatorPaginationData(
+      array $params,
+      Request $request
+    ) {
+
 
       $table = $params['table'];
-      
-      // Get per_page from request or params or session or default
-      $perPage = $request->input('per_page', 
-          $params['per_page'] ?? Session::get('per_page_' . $table, 15)
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Quantidade de registros por página
+      |--------------------------------------------------------------------------
+      */
+
+
+      $perPage = $request->input(
+
+        'per_page',
+
+        $params['per_page'] ??
+
+        Session::get(
+
+          'per_page_' . $table,
+
+          15
+
+        )
+
       );
-      
-      // Ensure per_page is a valid integer
-      $perPage = max(1, min((int)$perPage, 100)); // Min 1, Max 100
-      Session::put('per_page_' . $table, $perPage);
 
-      $query = DB::table($table);
 
-      // Apply where conditions if provided
-      if (isset($params['where'])) {
-          $where = $params['where'];
-          
-          if (is_callable($where)) {
-              // If where is a closure, apply it
-              $query = $where($query);
-          } elseif (is_array($where)) {
-              // If where is an array of conditions
-              // var_dump($where);
-              foreach ($where as $condition) {
-                  if (is_array($condition) && count($condition) >= 2) {
-                      if (count($condition) === 2) {
-                          // Simple condition: ['field', 'value']
-                          $query->where($condition[0], $condition[1]);
-                      } elseif (count($condition) === 3) {
-                          // Operator condition: ['field', 'operator', 'value']
-                          $query->where($condition[0], $condition[1], $condition[2]);
-                      }
+      $perPage = max(
+
+        1,
+
+        min(
+
+          (int) $perPage,
+
+          100
+
+        )
+
+      );
+
+
+      Session::put(
+
+        'per_page_' . $table,
+
+        $perPage
+
+      );
+
+
+      $query = DB::table(
+
+        $table
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Filtros fixos cadastrados na paginação
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(
+        array_key_exists(
+          'where',
+          $params
+        ) &&
+        $params['where'] !== null &&
+        $params['where'] !== ''
+      ) {
+
+
+        $query =
+
+          self::SysAutomatorApplyPaginationWhere(
+
+            $query,
+
+            $params['where']
+
+          );
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Filtros de relacionamentos
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(isset($params['with_where'])) {
+
+
+        $withWhere =
+
+          $params['with_where'];
+
+
+        if(is_array($withWhere)) {
+
+
+          foreach(
+            $withWhere
+            as $relation => $conditions
+          ) {
+
+
+            if(is_callable($conditions)) {
+
+
+              $query->whereHas(
+
+                $relation,
+
+                $conditions
+
+              );
+
+
+            } elseif(is_array($conditions)) {
+
+
+              $query->whereHas(
+
+                $relation,
+
+                function($relationQuery) use (
+                  $conditions
+                ) {
+
+
+                  $normalizedConditions =
+
+                    self::SysAutomatorNormalizePaginationWhereConditions(
+
+                      $conditions
+
+                    );
+
+
+                  foreach(
+                    $normalizedConditions
+                    as $conditionIndex => $condition
+                  ) {
+
+
+                    $boolean =
+
+                      $conditionIndex === 0
+
+                        ? 'and'
+
+                        : $condition['boolean'];
+
+
+                    if($boolean === 'or') {
+
+
+                      $relationQuery->orWhere(
+
+                        $condition['column'],
+
+                        $condition['operator'],
+
+                        $condition['value']
+
+                      );
+
+
+                      continue;
+
+                    }
+
+
+                    $relationQuery->where(
+
+                      $condition['column'],
+
+                      $condition['operator'],
+
+                      $condition['value']
+
+                    );
+
+
                   }
-              }
-          } elseif (is_string($where)) {
-              // If where is a string, try to parse it as JSON or apply directly
-              try {
-                  $whereArray = json_decode($where, true);
-                  if (is_array($whereArray)) {
-                      foreach ($whereArray as $condition) {
-                          if (is_array($condition) && count($condition) >= 2) {
-                              if (count($condition) === 2) {
-                                  $query->where($condition[0], $condition[1]);
-                              } elseif (count($condition) === 3) {
-                                  $query->where($condition[0], $condition[1], $condition[2]);
-                              }
-                          }
-                      }
-                  }
-              } catch (\Exception $e) {
-                  // Ignore JSON parse errors
-              }
+
+
+                }
+
+              );
+
+
+            }
+
+
           }
+
+
+        }
+
+
       }
 
-      // Apply relationship filters if provided (for filtering by related table)
-      if (isset($params['with_where'])) {
-          $withWhere = $params['with_where'];
-          
-          if (is_array($withWhere)) {
-              foreach ($withWhere as $relation => $conditions) {
-                  if (is_callable($conditions)) {
-                      $query->whereHas($relation, $conditions);
-                  } elseif (is_array($conditions)) {
-                      $query->whereHas($relation, function($q) use ($conditions) {
-                          foreach ($conditions as $condition) {
-                              if (is_array($condition) && count($condition) >= 2) {
-                                  if (count($condition) === 2) {
-                                      $q->where($condition[0], $condition[1]);
-                                  } elseif (count($condition) === 3) {
-                                      $q->where($condition[0], $condition[1], $condition[2]);
-                                  }
-                              }
-                          }
-                      });
-                  }
-              }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Busca
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(
+        $request->has('search') &&
+        isset($params['search_fields'])
+      ) {
+
+
+        $search =
+
+          $request->input('search');
+
+
+        Session::put(
+
+          'search_' . $table,
+
+          $search
+
+        );
+
+
+        $selectedFields =
+
+          $request->input(
+
+            'search_in',
+
+            array_keys(
+
+              $params['search_fields']
+
+            )
+
+          );
+
+
+        $query->where(function($searchQuery) use (
+          $search,
+          $selectedFields
+        ) {
+
+
+          foreach($selectedFields as $field) {
+
+
+            $searchQuery->orWhere(
+
+              $field,
+
+              'like',
+
+              '%' . $search . '%'
+
+            );
+
+
           }
+
+
+        });
+
+
       }
 
-      // Search
-      if ($request->has('search') && isset($params['search_fields'])) {
-          $search = $request->input('search');
-          Session::put('search_' . $table, $search);
-          
-          $selectedFields = $request->input('search_in', array_keys($params['search_fields']));
-          
-          $query->where(function($q) use ($search, $selectedFields) {
-              foreach ($selectedFields as $field) {
-                  $q->orWhere($field, 'like', '%' . $search . '%');
-              }
-          });
+
+      /*
+      |--------------------------------------------------------------------------
+      | Ordenação
+      |--------------------------------------------------------------------------
+      */
+
+
+      $sort = $request->input(
+
+        'sort',
+
+        $params['default_sort'] ?? null
+
+      );
+
+
+      $direction = $request->input(
+
+        'direction',
+
+        $params['default_direction'] ?? 'asc'
+
+      );
+
+
+      if($sort) {
+
+
+        $query->orderBy(
+
+          $sort,
+
+          $direction
+
+        );
+
+
       }
 
-      // Sorting
-      $sort = $request->input('sort', $params['default_sort'] ?? null);
-      $direction = $request->input('direction', $params['default_direction'] ?? 'asc');
-      if ($sort) {
-          $query->orderBy($sort, $direction);
-      }
 
-      $items = $query->paginate($perPage)->withQueryString();
+      $items = $query
+        ->paginate(
+          $perPage
+        )
+        ->withQueryString();
 
 
       return [
 
-        'items'          => $items,
-        'columns'        => $params['columns'],
-        'actions'        => $params['actions'] ?? [],
-        'index'          => $params['index'] ?? self::SysAutomatorGetPKColumn($table),
-        'header_actions' => $params['header_actions'] ?? [],
-        'list_actions'   => $params['list_actions'] ?? [],
-        'search_fields'  => $params['search_fields'] ?? [],
-        'modals'         => $params['modals'] ?? [],
-        'modal'          => $params['modal'] ?? null,
-        'page_name'      => $params['page_name'] ?? null,
-        'table'          => $table,
-        'sort'           => $sort,
-        'direction'      => $direction,
-        'action_urls'    => $params['action_urls'] ?? []
-      
+        'items' =>
+
+          $items,
+
+        'columns' =>
+
+          $params['columns'],
+
+        'actions' =>
+
+          $params['actions'] ?? [],
+
+        'index' =>
+
+          $params['index'] ??
+
+          self::SysAutomatorGetPKColumn(
+
+            $table
+
+          ),
+
+        'header_actions' =>
+
+          $params['header_actions'] ?? [],
+
+        'list_actions' =>
+
+          $params['list_actions'] ?? [],
+
+        'search_fields' =>
+
+          $params['search_fields'] ?? [],
+
+        'modals' =>
+
+          $params['modals'] ?? [],
+
+        'modal' =>
+
+          $params['modal'] ?? null,
+
+        'page_name' =>
+
+          $params['page_name'] ?? null,
+
+        'table' =>
+
+          $table,
+
+        'sort' =>
+
+          $sort,
+
+        'direction' =>
+
+          $direction,
+
+        'action_urls' =>
+
+          $params['action_urls'] ?? [],
+
       ];
 
 
     }
+    // public static function SysAutomatorPaginationData(array $params, Request $request) {
+        
+
+    //   $table = $params['table'];
+      
+    //   // Get per_page from request or params or session or default
+    //   $perPage = $request->input('per_page', 
+    //       $params['per_page'] ?? Session::get('per_page_' . $table, 15)
+    //   );
+      
+    //   // Ensure per_page is a valid integer
+    //   $perPage = max(1, min((int)$perPage, 100)); // Min 1, Max 100
+    //   Session::put('per_page_' . $table, $perPage);
+
+    //   $query = DB::table($table);
+
+    //   // Apply where conditions if provided
+    //   if (isset($params['where'])) {
+    //       $where = $params['where'];
+          
+    //       if (is_callable($where)) {
+    //           // If where is a closure, apply it
+    //           $query = $where($query);
+    //       } elseif (is_array($where)) {
+    //           // If where is an array of conditions
+    //           // var_dump($where);
+    //           foreach ($where as $condition) {
+    //               if (is_array($condition) && count($condition) >= 2) {
+    //                   if (count($condition) === 2) {
+    //                       // Simple condition: ['field', 'value']
+    //                       $query->where($condition[0], $condition[1]);
+    //                   } elseif (count($condition) === 3) {
+    //                       // Operator condition: ['field', 'operator', 'value']
+    //                       $query->where($condition[0], $condition[1], $condition[2]);
+    //                   }
+    //               }
+    //           }
+    //       } elseif (is_string($where)) {
+    //           // If where is a string, try to parse it as JSON or apply directly
+    //           try {
+    //               $whereArray = json_decode($where, true);
+    //               if (is_array($whereArray)) {
+    //                   foreach ($whereArray as $condition) {
+    //                       if (is_array($condition) && count($condition) >= 2) {
+    //                           if (count($condition) === 2) {
+    //                               $query->where($condition[0], $condition[1]);
+    //                           } elseif (count($condition) === 3) {
+    //                               $query->where($condition[0], $condition[1], $condition[2]);
+    //                           }
+    //                       }
+    //                   }
+    //               }
+    //           } catch (\Exception $e) {
+    //               // Ignore JSON parse errors
+    //           }
+    //       }
+    //   }
+
+    //   // Apply relationship filters if provided (for filtering by related table)
+    //   if (isset($params['with_where'])) {
+    //       $withWhere = $params['with_where'];
+          
+    //       if (is_array($withWhere)) {
+    //           foreach ($withWhere as $relation => $conditions) {
+    //               if (is_callable($conditions)) {
+    //                   $query->whereHas($relation, $conditions);
+    //               } elseif (is_array($conditions)) {
+    //                   $query->whereHas($relation, function($q) use ($conditions) {
+    //                       foreach ($conditions as $condition) {
+    //                           if (is_array($condition) && count($condition) >= 2) {
+    //                               if (count($condition) === 2) {
+    //                                   $q->where($condition[0], $condition[1]);
+    //                               } elseif (count($condition) === 3) {
+    //                                   $q->where($condition[0], $condition[1], $condition[2]);
+    //                               }
+    //                           }
+    //                       }
+    //                   });
+    //               }
+    //           }
+    //       }
+    //   }
+
+    //   // Search
+    //   if ($request->has('search') && isset($params['search_fields'])) {
+    //       $search = $request->input('search');
+    //       Session::put('search_' . $table, $search);
+          
+    //       $selectedFields = $request->input('search_in', array_keys($params['search_fields']));
+          
+    //       $query->where(function($q) use ($search, $selectedFields) {
+    //           foreach ($selectedFields as $field) {
+    //               $q->orWhere($field, 'like', '%' . $search . '%');
+    //           }
+    //       });
+    //   }
+
+    //   // Sorting
+    //   $sort = $request->input('sort', $params['default_sort'] ?? null);
+    //   $direction = $request->input('direction', $params['default_direction'] ?? 'asc');
+    //   if ($sort) {
+    //       $query->orderBy($sort, $direction);
+    //   }
+
+    //   $items = $query->paginate($perPage)->withQueryString();
+
+
+    //   return [
+
+    //     'items'          => $items,
+    //     'columns'        => $params['columns'],
+    //     'actions'        => $params['actions'] ?? [],
+    //     'index'          => $params['index'] ?? self::SysAutomatorGetPKColumn($table),
+    //     'header_actions' => $params['header_actions'] ?? [],
+    //     'list_actions'   => $params['list_actions'] ?? [],
+    //     'search_fields'  => $params['search_fields'] ?? [],
+    //     'modals'         => $params['modals'] ?? [],
+    //     'modal'          => $params['modal'] ?? null,
+    //     'page_name'      => $params['page_name'] ?? null,
+    //     'table'          => $table,
+    //     'sort'           => $sort,
+    //     'direction'      => $direction,
+    //     'action_urls'    => $params['action_urls'] ?? []
+      
+    //   ];
+
+
+    // }
 
 
 
@@ -6037,6 +6941,10 @@
 
 
     // Modificado aqui
+
+
+
+
 
 
     public static function SysAutomatorGetPaginationDataBy($campo = 'tbl_sys_pagination_name', $valor = null) {

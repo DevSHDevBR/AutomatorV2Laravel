@@ -2193,6 +2193,174 @@
 
 
 
+        // NOTIFICATIONS - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-notifications',
+            'tbl_sys_form_title'    => 'Notificações',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Enviar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode(["type" => "int"]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Usuário',
+                'tbl_sys_forms_field_name'     => 'tbl_user_ID',
+                'tbl_sys_forms_field_index'    => 'userID',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "type"          => "select",
+                  "relation"      => [
+
+                    "table"   => "tbl_users",
+                    "value"   => "tbl_user_ID",
+                    "label"   => "tbl_user_name"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Titulo',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-6",
+                  "maxlenght" => 255
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Mensagem',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_text',
+                'tbl_sys_forms_field_index'    => 'text',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12",
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Visualizada',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_opened',
+                'tbl_sys_forms_field_index'    => 'api',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    false => "Não",
+                    true  => "Sim",
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              // [
+
+              //   'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('datetime', 'tbl_sys_field_type_ID'),
+              //   'tbl_sys_forms_field_title'    => 'Data de envio',
+              //   'tbl_sys_forms_field_name'     => 'tbl_sys_notification_created_at',
+              //   'tbl_sys_forms_field_index'    => 'created_at',
+              //   'tbl_sys_forms_field_class'    => '',
+              //   'tbl_sys_forms_field_default'  => '',
+              //   'tbl_sys_forms_field_props'    => json_encode([
+
+              //     "wrapper_class" => "col-12 col-md-6",
+              //     "format"  => "Y-m-d H:i:s",
+              //     "display" => "d/m/Y - H:i:s",
+              //     "attrs" => [
+
+              //       "format"  => "Y-m-d H:i:s",
+              //       "display" => "d/m/Y - H:i:s"
+
+              //     ]
+
+              //   ]),
+              //   'tbl_sys_forms_field_attrs'    => '',
+              //   'tbl_sys_forms_field_required' => false,
+              //   'tbl_sys_forms_field_locked'   => true,
+              //   'tbl_sys_forms_field_ordem'    => 6,
+              //   'field_access'                 => [1, 2]
+              
+              // ],
+
+            ]
+
+          ],
+
+        // NOTIFICATIONS - END
+
+
+
         // SHORTCODES - START
 
           [
@@ -2373,6 +2541,684 @@
           ],
 
         // SHORTCODES - END
+
+
+        // OPEN VIEW MODAL - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-open-view-modal',
+            'tbl_sys_form_title'    => 'Abrir View Modal',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Gerar Código',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => false,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'View',
+                'tbl_sys_forms_field_name'     => 'view',
+                'tbl_sys_forms_field_index'    => 'view',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-5",
+                    "maxlenght" => 255
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Título do Modal',
+                'tbl_sys_forms_field_name'     => 'title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-7",
+                    "maxlenght" => 255
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Tamanho',
+                'tbl_sys_forms_field_name'     => 'size',
+                'tbl_sys_forms_field_index'    => 'size',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 'lg',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-6",
+
+                    "choices" => [
+
+                        "sm"         => "Small",
+                        "md"         => "Medium",
+                        "lg"         => "Large",
+                        "xl"         => "Extra Large",
+                        "fullscreen" => "Tela inteira"
+
+                    ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Backdrop',
+                'tbl_sys_forms_field_name'     => 'backdrop',
+                'tbl_sys_forms_field_index'    => 'backdrop',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => true,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-6",
+
+                    "choices" => [
+
+                        true  => "Sim",
+                        false => "Não"
+
+                    ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Fechar com ESC',
+                'tbl_sys_forms_field_name'     => 'keyboard',
+                'tbl_sys_forms_field_index'    => 'keyboard',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-6",
+
+                    "choices" => [
+
+                        true  => "Sim",
+                        false => "Não"
+
+                    ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Conteúdo Rolável',
+                'tbl_sys_forms_field_name'     => 'scrollable',
+                'tbl_sys_forms_field_index'    => 'scrollable',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12 col-md-6",
+
+                    "choices" => [
+
+                        true  => "Sim",
+                        false => "Não"
+
+                    ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Callback',
+                'tbl_sys_forms_field_name'     => 'callback',
+                'tbl_sys_forms_field_index'    => 'callback',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12",
+
+                    "rows" => 3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Before Show',
+                'tbl_sys_forms_field_name'     => 'beforeShow',
+                'tbl_sys_forms_field_index'    => 'beforeShow',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12",
+
+                    "rows" => 3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 8,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'After Hide',
+                'tbl_sys_forms_field_name'     => 'afterHide',
+                'tbl_sys_forms_field_index'    => 'afterHide',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class" => "col-12",
+
+                    "rows" => 3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 9,
+                'field_access'                 => [1, 2]
+
+              ]
+
+            ]
+
+          ],
+
+        // OPEN VIEW MODAL - END
+
+
+
+        // OPEN FORM MODAL - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-open-form-modal',
+            'tbl_sys_form_title'    => 'Abrir Formulário Modal',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Gerar Código',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => false,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Formulário',
+                'tbl_sys_forms_field_name'     => 'form',
+                'tbl_sys_forms_field_index'    => 'form',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-5",
+
+                  "type" => "select",
+
+                  "relation" => [
+
+                    "table" => "tbl_sys_forms",
+
+                    "value" => "tbl_sys_form_name",
+
+                    "label" => "tbl_sys_form_title"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Título do Modal',
+                'tbl_sys_forms_field_name'     => 'title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-7",
+
+                  "maxlenght"=>255
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Método de Carregamento',
+                'tbl_sys_forms_field_name'     => 'loadMethod',
+                'tbl_sys_forms_field_index'    => 'loadMethod',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 'GET',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-6",
+
+                  "choices" => [
+
+                    "GET"  => "GET",
+                    "POST" => "POST"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1,2] 
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Rota de Carregamento',
+                'tbl_sys_forms_field_name'     => 'loadRoute',
+                'tbl_sys_forms_field_index'    => 'loadRoute',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-6",
+
+                  "type" => "select",
+
+                  "relation" => [
+
+                    "table" => "tbl_sys_routes",
+
+                    "value" => "tbl_sys_route_name",
+
+                    "label" => "tbl_sys_route_title",
+                    "filters" => [
+
+                      "tbl_sys_route_api" => [
+
+                        "false" => [
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+                        ],
+                        false   => [
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+                        ],
+                      
+                      ]
+
+                    ],
+                    "where" => [
+
+                      "tbl_sys_route_api" => true,
+                      // "tbl_sys_route_status" => "ativo"
+
+                    ]
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Método de Envio',
+                'tbl_sys_forms_field_name'     => 'submitMethod',
+                'tbl_sys_forms_field_index'    => 'submitMethod',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 'POST',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    "POST" => "POST",
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Rota de Envio',
+                'tbl_sys_forms_field_name'     => 'submitRoute',
+                'tbl_sys_forms_field_index'    => 'submitRoute',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-6",
+
+                  "type" => "select",
+
+                  "relation" => [
+
+                    "table"   => "tbl_sys_routes",
+                    "value"   => "tbl_sys_route_name",
+                    "label"   => "tbl_sys_route_title",
+                    "filters" => [
+
+                      "tbl_sys_route_api" => [
+
+                        "false" => [
+
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+
+                        ],
+
+                        false   => [
+
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+                        
+                        ],
+                      
+                      ]
+
+                    ],
+
+                    "where" => [
+
+                      "tbl_sys_route_api" => true,
+                      "tbl_sys_route_status" => "ativo"
+
+                    ]
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Tamanho',
+                'tbl_sys_forms_field_name'     => 'size',
+                'tbl_sys_forms_field_index'    => 'size',
+                'tbl_sys_forms_field_default'  => 'lg',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    "sm"=>"Small",
+                    "md"=>"Medium",
+                    "lg"=>"Large",
+                    "xl"=>"Extra Large",
+                    "fullscreen"=>"Tela inteira"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Backdrop',
+                'tbl_sys_forms_field_name'     => 'backdrop',
+                'tbl_sys_forms_field_index'    => 'backdrop',
+                'tbl_sys_forms_field_default'  => true,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    true=>"Sim",
+                    false=>"Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 8,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Fechar com ESC',
+                'tbl_sys_forms_field_name'     => 'keyboard',
+                'tbl_sys_forms_field_index'    => 'keyboard',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    true=>"Sim",
+                    false=>"Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 9,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Conteúdo Rolável',
+                'tbl_sys_forms_field_name'     => 'scrollable',
+                'tbl_sys_forms_field_index'    => 'scrollable',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    true=>"Sim",
+                    false=>"Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 10,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Callback',
+                'tbl_sys_forms_field_name'     => 'callback',
+                'tbl_sys_forms_field_index'    => 'callback',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                    "wrapper_class"=>"col-12",
+
+                    "rows"=>3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 11,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Before Show',
+                'tbl_sys_forms_field_name'     => 'beforeShow',
+                'tbl_sys_forms_field_index'    => 'beforeShow',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12",
+
+                  "rows"=>3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 12,
+                'field_access'                 => [1,2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'After Hide',
+                'tbl_sys_forms_field_name'     => 'afterHide',
+                'tbl_sys_forms_field_index'    => 'afterHide',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12",
+
+                  "rows"=>3
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 13,
+                'field_access'                 => [1,2]
+
+              ]
+
+            ]
+
+          ],
+          
+        // OPEN FORM MODAL - END
 
 
       ];

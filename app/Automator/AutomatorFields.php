@@ -841,6 +841,551 @@
 
     /*
     |--------------------------------------------------------------------------
+    | Normaliza argumentos de uma coluna durante a paginação
+    |--------------------------------------------------------------------------
+    |
+    | As configurações persistidas pelo editor podem conter:
+    |
+    | attrs.configs
+    | attrs.attributes
+    | props relationais no formato plano
+    | props relationais no formato relation.*
+    |
+    | Esta função separa configurações internas de atributos HTML e mantém
+    | compatibilidade com todos os formatos já utilizados pelo sistema.
+    |
+    */
+
+    private static function normalizePaginationColumnRuntimeArgs($args = []) {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Container principal
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args)) {
+
+        $args = (array) $args;
+
+      }
+
+
+      if(!is_array($args)) {
+
+        $args = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Estrutura padrão
+      |--------------------------------------------------------------------------
+      */
+
+      $args['column']     = $args['column'] ?? [];
+      $args['props']      = $args['props'] ?? [];
+      $args['attrs']      = $args['attrs'] ?? [];
+      $args['config']     = $args['config'] ?? [];
+      $args['field_type'] = $args['field_type'] ?? [];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza coluna
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args['column'])) {
+
+        $args['column'] = (array) $args['column'];
+
+      }
+
+
+      if(!is_array($args['column'])) {
+
+        $args['column'] = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Recupera dados diretamente da coluna quando necessário
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        count($args['props']) <= 0 &&
+
+        isset($args['column']['props'])
+
+      ) {
+
+        $args['props'] = $args['column']['props'];
+
+      }
+
+
+      if(
+
+        count($args['attrs']) <= 0 &&
+
+        isset($args['column']['attrs'])
+
+      ) {
+
+        $args['attrs'] = $args['column']['attrs'];
+
+      }
+
+
+      if(
+
+        count($args['config']) <= 0 &&
+
+        isset($args['column']['config'])
+
+      ) {
+
+        $args['config'] = $args['column']['config'];
+
+      }
+
+
+      if(
+
+        count($args['field_type']) <= 0 &&
+
+        isset($args['column']['field_type'])
+
+      ) {
+
+        $args['field_type'] = $args['column']['field_type'];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza propriedades
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args['props'])) {
+
+        $args['props'] = (array) $args['props'];
+
+      }
+
+
+      if(!is_array($args['props'])) {
+
+
+        if(
+
+          is_string($args['props']) &&
+
+          trim($args['props']) !== ''
+
+        ) {
+
+          $decodedProps = json_decode(
+
+            $args['props'],
+
+            true
+
+          );
+
+
+          $args['props'] = is_array($decodedProps)
+
+            ? $decodedProps
+
+            : [];
+
+        } else {
+
+          $args['props'] = [];
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza atributos
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args['attrs'])) {
+
+        $args['attrs'] = (array) $args['attrs'];
+
+      }
+
+
+      if(!is_array($args['attrs'])) {
+
+
+        if(
+
+          is_string($args['attrs']) &&
+
+          trim($args['attrs']) !== ''
+
+        ) {
+
+          $decodedAttrs = json_decode(
+
+            $args['attrs'],
+
+            true
+
+          );
+
+
+          $args['attrs'] = is_array($decodedAttrs)
+
+            ? $decodedAttrs
+
+            : [];
+
+        } else {
+
+          $args['attrs'] = [];
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza configurações
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args['config'])) {
+
+        $args['config'] = (array) $args['config'];
+
+      }
+
+
+      if(!is_array($args['config'])) {
+
+
+        if(
+
+          is_string($args['config']) &&
+
+          trim($args['config']) !== ''
+
+        ) {
+
+          $decodedConfig = json_decode(
+
+            $args['config'],
+
+            true
+
+          );
+
+
+          $args['config'] = is_array($decodedConfig)
+
+            ? $decodedConfig
+
+            : [];
+
+        } else {
+
+          $args['config'] = [];
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza tipo de campo
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($args['field_type'])) {
+
+        $args['field_type'] = (array) $args['field_type'];
+
+      }
+
+
+      if(!is_array($args['field_type'])) {
+
+        $args['field_type'] = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Separa attrs.configs dos atributos HTML
+      |--------------------------------------------------------------------------
+      |
+      | O editor salva configurações da coluna desta forma:
+      |
+      | {
+      |   "configs": {
+      |     "size-type": "auto",
+      |     "size-value": null
+      |   }
+      | }
+      |
+      | O conteúdo de configs não pode ser enviado para renderAttrs().
+      |
+      */
+
+      if(isset($args['attrs']['configs'])) {
+
+
+        $attrsConfigs = $args['attrs']['configs'];
+
+
+        if(is_object($attrsConfigs)) {
+
+          $attrsConfigs = (array) $attrsConfigs;
+
+        }
+
+
+        if(is_array($attrsConfigs)) {
+
+
+          if(
+
+            !isset($args['config']['configs']) ||
+
+            !is_array($args['config']['configs'])
+
+          ) {
+
+            $args['config']['configs'] = [];
+
+          }
+
+
+          $args['config']['configs'] = array_replace_recursive(
+
+            $args['config']['configs'],
+
+            $attrsConfigs
+
+          );
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Mantém também acesso direto para códigos antigos
+          |--------------------------------------------------------------------------
+          */
+
+          foreach($attrsConfigs as $configName => $configValue) {
+
+            if(!array_key_exists($configName, $args['config'])) {
+
+              $args['config'][$configName] = $configValue;
+
+            }
+
+          }
+
+
+        }
+
+
+        unset($args['attrs']['configs']);
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Suporte para attrs.attributes
+      |--------------------------------------------------------------------------
+      |
+      | Alguns registros podem separar atributos HTML reais dentro de:
+      |
+      | attrs.attributes
+      |
+      */
+
+      if(isset($args['attrs']['attributes'])) {
+
+
+        $htmlAttributes = $args['attrs']['attributes'];
+
+
+        if(is_object($htmlAttributes)) {
+
+          $htmlAttributes = (array) $htmlAttributes;
+
+        }
+
+
+        unset($args['attrs']['attributes']);
+
+
+        if(is_array($htmlAttributes)) {
+
+          $args['attrs'] = array_replace(
+
+            $args['attrs'],
+
+            $htmlAttributes
+
+          );
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Descarta containers internos que não são atributos HTML
+      |--------------------------------------------------------------------------
+      */
+
+      $internalAttributeKeys = [
+
+        'config',
+        'settings',
+        'pagination',
+        'responsive',
+        'access',
+        'user_types',
+
+      ];
+
+
+      foreach($internalAttributeKeys as $internalAttributeKey) {
+
+        if(
+
+          isset($args['attrs'][$internalAttributeKey]) &&
+
+          (
+
+            is_array($args['attrs'][$internalAttributeKey]) ||
+
+            is_object($args['attrs'][$internalAttributeKey])
+
+          )
+
+        ) {
+
+          unset(
+
+            $args['attrs'][$internalAttributeKey]
+
+          );
+
+        }
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve nome do tipo de campo
+      |--------------------------------------------------------------------------
+      */
+
+      $fieldTypeName = strtolower(
+
+        self::normalizeRelationScalarValue(
+
+          $args['field_type']['tbl_sys_field_type_name']
+
+          ?? '',
+
+          [
+
+            'tbl_sys_field_type_name',
+            'type',
+            'name',
+            'value',
+
+          ],
+
+          ''
+
+        )
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza propriedades relacionais
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        $fieldTypeName === 'relation' ||
+
+        $fieldTypeName === 'relations'
+
+      ) {
+
+        $args['props'] = self::normalizeRelationFieldProps(
+
+          $args['props']
+
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Atualiza também a estrutura da coluna
+      |--------------------------------------------------------------------------
+      */
+
+      $args['column']['props']      = $args['props'];
+      $args['column']['attrs']      = $args['attrs'];
+      $args['column']['config']     = $args['config'];
+      $args['column']['field_type'] = $args['field_type'];
+
+
+      return $args;
+
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Renderiza coluna de paginação
+    |--------------------------------------------------------------------------
+    */
+
+    /*
+    |--------------------------------------------------------------------------
     | Renderiza coluna de paginação
     |--------------------------------------------------------------------------
     */
@@ -848,13 +1393,69 @@
     public static function renderPaginationColumn($columnType = 'tbody', $args = []) {
 
 
-      $args['render']     = 'paginacao';
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza os argumentos recebidos
+      |--------------------------------------------------------------------------
+      */
+
+      $args = self::normalizePaginationColumnRuntimeArgs(
+
+        $args
+
+      );
+
+
+      $args['render'] = 'paginacao';
+
       $args['columnType'] = $columnType;
 
 
-      $fieldType = $args['column']['field_type'] ?? [];
+      /*
+      |--------------------------------------------------------------------------
+      | Tipo do campo
+      |--------------------------------------------------------------------------
+      */
 
-      $fieldClass = self::resolveFieldClass($fieldType);
+      $fieldType =
+
+        $args['field_type']
+
+        ?? $args['column']['field_type']
+
+        ?? [];
+
+
+      if(is_object($fieldType)) {
+
+        $fieldType = (array) $fieldType;
+
+      }
+
+
+      if(!is_array($fieldType)) {
+
+        $fieldType = [];
+
+      }
+
+
+      $args['field_type'] = $fieldType;
+
+      $args['column']['field_type'] = $fieldType;
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve a classe responsável pela renderização
+      |--------------------------------------------------------------------------
+      */
+
+      $fieldClass = self::resolveFieldClass(
+
+        $fieldType
+
+      );
 
 
       if($fieldClass === null) {
@@ -871,10 +1472,51 @@
       }
 
 
-      return $fieldClass::paginationColumn($args);
+      /*
+      |--------------------------------------------------------------------------
+      | Renderiza a coluna
+      |--------------------------------------------------------------------------
+      */
+
+      return $fieldClass::paginationColumn(
+
+        $args
+
+      );
 
 
     }
+
+    // public static function renderPaginationColumn($columnType = 'tbody', $args = []) {
+
+
+    //   $args['render']     = 'paginacao';
+    //   $args['columnType'] = $columnType;
+
+
+    //   $fieldType = $args['column']['field_type'] ?? [];
+
+    //   $fieldClass = self::resolveFieldClass($fieldType);
+
+
+    //   if($fieldClass === null) {
+
+    //     return '';
+
+    //   }
+
+
+    //   if(!method_exists($fieldClass, 'paginationColumn')) {
+
+    //     return '';
+
+    //   }
+
+
+    //   return $fieldClass::paginationColumn($args);
+
+
+    // }
 
 
 
@@ -2391,7 +3033,26 @@
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Renderiza atributos HTML
+    |--------------------------------------------------------------------------
+    */
+
     public static function renderAttrs($attrs = []) {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza o container
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($attrs)) {
+
+        $attrs = (array) $attrs;
+
+      }
 
 
       if(!is_array($attrs) || count($attrs) <= 0) {
@@ -2407,22 +3068,128 @@
       foreach($attrs as $attrName => $attrValue) {
 
 
-        if($attrName === null || $attrName === '') {
+        /*
+        |--------------------------------------------------------------------------
+        | Nome inválido
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+
+          $attrName === null ||
+
+          trim((string) $attrName) === ''
+
+        ) {
 
           continue;
 
         }
 
 
+        $attrName = trim(
+
+          (string) $attrName
+
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Containers internos não são atributos HTML
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+
+          is_array($attrValue) ||
+
+          (
+
+            is_object($attrValue) &&
+
+            !method_exists($attrValue, '__toString')
+
+          )
+
+        ) {
+
+          continue;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Atributos booleanos
+        |--------------------------------------------------------------------------
+        */
+
         if($attrValue === true) {
 
           $html .= ' ' . e($attrName);
 
-        } else if($attrValue !== false && $attrValue !== null) {
-
-          $html .= ' ' . e($attrName) . '="' . e($attrValue) . '"';
+          continue;
 
         }
+
+
+        if(
+
+          $attrValue === false ||
+
+          $attrValue === null
+
+        ) {
+
+          continue;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Objetos convertíveis em string
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+
+          is_object($attrValue) &&
+
+          method_exists($attrValue, '__toString')
+
+        ) {
+
+          $attrValue = (string) $attrValue;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aceita apenas valores escalares
+        |--------------------------------------------------------------------------
+        */
+
+        if(!is_scalar($attrValue)) {
+
+          continue;
+
+        }
+
+
+        $html .=
+
+          ' ' .
+
+          e($attrName) .
+
+          '="' .
+
+          e((string) $attrValue) .
+
+          '"';
 
 
       }
@@ -2432,6 +3199,48 @@
 
 
     }
+
+    // public static function renderAttrs($attrs = []) {
+
+
+    //   if(!is_array($attrs) || count($attrs) <= 0) {
+
+    //     return '';
+
+    //   }
+
+
+    //   $html = '';
+
+
+    //   foreach($attrs as $attrName => $attrValue) {
+
+
+    //     if($attrName === null || $attrName === '') {
+
+    //       continue;
+
+    //     }
+
+
+    //     if($attrValue === true) {
+
+    //       $html .= ' ' . e($attrName);
+
+    //     } else if($attrValue !== false && $attrValue !== null) {
+
+    //       $html .= ' ' . e($attrName) . '="' . e($attrValue) . '"';
+
+    //     }
+
+
+    //   }
+
+
+    //   return $html;
+
+
+    // }
 
 
 
@@ -3503,6 +4312,12 @@
     |--------------------------------------------------------------------------
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza propriedades de campos relacionais
+    |--------------------------------------------------------------------------
+    */
+
     public static function normalizeRelationFieldProps($props = []) {
 
 
@@ -3557,74 +4372,99 @@
 
       /*
       |--------------------------------------------------------------------------
-      | Resolve o tipo visual do campo
+      | Normaliza params
       |--------------------------------------------------------------------------
       */
 
-      $fieldTypeValue = $props['type'] ?? '';
+      $params = $props['params'] ?? [];
 
 
-      if(isset($props['params'])) {
+      if(is_object($params)) {
 
-
-        $params = $props['params'];
-
-
-        if(is_object($params)) {
-
-          $params = (array) $params;
-
-        }
-
-
-        if(is_array($params)) {
-
-
-          if(
-
-            $fieldTypeValue === null ||
-
-            $fieldTypeValue === '' ||
-
-            is_array($fieldTypeValue) ||
-
-            is_object($fieldTypeValue)
-
-          ) {
-
-            $fieldTypeValue =
-
-              $params['configs.type']
-
-              ?? $params['advanced.type']
-
-              ?? $params['type']
-
-              ?? '';
-
-          }
-
-
-        }
-
+        $params = (array) $params;
 
       }
+
+
+      if(!is_array($params)) {
+
+        $params = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve o tipo visual do campo
+      |--------------------------------------------------------------------------
+      |
+      | Formulários antigos:
+      |
+      | type = select
+      | type = checkbox
+      | type = radio
+      |
+      | Editor de paginações:
+      |
+      | type = single
+      | type = multiple
+      |
+      | Em uma paginação, single/multiple representam o modo relacional, e não
+      | necessariamente o elemento HTML. Para manter compatibilidade, single vira
+      | select quando nenhuma configuração visual explícita existir.
+      |
+      */
+
+      $originalType = self::normalizeRelationScalarValue(
+
+        $props['type']
+
+        ?? '',
+
+        [
+
+          'type',
+          'value',
+          'default',
+          'current',
+
+        ],
+
+        ''
+
+      );
+
+
+      $visualTypeValue =
+
+        $props['input-type']
+
+        ?? $props['input_type']
+
+        ?? $props['visual-type']
+
+        ?? $props['visual_type']
+
+        ?? $params['configs.type']
+
+        ?? $params['advanced.type']
+
+        ?? $params['type']
+
+        ?? $originalType;
 
 
       $fieldType = strtolower(
 
         self::normalizeRelationScalarValue(
 
-          $fieldTypeValue,
+          $visualTypeValue,
 
           [
 
             'type',
-
             'value',
-
             'default',
-
             'current',
 
           ],
@@ -3636,7 +4476,15 @@
       );
 
 
-      if($fieldType === '') {
+      if(
+
+        $fieldType === '' ||
+
+        $fieldType === 'single' ||
+
+        $fieldType === 'multiple'
+
+      ) {
 
         $fieldType = 'select';
 
@@ -3652,9 +4500,7 @@
           [
 
             'select',
-
             'checkbox',
-
             'radio',
 
           ],
@@ -3670,12 +4516,48 @@
       }
 
 
+      /*
+      |--------------------------------------------------------------------------
+      | Preserva o modo original
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !isset($props['selection']) &&
+
+        in_array(
+
+          strtolower($originalType),
+
+          [
+
+            'single',
+            'multiple',
+
+          ],
+
+          true
+
+        )
+
+      ) {
+
+        $props['selection'] = strtolower(
+
+          $originalType
+
+        );
+
+      }
+
+
       $props['type'] = $fieldType;
 
 
       /*
       |--------------------------------------------------------------------------
-      | Normaliza a configuração relation
+      | Configuração relation existente
       |--------------------------------------------------------------------------
       */
 
@@ -3683,7 +4565,6 @@
 
 
       if(is_string($relation)) {
-
 
         $decodedRelation = json_decode(
 
@@ -3719,15 +4600,81 @@
 
       /*
       |--------------------------------------------------------------------------
-      | Resolve tabela
+      | Compatibilidade com propriedades planas
       |--------------------------------------------------------------------------
       |
-      | Formatos compatíveis:
+      | Estrutura salva atualmente pelo editor:
       |
-      | relation.table
-      | relation.tabela-destino
-      | relation.label_table
+      | table
+      | column
+      | display
+      | mode
+      | relational-table
+      | relational-column
+      | empty
       |
+      */
+
+      $flatRelationAliases = [
+
+        'table',
+        'column',
+        'value',
+        'display',
+        'label',
+        'index',
+        'key',
+        'mode',
+        'empty',
+        'relational-table',
+        'relational-column',
+        'relational_table',
+        'relational_column',
+        'tabela-destino',
+        'campo-destino',
+        'label-destino',
+        'label_table',
+        'label_value',
+        'label_display',
+
+      ];
+
+
+      foreach($flatRelationAliases as $flatRelationAlias) {
+
+        if(
+
+          !array_key_exists(
+
+            $flatRelationAlias,
+
+            $relation
+
+          ) &&
+
+          array_key_exists(
+
+            $flatRelationAlias,
+
+            $props
+
+          )
+
+        ) {
+
+          $relation[$flatRelationAlias] =
+
+            $props[$flatRelationAlias];
+
+        }
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve tabela
+      |--------------------------------------------------------------------------
       */
 
       $tableValue =
@@ -3737,6 +4684,8 @@
         ?? $relation['tabela-destino']
 
         ?? $relation['label_table']
+
+        ?? $props['table']
 
         ?? '';
 
@@ -3748,13 +4697,9 @@
         [
 
           'table',
-
           'value',
-
           'name',
-
           'current',
-
           'default',
 
         ],
@@ -3768,15 +4713,6 @@
       |--------------------------------------------------------------------------
       | Resolve coluna de valor
       |--------------------------------------------------------------------------
-      |
-      | Formatos compatíveis:
-      |
-      | relation.value
-      | relation.column
-      | relation.key
-      | relation.campo-destino
-      | relation.label_value
-      |
       */
 
       $valueValue =
@@ -3787,9 +4723,17 @@
 
         ?? $relation['key']
 
+        ?? $relation['index']
+
         ?? $relation['campo-destino']
 
         ?? $relation['label_value']
+
+        ?? $props['column']
+
+        ?? $props['value']
+
+        ?? $props['index']
 
         ?? '';
 
@@ -3801,17 +4745,12 @@
         [
 
           'value',
-
           'column',
-
           'field',
-
           'key',
-
+          'index',
           'name',
-
           'current',
-
           'default',
 
         ],
@@ -3825,14 +4764,6 @@
       |--------------------------------------------------------------------------
       | Resolve coluna de exibição
       |--------------------------------------------------------------------------
-      |
-      | Formatos compatíveis:
-      |
-      | relation.label
-      | relation.display
-      | relation.label-destino
-      | relation.label_display
-      |
       */
 
       $labelValue =
@@ -3845,6 +4776,10 @@
 
         ?? $relation['label_display']
 
+        ?? $props['display']
+
+        ?? $props['label']
+
         ?? '';
 
 
@@ -3855,19 +4790,12 @@
         [
 
           'label',
-
           'display',
-
           'column',
-
           'field',
-
           'value',
-
           'name',
-
           'current',
-
           'default',
 
         ],
@@ -3879,33 +4807,88 @@
 
       /*
       |--------------------------------------------------------------------------
-      | Mantém compatibilidade com index
+      | Modo da relação
       |--------------------------------------------------------------------------
-      |
-      | Algumas configurações do editor usam "index" no lugar de "value".
-      |
       */
 
-      if(
+      $relation['mode'] = self::normalizeRelationScalarValue(
 
-        $relation['value'] === '' &&
+        $relation['mode']
 
-        isset($relation['index'])
+        ?? $props['mode']
 
-      ) {
+        ?? 'revert',
 
-        $relation['value'] = self::normalizeRelationScalarValue(
+        [
 
-          $relation['index'],
+          'mode',
+          'value',
+          'default',
+
+        ],
+
+        'revert'
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Valor para relação vazia
+      |--------------------------------------------------------------------------
+      */
+
+      $relation['empty'] = self::normalizeRelationScalarValue(
+
+        $relation['empty']
+
+        ?? $props['empty']
+
+        ?? '',
+
+        [
+
+          'empty',
+          'value',
+          'default',
+
+        ],
+
+        ''
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Tabela intermediária
+      |--------------------------------------------------------------------------
+      */
+
+      $relationalTable =
+
+        $relation['relational-table']
+
+        ?? $relation['relational_table']
+
+        ?? $props['relational-table']
+
+        ?? $props['relational_table']
+
+        ?? '';
+
+
+      $relation['relational-table'] =
+
+        self::normalizeRelationScalarValue(
+
+          $relationalTable,
 
           [
 
-            'index',
-
-            'column',
-
-            'field',
-
+            'relational-table',
+            'relational_table',
+            'table',
             'value',
 
           ],
@@ -3914,40 +4897,85 @@
 
         );
 
-      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Coluna da tabela intermediária
+      |--------------------------------------------------------------------------
+      */
+
+      $relationalColumn =
+
+        $relation['relational-column']
+
+        ?? $relation['relational_column']
+
+        ?? $props['relational-column']
+
+        ?? $props['relational_column']
+
+        ?? '';
+
+
+      $relation['relational-column'] =
+
+        self::normalizeRelationScalarValue(
+
+          $relationalColumn,
+
+          [
+
+            'relational-column',
+            'relational_column',
+            'column',
+            'value',
+
+          ],
+
+          ''
+
+        );
 
 
       /*
       |--------------------------------------------------------------------------
-      | Remove somente aliases já convertidos
+      | Aliases para compatibilidade com renderizadores antigos
       |--------------------------------------------------------------------------
-      |
-      | As demais propriedades da relação permanecem intactas.
-      |
       */
 
-      unset(
+      $relation['column'] = $relation['value'];
 
-        $relation['column'],
+      $relation['display'] = $relation['label'];
 
-        $relation['display'],
 
-        $relation['key'],
+      $props['table'] = $relation['table'];
 
-        $relation['label_table'],
+      $props['column'] = $relation['value'];
 
-        $relation['label_value'],
+      $props['value'] = $relation['value'];
 
-        $relation['label_display'],
+      $props['display'] = $relation['label'];
 
-        $relation['tabela-destino'],
+      $props['label'] = $relation['label'];
 
-        $relation['campo-destino'],
+      $props['mode'] = $relation['mode'];
 
-        $relation['label-destino']
+      $props['empty'] = $relation['empty'];
 
-      );
+      $props['relational-table'] =
 
+        $relation['relational-table'];
+
+      $props['relational-column'] =
+
+        $relation['relational-column'];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Estrutura normalizada principal
+      |--------------------------------------------------------------------------
+      */
 
       $props['relation'] = $relation;
 
@@ -3956,6 +4984,460 @@
 
 
     }
+
+    // public static function normalizeRelationFieldProps($props = []) {
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza o container principal
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($props)) {
+
+    //     $props = (array) $props;
+
+    //   }
+
+
+    //   if(!is_array($props)) {
+
+
+    //     if(
+
+    //       is_string($props) &&
+
+    //       trim($props) !== ''
+
+    //     ) {
+
+    //       $decodedProps = json_decode(
+
+    //         $props,
+
+    //         true
+
+    //       );
+
+
+    //       $props = is_array($decodedProps)
+
+    //         ? $decodedProps
+
+    //         : [];
+
+    //     } else {
+
+    //       $props = [];
+
+    //     }
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve o tipo visual do campo
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $fieldTypeValue = $props['type'] ?? '';
+
+
+    //   if(isset($props['params'])) {
+
+
+    //     $params = $props['params'];
+
+
+    //     if(is_object($params)) {
+
+    //       $params = (array) $params;
+
+    //     }
+
+
+    //     if(is_array($params)) {
+
+
+    //       if(
+
+    //         $fieldTypeValue === null ||
+
+    //         $fieldTypeValue === '' ||
+
+    //         is_array($fieldTypeValue) ||
+
+    //         is_object($fieldTypeValue)
+
+    //       ) {
+
+    //         $fieldTypeValue =
+
+    //           $params['configs.type']
+
+    //           ?? $params['advanced.type']
+
+    //           ?? $params['type']
+
+    //           ?? '';
+
+    //       }
+
+
+    //     }
+
+
+    //   }
+
+
+    //   $fieldType = strtolower(
+
+    //     self::normalizeRelationScalarValue(
+
+    //       $fieldTypeValue,
+
+    //       [
+
+    //         'type',
+
+    //         'value',
+
+    //         'default',
+
+    //         'current',
+
+    //       ],
+
+    //       'select'
+
+    //     )
+
+    //   );
+
+
+    //   if($fieldType === '') {
+
+    //     $fieldType = 'select';
+
+    //   }
+
+
+    //   if(
+
+    //     !in_array(
+
+    //       $fieldType,
+
+    //       [
+
+    //         'select',
+
+    //         'checkbox',
+
+    //         'radio',
+
+    //       ],
+
+    //       true
+
+    //     )
+
+    //   ) {
+
+    //     $fieldType = 'select';
+
+    //   }
+
+
+    //   $props['type'] = $fieldType;
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza a configuração relation
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $relation = $props['relation'] ?? [];
+
+
+    //   if(is_string($relation)) {
+
+
+    //     $decodedRelation = json_decode(
+
+    //       $relation,
+
+    //       true
+
+    //     );
+
+
+    //     $relation = is_array($decodedRelation)
+
+    //       ? $decodedRelation
+
+    //       : [];
+
+    //   }
+
+
+    //   if(is_object($relation)) {
+
+    //     $relation = (array) $relation;
+
+    //   }
+
+
+    //   if(!is_array($relation)) {
+
+    //     $relation = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve tabela
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Formatos compatíveis:
+    //   |
+    //   | relation.table
+    //   | relation.tabela-destino
+    //   | relation.label_table
+    //   |
+    //   */
+
+    //   $tableValue =
+
+    //     $relation['table']
+
+    //     ?? $relation['tabela-destino']
+
+    //     ?? $relation['label_table']
+
+    //     ?? '';
+
+
+    //   $relation['table'] = self::normalizeRelationScalarValue(
+
+    //     $tableValue,
+
+    //     [
+
+    //       'table',
+
+    //       'value',
+
+    //       'name',
+
+    //       'current',
+
+    //       'default',
+
+    //     ],
+
+    //     ''
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve coluna de valor
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Formatos compatíveis:
+    //   |
+    //   | relation.value
+    //   | relation.column
+    //   | relation.key
+    //   | relation.campo-destino
+    //   | relation.label_value
+    //   |
+    //   */
+
+    //   $valueValue =
+
+    //     $relation['value']
+
+    //     ?? $relation['column']
+
+    //     ?? $relation['key']
+
+    //     ?? $relation['campo-destino']
+
+    //     ?? $relation['label_value']
+
+    //     ?? '';
+
+
+    //   $relation['value'] = self::normalizeRelationScalarValue(
+
+    //     $valueValue,
+
+    //     [
+
+    //       'value',
+
+    //       'column',
+
+    //       'field',
+
+    //       'key',
+
+    //       'name',
+
+    //       'current',
+
+    //       'default',
+
+    //     ],
+
+    //     ''
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve coluna de exibição
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Formatos compatíveis:
+    //   |
+    //   | relation.label
+    //   | relation.display
+    //   | relation.label-destino
+    //   | relation.label_display
+    //   |
+    //   */
+
+    //   $labelValue =
+
+    //     $relation['label']
+
+    //     ?? $relation['display']
+
+    //     ?? $relation['label-destino']
+
+    //     ?? $relation['label_display']
+
+    //     ?? '';
+
+
+    //   $relation['label'] = self::normalizeRelationScalarValue(
+
+    //     $labelValue,
+
+    //     [
+
+    //       'label',
+
+    //       'display',
+
+    //       'column',
+
+    //       'field',
+
+    //       'value',
+
+    //       'name',
+
+    //       'current',
+
+    //       'default',
+
+    //     ],
+
+    //     ''
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Mantém compatibilidade com index
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | Algumas configurações do editor usam "index" no lugar de "value".
+    //   |
+    //   */
+
+    //   if(
+
+    //     $relation['value'] === '' &&
+
+    //     isset($relation['index'])
+
+    //   ) {
+
+    //     $relation['value'] = self::normalizeRelationScalarValue(
+
+    //       $relation['index'],
+
+    //       [
+
+    //         'index',
+
+    //         'column',
+
+    //         'field',
+
+    //         'value',
+
+    //       ],
+
+    //       ''
+
+    //     );
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Remove somente aliases já convertidos
+    //   |--------------------------------------------------------------------------
+    //   |
+    //   | As demais propriedades da relação permanecem intactas.
+    //   |
+    //   */
+
+    //   unset(
+
+    //     $relation['column'],
+
+    //     $relation['display'],
+
+    //     $relation['key'],
+
+    //     $relation['label_table'],
+
+    //     $relation['label_value'],
+
+    //     $relation['label_display'],
+
+    //     $relation['tabela-destino'],
+
+    //     $relation['campo-destino'],
+
+    //     $relation['label-destino']
+
+    //   );
+
+
+    //   $props['relation'] = $relation;
+
+
+    //   return $props;
+
+
+    // }
 
 
     // public static function normalizeRelationFieldProps($props = []) {

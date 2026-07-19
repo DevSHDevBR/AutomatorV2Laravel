@@ -14988,3 +14988,2680 @@ $(document).ready(function() {
 
 
 });
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | AUTOMATOR JSON EDITOR
+  |--------------------------------------------------------------------------
+  |
+  | Editor hierárquico para campos JSON em formulários.
+  |
+  | O valor final permanece armazenado em um input hidden como JSON válido,
+  | preservando o funcionamento atual dos formulários, do AJAX e do backend.
+  |
+  */
+
+
+  function AutomatorJsonEditorNormalizeType(
+    type = ''
+  ) {
+
+
+    type = String(
+
+      type || ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    const allowedTypes = [
+
+      'string',
+      'number',
+      'boolean',
+      'null',
+      'object',
+      'array',
+
+    ];
+
+
+    if(
+
+      allowedTypes.indexOf(
+
+        type
+
+      ) < 0
+
+    ) {
+
+      return 'string';
+
+    }
+
+
+    return type;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorDetectType(
+    value
+  ) {
+
+
+    if(value === null) {
+
+      return 'null';
+
+    }
+
+
+    if(Array.isArray(value)) {
+
+      return 'array';
+
+    }
+
+
+    if(
+
+      typeof value === 'object'
+
+    ) {
+
+      return 'object';
+
+    }
+
+
+    if(
+
+      typeof value === 'number'
+
+    ) {
+
+      return 'number';
+
+    }
+
+
+    if(
+
+      typeof value === 'boolean'
+
+    ) {
+
+      return 'boolean';
+
+    }
+
+
+    return 'string';
+
+
+  }
+
+
+
+  function AutomatorJsonEditorCreateDefaultValue(
+    type = 'string'
+  ) {
+
+
+    type = AutomatorJsonEditorNormalizeType(
+
+      type
+
+    );
+
+
+    if(type == 'number') {
+
+      return 0;
+
+    }
+
+
+    if(type == 'boolean') {
+
+      return false;
+
+    }
+
+
+    if(type == 'null') {
+
+      return null;
+
+    }
+
+
+    if(type == 'object') {
+
+      return {};
+
+    }
+
+
+    if(type == 'array') {
+
+      return [];
+
+    }
+
+
+    return '';
+
+
+  }
+
+
+
+  function AutomatorJsonEditorEscapeHtml(
+    value = ''
+  ) {
+
+
+    return String(
+
+      value === null ||
+      value === undefined
+
+        ? ''
+
+        : value
+
+    )
+      .replace(
+        /&/g,
+        '&amp;'
+      )
+      .replace(
+        /</g,
+        '&lt;'
+      )
+      .replace(
+        />/g,
+        '&gt;'
+      )
+      .replace(
+        /"/g,
+        '&quot;'
+      )
+      .replace(
+        /'/g,
+        '&#039;'
+      );
+
+
+  }
+
+
+
+  function AutomatorJsonEditorGenerateNodeID() {
+
+
+    return (
+
+      'automator-json-node-' +
+
+      Date.now() +
+
+      '-' +
+
+      Math.floor(
+
+        Math.random() * 999999
+
+      )
+
+    );
+
+
+  }
+
+
+
+  function AutomatorJsonEditorParseValue(
+    value = ''
+  ) {
+
+
+    if(
+
+      value === null ||
+
+      value === undefined ||
+
+      value === ''
+
+    ) {
+
+      return {};
+
+    }
+
+
+    if(
+
+      typeof value === 'object'
+
+    ) {
+
+      return value;
+
+    }
+
+
+    try {
+
+      return JSON.parse(
+
+        String(value)
+
+      );
+
+    } catch(error) {
+
+      return {
+
+        value: String(value),
+
+      };
+
+    }
+
+
+  }
+
+
+
+  function AutomatorJsonEditorGetTypeOptions(
+    selectedType = 'string'
+  ) {
+
+
+    selectedType = AutomatorJsonEditorNormalizeType(
+
+      selectedType
+
+    );
+
+
+    const types = {
+
+      string:  'Texto',
+      number:  'Número',
+      boolean: 'Booleano',
+      null:    'Nulo',
+      object:  'Objeto',
+      array:   'Array',
+
+    };
+
+
+    let html = '';
+
+
+    Object.keys(
+
+      types
+
+    ).forEach(function(type) {
+
+
+      html +=
+
+        '<option value="' +
+
+          AutomatorJsonEditorEscapeHtml(type) +
+
+        '"' +
+
+        (
+
+          type == selectedType
+
+            ? ' selected'
+
+            : ''
+
+        ) +
+
+        '>' +
+
+          AutomatorJsonEditorEscapeHtml(
+
+            types[type]
+
+          ) +
+
+        '</option>';
+
+
+    });
+
+
+    return html;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorRenderScalarInput(
+    type = 'string',
+    value = ''
+  ) {
+
+
+    type = AutomatorJsonEditorNormalizeType(
+
+      type
+
+    );
+
+
+    if(type == 'boolean') {
+
+
+      return (
+
+        '<select class="' +
+
+          'form-select form-select-sm ' +
+
+          'automator-json-editor-node-value' +
+
+        '">' +
+
+          '<option value="true"' +
+
+          (
+
+            value === true
+
+              ? ' selected'
+
+              : ''
+
+          ) +
+
+          '>true</option>' +
+
+          '<option value="false"' +
+
+          (
+
+            value !== true
+
+              ? ' selected'
+
+              : ''
+
+          ) +
+
+          '>false</option>' +
+
+        '</select>'
+
+      );
+
+    }
+
+
+    if(type == 'null') {
+
+
+      return (
+
+        '<input ' +
+
+          'type="text" ' +
+
+          'class="' +
+
+            'form-control form-control-sm ' +
+
+            'automator-json-editor-node-value' +
+
+          '" ' +
+
+          'value="null" ' +
+
+          'disabled ' +
+
+        '/>'
+
+      );
+
+    }
+
+
+    if(type == 'number') {
+
+
+      return (
+
+        '<input ' +
+
+          'type="number" ' +
+
+          'step="any" ' +
+
+          'class="' +
+
+            'form-control form-control-sm ' +
+
+            'automator-json-editor-node-value' +
+
+          '" ' +
+
+          'value="' +
+
+            AutomatorJsonEditorEscapeHtml(
+
+              value
+
+            ) +
+
+          '" ' +
+
+        '/>'
+
+      );
+
+    }
+
+
+    return (
+
+      '<input ' +
+
+        'type="text" ' +
+
+        'class="' +
+
+          'form-control form-control-sm ' +
+
+          'automator-json-editor-node-value' +
+
+        '" ' +
+
+        'value="' +
+
+          AutomatorJsonEditorEscapeHtml(
+
+            value
+
+          ) +
+
+        '" ' +
+
+      '/>'
+
+    );
+
+
+  }
+
+
+
+  function AutomatorJsonEditorRenderNode(
+    key = '',
+    value = '',
+    options = {}
+  ) {
+
+
+    options =
+
+      options &&
+
+      typeof options === 'object'
+
+        ? options
+
+        : {};
+
+
+    const isRoot =
+
+      options.isRoot === true;
+
+
+    const parentType =
+
+      AutomatorJsonEditorNormalizeType(
+
+        options.parentType || 'object'
+
+      );
+
+
+    const nodeType =
+
+      AutomatorJsonEditorDetectType(
+
+        value
+
+      );
+
+
+    const nodeID =
+
+      AutomatorJsonEditorGenerateNodeID();
+
+
+    const keyDisabled =
+
+      isRoot === true ||
+
+      parentType == 'array';
+
+
+    let html = '';
+
+
+    html +=
+
+      '<div ' +
+
+        'class="' +
+
+          'automator-json-editor-node ' +
+
+          'border rounded mb-2 bg-light' +
+
+        '" ' +
+
+        'data-automator-json-node="true" ' +
+
+        'data-node-id="' +
+
+          AutomatorJsonEditorEscapeHtml(
+
+            nodeID
+
+          ) +
+
+        '" ' +
+
+        'data-node-type="' +
+
+          AutomatorJsonEditorEscapeHtml(
+
+            nodeType
+
+          ) +
+
+        '" ' +
+
+        'data-root="' +
+
+          (
+
+            isRoot === true
+
+              ? 'true'
+
+              : 'false'
+
+          ) +
+
+        '" ' +
+
+      '>';
+
+
+      html +=
+
+        '<div class="' +
+
+          'automator-json-editor-node-header ' +
+
+          'p-2 border-bottom bg-white' +
+
+        '">';
+
+
+        html +=
+
+          '<div class="row g-2 align-items-center">';
+
+
+          html +=
+
+            '<div class="col-12 col-md">';
+
+
+            html +=
+
+              '<input ' +
+
+                'type="text" ' +
+
+                'class="' +
+
+                  'form-control form-control-sm ' +
+
+                  'automator-json-editor-node-key' +
+
+                '" ' +
+
+                'placeholder="' +
+
+                  (
+
+                    parentType == 'array'
+
+                      ? 'Índice automático'
+
+                      : 'Nome da variável'
+
+                  ) +
+
+                '" ' +
+
+                'value="' +
+
+                  AutomatorJsonEditorEscapeHtml(
+
+                    key
+
+                  ) +
+
+                '" ' +
+
+                (
+
+                  keyDisabled === true
+
+                    ? 'disabled '
+
+                    : ''
+
+                ) +
+
+              '/>';
+
+
+          html += '</div>';
+
+
+          html +=
+
+            '<div class="col-8 col-md-auto">';
+
+
+            html +=
+
+              '<select class="' +
+
+                'form-select form-select-sm ' +
+
+                'automator-json-editor-node-type' +
+
+              '">';
+
+
+              html +=
+
+                AutomatorJsonEditorGetTypeOptions(
+
+                  nodeType
+
+                );
+
+
+            html += '</select>';
+
+
+          html += '</div>';
+
+
+          html +=
+
+            '<div class="col-4 col-md-auto">';
+
+
+            if(isRoot !== true) {
+
+
+              html +=
+
+                '<button ' +
+
+                  'type="button" ' +
+
+                  'class="' +
+
+                    'btn btn-sm btn-outline-danger w-100 ' +
+
+                    'automator-json-editor-node-delete' +
+
+                  '" ' +
+
+                  'title="Excluir variável"' +
+
+                '>' +
+
+                  '<i class="fa fa-trash"></i>' +
+
+                '</button>';
+
+
+            }
+
+
+          html += '</div>';
+
+
+        html += '</div>';
+
+
+      html += '</div>';
+
+
+      html +=
+
+        '<div class="' +
+
+          'automator-json-editor-node-body p-2' +
+
+        '">';
+
+
+        if(
+
+          nodeType == 'object' ||
+
+          nodeType == 'array'
+
+        ) {
+
+
+          html +=
+
+            '<div class="' +
+
+              'automator-json-editor-node-children' +
+
+            '" ' +
+
+            'data-container-type="' +
+
+              AutomatorJsonEditorEscapeHtml(
+
+                nodeType
+
+              ) +
+
+            '"' +
+
+            '>';
+
+
+            if(nodeType == 'array') {
+
+
+              value.forEach(function(
+
+                childValue,
+
+                childIndex
+
+              ) {
+
+
+                html +=
+
+                  AutomatorJsonEditorRenderNode(
+
+                    String(childIndex),
+
+                    childValue,
+
+                    {
+
+                      parentType: 'array',
+                      isRoot: false,
+
+                    }
+
+                  );
+
+
+              });
+
+
+            } else {
+
+
+              Object.keys(
+
+                value || {}
+
+              ).forEach(function(childKey) {
+
+
+                html +=
+
+                  AutomatorJsonEditorRenderNode(
+
+                    childKey,
+
+                    value[childKey],
+
+                    {
+
+                      parentType: 'object',
+                      isRoot: false,
+
+                    }
+
+                  );
+
+
+              });
+
+
+            }
+
+
+          html += '</div>';
+
+
+          html +=
+
+            '<button ' +
+
+              'type="button" ' +
+
+              'class="' +
+
+                'btn btn-sm btn-outline-primary w-100 ' +
+
+                'automator-json-editor-node-add' +
+
+              '" ' +
+
+              'data-container-type="' +
+
+                AutomatorJsonEditorEscapeHtml(
+
+                  nodeType
+
+                ) +
+
+              '"' +
+
+            '>' +
+
+              '<i class="fa fa-plus me-1"></i>' +
+
+              (
+
+                nodeType == 'array'
+
+                  ? 'Adicionar item'
+
+                  : 'Adicionar variável'
+
+              ) +
+
+            '</button>';
+
+
+        } else {
+
+
+          html +=
+
+            '<div class="automator-json-editor-node-scalar">';
+
+
+            html +=
+
+              AutomatorJsonEditorRenderScalarInput(
+
+                nodeType,
+
+                value
+
+              );
+
+
+          html += '</div>';
+
+
+        }
+
+
+      html += '</div>';
+
+
+    html += '</div>';
+
+
+    return html;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorReadScalarValue(
+    node,
+    type = 'string'
+  ) {
+
+
+    node = $(node);
+
+
+    type = AutomatorJsonEditorNormalizeType(
+
+      type
+
+    );
+
+
+    const input = node
+      .children(
+        '.automator-json-editor-node-body'
+      )
+      .find(
+        '> .automator-json-editor-node-scalar ' +
+        '> .automator-json-editor-node-value'
+      )
+      .first();
+
+
+    if(type == 'null') {
+
+      return null;
+
+    }
+
+
+    if(type == 'boolean') {
+
+      return String(
+
+        input.val()
+
+      ) == 'true';
+
+    }
+
+
+    if(type == 'number') {
+
+
+      const rawValue = String(
+
+        input.val() || ''
+
+      ).trim();
+
+
+      if(rawValue == '') {
+
+        return 0;
+
+      }
+
+
+      const numberValue = Number(
+
+        rawValue
+
+      );
+
+
+      return isNaN(numberValue)
+
+        ? 0
+
+        : numberValue;
+
+    }
+
+
+    return String(
+
+      input.val() || ''
+
+    );
+
+
+  }
+
+
+
+  function AutomatorJsonEditorReadNode(
+    node
+  ) {
+
+
+    node = $(node);
+
+
+    const nodeType =
+
+      AutomatorJsonEditorNormalizeType(
+
+        node.attr(
+
+          'data-node-type'
+
+        )
+
+      );
+
+
+    if(
+
+      nodeType != 'object' &&
+
+      nodeType != 'array'
+
+    ) {
+
+      return AutomatorJsonEditorReadScalarValue(
+
+        node,
+
+        nodeType
+
+      );
+
+    }
+
+
+    const childrenContainer = node
+      .children(
+        '.automator-json-editor-node-body'
+      )
+      .children(
+        '.automator-json-editor-node-children'
+      )
+      .first();
+
+
+    const childNodes = childrenContainer
+      .children(
+        '.automator-json-editor-node'
+      );
+
+
+    if(nodeType == 'array') {
+
+
+      const result = [];
+
+
+      childNodes.each(function() {
+
+
+        result.push(
+
+          AutomatorJsonEditorReadNode(
+
+            this
+
+          )
+
+        );
+
+
+      });
+
+
+      return result;
+
+    }
+
+
+    const result = {};
+
+
+    childNodes.each(function(index) {
+
+
+      const childNode = $(this);
+
+
+      let childKey = String(
+
+        childNode
+          .children(
+            '.automator-json-editor-node-header'
+          )
+          .find(
+            '.automator-json-editor-node-key'
+          )
+          .first()
+          .val() || ''
+
+      ).trim();
+
+
+      if(childKey == '') {
+
+        childKey =
+
+          'variavel_' +
+
+          (
+
+            index + 1
+
+          );
+
+      }
+
+
+      result[childKey] =
+
+        AutomatorJsonEditorReadNode(
+
+          childNode
+
+        );
+
+
+    });
+
+
+    return result;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorShowError(
+    editor,
+    message = ''
+  ) {
+
+
+    editor = $(editor);
+
+
+    const errorContainer = editor.find(
+
+      '.automator-json-editor-error'
+
+    ).first();
+
+
+    if(message == '') {
+
+
+      errorContainer
+        .addClass(
+          'd-none'
+        )
+        .empty();
+
+
+      return true;
+
+    }
+
+
+    errorContainer
+      .removeClass(
+        'd-none'
+      )
+      .text(
+        message
+      );
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorTriggerFormChange(
+    editor
+  ) {
+
+
+    editor = $(editor);
+
+
+    const valueInput = editor.find(
+
+      '.automator-json-editor-value'
+
+    ).first();
+
+
+    valueInput.trigger(
+
+      'input'
+
+    );
+
+
+    valueInput.trigger(
+
+      'change'
+
+    );
+
+
+    const form = editor.closest(
+
+      'form'
+
+    );
+
+
+    if(form.length) {
+
+
+      form.attr(
+
+        'data-automator-form-changed',
+
+        'true'
+
+      );
+
+
+      form.find(
+
+        'button[type="submit"], input[type="submit"]'
+
+      ).prop(
+
+        'disabled',
+
+        false
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorSyncValue(
+    editor,
+    triggerChange = true
+  ) {
+
+
+    editor = $(editor);
+
+
+    const rootNode = editor
+      .find(
+        '> .automator-json-editor-content ' +
+        '> .automator-json-editor-tree ' +
+        '> .automator-json-editor-node'
+      )
+      .first();
+
+
+    const valueInput = editor.find(
+
+      '.automator-json-editor-value'
+
+    ).first();
+
+
+    if(
+
+      !rootNode.length ||
+
+      !valueInput.length
+
+    ) {
+
+      return false;
+
+    }
+
+
+    try {
+
+
+      const value =
+
+        AutomatorJsonEditorReadNode(
+
+          rootNode
+
+        );
+
+
+      const jsonValue = JSON.stringify(
+
+        value
+
+      );
+
+
+      valueInput.val(
+
+        jsonValue
+
+      );
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        ''
+
+      );
+
+
+      if(triggerChange === true) {
+
+
+        AutomatorJsonEditorTriggerFormChange(
+
+          editor
+
+        );
+
+
+      }
+
+
+      return true;
+
+
+    } catch(error) {
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        'Não foi possível gerar o JSON: ' +
+
+        error.message
+
+      );
+
+
+      return false;
+
+
+    }
+
+
+  }
+
+
+
+  function AutomatorJsonEditorRefreshArrayIndexes(
+    container
+  ) {
+
+
+    container = $(container);
+
+
+    if(
+
+      container.attr(
+
+        'data-container-type'
+
+      ) != 'array'
+
+    ) {
+
+      return false;
+
+    }
+
+
+    container
+      .children(
+        '.automator-json-editor-node'
+      )
+      .each(function(index) {
+
+
+        $(this)
+          .children(
+            '.automator-json-editor-node-header'
+          )
+          .find(
+            '.automator-json-editor-node-key'
+          )
+          .first()
+          .val(
+            index
+          );
+
+
+      });
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorChangeNodeType(
+    node,
+    newType = 'string'
+  ) {
+
+
+    node = $(node);
+
+
+    newType = AutomatorJsonEditorNormalizeType(
+
+      newType
+
+    );
+
+
+    let currentValue;
+
+
+    try {
+
+      currentValue = AutomatorJsonEditorReadNode(
+
+        node
+
+      );
+
+    } catch(error) {
+
+      currentValue = null;
+
+    }
+
+
+    let newValue =
+
+      AutomatorJsonEditorCreateDefaultValue(
+
+        newType
+
+      );
+
+
+    if(newType == 'string') {
+
+
+      if(
+
+        currentValue !== null &&
+
+        typeof currentValue !== 'object'
+
+      ) {
+
+        newValue = String(
+
+          currentValue
+
+        );
+
+      }
+
+
+    } else if(newType == 'number') {
+
+
+      const parsedNumber = Number(
+
+        currentValue
+
+      );
+
+
+      newValue = isNaN(parsedNumber)
+
+        ? 0
+
+        : parsedNumber;
+
+
+    } else if(newType == 'boolean') {
+
+
+      newValue = (
+
+        currentValue === true ||
+
+        currentValue === 1 ||
+
+        currentValue === '1' ||
+
+        currentValue === 'true'
+
+      );
+
+
+    } else if(newType == 'object') {
+
+
+      if(
+
+        currentValue &&
+
+        typeof currentValue === 'object' &&
+
+        !Array.isArray(currentValue)
+
+      ) {
+
+        newValue = currentValue;
+
+      }
+
+
+    } else if(newType == 'array') {
+
+
+      if(Array.isArray(currentValue)) {
+
+        newValue = currentValue;
+
+      }
+
+
+    }
+
+
+    const body = node
+      .children(
+        '.automator-json-editor-node-body'
+      )
+      .first();
+
+
+    node.attr(
+
+      'data-node-type',
+
+      newType
+
+    );
+
+
+    let bodyHtml = '';
+
+
+    if(
+
+      newType == 'object' ||
+
+      newType == 'array'
+
+    ) {
+
+
+      bodyHtml +=
+
+        '<div ' +
+
+          'class="automator-json-editor-node-children" ' +
+
+          'data-container-type="' +
+
+            AutomatorJsonEditorEscapeHtml(
+
+              newType
+
+            ) +
+
+          '"' +
+
+        '>';
+
+        if(newType == 'array') {
+
+
+          newValue.forEach(function(
+
+            childValue,
+
+            childIndex
+
+          ) {
+
+
+            bodyHtml +=
+
+              AutomatorJsonEditorRenderNode(
+
+                String(childIndex),
+
+                childValue,
+
+                {
+
+                  parentType: 'array',
+
+                }
+
+              );
+
+
+          });
+
+
+        } else {
+
+
+          Object.keys(
+
+            newValue
+
+          ).forEach(function(childKey) {
+
+
+            bodyHtml +=
+
+              AutomatorJsonEditorRenderNode(
+
+                childKey,
+
+                newValue[childKey],
+
+                {
+
+                  parentType: 'object',
+
+                }
+
+              );
+
+
+          });
+
+
+        }
+
+
+      bodyHtml += '</div>';
+
+
+      bodyHtml +=
+
+        '<button ' +
+
+          'type="button" ' +
+
+          'class="' +
+
+            'btn btn-sm btn-outline-primary w-100 ' +
+
+            'automator-json-editor-node-add' +
+
+          '" ' +
+
+          'data-container-type="' +
+
+            AutomatorJsonEditorEscapeHtml(
+
+              newType
+
+            ) +
+
+          '"' +
+
+        '>' +
+
+          '<i class="fa fa-plus me-1"></i>' +
+
+          (
+
+            newType == 'array'
+
+              ? 'Adicionar item'
+
+              : 'Adicionar variável'
+
+          ) +
+
+        '</button>';
+
+
+    } else {
+
+
+      bodyHtml +=
+
+        '<div class="automator-json-editor-node-scalar">';
+
+
+        bodyHtml +=
+
+          AutomatorJsonEditorRenderScalarInput(
+
+            newType,
+
+            newValue
+
+          );
+
+
+      bodyHtml += '</div>';
+
+
+    }
+
+
+    body.html(
+
+      bodyHtml
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorBindEvents(
+    editor
+  ) {
+
+
+    editor = $(editor);
+
+
+    editor
+      .off(
+        '.automator-json-editor'
+      );
+
+
+    editor
+      .on(
+        'click.automator-json-editor',
+        '.automator-json-editor-node-add',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          const button = $(this);
+
+
+          const node = button.closest(
+
+            '.automator-json-editor-node'
+
+          );
+
+
+          const childrenContainer = node
+            .children(
+              '.automator-json-editor-node-body'
+            )
+            .children(
+              '.automator-json-editor-node-children'
+            )
+            .first();
+
+
+          const containerType =
+
+            AutomatorJsonEditorNormalizeType(
+
+              childrenContainer.attr(
+
+                'data-container-type'
+
+              )
+
+            );
+
+
+          const childIndex = childrenContainer
+            .children(
+              '.automator-json-editor-node'
+            )
+            .length;
+
+
+          const childKey =
+
+            containerType == 'array'
+
+              ? String(childIndex)
+
+              : 'variavel_' +
+
+                (
+
+                  childIndex + 1
+
+                );
+
+
+          childrenContainer.append(
+
+            AutomatorJsonEditorRenderNode(
+
+              childKey,
+
+              '',
+
+              {
+
+                parentType:
+
+                  containerType,
+
+              }
+
+            )
+
+          );
+
+
+          AutomatorJsonEditorRefreshArrayIndexes(
+
+            childrenContainer
+
+          );
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            true
+
+          );
+
+
+          const lastNode = childrenContainer
+            .children(
+              '.automator-json-editor-node'
+            )
+            .last();
+
+
+          lastNode
+            .find(
+              '.automator-json-editor-node-key:not(:disabled)'
+            )
+            .first()
+            .trigger(
+              'focus'
+            );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    editor
+      .on(
+        'click.automator-json-editor',
+        '.automator-json-editor-node-delete',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          const node = $(this).closest(
+
+            '.automator-json-editor-node'
+
+          );
+
+
+          const parentContainer = node.parent(
+
+            '.automator-json-editor-node-children'
+
+          );
+
+
+          node.remove();
+
+
+          AutomatorJsonEditorRefreshArrayIndexes(
+
+            parentContainer
+
+          );
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            true
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    editor
+      .on(
+        'change.automator-json-editor',
+        '.automator-json-editor-node-type',
+        function() {
+
+
+          const node = $(this).closest(
+
+            '.automator-json-editor-node'
+
+          );
+
+
+          AutomatorJsonEditorChangeNodeType(
+
+            node,
+
+            $(this).val()
+
+          );
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    editor
+      .on(
+        'input.automator-json-editor ' +
+        'change.automator-json-editor',
+        '.automator-json-editor-node-key, ' +
+        '.automator-json-editor-node-value',
+        function() {
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            true
+
+          );
+
+
+        }
+      );
+
+
+    editor
+      .on(
+        'click.automator-json-editor',
+        '.automator-json-editor-format',
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            false
+
+          );
+
+
+          const valueInput = editor.find(
+
+            '.automator-json-editor-value'
+
+          ).first();
+
+
+          let currentValue = {};
+
+
+          try {
+
+            currentValue = JSON.parse(
+
+              String(
+
+                valueInput.val() || '{}'
+
+              )
+
+            );
+
+          } catch(error) {
+
+
+            AutomatorJsonEditorShowError(
+
+              editor,
+
+              'O valor atual não contém um JSON válido.'
+
+            );
+
+
+            return false;
+
+          }
+
+
+          const rootTree = editor.find(
+
+            '.automator-json-editor-tree'
+
+          ).first();
+
+
+          rootTree.html(
+
+            AutomatorJsonEditorRenderNode(
+
+              '',
+
+              currentValue,
+
+              {
+
+                isRoot: true,
+                parentType: 'object',
+
+              }
+
+            )
+
+          );
+
+
+          AutomatorJsonEditorSyncValue(
+
+            editor,
+
+            true
+
+          );
+
+
+          return false;
+
+
+        }
+      );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza o valor e a árvore visual de um editor JSON já renderizado
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorSetValue(
+    target,
+    value = {},
+    triggerChange = false
+  ) {
+
+
+    target = $(target);
+
+
+    if(!target.length) {
+
+      return false;
+
+    }
+
+
+    let editor = $();
+
+
+    if(
+      target.is(
+        '[data-automator-json-editor="true"]'
+      )
+    ) {
+
+      editor = target.first();
+
+    } else {
+
+
+      editor = target.closest(
+
+        '[data-automator-json-editor="true"]'
+
+      ).first();
+
+
+      if(!editor.length) {
+
+
+        editor = target.find(
+
+          '[data-automator-json-editor="true"]'
+
+        ).first();
+
+
+      }
+
+
+    }
+
+
+    if(!editor.length) {
+
+      return false;
+
+    }
+
+
+    const valueInput = editor.find(
+
+      '.automator-json-editor-value'
+
+    ).first();
+
+
+    const rootTree = editor.find(
+
+      '.automator-json-editor-tree'
+
+    ).first();
+
+
+    if(
+      !valueInput.length ||
+      !rootTree.length
+    ) {
+
+      return false;
+
+    }
+
+
+    let parsedValue = {};
+
+
+    try {
+
+
+      parsedValue =
+
+        AutomatorJsonEditorParseValue(
+
+          value
+
+        );
+
+
+    } catch(error) {
+
+
+      parsedValue = {};
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        'O valor informado não contém um JSON válido.'
+
+      );
+
+
+    }
+
+
+    if(
+      parsedValue === undefined ||
+      typeof parsedValue === 'function'
+    ) {
+
+      parsedValue = {};
+
+    }
+
+
+    let jsonValue = '{}';
+
+
+    try {
+
+
+      jsonValue = JSON.stringify(
+
+        parsedValue
+
+      );
+
+
+      if(
+        jsonValue === undefined ||
+        jsonValue === null ||
+        jsonValue === ''
+      ) {
+
+        jsonValue = '{}';
+
+      }
+
+
+    } catch(error) {
+
+
+      parsedValue = {};
+
+
+      jsonValue = '{}';
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        'Não foi possível converter o valor informado para JSON.'
+
+      );
+
+
+    }
+
+
+    valueInput.val(
+
+      jsonValue
+
+    );
+
+
+    rootTree.html(
+
+      AutomatorJsonEditorRenderNode(
+
+        '',
+
+        parsedValue,
+
+        {
+
+          isRoot: true,
+
+          parentType: 'object',
+
+        }
+
+      )
+
+    );
+
+
+    AutomatorJsonEditorBindEvents(
+
+      editor
+
+    );
+
+
+    editor.attr(
+
+      'data-automator-json-initialized',
+
+      'true'
+
+    );
+
+
+    AutomatorJsonEditorSyncValue(
+
+      editor,
+
+      triggerChange === true
+
+    );
+
+
+    if(triggerChange !== true) {
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        ''
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorInitialize(
+    editor
+  ) {
+
+
+    editor = $(editor);
+
+
+    if(
+
+      !editor.length ||
+
+      editor.attr(
+
+        'data-automator-json-initialized'
+
+      ) == 'true'
+
+    ) {
+
+      return false;
+
+    }
+
+
+    const valueInput = editor.find(
+
+      '.automator-json-editor-value'
+
+    ).first();
+
+
+    let initialValue = {};
+
+
+    try {
+
+
+      initialValue =
+
+        AutomatorJsonEditorParseValue(
+
+          valueInput.val()
+
+        );
+
+
+    } catch(error) {
+
+
+      initialValue = {};
+
+
+      AutomatorJsonEditorShowError(
+
+        editor,
+
+        'O valor salvo não contém um JSON válido.'
+
+      );
+
+
+    }
+
+
+    editor.find(
+
+      '.automator-json-editor-tree'
+
+    ).first().html(
+
+      AutomatorJsonEditorRenderNode(
+
+        '',
+
+        initialValue,
+
+        {
+
+          isRoot: true,
+          parentType: 'object',
+
+        }
+
+      )
+
+    );
+
+
+    AutomatorJsonEditorBindEvents(
+
+      editor
+
+    );
+
+
+    AutomatorJsonEditorSyncValue(
+
+      editor,
+
+      false
+
+    );
+
+
+    editor.attr(
+
+      'data-automator-json-initialized',
+
+      'true'
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorInitializeAll(
+    container = document
+  ) {
+
+
+    $(container)
+      .find(
+        '[data-automator-json-editor="true"]'
+      )
+      .addBack(
+        '[data-automator-json-editor="true"]'
+      )
+      .each(function() {
+
+
+        AutomatorJsonEditorInitialize(
+
+          this
+
+        );
+
+
+      });
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorJsonEditorObserveDOM() {
+
+
+    if(
+
+      window.__automatorJsonEditorObserver
+
+    ) {
+
+      return window.__automatorJsonEditorObserver;
+
+    }
+
+
+    const observer = new MutationObserver(
+
+      function(mutations) {
+
+
+        mutations.forEach(function(mutation) {
+
+
+          mutation.addedNodes.forEach(function(node) {
+
+
+            if(
+
+              !node ||
+
+              node.nodeType !== 1
+
+            ) {
+
+              return;
+
+            }
+
+
+            AutomatorJsonEditorInitializeAll(
+
+              node
+
+            );
+
+
+          });
+
+
+        });
+
+
+      }
+
+    );
+
+
+    observer.observe(
+
+      document.body,
+
+      {
+
+        childList: true,
+        subtree: true,
+
+      }
+
+    );
+
+
+    window.__automatorJsonEditorObserver =
+
+      observer;
+
+
+    return observer;
+
+
+  }
+
+
+
+  document.addEventListener(
+
+    'DOMContentLoaded',
+
+    function() {
+
+
+      AutomatorJsonEditorInitializeAll(
+
+        document
+
+      );
+
+
+      AutomatorJsonEditorObserveDOM();
+
+
+    }
+
+  );

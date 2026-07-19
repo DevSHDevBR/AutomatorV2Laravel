@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 use App\Helpers\SysAutomator;
 
+use App\Models\SysForm;
 use App\Models\SysFieldType;
 use App\Models\SysPagination;
 use App\Models\SysPaginationsArg;
@@ -693,6 +694,7 @@ class PaginationsController extends Controller {
   |--------------------------------------------------------------------------
   */
 
+
   private function preparePaginationEditorSecurityData(): array {
 
 
@@ -783,6 +785,112 @@ class PaginationsController extends Controller {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Formulários auxiliares do editor de ações
+    |--------------------------------------------------------------------------
+    */
+
+
+    $actionBuilderForms = [];
+
+
+    $actionBuilderFormNames = [
+
+      'modal-form' => 'admin-open-form-modal',
+
+      'modal-view' => 'admin-open-view-modal',
+
+    ];
+
+
+    foreach(
+      $actionBuilderFormNames as
+      $actionBuilderType =>
+      $actionBuilderFormName
+    ) {
+
+
+      $actionBuilderForm = SysForm::where(
+
+        'tbl_sys_form_name',
+
+        $actionBuilderFormName
+
+      )->first();
+
+
+      if($actionBuilderForm === null) {
+
+        continue;
+
+      }
+
+
+      $actionBuilderForms[$actionBuilderType] = [
+
+        'id' =>
+
+          (string) $actionBuilderForm->tbl_sys_form_ID,
+
+        'name' =>
+
+          (string) $actionBuilderForm->tbl_sys_form_name,
+
+        'title' =>
+
+          (string) $actionBuilderForm->tbl_sys_form_title,
+
+      ];
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mapa de formulários disponíveis
+    |--------------------------------------------------------------------------
+    |
+    | O formulário admin-open-form-modal utiliza o nome do formulário no
+    | campo relation. A função AutomatorPaginationCreateModalForm(), por outro
+    | lado, recebe o ID numérico. Este mapa permite fazer essa conversão
+    | exclusivamente no editor de paginação.
+    |--------------------------------------------------------------------------
+    */
+
+
+    $availableForms = SysForm::query()
+      ->orderBy(
+        'tbl_sys_form_title',
+        'asc'
+      )
+      ->get()
+      ->map(function($form) {
+
+
+        return [
+
+          'id' =>
+
+            (string) $form->tbl_sys_form_ID,
+
+          'name' =>
+
+            (string) $form->tbl_sys_form_name,
+
+          'title' =>
+
+            (string) $form->tbl_sys_form_title,
+
+        ];
+
+
+      })
+      ->values()
+      ->toArray();
+
+
     return [
 
       'userTypes' => $userTypes,
@@ -809,10 +917,154 @@ class PaginationsController extends Controller {
 
       ],
 
+      'paginationActionBuilder' => [
+
+        'forms' =>
+
+          $actionBuilderForms,
+
+        'availableForms' =>
+
+          $availableForms,
+
+      ],
+
+      'pagination_action_builder' => [
+
+        'forms' =>
+
+          $actionBuilderForms,
+
+        'available_forms' =>
+
+          $availableForms,
+
+      ],
+
     ];
 
 
   }
+  // private function preparePaginationEditorSecurityData(): array {
+
+
+  //   $userTypes = UsersType::query()
+  //     ->orderBy(
+  //       'tbl_users_type_ID',
+  //       'asc'
+  //     )
+  //     ->get()
+  //     ->map(function($userType) {
+
+
+  //       $userTypeID =
+
+  //         (string) $userType->tbl_users_type_ID;
+
+
+  //       $userTypeName =
+
+  //         (string) $userType->tbl_users_type_name;
+
+
+  //       return [
+
+  //         'id' => $userTypeID,
+
+  //         'name' => $userTypeName,
+
+  //         'tbl_users_type_ID' => $userTypeID,
+
+  //         'tbl_users_type_name' => $userTypeName,
+
+  //         'isDeveloper' =>
+
+  //           mb_strtolower(
+
+  //             trim($userTypeName)
+
+  //           ) === 'desenvolvedor',
+
+  //       ];
+
+
+  //     })
+  //     ->values()
+  //     ->toArray();
+
+
+  //   $currentUser = Auth::user();
+
+
+  //   $currentUserTypeName = '';
+
+
+  //   if($currentUser !== null) {
+
+
+  //     $currentUserTypeID =
+
+  //       $currentUser->tbl_users_type_ID ??
+
+  //       $currentUser->tbl_user_type_ID ??
+
+  //       null;
+
+
+  //     if($currentUserTypeID !== null) {
+
+
+  //       $currentUserTypeName =
+
+  //         (string) UsersType::where(
+
+  //           'tbl_users_type_ID',
+
+  //           $currentUserTypeID
+
+  //         )->value(
+
+  //           'tbl_users_type_name'
+
+  //         );
+
+
+  //     }
+
+
+  //   }
+
+
+  //   return [
+
+  //     'userTypes' => $userTypes,
+
+  //     'user_types' => $userTypes,
+
+  //     'currentUser' => [
+
+  //       'id' =>
+
+  //         $currentUser->tbl_user_ID ??
+
+  //         $currentUser->id ??
+
+  //         null,
+
+  //       'isDeveloper' =>
+
+  //         mb_strtolower(
+
+  //           trim($currentUserTypeName)
+
+  //         ) === 'desenvolvedor',
+
+  //     ],
+
+  //   ];
+
+
+  // }
 
 
   /*
@@ -1391,6 +1643,464 @@ class PaginationsController extends Controller {
 
   /*
   |--------------------------------------------------------------------------
+  | Normaliza o operador de uma condição da paginação
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorWhereOperator(
+    $operator
+  ): string {
+
+
+    $operator = trim(
+
+      (string) $operator
+
+    );
+
+
+    $operators = [
+
+      '=='  => '=',
+
+      '===' => '=',
+
+      '='   => '=',
+
+      '!='  => '!=',
+
+      '!==' => '!=',
+
+      '<>'  => '!=',
+
+      '>'   => '>',
+
+      '>='  => '>=',
+
+      '<'   => '<',
+
+      '<='  => '<=',
+
+      'like' => 'like',
+
+      'LIKE' => 'like',
+
+    ];
+
+
+    if(
+      array_key_exists(
+
+        $operator,
+
+        $operators
+
+      )
+    ) {
+
+      return $operators[$operator];
+
+    }
+
+
+    return '=';
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o comparador lógico de uma condição
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorWhereBoolean(
+    $boolean
+  ): string {
+
+
+    $boolean = strtoupper(
+
+      trim(
+
+        (string) $boolean
+
+      )
+
+    );
+
+
+    return $boolean === 'OR'
+
+      ? 'OR'
+
+      : 'AND';
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o valor de uma condição
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorWhereValue(
+    $value
+  ) {
+
+
+    if(
+      $value === null ||
+      is_bool($value) ||
+      is_int($value) ||
+      is_float($value)
+    ) {
+
+      return $value;
+
+    }
+
+
+    if(is_array($value)) {
+
+      return $value;
+
+    }
+
+
+    return (string) $value;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza os filtros da paginação
+  |--------------------------------------------------------------------------
+  */
+
+  private function normalizePaginationEditorWhereConditions(
+    $conditions,
+    string $table = ''
+  ): array {
+
+
+    $conditions =
+
+      $this->decodePaginationEditorValue(
+
+        $conditions
+
+      );
+
+
+    if(!is_array($conditions)) {
+
+      return [];
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Uma condição isolada também é aceita
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+      isset($conditions[0]) &&
+      !is_array($conditions[0]) &&
+      !is_object($conditions[0])
+    ) {
+
+      $conditions = [
+
+        $conditions
+
+      ];
+
+    }
+
+
+    $tableColumns = [];
+
+
+    if(
+      $table !== '' &&
+      \Illuminate\Support\Facades\Schema::hasTable(
+
+        $table
+
+      )
+    ) {
+
+
+      $tableColumns =
+
+        \Illuminate\Support\Facades\Schema::getColumnListing(
+
+          $table
+
+        );
+
+
+    }
+
+
+    $normalizedConditions = [];
+
+
+    foreach(
+      array_values($conditions)
+      as $conditionIndex => $condition
+    ) {
+
+
+      if(is_object($condition)) {
+
+        $condition = (array) $condition;
+
+      }
+
+
+      if(!is_array($condition)) {
+
+        continue;
+
+      }
+
+
+      $column = '';
+
+      $operator = '=';
+
+      $value = null;
+
+      $boolean = 'AND';
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formato posicional
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(array_is_list($condition)) {
+
+
+        if(count($condition) === 2) {
+
+
+          $column = trim(
+
+            (string) (
+
+              $condition[0] ?? ''
+
+            )
+
+          );
+
+
+          $operator = '=';
+
+
+          $value =
+
+            $condition[1] ?? null;
+
+
+        } else {
+
+
+          $column = trim(
+
+            (string) (
+
+              $condition[0] ?? ''
+
+            )
+
+          );
+
+
+          $operator =
+
+            $condition[1] ?? '=';
+
+
+          $value =
+
+            $condition[2] ?? null;
+
+
+          $boolean =
+
+            $condition[3] ?? 'AND';
+
+
+        }
+
+
+      } else {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Formato associativo
+        |--------------------------------------------------------------------------
+        */
+
+
+        $column = trim(
+
+          (string) (
+
+            $condition['column'] ??
+
+            $condition['field'] ??
+
+            $condition['key'] ??
+
+            $condition['name'] ??
+
+            ''
+
+          )
+
+        );
+
+
+        $operator =
+
+          $condition['operator'] ??
+
+          $condition['compare'] ??
+
+          $condition['comparison'] ??
+
+          '=';
+
+
+        $value =
+
+          array_key_exists(
+            'value',
+            $condition
+          )
+
+            ? $condition['value']
+
+            : null;
+
+
+        $boolean =
+
+          $condition['boolean'] ??
+
+          $condition['connector'] ??
+
+          $condition['logical'] ??
+
+          'AND';
+
+
+      }
+
+
+      if($column === '') {
+
+        continue;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Impede que o editor grave uma coluna inexistente
+      |--------------------------------------------------------------------------
+      */
+
+
+      if(
+        count($tableColumns) > 0 &&
+        !in_array(
+
+          $column,
+
+          $tableColumns,
+
+          true
+
+        )
+      ) {
+
+        continue;
+
+      }
+
+
+      $operator =
+
+        $this->normalizePaginationEditorWhereOperator(
+
+          $operator
+
+        );
+
+
+      $boolean =
+
+        $this->normalizePaginationEditorWhereBoolean(
+
+          $boolean
+
+        );
+
+
+      if($conditionIndex === 0) {
+
+        $boolean = 'AND';
+
+      }
+
+
+      $normalizedConditions[] = [
+
+        $column,
+
+        $operator,
+
+        $this->normalizePaginationEditorWhereValue(
+
+          $value
+
+        ),
+
+        $boolean,
+
+      ];
+
+
+    }
+
+
+    return $normalizedConditions;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Normaliza o payload recebido do editor
   |--------------------------------------------------------------------------
   */
@@ -1636,6 +2346,30 @@ class PaginationsController extends Controller {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Filtros da paginação
+    |--------------------------------------------------------------------------
+    */
+
+
+    $paginationArgs['where'] =
+
+      $this->normalizePaginationEditorWhereConditions(
+
+        $paginationArgs['where'] ??
+
+        $payload['where'] ??
+
+        [],
+
+        $pagination[
+          'tbl_sys_pagination_table'
+        ]
+
+      );
+
+
     $paginationArgs['actions'] =
 
       $this->normalizePaginationEditorObject(
@@ -1737,6 +2471,355 @@ class PaginationsController extends Controller {
 
 
   }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza o payload recebido do editor
+  |--------------------------------------------------------------------------
+  */
+
+  // private function normalizePaginationEditorPayload(
+  //   array $payload
+  // ): array {
+
+
+  //   $pagination =
+
+  //     $this->normalizePaginationEditorObject(
+
+  //       $payload['pagination'] ?? []
+
+  //     );
+
+
+  //   $paginationArgs =
+
+  //     $this->normalizePaginationEditorObject(
+
+  //       $payload['pagination_args'] ?? []
+
+  //     );
+
+
+  //   $paginationCols =
+
+  //     $this->normalizePaginationEditorList(
+
+  //       $payload['pagination_cols'] ??
+
+  //       $payload['columns'] ??
+
+  //       $payload['cols'] ??
+
+  //       []
+
+  //     );
+
+
+  //   $paginationFields = [
+
+  //     'tbl_sys_pagination_name',
+  //     'tbl_sys_pagination_route',
+  //     'tbl_sys_pagination_title',
+  //     'tbl_sys_pagination_table',
+  //     'tbl_sys_pagination_index',
+  //     'tbl_sys_pagination_locked',
+
+  //   ];
+
+
+  //   foreach($paginationFields as $fieldName) {
+
+
+  //     if(
+  //       !array_key_exists(
+  //         $fieldName,
+  //         $pagination
+  //       ) &&
+  //       array_key_exists(
+  //         $fieldName,
+  //         $payload
+  //       )
+  //     ) {
+
+  //       $pagination[$fieldName] =
+
+  //         $payload[$fieldName];
+
+
+  //     }
+
+
+  //   }
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_name'
+
+  //   ] = trim((string) (
+
+  //     $pagination[
+  //       'tbl_sys_pagination_name'
+  //     ] ?? ''
+
+  //   ));
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_route'
+
+  //   ] = trim((string) (
+
+  //     $pagination[
+  //       'tbl_sys_pagination_route'
+  //     ] ?? ''
+
+  //   ));
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_title'
+
+  //   ] = trim((string) (
+
+  //     $pagination[
+  //       'tbl_sys_pagination_title'
+  //     ] ?? ''
+
+  //   ));
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_table'
+
+  //   ] = trim((string) (
+
+  //     $pagination[
+  //       'tbl_sys_pagination_table'
+  //     ] ?? ''
+
+  //   ));
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_index'
+
+  //   ] = trim((string) (
+
+  //     $pagination[
+  //       'tbl_sys_pagination_index'
+  //     ] ?? ''
+
+  //   ));
+
+
+  //   $pagination[
+
+  //     'tbl_sys_pagination_locked'
+
+  //   ] = $this->normalizePaginationEditorBoolean(
+
+  //     $pagination[
+  //       'tbl_sys_pagination_locked'
+  //     ] ?? false
+
+  //   );
+
+
+  //   $reservedFields = array_merge(
+
+  //     $paginationFields,
+
+  //     [
+
+  //       'id',
+  //       'acao',
+  //       'editorAction',
+  //       'paginationID',
+  //       'pagination_id',
+  //       'tbl_sys_pagination_ID',
+  //       'pagination',
+  //       'pagination_args',
+  //       'pagination_cols',
+  //       'columns',
+  //       'cols',
+
+  //     ]
+
+  //   );
+
+
+  //   foreach($payload as $key => $value) {
+
+
+  //     if(
+  //       in_array(
+  //         $key,
+  //         $reservedFields,
+  //         true
+  //       )
+  //     ) {
+
+  //       continue;
+
+  //     }
+
+
+  //     if(
+  //       !array_key_exists(
+  //         $key,
+  //         $paginationArgs
+  //       )
+  //     ) {
+
+  //       $paginationArgs[$key] =
+
+  //         $value;
+
+
+  //     }
+
+
+  //   }
+
+
+  //   $paginationArgs['page_name'] = trim((string) (
+
+  //     $paginationArgs['page_name'] ??
+
+  //     $pagination[
+  //       'tbl_sys_pagination_route'
+  //     ] ??
+
+  //     $pagination[
+  //       'tbl_sys_pagination_name'
+  //     ] ??
+
+  //     ''
+
+  //   ));
+
+
+  //   $paginationArgs['per_page'] = (int) (
+
+  //     $paginationArgs['per_page'] ?? 15
+
+  //   );
+
+
+  //   if($paginationArgs['per_page'] <= 0) {
+
+  //     $paginationArgs['per_page'] = 15;
+
+  //   }
+
+
+  //   $paginationArgs['actions'] =
+
+  //     $this->normalizePaginationEditorObject(
+
+  //       $paginationArgs['actions'] ??
+
+  //       $payload['actions'] ??
+
+  //       []
+
+  //     );
+
+
+  //   $paginationArgs['header_actions'] =
+
+  //     $this->normalizePaginationEditorList(
+
+  //       $paginationArgs['header_actions'] ??
+
+  //       $payload['header_actions'] ??
+
+  //       []
+
+  //     );
+
+
+  //   $paginationArgs['list_actions'] =
+
+  //     $this->normalizePaginationEditorList(
+
+  //       $paginationArgs['list_actions'] ??
+
+  //       $payload['list_actions'] ??
+
+  //       []
+
+  //     );
+
+
+  //   $normalizedColumns = [];
+
+
+  //   foreach($paginationCols as $columnIndex => $column) {
+
+
+  //     $column =
+
+  //       $this->normalizePaginationEditorObject(
+
+  //         $column
+
+  //       );
+
+
+  //     if(
+  //       $this->normalizePaginationEditorBoolean(
+
+  //         $column[
+  //           'is_action_buttons_column'
+  //         ] ??
+
+  //         $column[
+  //           'isActionButtonsColumn'
+  //         ] ??
+
+  //         false
+
+  //       )
+  //     ) {
+
+  //       continue;
+
+  //     }
+
+
+  //     $normalizedColumns[] =
+
+  //       $this->normalizePaginationEditorColumnPayload(
+
+  //         $column,
+
+  //         $columnIndex
+
+  //       );
+
+
+  //   }
+
+
+  //   return [
+
+  //     'pagination' => $pagination,
+
+  //     'pagination_args' => $paginationArgs,
+
+  //     'pagination_cols' => $normalizedColumns,
+
+  //   ];
+
+
+  // }
 
 
 

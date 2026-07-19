@@ -4,6 +4,7 @@
 
     $props = SysAutomator::SysAutomatorNormalizeRelationFieldProps($props);
 
+    
     $placeholder = $props['placeholder'] ?? $config['placeholder'] ?? $field_label;
 
     $options = [];

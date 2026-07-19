@@ -567,6 +567,7 @@
         // API'S - END
 
 
+
         // PAGES - START
 
           [
@@ -1334,6 +1335,217 @@
           ],
 
         // USERS - END
+
+
+
+        // NOTIFICATIONS - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-notifications-pagination',
+            'tbl_sys_pagination_route'  => 'admin-notifications',
+            'tbl_sys_pagination_title'  => 'Paginação notificações do sistema de usuarios.',
+            'tbl_sys_pagination_table'  => 'tbl_sys_notifications',
+            'tbl_sys_pagination_index'  => 'tbl_sys_notification_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-notifications-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'add' => [
+
+                    'route'  => 'admin-api-notifications-store',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-notifications-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'delete' => [
+
+                    'route'  => 'admin-api-notifications-delete',
+                    'params' => [],
+                    'show'   => false
+                  
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'header_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                    [
+
+                      'type'    => 'button',
+                      'action'  => 'add',
+                      'id'      => 'btn-add-notification',
+                      'class'   => 'btn btn-success',
+                      'icon'    => 'plus',
+                      'text'    => 'Nova Notificação',
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ");",
+
+                    ]
+
+                  ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  // [
+
+                  //   'type'    => 'button',
+                  //   'action'  => 'get',
+                  //   'id'      => 'btn-view-notification',
+                  //   'class'   => 'btn-warning text-white',
+                  //   'icon'    => 'pencil',
+                  //   'text'    => 'Visualizar Notificação',
+                  //   'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Visualizar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                  //   // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
+
+                  // ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-edit-notification',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'pencil',
+                    'text'    => 'Editar Notificação',
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'delete',
+                    'id'      => 'btn-delete-notification',
+                    'class'   => 'btn-danger',
+                    'icon'    => 'trash',
+                    'text'    => 'Excluir Notificação',
+                    'onclick' => '',
+
+                  ]
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_user_ID',
+                'tbl_sys_paginations_col_title'  => 'Usuário',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => json_encode([
+
+                  'type'     => 'single',
+                  'mode'     => 'revert',
+                  'table'    => 'tbl_users',
+                  'column'   => 'tbl_user_ID',
+                  'display'  => 'tbl_user_name',
+                  'nullable' => true,
+                  'empty'    => '- - -'
+                  
+                ]),
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              // [
+                
+              //   'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+              //   'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_title',
+              //   'tbl_sys_paginations_col_title'  => 'Titulo',
+              //   'tbl_sys_paginations_col_header' => '',
+              //   'tbl_sys_paginations_col_body'   => '',
+              //   'tbl_sys_paginations_col_props'  => '',
+              //   'tbl_sys_paginations_col_attrs'  => '',
+              //   'tbl_sys_paginations_col_search' => true,
+              //   'tbl_sys_paginations_col_sort'   => false,
+              //   'cols_access'                    => [1, 2]
+
+              // ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_created_at',
+                'tbl_sys_paginations_col_title'  => 'Data envio',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => json_encode([
+
+                  'format'  => 'Y-m-d H:i:s',
+                  'display' => 'd/m/Y - H:i',
+                  
+                ]),
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+
+            ],
+
+          ],
+
+        // NOTIFICATIONS - END
 
 
 
@@ -2603,410 +2815,6 @@
 
         // SHORTCODES - END
 
-
-        // USERS2 - START
-
-          [
-
-            'tbl_sys_pagination_name'   => 'admin-users-2-pagination',
-            'tbl_sys_pagination_route'  => 'admin-dashboard',
-            'tbl_sys_pagination_title'  => 'Paginação de usuários2',
-            'tbl_sys_pagination_table'  => 'tbl_users',
-            'tbl_sys_pagination_index'  => 'tbl_user_ID',
-            'tbl_sys_pagination_locked' => true,
-            'pagination_args'           => [
-              
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'per_page',
-                'tbl_sys_paginations_arg_value' => 15
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                  'get' => [
-
-                    'route'  => 'admin-api-users-get',
-                    'params' => ['id' => "#ID#"],
-                    'show'   => true,
-
-                  ],
-                  'add' => [
-
-                    'route'  => 'admin-api-users-store',
-                    'params' => [],
-                    'show'   => true,
-
-                  ],
-                  'edit' => [
-
-                    'route'  => 'admin-api-users-update',
-                    'params' => [],
-                    'show'   => true,
-
-                  ],
-                  'delete' => [
-
-                    'route'  => 'admin-api-users-delete',
-                    'params' => [],
-                    'show'   => false,
-                    // 'roles'  => [
-
-                    //   [
-
-                    //     'key'     => 'tbl_users_type_locked',
-                    //     'compare' => '==',
-                    //     'value'   => false
-                      
-                    //   ]
-
-                    // ]
-                  
-                  ]
-
-                ])
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'header_actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                    [
-
-                      'type'    => 'button',
-                      'action'  => 'add',
-                      'id'      => 'btn-add-user',
-                      'class'   => 'btn btn-success',
-                      'icon'    => 'plus',
-                      'text'    => 'Novo Usuário',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
-                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ");",
-
-                    ]
-
-                  ])
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'list_actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                  [
-
-                    'type'    => 'button',
-                    'action'  => 'edit',
-                    'id'      => 'btn-edit',
-                    'class'   => 'btn-primary',
-                    'icon'    => 'pencil',
-                    'text'    => 'Editar Usuário',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-edit') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
-                    // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
-
-                  ],
-                  [
-
-                    'type'    => 'button',
-                    'action'  => 'delete',
-                    'id'      => 'btn-delete',
-                    'class'   => 'btn-danger',
-                    'icon'    => 'trash',
-                    'text'    => 'Excluir Usuário',
-                    'onclick' => '',
-
-                  ]
-
-                ])
-              
-              ],
-
-            ],
-            'pagination_cols'           => [
-
-              [
-
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_user_ID',
-                'tbl_sys_paginations_col_title'  => 'ID',
-                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => true,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_user_login',
-                'tbl_sys_paginations_col_title'  => 'Usuário',
-                'tbl_sys_paginations_col_header' => '',
-                'tbl_sys_paginations_col_body'   => '',
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => false,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_user_name',
-                'tbl_sys_paginations_col_title'  => 'Nome',
-                'tbl_sys_paginations_col_header' => '',
-                'tbl_sys_paginations_col_body'   => '',
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => false,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_user_status',
-                'tbl_sys_paginations_col_title'  => 'Status',
-                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => json_encode([
-
-                  'replaced' => [
-
-                    'ativo'   => '<span class="badge text-bg-success">Ativo</span>',
-                    'inativo' => '<span class="badge text-bg-danger">Inativo</span>'
-                  
-                  ]
-                  
-                ]),
-                'tbl_sys_paginations_col_search' => false,
-                'tbl_sys_paginations_col_sort'   => true,
-                'cols_access'                    => [1, 2]
-
-              ]
-
-            ],
-
-          ],
-
-        // USERS2 - END
-
-
-        // NAVS2 - START
-
-          [
-
-            'tbl_sys_pagination_name'   => 'admin-navs2-pagination',
-            'tbl_sys_pagination_route'  => 'admin-navs',
-            'tbl_sys_pagination_title'  => 'Paginação posições de menus de navegação.',
-            'tbl_sys_pagination_table'  => 'tbl_sys_navs',
-            'tbl_sys_pagination_index'  => 'tbl_sys_nav_ID',
-            'tbl_sys_pagination_locked' => true,
-            'pagination_args'           => [
-              
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'per_page',
-                'tbl_sys_paginations_arg_value' => 15
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                  'get' => [
-
-                    'route'  => 'admin-api-navs-get',
-                    'params' => ['id' => "#ID#"],
-                    'show'   => true,
-
-                  ],
-                  'add' => [
-
-                    'route'  => 'admin-api-navs-store',
-                    'params' => [],
-                    'show'   => true,
-
-                  ],
-                  'edit' => [
-
-                    'route'  => 'admin-api-navs-update',
-                    'params' => [],
-                    'show'   => true,
-
-                  ],
-                  'delete' => [
-
-                    'route'  => 'admin-api-navs-delete',
-                    'params' => [],
-                    'show'   => false,
-                    'roles'  => [
-
-                      [
-
-                        'key'     => 'tbl_sys_nav_locked',
-                        'compare' => '==',
-                        'value'   => false
-                      
-                      ]
-
-                    ]
-                  
-                  ]
-
-                ])
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'header_actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                    [
-
-                      'type'    => 'button',
-                      'action'  => 'add',
-                      'id'      => 'btn-add-nav',
-                      'class'   => 'btn btn-success',
-                      'icon'    => 'plus',
-                      'text'    => 'Nova Área de navegação',
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
-                      // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ");",
-
-                    ]
-
-                  ])
-              
-              ],
-              [
-
-                'tbl_sys_paginations_arg_name'  => 'list_actions',
-                'tbl_sys_paginations_arg_value' => json_encode([
-
-                  [
-
-                    'type'    => 'button',
-                    'action'  => 'edit',
-                    'id'      => 'btn-edit',
-                    'class'   => 'btn-primary',
-                    'icon'    => 'pencil',
-                    'text'    => 'Editar Área de navegação',
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
-                    // 'onclick' => "AutomatorPaginationCreateModalForm('" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id});",
-
-                  ],
-                  [
-
-                    'type'    => 'button',
-                    'action'  => 'delete',
-                    'id'      => 'btn-delete',
-                    'class'   => 'btn-danger',
-                    'icon'    => 'trash',
-                    'text'    => 'Excluir Área de navegação',
-                    'onclick' => '',
-
-                  ]
-
-                ])
-              
-              ],
-
-            ],
-            'pagination_cols'           => [
-
-              [
-
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_sys_nav_ID',
-                'tbl_sys_paginations_col_title'  => 'ID',
-                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => true,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_sys_nav_name',
-                'tbl_sys_paginations_col_title'  => 'Nome',
-                'tbl_sys_paginations_col_header' => '',
-                'tbl_sys_paginations_col_body'   => '',
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => false,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_sys_nav_title',
-                'tbl_sys_paginations_col_title'  => 'Titulo',
-                'tbl_sys_paginations_col_header' => '',
-                'tbl_sys_paginations_col_body'   => '',
-                'tbl_sys_paginations_col_props'  => '',
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => true,
-                'tbl_sys_paginations_col_sort'   => false,
-                'cols_access'                    => [1, 2]
-
-              ],
-              [
-                
-                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
-                'tbl_sys_paginations_col_name'   => 'tbl_sys_nav_ID',
-                'tbl_sys_paginations_col_title'  => 'Menu',
-                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
-                'tbl_sys_paginations_col_props'  => json_encode([
-
-                  'type'     => 'single',
-                  'mode'     => 'revert',
-                  'table'    => 'tbl_sys_menus',
-                  'column'   => 'tbl_sys_nav_ID',
-                  'display'  => 'tbl_sys_menu_title',
-                  'nullable' => true,
-                  'empty'    => '- - -'
-                  
-                ]),
-                'tbl_sys_paginations_col_attrs'  => '',
-                'tbl_sys_paginations_col_search' => false,
-                'tbl_sys_paginations_col_sort'   => false,
-                'cols_access'                    => [1, 2]
-
-              ],
-
-            ],
-
-          ],
-
-        // NAVS2 - END
 
       ];
 

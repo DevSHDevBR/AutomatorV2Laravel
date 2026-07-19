@@ -1270,6 +1270,8 @@
                     $fieldClass = $configContentFieldArgs['class'] ?? 'form-floating mb-3';
 
                     $fieldLabel = $configContentFieldArgs['label'] ?? $configContentFieldKey;
+                    
+                    $fieldPlacehold = ( (isset($configContentFieldArgs['placeholder'])) ? $configContentFieldArgs['placeholder'] : ( ($configContentFieldArgs['label']) ? $configContentFieldArgs['label'] :  $configContentFieldKey) );
 
                     $fieldName = $configContentFieldArgs['name'] ?? $configContentFieldKey;
 
@@ -1493,7 +1495,7 @@
                         class="form-control automator-pagination-editor-setting"
                         id="{!! $configContentFieldKey !!}"
                         name="{!! $fieldName !!}"
-                        placeholder="{!! $fieldLabel !!}"
+                        placeholder="{!! $fieldPlacehold !!}"
                         value="{!! $fieldValue !!}"
                         {!! ($fieldRequired ? ' required' : '') !!}
                         {!! ($fieldDisabled ? ' disabled' : '') !!}
