@@ -2,38 +2,42 @@
 
   <div class="mb-3 {{ $props['wrapper_class'] ?? '' }}">
 
-    @if($field_label != '')
+    <div class="form-floating">
 
-      <label for="{{ $field_id }}" class="form-label">
+      <input type="number"
+        id="{{ $field_id }}"
+        name="{{ $field_name }}"
+        value="{{ $field_value }}"
+        class="form-control {{ $field_class }}"
+        data-automator-field="true"
+        data-automator-field-name="{{ $field_name }}"
+        data-automator-field-id="{{ $field_id }}"
+        {{ $field_required ? 'required' : '' }}
+        {!! $field_attrs !!} />
 
-        {{ $field_label }}
+      @if(isset($props['help']) && $props['help'] != '')
 
-        @if($field_required)
-          <span class="text-danger">*</span>
-        @endif
+        <div class="form-text">
+          {{ $props['help'] }}
+        </div>
 
-      </label>
+      @endif
 
-    @endif
+      @if($field_label != '')
 
-    <input type="number"
-      id="{{ $field_id }}"
-      name="{{ $field_name }}"
-      value="{{ $field_value }}"
-      class="form-control {{ $field_class }}"
-      data-automator-field="true"
-      data-automator-field-name="{{ $field_name }}"
-      data-automator-field-id="{{ $field_id }}"
-      {{ $field_required ? 'required' : '' }}
-      {!! $field_attrs !!} />
+        <label for="{{ $field_id }}" class="form-label">
 
-    @if(isset($props['help']) && $props['help'] != '')
+          {{ $field_label }}
 
-      <div class="form-text">
-        {{ $props['help'] }}
-      </div>
+          @if($field_required)
+            <span class="text-danger">*</span>
+          @endif
 
-    @endif
+        </label>
+
+      @endif
+
+    </div>
 
   </div>
 

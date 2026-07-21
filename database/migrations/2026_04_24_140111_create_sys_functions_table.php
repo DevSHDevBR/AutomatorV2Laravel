@@ -24,6 +24,7 @@
         $table->string('tbl_sys_function_name', 255)->unique();
         $table->text('tbl_sys_function_fn');
         $table->text('tbl_sys_function_params')->nullable();
+        $table->text('tbl_sys_function_props')->nullable();
         $table->timestamp('tbl_sys_function_created_at')->useCurrent();
         $table->timestamp('tbl_sys_function_updated_at')->nullable()->useCurrentOnUpdate();
 

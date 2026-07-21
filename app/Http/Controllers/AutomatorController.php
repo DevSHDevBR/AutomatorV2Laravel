@@ -10,6 +10,8 @@
   use Illuminate\Support\Facades\Cache;
   use Illuminate\Support\Facades\DB;
   use Illuminate\Support\Facades\Schema;
+  use Illuminate\Support\Facades\Auth;
+  use Illuminate\Support\Carbon;
   use Illuminate\Support\Str;
   use Illuminate\Database\Eloquent\Model;
 
@@ -3008,6 +3010,1593 @@
         'message' => 'Registro removido com sucesso.'
 
       ]);
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza as colunas solicitadas pelas funções internas
+    |--------------------------------------------------------------------------
+    */
+
+    private static function normalizeAutomatorRequestedData(
+      $data = []
+    ): array {
+
+
+      if(
+        $data === null ||
+        $data === ''
+      ) {
+
+        return [];
+
+      }
+
+
+      if(is_string($data)) {
+
+
+        $data = trim(
+
+          $data
+
+        );
+
+
+        if($data === '') {
+
+          return [];
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Permite informar várias colunas separadas por vírgula
+        |--------------------------------------------------------------------------
+        */
+
+        if(strpos($data, ',') !== false) {
+
+          $data = explode(
+
+            ',',
+
+            $data
+
+          );
+
+        } else {
+
+          $data = [
+
+            $data
+
+          ];
+
+        }
+
+
+      } elseif(is_object($data)) {
+
+
+        $data = (array) $data;
+
+
+      } elseif(!is_array($data)) {
+
+
+        if(is_scalar($data)) {
+
+          $data = [
+
+            (string) $data
+
+          ];
+
+        } else {
+
+          return [];
+
+        }
+
+
+      }
+
+
+      $normalizedData = [];
+
+
+      foreach($data as $dataKey => $dataValue) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Aceita estrutura associativa
+        |--------------------------------------------------------------------------
+        |
+        | Exemplo:
+        |
+        | [
+        |   'name'  => true,
+        |   'email' => true,
+        | ]
+        |
+        */
+
+        if(
+          !is_int($dataKey) &&
+          (
+            $dataValue === true ||
+            $dataValue === 1 ||
+            $dataValue === '1'
+          )
+        ) {
+
+          $dataValue = $dataKey;
+
+        }
+
+
+        if(!is_scalar($dataValue)) {
+
+          continue;
+
+        }
+
+
+        $dataValue = trim(
+
+          (string) $dataValue
+
+        );
+
+
+        if(
+          $dataValue === '' ||
+          !preg_match(
+            '/^[a-zA-Z0-9_]+$/',
+            $dataValue
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        if(!in_array(
+
+          $dataValue,
+
+          $normalizedData,
+
+          true
+
+        )) {
+
+          $normalizedData[] =
+
+            $dataValue;
+
+        }
+
+
+      }
+
+
+      return $normalizedData;
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prepara o retorno de uma ou várias colunas
+    |--------------------------------------------------------------------------
+    */
+
+    private static function prepareAutomatorDataResult(
+      array $requestedColumns,
+      array $values,
+      $default = null
+    ) {
+
+
+      if(count($requestedColumns) <= 0) {
+
+        return $default;
+
+      }
+
+
+      if(count($requestedColumns) === 1) {
+
+
+        $column =
+
+          $requestedColumns[0];
+
+
+        return array_key_exists(
+
+          $column,
+
+          $values
+
+        )
+          ? $values[$column]
+          : $default;
+
+
+      }
+
+
+      $result = [];
+
+
+      foreach($requestedColumns as $column) {
+
+
+        $result[$column] =
+
+          array_key_exists(
+
+            $column,
+
+            $values
+
+          )
+            ? $values[$column]
+            : $default;
+
+
+      }
+
+
+      return $result;
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna os idiomas registrados no sistema
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetTranslations() {
+
+
+      if(!Schema::hasTable(
+
+        'tbl_sys_translations'
+
+      )) {
+
+        return [];
+
+      }
+
+
+      try {
+
+
+        $translations = DB::table(
+
+          'tbl_sys_translations'
+
+        )
+          ->select([
+
+            'tbl_sys_translation_ID',
+
+            'tbl_sys_translation_key',
+
+            'tbl_sys_translation_name',
+
+            'tbl_sys_translation_description',
+
+          ])
+          ->orderBy(
+
+            'tbl_sys_translation_name',
+
+            'asc'
+
+          )
+          ->get();
+
+
+        $result = [];
+
+
+        foreach($translations as $translation) {
+
+
+          $translation =
+
+            (array) $translation;
+
+
+          $translationKey = trim(
+
+            (string) (
+
+              $translation[
+                'tbl_sys_translation_key'
+              ]
+
+              ?? ''
+
+            )
+
+          );
+
+
+          if($translationKey === '') {
+
+            continue;
+
+          }
+
+
+          $translationName = trim(
+
+            (string) (
+
+              $translation[
+                'tbl_sys_translation_name'
+              ]
+
+              ?? $translationKey
+
+            )
+
+          );
+
+
+          $result[] = [
+
+            'value' =>
+
+              $translationKey,
+
+            'label' =>
+
+              $translationName !== ''
+
+                ? $translationName
+
+                : $translationKey,
+
+            'id' =>
+
+              $translation[
+                'tbl_sys_translation_ID'
+              ]
+
+              ?? null,
+
+            'key' =>
+
+              $translationKey,
+
+            'name' =>
+
+              $translationName,
+
+            'description' =>
+
+              $translation[
+                'tbl_sys_translation_description'
+              ]
+
+              ?? '',
+
+          ];
+
+
+        }
+
+
+        return $result;
+
+
+      } catch(\Throwable $exception) {
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        return [];
+
+
+      }
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Traduz uma palavra utilizando o idioma informado
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorTranslate(
+      $word = '',
+      $lang = null
+    ) {
+
+
+      if(
+        $word === null ||
+        !is_scalar($word)
+      ) {
+
+        return '';
+
+      }
+
+
+      $word = (string) $word;
+
+
+      if(trim($word) === '') {
+
+        return $word;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Idioma padrão
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        $lang === null ||
+        !is_scalar($lang) ||
+        trim((string) $lang) === ''
+      ) {
+
+        $lang = SysAutomator::SysAutomatorGetConfigValue(
+
+          'system-default-language',
+
+          'pt-br'
+
+        );
+
+      }
+
+
+      $lang = trim(
+
+        (string) $lang
+
+      );
+
+
+      if(
+        !Schema::hasTable(
+          'tbl_sys_translations'
+        ) ||
+        !Schema::hasTable(
+          'tbl_sys_translations_words'
+        )
+      ) {
+
+        return $word;
+
+      }
+
+
+      try {
+
+
+        $translationID = DB::table(
+
+          'tbl_sys_translations'
+
+        )
+          ->where(
+
+            'tbl_sys_translation_key',
+
+            $lang
+
+          )
+          ->value(
+
+            'tbl_sys_translation_ID'
+
+          );
+
+
+        if(
+          $translationID === null ||
+          $translationID === ''
+        ) {
+
+          return $word;
+
+        }
+
+
+        $translatedWord = DB::table(
+
+          'tbl_sys_translations_words'
+
+        )
+          ->where(
+
+            'tbl_sys_translation_ID',
+
+            $translationID
+
+          )
+          ->where(
+
+            'tbl_translations_word_name',
+
+            $word
+
+          )
+          ->value(
+
+            'tbl_translations_word_str'
+
+          );
+
+
+        if(
+          $translatedWord === null ||
+          $translatedWord === ''
+        ) {
+
+          return $word;
+
+        }
+
+
+        return (string) $translatedWord;
+
+
+      } catch(\Throwable $exception) {
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        return $word;
+
+
+      }
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Formata uma data
+    |--------------------------------------------------------------------------
+    |
+    | translate pode receber:
+    |
+    | false/null:
+    |   utiliza o formato padrão brasileiro.
+    |
+    | true:
+    |   utiliza data traduzida por extenso.
+    |
+    | string:
+    |   utiliza a string como formato Carbon/PHP.
+    |
+    */
+
+    public static function AutomatorDateFormat(
+      $date = '',
+      $translate = false
+    ) {
+
+
+      if(
+        $date === null ||
+        $date === ''
+      ) {
+
+        return '';
+
+      }
+
+
+      try {
+
+
+        if($date instanceof \DateTimeInterface) {
+
+
+          $dateValue = Carbon::instance(
+
+            $date
+
+          );
+
+
+        } else {
+
+
+          $dateValue = Carbon::parse(
+
+            $date
+
+          );
+
+
+        }
+
+
+      } catch(\Throwable $exception) {
+
+
+        return is_scalar($date)
+
+          ? (string) $date
+
+          : '';
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formato personalizado
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        is_string($translate) &&
+        trim($translate) !== '' &&
+        !in_array(
+
+          strtolower(
+            trim($translate)
+          ),
+
+          [
+
+            'true',
+            'false',
+            'sim',
+            'não',
+            'nao',
+            '1',
+            '0',
+
+          ],
+
+          true
+
+        )
+      ) {
+
+
+        try {
+
+
+          return $dateValue->format(
+
+            trim($translate)
+
+          );
+
+
+        } catch(\Throwable $exception) {
+
+
+          return $dateValue->format(
+
+            'd/m/Y H:i'
+
+          );
+
+
+        }
+
+
+      }
+
+
+      $translateEnabled = in_array(
+
+        $translate,
+
+        [
+
+          true,
+          1,
+          '1',
+          'true',
+          'TRUE',
+          'sim',
+          'SIM',
+
+        ],
+
+        true
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Data por extenso traduzida
+      |--------------------------------------------------------------------------
+      */
+
+      if($translateEnabled === true) {
+
+
+        $locale = SysAutomator::SysAutomatorGetConfigValue(
+
+          'system-default-language',
+
+          'pt-br'
+
+        );
+
+
+        $locale = str_replace(
+
+          '-',
+
+          '_',
+
+          strtolower(
+
+            trim(
+
+              (string) $locale
+
+            )
+
+          )
+
+        );
+
+
+        try {
+
+
+          $dateValue->locale(
+
+            $locale
+
+          );
+
+
+          $hasTime =
+
+            $dateValue->hour != 0 ||
+
+            $dateValue->minute != 0 ||
+
+            $dateValue->second != 0;
+
+
+          return $dateValue->translatedFormat(
+
+            $hasTime
+
+              ? 'd \d\e F \d\e Y \à\s H:i'
+
+              : 'd \d\e F \d\e Y'
+
+          );
+
+
+        } catch(\Throwable $exception) {
+
+
+          return $dateValue->format(
+
+            'd/m/Y H:i'
+
+          );
+
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formato padrão
+      |--------------------------------------------------------------------------
+      */
+
+      $hasTime =
+
+        $dateValue->hour != 0 ||
+
+        $dateValue->minute != 0 ||
+
+        $dateValue->second != 0;
+
+
+      return $dateValue->format(
+
+        $hasTime
+
+          ? 'd/m/Y H:i'
+
+          : 'd/m/Y'
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna as colunas disponíveis na tabela de rotas
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetRouteDataInfo() {
+
+
+      $table =
+
+        'tbl_sys_routes';
+
+
+      if(!Schema::hasTable(
+
+        $table
+
+      )) {
+
+        return [];
+
+      }
+
+
+      try {
+
+
+        $columns = Schema::getColumnListing(
+
+          $table
+
+        );
+
+
+        $result = [];
+
+
+        foreach($columns as $column) {
+
+
+          $column = trim(
+
+            (string) $column
+
+          );
+
+
+          if($column === '') {
+
+            continue;
+
+          }
+
+
+          $result[] = [
+
+            'value' => $column,
+
+            'label' => $column,
+
+          ];
+
+
+        }
+
+
+        return $result;
+
+
+      } catch(\Throwable $exception) {
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        return [];
+
+
+      }
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna dados de uma rota pelo nome
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetRouteData(
+      $data = [],
+      $route = null
+    ) {
+
+
+      $table =
+
+        'tbl_sys_routes';
+
+
+      if(!Schema::hasTable(
+
+        $table
+
+      )) {
+
+        return null;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Permite receber todos os parâmetros em um único array
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        is_array($data) &&
+        (
+          array_key_exists(
+            'data',
+            $data
+          ) ||
+          array_key_exists(
+            'route',
+            $data
+          )
+        )
+      ) {
+
+
+        $params = $data;
+
+
+        $data =
+
+          $params['data']
+
+          ?? [];
+
+
+        if(
+          $route === null ||
+          $route === ''
+        ) {
+
+          $route =
+
+            $params['route']
+
+            ?? null;
+
+        }
+
+
+      }
+
+
+      if(
+        $route instanceof SysRoute
+      ) {
+
+
+        $routeData =
+
+          $route->toArray();
+
+
+      } elseif(is_array($route)) {
+
+
+        $routeData =
+
+          $route;
+
+
+      } else {
+
+
+        if(
+          $route === null ||
+          !is_scalar($route) ||
+          trim((string) $route) === ''
+        ) {
+
+          return null;
+
+        }
+
+
+        $routeName = trim(
+
+          (string) $route
+
+        );
+
+
+        try {
+
+
+          $routeRecord = DB::table(
+
+            $table
+
+          )
+            ->where(
+
+              'tbl_sys_route_name',
+
+              $routeName
+
+            )
+            ->first();
+
+
+        } catch(\Throwable $exception) {
+
+
+          report(
+
+            $exception
+
+          );
+
+
+          return null;
+
+
+        }
+
+
+        if($routeRecord === null) {
+
+          return null;
+
+        }
+
+
+        $routeData =
+
+          (array) $routeRecord;
+
+
+      }
+
+
+      $requestedColumns =
+
+        self::normalizeAutomatorRequestedData(
+
+          $data
+
+        );
+
+
+      if(count($requestedColumns) <= 0) {
+
+        return $routeData;
+
+      }
+
+
+      $validColumns = Schema::getColumnListing(
+
+        $table
+
+      );
+
+
+      $requestedColumns = array_values(
+
+        array_filter(
+
+          $requestedColumns,
+
+          function($column) use ($validColumns) {
+
+
+            return in_array(
+
+              $column,
+
+              $validColumns,
+
+              true
+
+            );
+
+
+          }
+
+        )
+
+      );
+
+
+      return self::prepareAutomatorDataResult(
+
+        $requestedColumns,
+
+        $routeData,
+
+        null
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna as colunas públicas disponíveis da tabela de usuários
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetUserDataInfo() {
+
+
+      $table =
+
+        'tbl_users';
+
+
+      if(!Schema::hasTable(
+
+        $table
+
+      )) {
+
+        return [];
+
+      }
+
+
+      $blockedColumns = [
+
+        'tbl_user_password',
+
+        'tbl_user_email_verified_at',
+
+        'tbl_user_deleted_at',
+
+        'remember_token',
+
+      ];
+
+
+      try {
+
+
+        $columns = Schema::getColumnListing(
+
+          $table
+
+        );
+
+
+        $result = [];
+
+
+        foreach($columns as $column) {
+
+
+          $column = trim(
+
+            (string) $column
+
+          );
+
+
+          if(
+            $column === '' ||
+            in_array(
+              $column,
+              $blockedColumns,
+              true
+            )
+          ) {
+
+            continue;
+
+          }
+
+
+          $result[] = [
+
+            'value' => $column,
+
+            'label' => $column,
+
+          ];
+
+
+        }
+
+
+        return $result;
+
+
+      } catch(\Throwable $exception) {
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        return [];
+
+
+      }
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna dados de um usuário específico
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetUserData(
+      $data = [],
+      $user = null
+    ) {
+
+
+      $table =
+
+        'tbl_users';
+
+
+      if(!Schema::hasTable(
+
+        $table
+
+      )) {
+
+        return null;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Permite receber todos os parâmetros em um único array
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        is_array($data) &&
+        (
+          array_key_exists(
+            'data',
+            $data
+          ) ||
+          array_key_exists(
+            'user',
+            $data
+          )
+        )
+      ) {
+
+
+        $params = $data;
+
+
+        $data =
+
+          $params['data']
+
+          ?? [];
+
+
+        if(
+          $user === null ||
+          $user === ''
+        ) {
+
+          $user =
+
+            $params['user']
+
+            ?? null;
+
+        }
+
+
+      }
+
+
+      if(
+        $user instanceof Model
+      ) {
+
+
+        $userData =
+
+          $user->toArray();
+
+
+      } elseif(is_array($user)) {
+
+
+        $userData =
+
+          $user;
+
+
+      } else {
+
+
+        if(
+          $user === null ||
+          $user === ''
+        ) {
+
+          return null;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | O parâmetro user deve ser o ID do usuário
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+          !is_int($user) &&
+          !(
+            is_string($user) &&
+            ctype_digit(
+              trim($user)
+            )
+          )
+        ) {
+
+          return null;
+
+        }
+
+
+        $userID = (int) $user;
+
+
+        if($userID <= 0) {
+
+          return null;
+
+        }
+
+
+        try {
+
+
+          $userRecord = DB::table(
+
+            $table
+
+          )
+            ->where(
+
+              'tbl_user_ID',
+
+              $userID
+
+            )
+            ->first();
+
+
+        } catch(\Throwable $exception) {
+
+
+          report(
+
+            $exception
+
+          );
+
+
+          return null;
+
+
+        }
+
+
+        if($userRecord === null) {
+
+          return null;
+
+        }
+
+
+        $userData =
+
+          (array) $userRecord;
+
+
+      }
+
+
+      $requestedColumns =
+
+        self::normalizeAutomatorRequestedData(
+
+          $data
+
+        );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Não retorna o registro completo sem especificar uma coluna
+      |--------------------------------------------------------------------------
+      |
+      | Isso impede exposição acidental de senha e tokens.
+      |--------------------------------------------------------------------------
+      */
+
+      if(count($requestedColumns) <= 0) {
+
+        return null;
+
+      }
+
+
+      $blockedColumns = [
+
+        'tbl_user_password',
+
+        'tbl_user_email_verified_at',
+
+        'tbl_user_deleted_at',
+
+        'remember_token',
+
+      ];
+
+
+      $validColumns = Schema::getColumnListing(
+
+        $table
+
+      );
+
+
+      $requestedColumns = array_values(
+
+        array_filter(
+
+          $requestedColumns,
+
+          function($column) use (
+            $validColumns,
+            $blockedColumns
+          ) {
+
+
+            return (
+
+              in_array(
+                $column,
+                $validColumns,
+                true
+              ) &&
+
+              !in_array(
+                $column,
+                $blockedColumns,
+                true
+              )
+
+            );
+
+
+          }
+
+        )
+
+      );
+
+
+      return self::prepareAutomatorDataResult(
+
+        $requestedColumns,
+
+        $userData,
+
+        null
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna dados do usuário autenticado
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetCurrentUserData(
+      $data = []
+    ) {
+
+
+      if(
+        Auth::check() !== true ||
+        Auth::user() === null
+      ) {
+
+        return null;
+
+      }
+
+
+      $user = Auth::user();
+
+
+      return self::AutomatorGetUserData(
+
+        $data,
+
+        $user
+
+      );
 
 
     }

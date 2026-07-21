@@ -136,7 +136,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -339,7 +339,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -583,7 +583,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -935,7 +935,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -1150,7 +1150,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -1353,7 +1353,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -1564,7 +1564,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -1743,7 +1743,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -1945,7 +1945,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -2178,7 +2178,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -2641,7 +2641,7 @@
               [
 
                 'tbl_sys_paginations_arg_name'  => 'page_name',
-                'tbl_sys_paginations_arg_value' => '@replace($route["tbl_sys_route_name"])'
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
               
               ],
               [
@@ -2814,6 +2814,152 @@
           ],
 
         // SHORTCODES - END
+
+
+        // USER NOTIFICATIONS - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-user-notifications-pagination',
+            'tbl_sys_pagination_route'  => 'admin-notificacoes',
+            'tbl_sys_pagination_title'  => 'Notificações do usuario',
+            'tbl_sys_pagination_table'  => 'tbl_sys_notifications',
+            'tbl_sys_pagination_index'  => 'tbl_sys_notification_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'where',
+                'tbl_sys_paginations_arg_value' => json_encode([
+                  
+                  [
+
+                    'tbl_user_ID',
+                    '==',
+                    "@SysFunctions('sysGetCurrentUserData', ['data' => 'tbl_user_ID'])"
+
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-notificacoes-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-notificacoes-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-view',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'eye',
+                    'text'    => 'Visualizar Notificação',
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-lg', 'Visualizar Notificação', " . SysAutomator::SysAutomatorGetFormIDByName('admin-user-notification') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2, 3, 4]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_title',
+                'tbl_sys_paginations_col_title'  => 'Titulo',
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2, 3, 4]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_notification_opened',
+                'tbl_sys_paginations_col_title'  => 'Status',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => json_encode([
+
+                  'replaced' => [
+
+                    0 => '<span class="badge text-bg-danger">Fechada</span>',
+                    1 => '<span class="badge text-bg-success">Aberta</span>',
+                  
+                  ]
+                  
+                ]),
+                'tbl_sys_paginations_col_search' => false,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2, 3, 4]
+
+              ]
+
+            ],
+
+          ],
+
+        // USER NOTIFICATIONS - END
 
 
       ];

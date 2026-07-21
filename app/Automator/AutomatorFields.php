@@ -16,6 +16,183 @@
   class AutomatorFields {
 
 
+    private static function normalizeFormSubmissionData(
+      $form = []
+    ): array {
+
+
+      if(is_object($form)) {
+
+        $form = (array) $form;
+
+      }
+
+
+      if(!is_array($form)) {
+
+        $form = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Valores originais
+      |--------------------------------------------------------------------------
+      */
+
+      $method = trim(
+
+        (string) (
+
+          $form['tbl_sys_form_method']
+
+          ?? ''
+
+        )
+
+      );
+
+
+      $route = trim(
+
+        (string) (
+
+          $form['tbl_sys_form_route']
+
+          ?? ''
+
+        )
+
+      );
+
+
+      $submit = trim(
+
+        (string) (
+
+          $form['tbl_sys_form_submit']
+
+          ?? ''
+
+        )
+
+      );
+
+
+      $cancel = trim(
+
+        (string) (
+
+          $form['tbl_sys_form_cancel']
+
+          ?? ''
+
+        )
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza o método somente quando estiver preenchido
+      |--------------------------------------------------------------------------
+      */
+
+      if($method !== '') {
+
+        $method = strtoupper(
+
+          $method
+
+        );
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve a URL somente quando existir uma rota
+      |--------------------------------------------------------------------------
+      */
+
+      $action = '';
+
+
+      if($route !== '') {
+
+        $resolvedAction =
+
+          SysAutomator::SysAutomatorGetRouteLinkByName(
+
+            $route
+
+          );
+
+
+        if(
+
+          $resolvedAction !== null &&
+
+          is_scalar($resolvedAction)
+
+        ) {
+
+          $action = trim(
+
+            (string) $resolvedAction
+
+          );
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Define se o formulário possui ação de envio
+      |--------------------------------------------------------------------------
+      |
+      | Os três valores precisam existir:
+      |
+      | - método;
+      | - rota válida;
+      | - texto do botão de submit.
+      |
+      | Isso impede que um formulário sem action envie acidentalmente seus
+      | dados para a URL atual do navegador.
+      |
+      */
+
+      $submitEnabled = (
+
+        $method !== '' &&
+
+        $route !== '' &&
+
+        $action !== '' &&
+
+        $submit !== ''
+
+      );
+
+
+      return [
+
+        'method'         => $method,
+        'route'          => $route,
+        'action'         => $action,
+        'submit'         => $submit,
+        'cancel'         => $cancel,
+        'submit_enabled' => $submitEnabled,
+
+      ];
+
+
+    }
+
 
     /*
     |--------------------------------------------------------------------------
@@ -23,12 +200,29 @@
     |--------------------------------------------------------------------------
     */
 
-    public static function renderFormFields($formData = [], $values = []) {
+    public static function renderFormFields(
+      $formData = [],
+      $values = []
+    ) {
+
+
+      if(is_object($formData)) {
+
+        $formData = (array) $formData;
+
+      }
 
 
       if(!is_array($formData)) {
 
         $formData = [];
+
+      }
+
+
+      if(is_object($values)) {
+
+        $values = (array) $values;
 
       }
 
@@ -40,14 +234,37 @@
       }
 
 
-      $form = $formData['form'] ?? [];
+      $form =
 
-      $fields = $formData['fields'] ?? [];
+        $formData['form']
+
+        ?? [];
+
+
+      $fields =
+
+        $formData['fields']
+
+        ?? [];
+
+
+      if(is_object($form)) {
+
+        $form = (array) $form;
+
+      }
 
 
       if(!is_array($form)) {
 
         $form = [];
+
+      }
+
+
+      if(is_object($fields)) {
+
+        $fields = (array) $fields;
 
       }
 
@@ -68,63 +285,56 @@
       |--------------------------------------------------------------------------
       */
 
-      $formID = $form['tbl_sys_form_ID'] ?? '';
+      $formID =
 
-      $formName = $form['tbl_sys_form_name'] ?? '';
+        $form['tbl_sys_form_ID']
 
-      $formMethod = $form['tbl_sys_form_method'] ?? '';
-
-      $formRoute = $form['tbl_sys_form_route'] ?? '';
-
-      $formValidate = $form['tbl_sys_form_validate'] ?? false;
-
-      $formModal = $form['tbl_sys_form_modal'] ?? false;
+        ?? '';
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | Normaliza método
-      |--------------------------------------------------------------------------
-      */
+      $formName =
 
-      if(
-        $formMethod === null ||
-        trim((string) $formMethod) === ''
-      ) {
+        $form['tbl_sys_form_name']
 
-        $formMethod = 'POST';
-
-      }
+        ?? '';
 
 
-      $formMethod = strtoupper(
+      $formValidate =
 
-        trim((string) $formMethod)
+        $form['tbl_sys_form_validate']
 
-      );
-
-
-      /*
-      |--------------------------------------------------------------------------
-      | Resolve action
-      |--------------------------------------------------------------------------
-      */
-
-      $formAction = '';
+        ?? false;
 
 
-      if(
-        $formRoute !== null &&
-        trim((string) $formRoute) !== ''
-      ) {
+      $formModal =
 
-        $formAction = SysAutomator::SysAutomatorGetRouteLinkByName(
+        $form['tbl_sys_form_modal']
 
-          trim((string) $formRoute)
+        ?? false;
+
+
+      $submissionData =
+
+        self::normalizeFormSubmissionData(
+
+          $form
 
         );
 
-      }
+
+      $formMethod =
+
+        $submissionData['method'];
+
+
+      $formAction =
+
+        $submissionData['action'];
+
+
+      $submitEnabled =
+
+        $submissionData['submit_enabled'];
 
 
       /*
@@ -133,7 +343,13 @@
       |--------------------------------------------------------------------------
       */
 
-      $isModal = self::isTruthy($formModal);
+      $isModal =
+
+        self::isTruthy(
+
+          $formModal
+
+        );
 
 
       /*
@@ -147,25 +363,38 @@
 
       if(!$isModal) {
 
-        $formIdentifier = $formID;
+
+        $formIdentifier =
+
+          $formID;
 
 
         if(
+
           $formIdentifier === null ||
+
           $formIdentifier === ''
+
         ) {
 
-          $formIdentifier = $formName;
+          $formIdentifier =
+
+            $formName;
 
         }
 
 
         if(
+
           $formIdentifier === null ||
+
           $formIdentifier === ''
+
         ) {
 
-          $formIdentifier = 'form';
+          $formIdentifier =
+
+            'form';
 
         }
 
@@ -181,10 +410,22 @@
         );
 
 
-        $formElementID = 'automator-form-' .
-                         trim($formIdentifier, '-') .
-                         '-' .
-                         uniqid();
+        $formElementID =
+
+          'automator-form-' .
+
+          trim(
+
+            $formIdentifier,
+
+            '-'
+
+          ) .
+
+          '-' .
+
+          uniqid();
+
 
       }
 
@@ -197,16 +438,48 @@
 
       $formClasses = [
 
-        'row'
+        'row',
 
       ];
 
 
-      if(!$isModal) {
+      /*
+      |--------------------------------------------------------------------------
+      | Classes de envio somente quando o formulário possuir submit válido
+      |--------------------------------------------------------------------------
+      */
 
-        $formClasses[] = 'automator-system-form';
+      if(
 
-        $formClasses[] = 'js-automator-system-page-form';
+        !$isModal &&
+
+        $submitEnabled === true
+
+      ) {
+
+        $formClasses[] =
+
+          'automator-system-form';
+
+
+        $formClasses[] =
+
+          'js-automator-system-page-form';
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formulário apenas para visualização
+      |--------------------------------------------------------------------------
+      */
+
+      if($submitEnabled !== true) {
+
+        $formClasses[] =
+
+          'automator-system-form-view-only';
 
       }
 
@@ -217,83 +490,238 @@
       |--------------------------------------------------------------------------
       */
 
-      $html = '<form';
+      $html =
+
+        '<form';
 
 
       if($formElementID !== '') {
 
-        $html .= ' id="' . e($formElementID) . '"';
+        $html .=
+
+          ' id="' .
+
+          e($formElementID) .
+
+          '"';
 
       }
 
 
-      $html .= ' class="' . e(implode(' ', $formClasses)) . '"';
+      $html .=
 
-      $html .= ' method="' . e($formMethod) . '"';
+        ' class="' .
 
-      $html .= ' action="' . e($formAction) . '"';
+        e(
 
-      $html .= ' data-submit="false"';
+          implode(
 
-      $html .= ' data-form-validate="' . (
+            ' ',
 
-        self::isTruthy($formValidate)
+            $formClasses
 
-          ? 'true'
+          )
 
-          : 'false'
+        ) .
 
-      ) . '"';
+        '"';
 
 
       /*
       |--------------------------------------------------------------------------
-      | Identificação exclusiva para formulários renderizados na página
+      | Método e action não são gerados quando o envio estiver desabilitado
+      |--------------------------------------------------------------------------
+      */
+
+      if($submitEnabled === true) {
+
+
+        $html .=
+
+          ' method="' .
+
+          e($formMethod) .
+
+          '"';
+
+
+        $html .=
+
+          ' action="' .
+
+          e($formAction) .
+
+          '"';
+
+
+      }
+
+
+      $html .=
+
+        ' data-submit="false"';
+
+
+      $html .=
+
+        ' data-form-validate="' .
+
+        (
+
+          self::isTruthy(
+
+            $formValidate
+
+          )
+
+            ? 'true'
+
+            : 'false'
+
+        ) .
+
+        '"';
+
+
+      $html .=
+
+        ' data-automator-form-submit-enabled="' .
+
+        (
+
+          $submitEnabled === true
+
+            ? 'true'
+
+            : 'false'
+
+        ) .
+
+        '"';
+
+
+      if($submitEnabled !== true) {
+
+        $html .=
+
+          ' data-automator-form-view-only="true"';
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Identificação dos formulários renderizados diretamente na página
       |--------------------------------------------------------------------------
       */
 
       if(!$isModal) {
 
-        $html .= ' data-automator-system-form="true"';
 
-        $html .= ' data-automator-form-modal="false"';
+        $html .=
 
-        $html .= ' data-automator-form-id="' . e($formID) . '"';
+          ' data-automator-form-modal="false"';
 
-        $html .= ' data-automator-form-name="' . e($formName) . '"';
 
-        $html .= ' data-automator-form-changed="false"';
+        $html .=
+
+          ' data-automator-form-id="' .
+
+          e($formID) .
+
+          '"';
+
+
+        $html .=
+
+          ' data-automator-form-name="' .
+
+          e($formName) .
+
+          '"';
+
+
+        $html .=
+
+          ' data-automator-form-changed="false"';
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | O listener geral de submit só deve identificar formulários enviáveis
+        |--------------------------------------------------------------------------
+        */
+
+        if($submitEnabled === true) {
+
+          $html .=
+
+            ' data-automator-system-form="true"';
+
+        }
+
 
       }
 
 
-      $html .= '>';
+      $html .=
+
+        '>';
 
 
       /*
       |--------------------------------------------------------------------------
       | ID do formulário no Automator
       |--------------------------------------------------------------------------
+      |
+      | Mantido inclusive em formulários de visualização para preservar o
+      | contexto do formulário e a compatibilidade com scripts existentes.
+      |
       */
 
-      $html .= '<input';
+      $html .=
 
-      $html .= ' type="hidden"';
+        '<input';
 
-      $html .= ' name="automatorFormID"';
 
-      $html .= ' value="' . e($formID) . '"';
+      $html .=
 
-      $html .= ' />';
+        ' type="hidden"';
+
+
+      $html .=
+
+        ' name="automatorFormID"';
+
+
+      $html .=
+
+        ' value="' .
+
+        e($formID) .
+
+        '"';
+
+
+      $html .=
+
+        ' />';
 
 
       /*
       |--------------------------------------------------------------------------
-      | Renderiza campos
+      | Renderiza os campos
       |--------------------------------------------------------------------------
       */
 
       foreach($fields as $field) {
+
+
+        if(is_object($field)) {
+
+          $field = (array) $field;
+
+        }
 
 
         if(!is_array($field)) {
@@ -303,13 +731,15 @@
         }
 
 
-        $field['value'] = self::getFieldValue(
+        $field['value'] =
 
-          $field,
+          self::getFieldValue(
 
-          $values
+            $field,
 
-        );
+            $values
+
+          );
 
 
         $_field = [
@@ -327,23 +757,45 @@
         ];
 
 
-        if(!isset($_field['props']['wrapper_class'])) {
+        if(
 
-          $_field['props']['wrapper_class'] = 'col-12';
+          !isset(
+
+            $_field['props']['wrapper_class']
+
+          )
+
+        ) {
+
+          $_field['props']['wrapper_class'] =
+
+            'col-12';
 
         }
 
 
-        $fieldHTML = self::renderFormField($_field);
+        $fieldHTML =
+
+          self::renderFormField(
+
+            $_field
+
+          );
 
 
-        $field['html'] = $fieldHTML;
+        $field['html'] =
+
+          $fieldHTML;
 
 
-        $renderedFields[] = $field;
+        $renderedFields[] =
+
+          $field;
 
 
-        $html .= $fieldHTML;
+        $html .=
+
+          $fieldHTML;
 
 
       }
@@ -351,30 +803,33 @@
 
       /*
       |--------------------------------------------------------------------------
-      | Botões para formulário não modal
+      | Ações do formulário
       |--------------------------------------------------------------------------
+      |
+      | A própria função decide quais botões devem ser renderizados. Dessa forma
+      | um formulário sem submit pode continuar exibindo apenas o botão cancelar,
+      | caso ele esteja configurado.
+      |
       */
 
       if(!$isModal) {
 
-        $html .= self::renderFormActions(
+        $html .=
 
-          $form,
+          self::renderFormActions(
 
-          $formElementID
+            $form,
 
-        );
+            $formElementID
+
+          );
 
       }
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | Fechamento do formulário
-      |--------------------------------------------------------------------------
-      */
+      $html .=
 
-      $html .= '</form>';
+        '</form>';
 
 
       return [
@@ -382,11 +837,378 @@
         'fields'          => $renderedFields,
         'html'            => $html,
         'form_element_id' => $formElementID,
+        'submit_enabled'  => $submitEnabled,
+        'form_action'     => $formAction,
+        'form_method'     => $formMethod,
 
       ];
 
 
     }
+    // public static function renderFormFields($formData = [], $values = []) {
+
+
+    //   if(!is_array($formData)) {
+
+    //     $formData = [];
+
+    //   }
+
+
+    //   if(!is_array($values)) {
+
+    //     $values = [];
+
+    //   }
+
+
+    //   $form = $formData['form'] ?? [];
+
+    //   $fields = $formData['fields'] ?? [];
+
+
+    //   if(!is_array($form)) {
+
+    //     $form = [];
+
+    //   }
+
+
+    //   if(!is_array($fields)) {
+
+    //     $fields = [];
+
+    //   }
+
+
+    //   $renderedFields = [];
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Dados do formulário
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $formID = $form['tbl_sys_form_ID'] ?? '';
+
+    //   $formName = $form['tbl_sys_form_name'] ?? '';
+
+    //   $formMethod = $form['tbl_sys_form_method'] ?? '';
+
+    //   $formRoute = $form['tbl_sys_form_route'] ?? '';
+
+    //   $formValidate = $form['tbl_sys_form_validate'] ?? false;
+
+    //   $formModal = $form['tbl_sys_form_modal'] ?? false;
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza método
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(
+    //     $formMethod === null ||
+    //     trim((string) $formMethod) === ''
+    //   ) {
+
+    //     $formMethod = 'POST';
+
+    //   }
+
+
+    //   $formMethod = strtoupper(
+
+    //     trim((string) $formMethod)
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve action
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $formAction = '';
+
+
+    //   if(
+    //     $formRoute !== null &&
+    //     trim((string) $formRoute) !== ''
+    //   ) {
+
+    //     $formAction = SysAutomator::SysAutomatorGetRouteLinkByName(
+
+    //       trim((string) $formRoute)
+
+    //     );
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Verifica se o formulário é modal
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $isModal = self::isTruthy($formModal);
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | ID do elemento form
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $formElementID = '';
+
+
+    //   if(!$isModal) {
+
+    //     $formIdentifier = $formID;
+
+
+    //     if(
+    //       $formIdentifier === null ||
+    //       $formIdentifier === ''
+    //     ) {
+
+    //       $formIdentifier = $formName;
+
+    //     }
+
+
+    //     if(
+    //       $formIdentifier === null ||
+    //       $formIdentifier === ''
+    //     ) {
+
+    //       $formIdentifier = 'form';
+
+    //     }
+
+
+    //     $formIdentifier = preg_replace(
+
+    //       '/[^a-zA-Z0-9\-_]/',
+
+    //       '-',
+
+    //       (string) $formIdentifier
+
+    //     );
+
+
+    //     $formElementID = 'automator-form-' .
+    //                      trim($formIdentifier, '-') .
+    //                      '-' .
+    //                      uniqid();
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Classes do formulário
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $formClasses = [
+
+    //     'row'
+
+    //   ];
+
+
+    //   if(!$isModal) {
+
+    //     $formClasses[] = 'automator-system-form';
+
+    //     $formClasses[] = 'js-automator-system-page-form';
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Abertura do formulário
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $html = '<form';
+
+
+    //   if($formElementID !== '') {
+
+    //     $html .= ' id="' . e($formElementID) . '"';
+
+    //   }
+
+
+    //   $html .= ' class="' . e(implode(' ', $formClasses)) . '"';
+
+    //   $html .= ' method="' . e($formMethod) . '"';
+
+    //   $html .= ' action="' . e($formAction) . '"';
+
+    //   $html .= ' data-submit="false"';
+
+    //   $html .= ' data-form-validate="' . (
+
+    //     self::isTruthy($formValidate)
+
+    //       ? 'true'
+
+    //       : 'false'
+
+    //   ) . '"';
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Identificação exclusiva para formulários renderizados na página
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(!$isModal) {
+
+    //     $html .= ' data-automator-system-form="true"';
+
+    //     $html .= ' data-automator-form-modal="false"';
+
+    //     $html .= ' data-automator-form-id="' . e($formID) . '"';
+
+    //     $html .= ' data-automator-form-name="' . e($formName) . '"';
+
+    //     $html .= ' data-automator-form-changed="false"';
+
+    //   }
+
+
+    //   $html .= '>';
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | ID do formulário no Automator
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $html .= '<input';
+
+    //   $html .= ' type="hidden"';
+
+    //   $html .= ' name="automatorFormID"';
+
+    //   $html .= ' value="' . e($formID) . '"';
+
+    //   $html .= ' />';
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Renderiza campos
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   foreach($fields as $field) {
+
+
+    //     if(!is_array($field)) {
+
+    //       continue;
+
+    //     }
+
+
+    //     $field['value'] = self::getFieldValue(
+
+    //       $field,
+
+    //       $values
+
+    //     );
+
+
+    //     $_field = [
+
+    //       'form'       => $form,
+    //       'field'      => $field,
+    //       'fields'     => $fields,
+    //       'props'      => self::normalizeFieldPropsForRender($field),
+    //       'attrs'      => $field['attrs'] ?? [],
+    //       'config'     => $field['config'] ?? [],
+    //       'field_type' => $field['field_type'] ?? [],
+    //       'values'     => $values,
+    //       'render'     => 'formulario',
+
+    //     ];
+
+
+    //     if(!isset($_field['props']['wrapper_class'])) {
+
+    //       $_field['props']['wrapper_class'] = 'col-12';
+
+    //     }
+
+
+    //     $fieldHTML = self::renderFormField($_field);
+
+
+    //     $field['html'] = $fieldHTML;
+
+
+    //     $renderedFields[] = $field;
+
+
+    //     $html .= $fieldHTML;
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Botões para formulário não modal
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(!$isModal) {
+
+    //     $html .= self::renderFormActions(
+
+    //       $form,
+
+    //       $formElementID
+
+    //     );
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Fechamento do formulário
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $html .= '</form>';
+
+
+    //   return [
+
+    //     'fields'          => $renderedFields,
+    //     'html'            => $html,
+    //     'form_element_id' => $formElementID,
+
+    //   ];
+
+
+    // }
 
     /*
     |--------------------------------------------------------------------------
@@ -2384,23 +3206,117 @@
         | Atributos booleanos provenientes de props
         |--------------------------------------------------------------------------
         |
-        | attrs continua tendo prioridade.
+        | attrs continua tendo prioridade sobre props.
         |
+        | Também são aceitos valores persistidos dentro de props.params para
+        | preservar formulários registrados por versões anteriores do editor.
+        |
+        */
+
+        $fieldParams =
+
+          isset($args['props']['params']) &&
+
+          is_array($args['props']['params'])
+
+            ? $args['props']['params']
+
+            : [];
+
+
+        $fieldDisabled =
+
+          $args['props']['disabled']
+
+          ?? $fieldParams['configs.disabled']
+
+          ?? $fieldParams['config.disabled']
+
+          ?? $fieldParams['advanced.disabled']
+
+          ?? $fieldParams['disabled']
+
+          ?? false;
+
+
+        $fieldReadonly =
+
+          $args['props']['readonly']
+
+          ?? $args['props']['readonlue']
+
+          ?? $fieldParams['configs.readonly']
+
+          ?? $fieldParams['config.readonly']
+
+          ?? $fieldParams['advanced.readonly']
+
+          ?? $fieldParams['readonly']
+
+          ?? false;
+
+
+        $fieldDisabled =
+
+          self::isTruthy(
+
+            $fieldDisabled
+
+          );
+
+
+        $fieldReadonly =
+
+          self::isTruthy(
+
+            $fieldReadonly
+
+          );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | attrs continua tendo prioridade sobre props
+        |--------------------------------------------------------------------------
         */
 
         if(
 
-          !array_key_exists('disabled', $args['attrs']) &&
+          array_key_exists(
 
-          self::isTruthy(
+            'disabled',
 
-            $args['props']['disabled']
-
-            ?? false
+            $args['attrs']
 
           )
 
         ) {
+
+          $fieldDisabled =
+
+            self::isTruthy(
+
+              $args['attrs']['disabled']
+
+            );
+
+
+          if($fieldDisabled === true) {
+
+            $args['attrs']['disabled'] = true;
+
+          } else {
+
+            unset(
+
+              $args['attrs']['disabled']
+
+            );
+
+          }
+
+
+        } elseif($fieldDisabled === true) {
 
           $args['attrs']['disabled'] = true;
 
@@ -2409,29 +3325,41 @@
 
         if(
 
-          !array_key_exists('readonly', $args['attrs']) &&
+          array_key_exists(
 
-          (
+            'readonly',
 
-            self::isTruthy(
-
-              $args['props']['readonly']
-
-              ?? false
-
-            ) ||
-
-            self::isTruthy(
-
-              $args['props']['readonlue']
-
-              ?? false
-
-            )
+            $args['attrs']
 
           )
 
         ) {
+
+          $fieldReadonly =
+
+            self::isTruthy(
+
+              $args['attrs']['readonly']
+
+            );
+
+
+          if($fieldReadonly === true) {
+
+            $args['attrs']['readonly'] = true;
+
+          } else {
+
+            unset(
+
+              $args['attrs']['readonly']
+
+            );
+
+          }
+
+
+        } elseif($fieldReadonly === true) {
 
           $args['attrs']['readonly'] = true;
 
@@ -2440,15 +3368,55 @@
 
         /*
         |--------------------------------------------------------------------------
+        | Required não deve permanecer ativo em campo desabilitado
+        |--------------------------------------------------------------------------
+        |
+        | Um controle disabled não participa da validação nem do envio HTML.
+        |
+        */
+
+        if($fieldDisabled === true) {
+
+          $args['field_required'] = false;
+
+          unset(
+
+            $args['attrs']['required']
+
+          );
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Estado normalizado disponível para as views
+        |--------------------------------------------------------------------------
+        */
+
+        $args['field_disabled'] =
+
+          $fieldDisabled;
+
+
+        $args['field_readonly'] =
+
+          $fieldReadonly;
+
+
+        /*
+        |--------------------------------------------------------------------------
         | HTML dos atributos
         |--------------------------------------------------------------------------
         */
 
-        $args['field_attrs'] = self::renderAttrs(
+        $args['field_attrs'] =
 
-          $args['attrs']
+          self::renderAttrs(
 
-        );
+            $args['attrs']
+
+          );
 
 
       }
@@ -2667,6 +3635,996 @@
 
 
     }
+
+    // public static function normalizeArgs($args = []) {
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza o container principal
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args)) {
+
+    //     $args = (array) $args;
+
+    //   }
+
+
+    //   if(!is_array($args)) {
+
+    //     $args = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Estrutura padrão
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $args['form']       = $args['form'] ?? [];
+    //   $args['field']      = $args['field'] ?? [];
+    //   $args['fields']     = $args['fields'] ?? [];
+    //   $args['props']      = $args['props'] ?? [];
+    //   $args['attrs']      = $args['attrs'] ?? [];
+    //   $args['config']     = $args['config'] ?? [];
+    //   $args['field_type'] = $args['field_type'] ?? [];
+    //   $args['values']     = $args['values'] ?? [];
+    //   $args['render']     = $args['render'] ?? 'formulario';
+
+    //   $args['pagination'] = $args['pagination'] ?? [];
+    //   $args['column']     = $args['column'] ?? [];
+    //   $args['columns']    = $args['columns'] ?? [];
+    //   $args['item']       = $args['item'] ?? null;
+    //   $args['request']    = $args['request'] ?? [];
+    //   $args['columnType'] = $args['columnType'] ?? null;
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza form
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['form'])) {
+
+    //     $args['form'] = (array) $args['form'];
+
+    //   }
+
+
+    //   if(!is_array($args['form'])) {
+
+    //     $args['form'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza field
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['field'])) {
+
+    //     $args['field'] = (array) $args['field'];
+
+    //   }
+
+
+    //   if(!is_array($args['field'])) {
+
+    //     $args['field'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza fields
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['fields'])) {
+
+    //     $args['fields'] = (array) $args['fields'];
+
+    //   }
+
+
+    //   if(!is_array($args['fields'])) {
+
+    //     $args['fields'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza values
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['values'])) {
+
+    //     $args['values'] = (array) $args['values'];
+
+    //   }
+
+
+    //   if(!is_array($args['values'])) {
+
+    //     $args['values'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza config
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['config'])) {
+
+    //     $args['config'] = (array) $args['config'];
+
+    //   }
+
+
+    //   if(!is_array($args['config'])) {
+
+
+    //     if(
+
+    //       is_string($args['config']) &&
+
+    //       trim($args['config']) !== ''
+
+    //     ) {
+
+    //       $decodedConfig = json_decode(
+
+    //         $args['config'],
+
+    //         true
+
+    //       );
+
+
+    //       $args['config'] = is_array($decodedConfig)
+
+    //         ? $decodedConfig
+
+    //         : [];
+
+    //     } else {
+
+    //       $args['config'] = [];
+
+    //     }
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza props
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['props'])) {
+
+    //     $args['props'] = (array) $args['props'];
+
+    //   }
+
+
+    //   if(!is_array($args['props'])) {
+
+
+    //     if(
+
+    //       is_string($args['props']) &&
+
+    //       trim($args['props']) !== ''
+
+    //     ) {
+
+    //       $decodedProps = json_decode(
+
+    //         $args['props'],
+
+    //         true
+
+    //       );
+
+
+    //       $args['props'] = is_array($decodedProps)
+
+    //         ? $decodedProps
+
+    //         : [];
+
+    //     } else {
+
+    //       $args['props'] = [];
+
+    //     }
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza attrs
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['attrs'])) {
+
+    //     $args['attrs'] = (array) $args['attrs'];
+
+    //   }
+
+
+    //   if(!is_array($args['attrs'])) {
+
+
+    //     if(
+
+    //       is_string($args['attrs']) &&
+
+    //       trim($args['attrs']) !== ''
+
+    //     ) {
+
+    //       $decodedAttrs = json_decode(
+
+    //         $args['attrs'],
+
+    //         true
+
+    //       );
+
+
+    //       $args['attrs'] = is_array($decodedAttrs)
+
+    //         ? $decodedAttrs
+
+    //         : [];
+
+    //     } else {
+
+    //       $args['attrs'] = [];
+
+    //     }
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza field_type principal
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($args['field_type'])) {
+
+    //     $args['field_type'] = (array) $args['field_type'];
+
+    //   }
+
+
+    //   if(!is_array($args['field_type'])) {
+
+    //     $args['field_type'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza field_type interno do field
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(
+
+    //     isset($args['field']['field_type']) &&
+
+    //     is_object($args['field']['field_type'])
+
+    //   ) {
+
+    //     $args['field']['field_type'] =
+
+    //       (array) $args['field']['field_type'];
+
+    //   }
+
+
+    //   if(
+
+    //     isset($args['field']['field_type']) &&
+
+    //     !is_array($args['field']['field_type'])
+
+    //   ) {
+
+    //     $args['field']['field_type'] = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve o nome do tipo de campo com segurança
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $fieldTypeNameValue = '';
+
+
+    //   if(
+
+    //     array_key_exists(
+
+    //       'tbl_sys_field_type_name',
+
+    //       $args['field_type']
+
+    //     )
+
+    //   ) {
+
+    //     $fieldTypeNameValue =
+
+    //       $args['field_type']['tbl_sys_field_type_name'];
+
+    //   } elseif(
+
+    //     isset($args['field']['field_type']) &&
+
+    //     is_array($args['field']['field_type']) &&
+
+    //     array_key_exists(
+
+    //       'tbl_sys_field_type_name',
+
+    //       $args['field']['field_type']
+
+    //     )
+
+    //   ) {
+
+    //     $fieldTypeNameValue =
+
+    //       $args['field']['field_type']['tbl_sys_field_type_name'];
+
+    //   } elseif(
+
+    //     array_key_exists(
+
+    //       'tbl_sys_field_type_name',
+
+    //       $args['field']
+
+    //     )
+
+    //   ) {
+
+    //     $fieldTypeNameValue =
+
+    //       $args['field']['tbl_sys_field_type_name'];
+
+    //   }
+
+
+    //   $fieldTypeName = strtolower(
+
+    //     self::normalizeRelationScalarValue(
+
+    //       $fieldTypeNameValue,
+
+    //       [
+
+    //         'tbl_sys_field_type_name',
+
+    //         'type',
+
+    //         'name',
+
+    //         'value',
+
+    //         'current',
+
+    //         'default',
+
+    //       ],
+
+    //       ''
+
+    //     )
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normalização específica de campos relacionais
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(
+
+    //     $fieldTypeName === 'relation' ||
+
+    //     $fieldTypeName === 'relations'
+
+    //   ) {
+
+    //     $args['props'] = self::normalizeRelationFieldProps(
+
+    //       $args['props']
+
+    //     );
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Renderização de formulário
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if($args['render'] === 'formulario') {
+
+
+    //     $field = $args['field'];
+
+
+    //     $fieldID =
+
+    //       $field['tbl_sys_forms_field_ID']
+
+    //       ?? uniqid();
+
+
+    //     $fieldNameValue =
+
+    //       $field['tbl_sys_forms_field_name']
+
+    //       ?? $field['field_name']
+
+    //       ?? '';
+
+
+    //     $fieldName = self::normalizeRelationScalarValue(
+
+    //       $fieldNameValue,
+
+    //       [
+
+    //         'tbl_sys_forms_field_name',
+
+    //         'field_name',
+
+    //         'name',
+
+    //         'value',
+
+    //       ],
+
+    //       ''
+
+    //     );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | ID do campo
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $fieldIDValue =
+
+    //       $field['field_id']
+
+    //       ?? ('field_' . $fieldID);
+
+
+    //     $args['field_id'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $fieldIDValue,
+
+    //         [
+
+    //           'field_id',
+
+    //           'id',
+
+    //           'value',
+
+    //         ],
+
+    //         'field_' . $fieldID
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Nome do campo
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['field_name'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $field['field_name'] ?? $fieldName,
+
+    //         [
+
+    //           'field_name',
+
+    //           'name',
+
+    //           'value',
+
+    //         ],
+
+    //         $fieldName
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Label do campo
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $fieldLabelValue =
+
+    //       $field['tbl_sys_forms_field_title']
+
+    //       ?? $field['tbl_sys_forms_field_label']
+
+    //       ?? '';
+
+
+    //     $args['field_label'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $fieldLabelValue,
+
+    //         [
+
+    //           'tbl_sys_forms_field_title',
+
+    //           'tbl_sys_forms_field_label',
+
+    //           'label',
+
+    //           'title',
+
+    //           'value',
+
+    //         ],
+
+    //         ''
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Valor do campo
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | O valor não é convertido para string, pois checkbox, relation e campos
+    //     | múltiplos podem utilizar arrays.
+    //     |
+    //     */
+
+    //     $args['field_value'] =
+
+    //       array_key_exists('value', $field)
+
+    //         ? $field['value']
+
+    //         : self::getFieldValue(
+
+    //             $field,
+
+    //             $args['values']
+
+    //           );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Campo obrigatório
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['field_required'] = self::isTruthy(
+
+    //       $field['tbl_sys_forms_field_required']
+
+    //       ?? false
+
+    //     );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Classes adicionais
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['field_class'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $field['tbl_sys_forms_field_class']
+
+    //         ?? '',
+
+    //         [
+
+    //           'tbl_sys_forms_field_class',
+
+    //           'class',
+
+    //           'value',
+
+    //         ],
+
+    //         ''
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Seletor do campo
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $defaultFieldSelector =
+
+    //       ($fieldName !== '')
+
+    //         ? '[name="' . $fieldName . '"]'
+
+    //         : '';
+
+
+    //     $args['field_selector'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $field['field_selector']
+
+    //         ?? $defaultFieldSelector,
+
+    //         [
+
+    //           'field_selector',
+
+    //           'selector',
+
+    //           'value',
+
+    //         ],
+
+    //         $defaultFieldSelector
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Atributos booleanos provenientes de props
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | attrs continua tendo prioridade.
+    //     |
+    //     */
+
+    //     if(
+
+    //       !array_key_exists('disabled', $args['attrs']) &&
+
+    //       self::isTruthy(
+
+    //         $args['props']['disabled']
+
+    //         ?? false
+
+    //       )
+
+    //     ) {
+
+    //       $args['attrs']['disabled'] = true;
+
+    //     }
+
+
+    //     if(
+
+    //       !array_key_exists('readonly', $args['attrs']) &&
+
+    //       (
+
+    //         self::isTruthy(
+
+    //           $args['props']['readonly']
+
+    //           ?? false
+
+    //         ) ||
+
+    //         self::isTruthy(
+
+    //           $args['props']['readonlue']
+
+    //           ?? false
+
+    //         )
+
+    //       )
+
+    //     ) {
+
+    //       $args['attrs']['readonly'] = true;
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | HTML dos atributos
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['field_attrs'] = self::renderAttrs(
+
+    //       $args['attrs']
+
+    //     );
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Renderização de paginação
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if($args['render'] === 'paginacao') {
+
+
+    //     if(is_object($args['column'])) {
+
+    //       $args['column'] = (array) $args['column'];
+
+    //     }
+
+
+    //     if(!is_array($args['column'])) {
+
+    //       $args['column'] = [];
+
+    //     }
+
+
+    //     $column = $args['column'];
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Nome da coluna
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $columnNameValue =
+
+    //       $column['column_name']
+
+    //       ?? $column['tbl_sys_paginations_col_name']
+
+    //       ?? $column['tbl_sys_paginations_col_field']
+
+    //       ?? $column['tbl_sys_paginations_col_column']
+
+    //       ?? '';
+
+
+    //     $args['column_name'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $columnNameValue,
+
+    //         [
+
+    //           'column_name',
+
+    //           'tbl_sys_paginations_col_name',
+
+    //           'tbl_sys_paginations_col_field',
+
+    //           'tbl_sys_paginations_col_column',
+
+    //           'column',
+
+    //           'field',
+
+    //           'name',
+
+    //           'value',
+
+    //         ],
+
+    //         ''
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Label da coluna
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $columnLabelValue =
+
+    //       $column['label']
+
+    //       ?? $column['tbl_sys_paginations_col_title']
+
+    //       ?? $column['tbl_sys_paginations_col_label']
+
+    //       ?? $args['column_name'];
+
+
+    //     $args['column_label'] =
+
+    //       self::normalizeRelationScalarValue(
+
+    //         $columnLabelValue,
+
+    //         [
+
+    //           'label',
+
+    //           'tbl_sys_paginations_col_title',
+
+    //           'tbl_sys_paginations_col_label',
+
+    //           'title',
+
+    //           'name',
+
+    //           'value',
+
+    //         ],
+
+    //         $args['column_name']
+
+    //       );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Valor da coluna
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['column_value'] = self::getColumnValue(
+
+    //       $args['item'],
+
+    //       $args['column_name']
+
+    //     );
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Substituições de valores
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     if(
+
+    //       isset($column['replaced']) &&
+
+    //       is_object($column['replaced'])
+
+    //     ) {
+
+    //       $column['replaced'] =
+
+    //         (array) $column['replaced'];
+
+    //     }
+
+
+    //     if(
+
+    //       isset($column['replaced']) &&
+
+    //       is_array($column['replaced']) &&
+
+    //       (
+
+    //         is_string($args['column_value']) ||
+
+    //         is_int($args['column_value']) ||
+
+    //         is_float($args['column_value']) ||
+
+    //         is_bool($args['column_value']) ||
+
+    //         $args['column_value'] === null
+
+    //       ) &&
+
+    //       array_key_exists(
+
+    //         $args['column_value'],
+
+    //         $column['replaced']
+
+    //       )
+
+    //     ) {
+
+    //       $args['column_value'] =
+
+    //         $column['replaced'][$args['column_value']];
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | HTML dos atributos da coluna
+    //     |--------------------------------------------------------------------------
+    //     */
+
+    //     $args['column_attrs'] = self::renderAttrs(
+
+    //       $args['attrs']
+
+    //     );
+
+
+    //   }
+
+
+    //   return $args;
+
+
+    // }
 
 
 
@@ -3249,14 +5207,83 @@
     | Boolean helper
     |--------------------------------------------------------------------------
     */
+    public static function isTruthy(
+      $value
+    ) {
 
-    public static function isTruthy($value) {
+
+      if($value === true) {
+
+        return true;
+
+      }
 
 
-      return ($value === true || $value === 1 || $value === '1' || $value === 'true');
+      if(
+
+        $value === false ||
+
+        $value === null
+
+      ) {
+
+        return false;
+
+      }
+
+
+      if(is_int($value) || is_float($value)) {
+
+        return (int) $value === 1;
+
+      }
+
+
+      if(!is_scalar($value)) {
+
+        return false;
+
+      }
+
+
+      $value = strtolower(
+
+        trim(
+
+          (string) $value
+
+        )
+
+      );
+
+
+      return in_array(
+
+        $value,
+
+        [
+
+          '1',
+          'true',
+          'sim',
+          'yes',
+          'on',
+
+        ],
+
+        true
+
+      );
 
 
     }
+    // public static function isTruthy($value) {
+
+
+    //   return ($value === true || $value === 1 || $value === '1' || $value === 'true');
+
+
+    // }
 
 
     public static function renderViewEditorField($field, $data = [], $layout = true) {
@@ -4502,6 +6529,7 @@
             'select',
             'checkbox',
             'radio',
+            'hidden',
 
           ],
 
@@ -5520,8 +7548,9 @@
     | Normaliza propriedades do campo para renderização
     |--------------------------------------------------------------------------
     */
-
-    public static function normalizeFieldPropsForRender($field = []) {
+    public static function normalizeFieldPropsForRender(
+      $field = []
+    ) {
 
 
       if(is_object($field)) {
@@ -5553,24 +7582,12 @@
         ?? [];
 
 
-      /*
-      |--------------------------------------------------------------------------
-      | Normaliza propriedades recebidas como objeto
-      |--------------------------------------------------------------------------
-      */
-
       if(is_object($props)) {
 
         $props = (array) $props;
 
       }
 
-
-      /*
-      |--------------------------------------------------------------------------
-      | Normaliza propriedades recebidas como JSON
-      |--------------------------------------------------------------------------
-      */
 
       if(!is_array($props)) {
 
@@ -5606,6 +7623,119 @@
 
 
       }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Parâmetros salvos pelo editor
+      |--------------------------------------------------------------------------
+      |
+      | Algumas versões do editor mantêm as configurações em props.params usando
+      | chaves como configs.disabled e configs.readonly.
+      |
+      */
+
+      $params =
+
+        isset($props['params']) &&
+
+        is_array($props['params'])
+
+          ? $props['params']
+
+          : [];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Disabled
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !array_key_exists(
+
+          'disabled',
+
+          $props
+
+        )
+
+      ) {
+
+        $props['disabled'] =
+
+          $params['configs.disabled']
+
+          ?? $params['config.disabled']
+
+          ?? $params['advanced.disabled']
+
+          ?? $params['disabled']
+
+          ?? false;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Readonly
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !array_key_exists(
+
+          'readonly',
+
+          $props
+
+        )
+
+      ) {
+
+        $props['readonly'] =
+
+          $params['configs.readonly']
+
+          ?? $params['config.readonly']
+
+          ?? $params['advanced.readonly']
+
+          ?? $params['readonly']
+
+          ?? $props['readonlue']
+
+          ?? false;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza para boolean
+      |--------------------------------------------------------------------------
+      */
+
+      $props['disabled'] =
+
+        self::isTruthy(
+
+          $props['disabled']
+
+        );
+
+
+      $props['readonly'] =
+
+        self::isTruthy(
+
+          $props['readonly']
+
+        );
 
 
       /*
@@ -5653,11 +7783,8 @@
           [
 
             'tbl_sys_field_type_name',
-
             'type',
-
             'name',
-
             'value',
 
           ],
@@ -5683,11 +7810,13 @@
 
       ) {
 
-        $props = self::normalizeRelationFieldProps(
+        $props =
 
-          $props
+          self::normalizeRelationFieldProps(
 
-        );
+            $props
+
+          );
 
       }
 
@@ -5696,6 +7825,181 @@
 
 
     }
+    // public static function normalizeFieldPropsForRender($field = []) {
+
+
+    //   if(is_object($field)) {
+
+    //     $field = (array) $field;
+
+    //   }
+
+
+    //   if(!is_array($field)) {
+
+    //     $field = [];
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Localiza as propriedades
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $props =
+
+    //     $field['props']
+
+    //     ?? $field['tbl_sys_forms_field_props']
+
+    //     ?? [];
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza propriedades recebidas como objeto
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(is_object($props)) {
+
+    //     $props = (array) $props;
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normaliza propriedades recebidas como JSON
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(!is_array($props)) {
+
+
+    //     if(
+
+    //       is_string($props) &&
+
+    //       trim($props) !== ''
+
+    //     ) {
+
+    //       $decodedProps = json_decode(
+
+    //         $props,
+
+    //         true
+
+    //       );
+
+
+    //       $props = is_array($decodedProps)
+
+    //         ? $decodedProps
+
+    //         : [];
+
+    //     } else {
+
+    //       $props = [];
+
+    //     }
+
+
+    //   }
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Resolve o tipo do campo
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   $fieldType =
+
+    //     $field['field_type']
+
+    //     ?? [];
+
+
+    //   if(is_object($fieldType)) {
+
+    //     $fieldType = (array) $fieldType;
+
+    //   }
+
+
+    //   if(!is_array($fieldType)) {
+
+    //     $fieldType = [];
+
+    //   }
+
+
+    //   $fieldTypeNameValue =
+
+    //     $fieldType['tbl_sys_field_type_name']
+
+    //     ?? $field['tbl_sys_field_type_name']
+
+    //     ?? '';
+
+
+    //   $fieldTypeName = strtolower(
+
+    //     self::normalizeRelationScalarValue(
+
+    //       $fieldTypeNameValue,
+
+    //       [
+
+    //         'tbl_sys_field_type_name',
+
+    //         'type',
+
+    //         'name',
+
+    //         'value',
+
+    //       ],
+
+    //       ''
+
+    //     )
+
+    //   );
+
+
+    //   /*
+    //   |--------------------------------------------------------------------------
+    //   | Normalização específica de campos relacionais
+    //   |--------------------------------------------------------------------------
+    //   */
+
+    //   if(
+
+    //     $fieldTypeName === 'relation' ||
+
+    //     $fieldTypeName === 'relations'
+
+    //   ) {
+
+    //     $props = self::normalizeRelationFieldProps(
+
+    //       $props
+
+    //     );
+
+    //   }
+
+
+    //   return $props;
+
+
+    // }
 
 
     // public static function normalizeFieldPropsForRender($field = []) {
@@ -5742,8 +8046,17 @@
     | - 1 / true: os botões continuam sendo controlados pelo modal.
     |
     */
+    public static function renderFormActions(
+      $form = [],
+      $formElementID = ''
+    ) {
 
-    public static function renderFormActions($form = [], $formElementID = '') {
+
+      if(is_object($form)) {
+
+        $form = (array) $form;
+
+      }
 
 
       if(!is_array($form)) {
@@ -5753,43 +8066,150 @@
       }
 
 
-      if($formElementID === '') {
+      if(
+
+        $formElementID === null ||
+
+        trim((string) $formElementID) === ''
+
+      ) {
 
         return '';
 
       }
 
 
-      $cancelText = $form['tbl_sys_form_cancel'] ?? '';
+      $formElementID = trim(
 
-      $submitText = $form['tbl_sys_form_submit'] ?? '';
+        (string) $formElementID
+
+      );
 
 
-      if($cancelText === null || trim((string) $cancelText) === '') {
+      $submissionData =
 
-        $cancelText = SysAutomator::SysAutomatorGetTranslateWord('Cancelar');
+        self::normalizeFormSubmissionData(
+
+          $form
+
+        );
+
+
+      $cancelText =
+
+        $submissionData['cancel'];
+
+
+      $submitText =
+
+        $submissionData['submit'];
+
+
+      $submitEnabled =
+
+        $submissionData['submit_enabled'];
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Nenhuma ação configurada
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        $cancelText === '' &&
+
+        (
+
+          $submitText === '' ||
+
+          $submitEnabled !== true
+
+        )
+
+      ) {
+
+        return '';
 
       }
 
 
-      if($submitText === null || trim((string) $submitText) === '') {
+      $showCancel =
 
-        $submitText = SysAutomator::SysAutomatorGetTranslateWord('Salvar');
+        $cancelText !== '';
+
+
+      $showSubmit = (
+
+        $submitEnabled === true &&
+
+        $submitText !== ''
+
+      );
+
+
+      if(
+
+        $showCancel !== true &&
+
+        $showSubmit !== true
+
+      ) {
+
+        return '';
 
       }
 
 
-      $cancelButtonID = $formElementID . '-cancel';
+      $cancelButtonID =
 
-      $submitButtonID = $formElementID . '-submit';
+        $formElementID .
+
+        '-cancel';
+
+
+      $submitButtonID =
+
+        $formElementID .
+
+        '-submit';
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Largura dos botões
+      |--------------------------------------------------------------------------
+      */
+
+      $buttonColumnClass = (
+
+        $showCancel === true &&
+
+        $showSubmit === true
+
+      )
+
+        ? 'col-12 col-md-6'
+
+        : 'col-12';
 
 
       $html = '';
 
 
-      $html .= '<div class="col-12">' . "\n";
+      $html .=
 
-        $html .= '<div class="row">' . "\n";
+        '<div class="col-12">' .
+
+        "\n";
+
+
+        $html .=
+
+          '<div class="row g-2">' .
+
+          "\n";
 
 
           /*
@@ -5798,20 +8218,78 @@
           |--------------------------------------------------------------------------
           */
 
-          $html .= '<div class="col-12 order-2 col-md-6 order-md-1">' . "\n";
+          if($showCancel === true) {
 
-            $html .= '<button';
-            $html .= ' type="reset"';
-            $html .= ' id="' . e($cancelButtonID) . '"';
-            $html .= ' form="' . e($formElementID) . '"';
-            $html .= ' class="btn btn-secondary w-100 js-automator-pagination-modal-cancel"';
-            $html .= '>';
 
-              $html .= e($cancelText);
+            $html .=
 
-            $html .= '</button>' . "\n";
+              '<div class="' .
 
-          $html .= '</div>' . "\n";
+              e($buttonColumnClass) .
+
+              ' order-2 order-md-1">' .
+
+              "\n";
+
+
+              $html .=
+
+                '<button';
+
+
+              $html .=
+
+                ' type="reset"';
+
+
+              $html .=
+
+                ' id="' .
+
+                e($cancelButtonID) .
+
+                '"';
+
+
+              $html .=
+
+                ' form="' .
+
+                e($formElementID) .
+
+                '"';
+
+
+              $html .=
+
+                ' class="btn btn-secondary w-100 js-automator-pagination-modal-cancel"';
+
+
+              $html .=
+
+                '>';
+
+
+                $html .=
+
+                  e($cancelText);
+
+
+              $html .=
+
+                '</button>' .
+
+                "\n";
+
+
+            $html .=
+
+              '</div>' .
+
+              "\n";
+
+
+          }
 
 
           /*
@@ -5820,32 +8298,212 @@
           |--------------------------------------------------------------------------
           */
 
-          $html .= '<div class="col-12 order-1 col-md-6 order-md-2">' . "\n";
-
-            $html .= '<button';
-            $html .= ' type="submit"';
-            $html .= ' id="' . e($submitButtonID) . '"';
-            $html .= ' form="' . e($formElementID) . '"';
-            $html .= ' class="btn btn-primary w-100 js-automator-pagination-modal-submit"';
-            $html .= ' disabled';
-            $html .= '>';
-
-              $html .= e($submitText);
-
-            $html .= '</button>' . "\n";
-
-          $html .= '</div>' . "\n";
+          if($showSubmit === true) {
 
 
-        $html .= '</div>' . "\n";
+            $html .=
 
-      $html .= '</div>' . "\n";
+              '<div class="' .
+
+              e($buttonColumnClass) .
+
+              ' order-1 order-md-2">' .
+
+              "\n";
+
+
+              $html .=
+
+                '<button';
+
+
+              $html .=
+
+                ' type="submit"';
+
+
+              $html .=
+
+                ' id="' .
+
+                e($submitButtonID) .
+
+                '"';
+
+
+              $html .=
+
+                ' form="' .
+
+                e($formElementID) .
+
+                '"';
+
+
+              $html .=
+
+                ' class="btn btn-primary w-100 js-automator-pagination-modal-submit"';
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Mantém o comportamento atual de habilitação por alteração
+              |--------------------------------------------------------------------------
+              */
+
+              $html .=
+
+                ' disabled';
+
+
+              $html .=
+
+                '>';
+
+
+                $html .=
+
+                  e($submitText);
+
+
+              $html .=
+
+                '</button>' .
+
+                "\n";
+
+
+            $html .=
+
+              '</div>' .
+
+              "\n";
+
+
+          }
+
+
+        $html .=
+
+          '</div>' .
+
+          "\n";
+
+
+      $html .=
+
+        '</div>' .
+
+        "\n";
 
 
       return $html;
 
 
     }
+    // public static function renderFormActions($form = [], $formElementID = '') {
+
+
+    //   if(!is_array($form)) {
+
+    //     $form = [];
+
+    //   }
+
+
+    //   if($formElementID === '') {
+
+    //     return '';
+
+    //   }
+
+
+    //   $cancelText = $form['tbl_sys_form_cancel'] ?? '';
+
+    //   $submitText = $form['tbl_sys_form_submit'] ?? '';
+
+
+    //   if($cancelText === null || trim((string) $cancelText) === '') {
+
+    //     $cancelText = SysAutomator::SysAutomatorGetTranslateWord('Cancelar');
+
+    //   }
+
+
+    //   if($submitText === null || trim((string) $submitText) === '') {
+
+    //     $submitText = SysAutomator::SysAutomatorGetTranslateWord('Salvar');
+
+    //   }
+
+
+    //   $cancelButtonID = $formElementID . '-cancel';
+
+    //   $submitButtonID = $formElementID . '-submit';
+
+
+    //   $html = '';
+
+
+    //   $html .= '<div class="col-12">' . "\n";
+
+    //     $html .= '<div class="row">' . "\n";
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Botão cancelar/resetar
+    //       |--------------------------------------------------------------------------
+    //       */
+
+    //       $html .= '<div class="col-12 order-2 col-md-6 order-md-1">' . "\n";
+
+    //         $html .= '<button';
+    //         $html .= ' type="reset"';
+    //         $html .= ' id="' . e($cancelButtonID) . '"';
+    //         $html .= ' form="' . e($formElementID) . '"';
+    //         $html .= ' class="btn btn-secondary w-100 js-automator-pagination-modal-cancel"';
+    //         $html .= '>';
+
+    //           $html .= e($cancelText);
+
+    //         $html .= '</button>' . "\n";
+
+    //       $html .= '</div>' . "\n";
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Botão submit
+    //       |--------------------------------------------------------------------------
+    //       */
+
+    //       $html .= '<div class="col-12 order-1 col-md-6 order-md-2">' . "\n";
+
+    //         $html .= '<button';
+    //         $html .= ' type="submit"';
+    //         $html .= ' id="' . e($submitButtonID) . '"';
+    //         $html .= ' form="' . e($formElementID) . '"';
+    //         $html .= ' class="btn btn-primary w-100 js-automator-pagination-modal-submit"';
+    //         $html .= ' disabled';
+    //         $html .= '>';
+
+    //           $html .= e($submitText);
+
+    //         $html .= '</button>' . "\n";
+
+    //       $html .= '</div>' . "\n";
+
+
+    //     $html .= '</div>' . "\n";
+
+    //   $html .= '</div>' . "\n";
+
+
+    //   return $html;
+
+
+    // }
 
 
 

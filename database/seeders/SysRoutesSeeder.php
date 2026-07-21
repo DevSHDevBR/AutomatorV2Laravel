@@ -189,7 +189,7 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'getFunction',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-notificacoes-pagination" index="tbl_sys_notification_ID"]</code>',
+            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-user-notifications-pagination"]</code>',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2, 3, 4]
@@ -197,7 +197,7 @@
           ],
           [
 
-            'tbl_sys_route_name'       => 'admin-api-notificacoes',
+            'tbl_sys_route_name'       => 'admin-api-notificacoes-get',
             'tbl_sys_route_title'      => 'API - Notificações GET',
             'tbl_sys_route_api'        => true,
             'tbl_sys_route_admin'      => true,
@@ -1330,10 +1330,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'POST',
-            'tbl_sys_route_controller' => 'UsersController',
-            'tbl_sys_route_method'     => 'updateUser',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'updateData',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '',
+            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_notifications" index="tbl_sys_notification_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2]

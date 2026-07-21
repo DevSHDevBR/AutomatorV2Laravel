@@ -1,88 +1,1455 @@
-$(document).on('click', '.btn-logout-system', function(e) {
+/*
+|--------------------------------------------------------------------------
+| Logout manual
+|--------------------------------------------------------------------------
+*/
 
-  AutomatorGetActionStatus(function() {
+$(document)
+  .off('click.AutomatorManualLogout')
+  .on(
+    'click.AutomatorManualLogout',
+    '.btn-logout-system',
+    function(e) {
 
-    AutomatorSetActionStatus(true, function() {
 
-      AutomatorPageLoader('show', function() {
+      e.preventDefault();
 
-        $.ajax({
-          url: window.AutomatorRoutes.apiLogout,
-          type: 'POST',
-          data: {},
-          headers: {
-            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
-            'Accept': 'application/json'
-          },
-          dataType: 'json',
-          success: function(response) {
 
-            if(response.status == true) {
+      /*
+      |--------------------------------------------------------------------------
+      | Logout manual não deve restaurar a página anterior
+      |--------------------------------------------------------------------------
+      */
 
-              AutomatorSetActionStatus(false, function() {
+      window.__automatorManualLogout = true;
 
-                if(response.redirect_url) {
 
-                  window.location.href = response.redirect_url;
+      try {
+
+        sessionStorage.removeItem(
+
+          'automator.return.url'
+
+        );
+
+      } catch(error) {}
+
+
+      AutomatorGetActionStatus(function() {
+
+
+        AutomatorSetActionStatus(true, function() {
+
+
+          AutomatorPageLoader('show', function() {
+
+
+            $.ajax({
+
+              url: window.AutomatorRoutes.apiLogout,
+
+              type: 'POST',
+
+              data: {},
+
+              headers: {
+
+                'X-CSRF-TOKEN':
+
+                  $('meta[name="csrf-token"]')
+                    .attr('content'),
+
+                'Accept': 'application/json',
+
+              },
+
+              dataType: 'json',
+
+              success: function(response) {
+
+
+                if(response.status == true) {
+
+
+                  AutomatorSetActionStatus(false, function() {
+
+
+                    if(response.redirect_url) {
+
+                      window.location.href =
+
+                        response.redirect_url;
+
+                    } else {
+
+                      window.location.href =
+
+                        '/admin';
+
+                    }
+
+
+                  });
+
 
                 } else {
 
-                  window.location.href = '/admin';
+
+                  window.__automatorManualLogout = false;
+
+
+                  var message =
+
+                    'Não foi possível realizar o logout.';
+
+
+                  if(response.message) {
+
+                    message = response.message;
+
+                  }
+
+
+                  alert(
+
+                    message
+
+                  );
+
+
+                  AutomatorPageLoader('hide', function() {
+
+                    AutomatorSetActionStatus(false);
+
+                  });
+
 
                 }
 
-              });
 
-            } else {
+              },
 
-              var message = 'Não foi possível realizar o login.';
+              error: function(xhr) {
 
-              if(response.message) {
-                message = response.message;
-              }
 
-              alert(message);
+                window.__automatorManualLogout = false;
 
-              AutomatorPageLoader('hide', function() {
-                AutomatorSetActionStatus(false);
-              });
 
-            }
+                /*
+                |--------------------------------------------------------------------------
+                | A sessão já pode ter expirado durante o logout
+                |--------------------------------------------------------------------------
+                */
 
-          },
-          error: function(xhr) {
+                if(
 
-            var message = 'Não foi possível realizar o login.';
+                  typeof AutomatorSessionResponseIsExpired === 'function' &&
 
-            if(xhr.responseJSON && xhr.responseJSON.message) {
+                  AutomatorSessionResponseIsExpired(xhr)
 
-              message = xhr.responseJSON.message;
+                ) {
 
-            } else if(xhr.responseText) {
+                  AutomatorSessionForceLogin(xhr);
 
-              message = xhr.responseText;
+                  return;
 
-            }
+                }
 
-            alert(message);
 
-            AutomatorPageLoader('hide', function() {
-              AutomatorSetActionStatus(false);
+                var message =
+
+                  'Não foi possível realizar o logout.';
+
+
+                if(
+
+                  xhr.responseJSON &&
+
+                  xhr.responseJSON.message
+
+                ) {
+
+                  message =
+
+                    xhr.responseJSON.message;
+
+                } else if(xhr.responseText) {
+
+                  message = xhr.responseText;
+
+                }
+
+
+                alert(
+
+                  message
+
+                );
+
+
+                AutomatorPageLoader('hide', function() {
+
+                  AutomatorSetActionStatus(false);
+
+                });
+
+
+              },
+
             });
 
-          }
+
+          });
+
 
         });
 
+
       });
 
-    });
 
-  });
+      return false;
+
+
+    }
+  );
+
+// $(document).on('click', '.btn-logout-system', function(e) {
+
+//   AutomatorGetActionStatus(function() {
+
+//     AutomatorSetActionStatus(true, function() {
+
+//       AutomatorPageLoader('show', function() {
+
+//         $.ajax({
+//           url: window.AutomatorRoutes.apiLogout,
+//           type: 'POST',
+//           data: {},
+//           headers: {
+//             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content'),
+//             'Accept': 'application/json'
+//           },
+//           dataType: 'json',
+//           success: function(response) {
+
+//             if(response.status == true) {
+
+//               AutomatorSetActionStatus(false, function() {
+
+//                 if(response.redirect_url) {
+
+//                   window.location.href = response.redirect_url;
+
+//                 } else {
+
+//                   window.location.href = '/admin';
+
+//                 }
+
+//               });
+
+//             } else {
+
+//               var message = 'Não foi possível realizar o login.';
+
+//               if(response.message) {
+//                 message = response.message;
+//               }
+
+//               alert(message);
+
+//               AutomatorPageLoader('hide', function() {
+//                 AutomatorSetActionStatus(false);
+//               });
+
+//             }
+
+//           },
+//           error: function(xhr) {
+
+//             var message = 'Não foi possível realizar o login.';
+
+//             if(xhr.responseJSON && xhr.responseJSON.message) {
+
+//               message = xhr.responseJSON.message;
+
+//             } else if(xhr.responseText) {
+
+//               message = xhr.responseText;
+
+//             }
+
+//             alert(message);
+
+//             AutomatorPageLoader('hide', function() {
+//               AutomatorSetActionStatus(false);
+//             });
+
+//           }
+
+//         });
+
+//       });
+
+//     });
+
+//   });
+
+//   return false;
+
+// });
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTOMATOR SESSION MANAGER
+|--------------------------------------------------------------------------
+|
+| Controla a expiração da sessão na área restrita.
+|
+| A verificação acontece:
+|
+| - ao carregar a página;
+| - por intervalo;
+| - após interação do usuário;
+| - quando uma requisição AJAX retorna 401 ou 419;
+| - quando uma requisição AJAX é redirecionada para o login.
+|
+*/
+
+
+window.AutomatorSessionManager = window.AutomatorSessionManager || {
+
+  checking: false,
+
+  redirecting: false,
+
+  initialized: false,
+
+  interval: null,
+
+  interactionTimer: null,
+
+  lastInteractionCheck: 0,
+
+  intervalTime: 60000,
+
+  interactionThrottle: 5000,
+
+};
+
+
+
+function AutomatorSessionGetLoginURL(
+  response = null
+) {
+
+
+  var loginURL = '';
+
+
+  if(
+
+    response &&
+
+    response.responseJSON &&
+
+    response.responseJSON.login_url
+
+  ) {
+
+    loginURL = String(
+
+      response.responseJSON.login_url
+
+    );
+
+  }
+
+
+  if(
+
+    loginURL == '' &&
+
+    response &&
+
+    response.login_url
+
+  ) {
+
+    loginURL = String(
+
+      response.login_url
+
+    );
+
+  }
+
+
+  if(
+
+    loginURL == '' &&
+
+    typeof window.AutomatorRoutes !== 'undefined'
+
+  ) {
+
+    loginURL = String(
+
+      window.AutomatorRoutes.login ||
+
+      window.AutomatorRoutes.adminLogin ||
+
+      window.AutomatorRoutes.pageLogin ||
+
+      ''
+
+    );
+
+  }
+
+
+  if(loginURL == '') {
+
+
+    var adminPath =
+
+      window.location.pathname
+        .split('/')
+        .filter(Boolean)[0] ||
+
+      'admin';
+
+
+    loginURL =
+
+      window.location.origin +
+
+      '/' +
+
+      adminPath +
+
+      '/login';
+
+
+  }
+
+
+  return loginURL;
+
+
+}
+
+
+
+function AutomatorSessionIsLoginURL(
+  url = ''
+) {
+
+
+  url = String(
+
+    url || ''
+
+  );
+
+
+  if(url == '') {
+
+    return false;
+
+  }
+
+
+  try {
+
+
+    var parsedURL = new URL(
+
+      url,
+
+      window.location.origin
+
+    );
+
+
+    var path = String(
+
+      parsedURL.pathname || ''
+
+    )
+      .replace(
+        /\/+$/,
+        ''
+      )
+      .toLowerCase();
+
+
+    return (
+
+      path.endsWith('/login') ||
+
+      path.endsWith('/entrar')
+
+    );
+
+
+  } catch(error) {
+
+    return false;
+
+  }
+
+
+}
+
+
+
+function AutomatorSessionGetCurrentURL() {
+
+
+  return (
+
+    window.location.pathname +
+
+    window.location.search +
+
+    window.location.hash
+
+  );
+
+
+}
+
+
+
+function AutomatorSessionRememberCurrentURL() {
+
+
+  if(window.__automatorManualLogout === true) {
+
+    return false;
+
+  }
+
+
+  if(
+
+    AutomatorSessionIsLoginURL(
+
+      window.location.href
+
+    )
+
+  ) {
+
+    return false;
+
+  }
+
+
+  var currentURL =
+
+    AutomatorSessionGetCurrentURL();
+
+
+  if(
+
+    currentURL == '' ||
+
+    currentURL == '/'
+
+  ) {
+
+    return false;
+
+  }
+
+
+  try {
+
+
+    sessionStorage.setItem(
+
+      'automator.return.url',
+
+      currentURL
+
+    );
+
+
+    sessionStorage.setItem(
+
+      'automator.return.created',
+
+      String(
+
+        Date.now()
+
+      )
+
+    );
+
+
+  } catch(error) {
+
+
+    console.warn(
+
+      'Não foi possível armazenar a URL atual.',
+
+      error
+
+    );
+
+
+  }
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionClearUnloadWarnings() {
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Remove bloqueios de navegação existentes
+  |--------------------------------------------------------------------------
+  |
+  | O redirecionamento por sessão expirada não pode exibir uma confirmação
+  | de alterações não salvas, pois o usuário já não possui uma sessão válida.
+  |
+  */
+
+  $(window).off(
+
+    'beforeunload.AutomatorSetActionStatus'
+
+  );
+
+
+  $(window).off(
+
+    'beforeunload.AutomatorModalFormChanged'
+
+  );
+
+
+  $(window).off(
+
+    'beforeunload.AutomatorModalViewChanged'
+
+  );
+
+
+  $(window).off(
+
+    'beforeunload.AutomatorFormEditorChanged'
+
+  );
+
+
+  $(window).off(
+
+    'beforeunload.AutomatorPaginationEditorChanged'
+
+  );
+
+
+  if(
+
+    window.__automatorFormEditorBeforeUnloadHandler
+
+  ) {
+
+    window.removeEventListener(
+
+      'beforeunload',
+
+      window.__automatorFormEditorBeforeUnloadHandler
+
+    );
+
+
+    window.__automatorFormEditorBeforeUnloadHandler =
+
+      null;
+
+  }
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionBuildLoginRedirectURL(
+  loginURL = ''
+) {
+
+
+  loginURL = String(
+
+    loginURL || ''
+
+  );
+
+
+  if(loginURL == '') {
+
+    loginURL = AutomatorSessionGetLoginURL();
+
+  }
+
+
+  try {
+
+
+    var parsedURL = new URL(
+
+      loginURL,
+
+      window.location.origin
+
+    );
+
+
+    parsedURL.searchParams.set(
+
+      'session_expired',
+
+      '1'
+
+    );
+
+
+    return parsedURL.toString();
+
+
+  } catch(error) {
+
+
+    return loginURL;
+
+
+  }
+
+
+}
+
+
+
+function AutomatorSessionForceLogin(
+  response = null
+) {
+
+
+  var manager =
+
+    window.AutomatorSessionManager;
+
+
+  if(
+
+    manager.redirecting === true ||
+
+    window.__automatorManualLogout === true
+
+  ) {
+
+    return false;
+
+  }
+
+
+  manager.redirecting = true;
+
+  manager.checking = false;
+
+
+  if(manager.interval) {
+
+
+    clearInterval(
+
+      manager.interval
+
+    );
+
+
+    manager.interval = null;
+
+
+  }
+
+
+  if(manager.interactionTimer) {
+
+
+    clearTimeout(
+
+      manager.interactionTimer
+
+    );
+
+
+    manager.interactionTimer = null;
+
+
+  }
+
+
+  AutomatorSessionRememberCurrentURL();
+
+  AutomatorSessionClearUnloadWarnings();
+
+
+  try {
+
+    AutomatorSetActionStatus(false);
+
+  } catch(error) {}
+
+
+  try {
+
+    $('#page-loader').stop(true, true).show();
+
+  } catch(error) {}
+
+
+  var loginURL =
+
+    AutomatorSessionGetLoginURL(
+
+      response
+
+    );
+
+
+  loginURL =
+
+    AutomatorSessionBuildLoginRedirectURL(
+
+      loginURL
+
+    );
+
+
+  window.location.replace(
+
+    loginURL
+
+  );
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionResponseIsExpired(
+  xhr = null
+) {
+
+
+  if(!xhr) {
+
+    return false;
+
+  }
+
+
+  var status = Number(
+
+    xhr.status || 0
+
+  );
+
+
+  if(
+
+    status == 401 ||
+
+    status == 419
+
+  ) {
+
+    return true;
+
+  }
+
+
+  if(
+
+    xhr.responseJSON &&
+
+    (
+      xhr.responseJSON.session_expired === true ||
+
+      xhr.responseJSON.authenticated === false
+    )
+
+  ) {
+
+    return true;
+
+  }
+
+
+  var responseURL = String(
+
+    xhr.responseURL || ''
+
+  );
+
+
+  if(
+
+    responseURL != '' &&
+
+    AutomatorSessionIsLoginURL(
+
+      responseURL
+
+    )
+
+  ) {
+
+    return true;
+
+  }
+
+
+  var responseText = String(
+
+    xhr.responseText || ''
+
+  );
+
+
+  if(
+
+    responseText != '' &&
+
+    (
+      responseText.indexOf(
+
+        'name="login"'
+
+      ) >= 0 &&
+
+      responseText.indexOf(
+
+        'name="password"'
+
+      ) >= 0
+    )
+
+  ) {
+
+    return true;
+
+  }
+
 
   return false;
 
-});
+
+}
+
+
+
+function AutomatorSessionCheck(
+  source = 'manual'
+) {
+
+
+  var manager =
+
+    window.AutomatorSessionManager;
+
+
+  if(
+
+    manager.checking === true ||
+
+    manager.redirecting === true ||
+
+    window.__automatorManualLogout === true
+
+  ) {
+
+    return false;
+
+  }
+
+
+  if(
+
+    typeof window.AutomatorRoutes === 'undefined' ||
+
+    !window.AutomatorRoutes.apiAdmin
+
+  ) {
+
+    return false;
+
+  }
+
+
+  manager.checking = true;
+
+
+  $.ajax({
+
+    url: window.AutomatorRoutes.apiAdmin,
+
+    type: 'POST',
+
+    data: {
+
+      acao: 'check-session',
+
+      source: source,
+
+    },
+
+    headers: {
+
+      'X-CSRF-TOKEN':
+
+        $('meta[name="csrf-token"]')
+          .attr('content'),
+
+      'Accept': 'application/json',
+
+      'X-Automator-Session-Check': 'true',
+
+    },
+
+    dataType: 'json',
+
+    global: false,
+
+    success: function(response) {
+
+
+      manager.checking = false;
+
+
+      if(
+
+        !response ||
+
+        response.authenticated === false ||
+
+        response.session_expired === true
+
+      ) {
+
+        AutomatorSessionForceLogin(
+
+          response
+
+        );
+
+      }
+
+
+    },
+
+    error: function(xhr) {
+
+
+      manager.checking = false;
+
+
+      if(
+
+        AutomatorSessionResponseIsExpired(
+
+          xhr
+
+        )
+
+      ) {
+
+        AutomatorSessionForceLogin(
+
+          xhr
+
+        );
+
+      }
+
+
+    },
+
+  });
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionScheduleInteractionCheck() {
+
+
+  var manager =
+
+    window.AutomatorSessionManager;
+
+
+  if(
+
+    manager.redirecting === true ||
+
+    manager.checking === true ||
+
+    window.__automatorManualLogout === true
+
+  ) {
+
+    return false;
+
+  }
+
+
+  var currentTime = Date.now();
+
+
+  if(
+
+    currentTime -
+
+    manager.lastInteractionCheck
+
+    < manager.interactionThrottle
+
+  ) {
+
+    return false;
+
+  }
+
+
+  manager.lastInteractionCheck =
+
+    currentTime;
+
+
+  if(manager.interactionTimer) {
+
+    clearTimeout(
+
+      manager.interactionTimer
+
+    );
+
+  }
+
+
+  manager.interactionTimer = setTimeout(
+
+    function() {
+
+
+      manager.interactionTimer = null;
+
+
+      AutomatorSessionCheck(
+
+        'interaction'
+
+      );
+
+
+    },
+
+    100
+
+  );
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionBindInteractionEvents() {
+
+
+  $(document)
+    .off(
+      '.AutomatorSessionInteraction'
+    )
+    .on(
+      'click.AutomatorSessionInteraction ' +
+      'keydown.AutomatorSessionInteraction ' +
+      'submit.AutomatorSessionInteraction ' +
+      'change.AutomatorSessionInteraction',
+      function(event) {
+
+
+        if(
+
+          $(event.target).closest(
+
+            '.btn-logout-system'
+
+          ).length
+
+        ) {
+
+          return;
+
+        }
+
+
+        AutomatorSessionScheduleInteractionCheck();
+
+
+      }
+    );
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionBindAjaxError() {
+
+
+  $(document)
+    .off(
+      'ajaxError.AutomatorSession'
+    )
+    .on(
+      'ajaxError.AutomatorSession',
+      function(
+
+        event,
+
+        xhr,
+
+        settings
+
+      ) {
+
+
+        if(
+
+          window.__automatorManualLogout === true ||
+
+          window.AutomatorSessionManager.redirecting === true
+
+        ) {
+
+          return;
+
+        }
+
+
+        if(
+
+          settings &&
+
+          settings.headers &&
+
+          settings.headers['X-Automator-Session-Check']
+
+        ) {
+
+          return;
+
+        }
+
+
+        if(
+
+          AutomatorSessionResponseIsExpired(
+
+            xhr
+
+          )
+
+        ) {
+
+          AutomatorSessionForceLogin(
+
+            xhr
+
+          );
+
+        }
+
+
+      }
+    );
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSessionInitialize() {
+
+
+  var manager =
+
+    window.AutomatorSessionManager;
+
+
+  if(manager.initialized === true) {
+
+    return false;
+
+  }
+
+
+  manager.initialized = true;
+
+
+  AutomatorSessionBindInteractionEvents();
+
+  AutomatorSessionBindAjaxError();
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Verificação inicial
+  |--------------------------------------------------------------------------
+  */
+
+  AutomatorSessionCheck(
+
+    'page-load'
+
+  );
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Verificação periódica
+  |--------------------------------------------------------------------------
+  */
+
+  manager.interval = setInterval(
+
+    function() {
+
+
+      AutomatorSessionCheck(
+
+        'interval'
+
+      );
+
+
+    },
+
+    manager.intervalTime
+
+  );
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorno à aba
+  |--------------------------------------------------------------------------
+  */
+
+  document.addEventListener(
+
+    'visibilitychange',
+
+    function() {
+
+
+      if(document.visibilityState == 'visible') {
+
+        AutomatorSessionCheck(
+
+          'visibility'
+
+        );
+
+      }
+
+
+    }
+
+  );
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Foco na janela
+  |--------------------------------------------------------------------------
+  */
+
+  window.addEventListener(
+
+    'focus',
+
+    function() {
+
+
+      AutomatorSessionCheck(
+
+        'focus'
+
+      );
+
+
+    }
+
+  );
+
+
+  return true;
+
+
+}
+
+
+
+document.addEventListener(
+
+  'DOMContentLoaded',
+
+  function() {
+
+
+    AutomatorSessionInitialize();
+
+
+  }
+
+);
+
 
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -4310,3 +5677,1662 @@ function setSysAutomatorPageEditorInitialHeaderState(response) {
   }
 
 }
+
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTOMATOR SYS FUNCTIONS AUTOCOMPLETE
+|--------------------------------------------------------------------------
+*/
+
+
+window.AutomatorSysFunctionsAutocomplete =
+
+  window.AutomatorSysFunctionsAutocomplete || {
+
+    loaded: false,
+
+    loading: false,
+
+    functions: [],
+
+    callbacks: [],
+
+    activeField: null,
+
+    activeItems: [],
+
+    activeIndex: -1,
+
+  };
+
+
+
+function AutomatorSysFunctionsEscapeHTML(
+  value = ''
+) {
+
+
+  return String(
+
+    value === null ||
+    value === undefined
+
+      ? ''
+
+      : value
+
+  )
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+
+}
+
+
+
+function AutomatorSysFunctionsGetContainer() {
+
+
+  let container = $(
+
+    '#automator-sysfunctions-autocomplete'
+
+  );
+
+
+  if(container.length) {
+
+    return container;
+
+  }
+
+
+  container = $(
+
+    '<div ' +
+
+      'id="automator-sysfunctions-autocomplete" ' +
+
+      'class="' +
+
+        'automator-sysfunctions-autocomplete ' +
+
+        'position-fixed bg-white border rounded shadow d-none' +
+
+      '" ' +
+
+      'style="' +
+
+        'z-index: 5000;' +
+
+        'max-height: 280px;' +
+
+        'overflow-y: auto;' +
+
+        'min-width: 280px;' +
+
+      '"' +
+
+    '></div>'
+
+  );
+
+
+  $('body').append(
+
+    container
+
+  );
+
+
+  return container;
+
+
+}
+
+
+
+function AutomatorSysFunctionsHide() {
+
+
+  const autocomplete =
+
+    window.AutomatorSysFunctionsAutocomplete;
+
+
+  autocomplete.activeField = null;
+
+  autocomplete.activeItems = [];
+
+  autocomplete.activeIndex = -1;
+
+
+  AutomatorSysFunctionsGetContainer()
+    .addClass('d-none')
+    .empty();
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsLoad(
+  callback = null
+) {
+
+
+  const autocomplete =
+
+    window.AutomatorSysFunctionsAutocomplete;
+
+
+  if(autocomplete.loaded === true) {
+
+
+    if(typeof callback === 'function') {
+
+      callback(
+
+        autocomplete.functions
+
+      );
+
+    }
+
+
+    return true;
+
+  }
+
+
+  if(typeof callback === 'function') {
+
+    autocomplete.callbacks.push(
+
+      callback
+
+    );
+
+  }
+
+
+  if(autocomplete.loading === true) {
+
+    return true;
+
+  }
+
+
+  if(
+    typeof window.AutomatorRoutes === 'undefined' ||
+    !window.AutomatorRoutes.apiAdmin
+  ) {
+
+    return false;
+
+  }
+
+
+  autocomplete.loading = true;
+
+
+  $.ajax({
+
+    url: window.AutomatorRoutes.apiAdmin,
+
+    type: 'POST',
+
+    data: {
+
+      acao: 'get-sys-functions-autocomplete',
+
+    },
+
+    headers: {
+
+      'X-CSRF-TOKEN':
+
+        $('meta[name="csrf-token"]')
+          .attr('content'),
+
+      'Accept': 'application/json',
+
+    },
+
+    dataType: 'json',
+
+    success: function(response) {
+
+
+      autocomplete.loading = false;
+
+
+      if(
+        response &&
+        response.status === true &&
+        Array.isArray(
+          response.functions
+        )
+      ) {
+
+        autocomplete.functions =
+
+          response.functions;
+
+      } else {
+
+        autocomplete.functions = [];
+
+      }
+
+
+      autocomplete.loaded = true;
+
+
+      const callbacks =
+
+        autocomplete.callbacks.slice();
+
+
+      autocomplete.callbacks = [];
+
+
+      callbacks.forEach(function(currentCallback) {
+
+
+        if(typeof currentCallback === 'function') {
+
+          currentCallback(
+
+            autocomplete.functions
+
+          );
+
+        }
+
+
+      });
+
+
+    },
+
+    error: function(xhr) {
+
+
+      autocomplete.loading = false;
+
+      autocomplete.loaded = true;
+
+      autocomplete.functions = [];
+
+
+      const callbacks =
+
+        autocomplete.callbacks.slice();
+
+
+      autocomplete.callbacks = [];
+
+
+      callbacks.forEach(function(currentCallback) {
+
+
+        if(typeof currentCallback === 'function') {
+
+          currentCallback([]);
+
+        }
+
+
+      });
+
+
+      if(
+        typeof AutomatorSessionResponseIsExpired === 'function' &&
+        AutomatorSessionResponseIsExpired(xhr)
+      ) {
+
+        AutomatorSessionForceLogin(
+
+          xhr
+
+        );
+
+      }
+
+
+    },
+
+  });
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsGetCursorPosition(
+  field
+) {
+
+
+  field = $(field);
+
+
+  if(!field.length) {
+
+    return 0;
+
+  }
+
+
+  const fieldElement = field[0];
+
+
+  if(
+    typeof fieldElement.selectionStart === 'number'
+  ) {
+
+    return fieldElement.selectionStart;
+
+  }
+
+
+  return String(
+
+    field.val() || ''
+
+  ).length;
+
+
+}
+
+
+
+function AutomatorSysFunctionsGetContext(
+  field
+) {
+
+
+  field = $(field);
+
+
+  if(!field.length) {
+
+    return null;
+
+  }
+
+
+  const value = String(
+
+    field.val() || ''
+
+  );
+
+
+  const cursorPosition =
+
+    AutomatorSysFunctionsGetCursorPosition(
+
+      field
+
+    );
+
+
+  const valueBeforeCursor = value.substring(
+
+    0,
+
+    cursorPosition
+
+  );
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Localiza o início do gatilho
+  |--------------------------------------------------------------------------
+  |
+  | A versão anterior utilizava:
+  |
+  | valueBeforeCursor.lastIndexOf('@SysFunctions')
+  |
+  | Isso fazia com que o autocomplete fosse aberto somente depois que o
+  | usuário terminasse de escrever todo o texto "@SysFunctions".
+  |
+  | Agora também são reconhecidos os valores parciais:
+  |
+  | @
+  | @S
+  | @Sys
+  | @SysFun
+  | @SysFunctions
+  |--------------------------------------------------------------------------
+  */
+
+
+  const partialTriggerMatch =
+
+    valueBeforeCursor.match(
+
+      /@(?:S(?:y(?:s(?:F(?:u(?:n(?:c(?:t(?:i(?:o(?:n(?:s)?)?)?)?)?)?)?)?)?)?)?)?$/i
+
+    );
+
+
+  let triggerPosition = -1;
+
+
+  if(partialTriggerMatch) {
+
+
+    triggerPosition =
+
+      valueBeforeCursor.length -
+
+      String(
+
+        partialTriggerMatch[0] || ''
+
+      ).length;
+
+
+  } else {
+
+
+    triggerPosition =
+
+      valueBeforeCursor.lastIndexOf(
+
+        '@SysFunctions'
+
+      );
+
+
+  }
+
+
+  if(triggerPosition < 0) {
+
+    return null;
+
+  }
+
+
+  const expressionBeforeCursor =
+
+    valueBeforeCursor.substring(
+
+      triggerPosition
+
+    );
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Gatilho sendo digitado parcialmente
+  |--------------------------------------------------------------------------
+  */
+
+
+  if(
+
+    /^@(?:S(?:y(?:s(?:F(?:u(?:n(?:c(?:t(?:i(?:o(?:n(?:s)?)?)?)?)?)?)?)?)?)?)?)?$/i.test(
+
+      expressionBeforeCursor
+
+    )
+
+  ) {
+
+
+    return {
+
+      type: 'function',
+
+      query: '',
+
+      start: triggerPosition,
+
+      end: cursorPosition,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Função sendo pesquisada
+  |--------------------------------------------------------------------------
+  |
+  | Exemplos:
+  |
+  | @SysFunctions(
+  | @SysFunctions('
+  | @SysFunctions('sys
+  |--------------------------------------------------------------------------
+  */
+
+
+  const functionMatch =
+
+    expressionBeforeCursor.match(
+
+      /^@SysFunctions\s*\(\s*['"]?([^'"]*)$/i
+
+    );
+
+
+  if(functionMatch) {
+
+
+    return {
+
+      type: 'function',
+
+      query: String(
+
+        functionMatch[1] || ''
+
+      ),
+
+      start: triggerPosition,
+
+      end: cursorPosition,
+
+    };
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Parâmetro sendo preenchido
+  |--------------------------------------------------------------------------
+  |
+  | Exemplo:
+  |
+  | @SysFunctions(
+  |   'sysGetRouteData',
+  |   [
+  |     'data' => 'tbl_sys_
+  |   ]
+  | )
+  |--------------------------------------------------------------------------
+  */
+
+
+  const completeFunctionMatch =
+
+    expressionBeforeCursor.match(
+
+      /^@SysFunctions\s*\(\s*['"]([^'"]+)['"]\s*,\s*\[([\s\S]*)$/i
+
+    );
+
+
+  if(completeFunctionMatch) {
+
+
+    const functionName = String(
+
+      completeFunctionMatch[1] || ''
+
+    ).trim();
+
+
+    const paramsContent = String(
+
+      completeFunctionMatch[2] || ''
+
+    );
+
+
+    const paramMatch = paramsContent.match(
+
+      /['"]([^'"]+)['"]\s*=>\s*['"]([^'"]*)$/i
+
+    );
+
+
+    if(paramMatch) {
+
+
+      const currentParamValue = String(
+
+        paramMatch[2] || ''
+
+      );
+
+
+      return {
+
+        type: 'param-value',
+
+        functionName: functionName,
+
+        paramName: String(
+
+          paramMatch[1] || ''
+
+        ).trim(),
+
+        query: currentParamValue,
+
+        start:
+
+          cursorPosition -
+
+          currentParamValue.length,
+
+        end: cursorPosition,
+
+      };
+
+
+    }
+
+
+  }
+
+
+  return null;
+
+
+}
+
+
+
+function AutomatorSysFunctionsGetFunctionByName(
+  functionName = ''
+) {
+
+
+  functionName = String(
+
+    functionName || ''
+
+  ).trim();
+
+
+  const functions =
+
+    window
+      .AutomatorSysFunctionsAutocomplete
+      .functions;
+
+
+  return functions.find(function(functionData) {
+
+
+    return String(
+
+      functionData.name || ''
+
+    ).trim() == functionName;
+
+
+  }) || null;
+
+
+}
+
+
+
+function AutomatorSysFunctionsGetItems(
+  context
+) {
+
+
+  if(!context) {
+
+    return [];
+
+  }
+
+
+  const query = String(
+
+    context.query || ''
+
+  )
+    .trim()
+    .toLowerCase();
+
+
+  if(context.type == 'function') {
+
+
+    return window
+      .AutomatorSysFunctionsAutocomplete
+      .functions
+      .filter(function(functionData) {
+
+
+        const functionName = String(
+
+          functionData.name || ''
+
+        ).toLowerCase();
+
+
+        const functionMethod = String(
+
+          functionData.method || ''
+
+        ).toLowerCase();
+
+
+        return (
+
+          query == '' ||
+
+          functionName.indexOf(query) >= 0 ||
+
+          functionMethod.indexOf(query) >= 0
+
+        );
+
+
+      })
+      .map(function(functionData) {
+
+
+        return {
+
+          type: 'function',
+
+          value: String(
+
+            functionData.syntax ||
+
+            "@SysFunctions('" +
+
+              functionData.name +
+
+            "')"
+
+          ),
+
+          title: String(
+
+            functionData.name || ''
+
+          ),
+
+          description: String(
+
+            functionData.method || ''
+
+          ),
+
+        };
+
+
+      });
+
+  }
+
+
+  if(context.type == 'param-value') {
+
+
+    const functionData =
+
+      AutomatorSysFunctionsGetFunctionByName(
+
+        context.functionName
+
+      );
+
+
+    if(!functionData) {
+
+      return [];
+
+    }
+
+
+    const params = Array.isArray(
+
+      functionData.params
+
+    )
+      ? functionData.params
+      : [];
+
+
+    const paramData = params.find(function(currentParamData) {
+
+
+      return String(
+
+        currentParamData.name || ''
+
+      ).trim() == context.paramName;
+
+
+    });
+
+
+    if(
+      !paramData ||
+      !Array.isArray(
+        paramData.options
+      )
+    ) {
+
+      return [];
+
+    }
+
+
+    return paramData.options
+      .filter(function(optionData) {
+
+
+        const optionValue = String(
+
+          optionData.value || ''
+
+        ).toLowerCase();
+
+
+        const optionLabel = String(
+
+          optionData.label || ''
+
+        ).toLowerCase();
+
+
+        return (
+
+          query == '' ||
+
+          optionValue.indexOf(query) >= 0 ||
+
+          optionLabel.indexOf(query) >= 0
+
+        );
+
+
+      })
+      .map(function(optionData) {
+
+
+        return {
+
+          type: 'param-value',
+
+          value: String(
+
+            optionData.value || ''
+
+          ),
+
+          title: String(
+
+            optionData.label ||
+
+            optionData.value ||
+
+            ''
+
+          ),
+
+          description: String(
+
+            optionData.value || ''
+
+          ),
+
+        };
+
+
+      });
+
+  }
+
+
+  return [];
+
+
+}
+
+
+
+function AutomatorSysFunctionsPosition(
+  field
+) {
+
+
+  field = $(field);
+
+
+  if(!field.length) {
+
+    return false;
+
+  }
+
+
+  const fieldRect =
+
+    field[0].getBoundingClientRect();
+
+
+  const container =
+
+    AutomatorSysFunctionsGetContainer();
+
+
+  const availableWidth = Math.max(
+
+    280,
+
+    Math.min(
+
+      fieldRect.width,
+
+      window.innerWidth - 30
+
+    )
+
+  );
+
+
+  let top = fieldRect.bottom + 4;
+
+  let left = fieldRect.left;
+
+
+  if(
+    top + 280 >
+    window.innerHeight
+  ) {
+
+    top = Math.max(
+
+      10,
+
+      fieldRect.top -
+
+      Math.min(
+        280,
+        container.outerHeight() || 280
+      ) -
+
+      4
+
+    );
+
+  }
+
+
+  if(left + availableWidth > window.innerWidth - 10) {
+
+    left = Math.max(
+
+      10,
+
+      window.innerWidth -
+
+      availableWidth -
+
+      10
+
+    );
+
+  }
+
+
+  container.css({
+
+    top: top + 'px',
+
+    left: left + 'px',
+
+    width: availableWidth + 'px',
+
+  });
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsRender(
+  field,
+  context
+) {
+
+
+  const autocomplete =
+
+    window.AutomatorSysFunctionsAutocomplete;
+
+
+  const items =
+
+    AutomatorSysFunctionsGetItems(
+
+      context
+
+    );
+
+
+  if(items.length <= 0) {
+
+    AutomatorSysFunctionsHide();
+
+    return false;
+
+  }
+
+
+  autocomplete.activeField = $(field);
+
+  autocomplete.activeItems = items;
+
+  autocomplete.activeIndex = 0;
+
+
+  let html = '';
+
+
+  items.forEach(function(item, index) {
+
+
+    html +=
+
+      '<button ' +
+
+        'type="button" ' +
+
+        'class="' +
+
+          'automator-sysfunctions-autocomplete-item ' +
+
+          'btn btn-light border-0 rounded-0 text-start w-100 ' +
+
+          (
+
+            index === 0
+
+              ? 'active'
+
+              : ''
+
+          ) +
+
+        '" ' +
+
+        'data-automator-sysfunctions-index="' +
+
+          index +
+
+        '"' +
+
+      '>' +
+
+        '<span class="d-block fw-semibold text-truncate">' +
+
+          AutomatorSysFunctionsEscapeHTML(
+
+            item.title
+
+          ) +
+
+        '</span>' +
+
+        (
+
+          item.description != ''
+
+            ? '<span class="d-block small text-muted text-truncate">' +
+
+                AutomatorSysFunctionsEscapeHTML(
+
+                  item.description
+
+                ) +
+
+              '</span>'
+
+            : ''
+
+        ) +
+
+      '</button>';
+
+
+  });
+
+
+  AutomatorSysFunctionsGetContainer()
+    .html(html)
+    .removeClass('d-none');
+
+
+  AutomatorSysFunctionsPosition(
+
+    field
+
+  );
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsRefresh(
+  field
+) {
+
+
+  field = $(field);
+
+
+  if(!field.length) {
+
+    return false;
+
+  }
+
+
+  const context =
+
+    AutomatorSysFunctionsGetContext(
+
+      field
+
+    );
+
+
+  if(!context) {
+
+    AutomatorSysFunctionsHide();
+
+    return false;
+
+  }
+
+
+  AutomatorSysFunctionsLoad(function() {
+
+
+    AutomatorSysFunctionsRender(
+
+      field,
+
+      context
+
+    );
+
+
+  });
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsInsert(
+  field,
+  item
+) {
+
+
+  field = $(field);
+
+
+  if(
+    !field.length ||
+    !item
+  ) {
+
+    return false;
+
+  }
+
+
+  const context =
+
+    AutomatorSysFunctionsGetContext(
+
+      field
+
+    );
+
+
+  if(!context) {
+
+    return false;
+
+  }
+
+
+  const currentValue = String(
+
+    field.val() || ''
+
+  );
+
+
+  const replacementValue = String(
+
+    item.value || ''
+
+  );
+
+
+  const updatedValue =
+
+    currentValue.substring(
+
+      0,
+
+      context.start
+
+    ) +
+
+    replacementValue +
+
+    currentValue.substring(
+
+      context.end
+
+    );
+
+
+  const newCursorPosition =
+
+    context.start +
+
+    replacementValue.length;
+
+
+  field.val(
+
+    updatedValue
+
+  );
+
+
+  field.trigger(
+
+    'input'
+
+  );
+
+
+  field.trigger(
+
+    'change'
+
+  );
+
+
+  if(field[0].setSelectionRange) {
+
+    field[0].setSelectionRange(
+
+      newCursorPosition,
+
+      newCursorPosition
+
+    );
+
+  }
+
+
+  field.trigger(
+
+    'focus'
+
+  );
+
+
+  AutomatorSysFunctionsHide();
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsUpdateActiveItem() {
+
+
+  const autocomplete =
+
+    window.AutomatorSysFunctionsAutocomplete;
+
+
+  const container =
+
+    AutomatorSysFunctionsGetContainer();
+
+
+  container
+    .find(
+      '.automator-sysfunctions-autocomplete-item'
+    )
+    .removeClass('active');
+
+
+  const activeItem = container.find(
+
+    '[data-automator-sysfunctions-index="' +
+
+      autocomplete.activeIndex +
+
+    '"]'
+
+  );
+
+
+  activeItem.addClass(
+
+    'active'
+
+  );
+
+
+  if(activeItem.length) {
+
+    activeItem[0].scrollIntoView({
+
+      block: 'nearest',
+
+    });
+
+  }
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorSysFunctionsBindEvents() {
+
+
+  $(document)
+    .off(
+      '.AutomatorSysFunctionsAutocomplete'
+    );
+
+
+  $(document)
+    .on(
+      'input.AutomatorSysFunctionsAutocomplete ' +
+      'click.AutomatorSysFunctionsAutocomplete ' +
+      'focus.AutomatorSysFunctionsAutocomplete',
+      'input.automator-sysfunctions, ' +
+      'textarea.automator-sysfunctions',
+      function() {
+
+
+        AutomatorSysFunctionsRefresh(
+
+          this
+
+        );
+
+
+      }
+    );
+
+
+  $(document)
+    .on(
+      'keydown.AutomatorSysFunctionsAutocomplete',
+      'input.automator-sysfunctions, ' +
+      'textarea.automator-sysfunctions',
+      function(event) {
+
+
+        const autocomplete =
+
+          window.AutomatorSysFunctionsAutocomplete;
+
+
+        if(
+          autocomplete.activeItems.length <= 0 ||
+          AutomatorSysFunctionsGetContainer()
+            .hasClass('d-none')
+        ) {
+
+          return;
+
+        }
+
+
+        if(event.key == 'ArrowDown') {
+
+
+          event.preventDefault();
+
+
+          autocomplete.activeIndex = Math.min(
+
+            autocomplete.activeItems.length - 1,
+
+            autocomplete.activeIndex + 1
+
+          );
+
+
+          AutomatorSysFunctionsUpdateActiveItem();
+
+
+        } else if(event.key == 'ArrowUp') {
+
+
+          event.preventDefault();
+
+
+          autocomplete.activeIndex = Math.max(
+
+            0,
+
+            autocomplete.activeIndex - 1
+
+          );
+
+
+          AutomatorSysFunctionsUpdateActiveItem();
+
+
+        } else if(
+          event.key == 'Enter' ||
+          event.key == 'Tab'
+        ) {
+
+
+          event.preventDefault();
+
+
+          const activeItem =
+
+            autocomplete.activeItems[
+
+              autocomplete.activeIndex
+
+            ];
+
+
+          AutomatorSysFunctionsInsert(
+
+            this,
+
+            activeItem
+
+          );
+
+
+        } else if(event.key == 'Escape') {
+
+
+          event.preventDefault();
+
+
+          AutomatorSysFunctionsHide();
+
+
+        }
+
+
+      }
+    );
+
+
+  $(document)
+    .on(
+      'mousedown.AutomatorSysFunctionsAutocomplete',
+      '.automator-sysfunctions-autocomplete-item',
+      function(event) {
+
+
+        event.preventDefault();
+
+
+        const autocomplete =
+
+          window.AutomatorSysFunctionsAutocomplete;
+
+
+        const itemIndex = Number(
+
+          $(this).attr(
+
+            'data-automator-sysfunctions-index'
+
+          )
+
+        );
+
+
+        const item =
+
+          autocomplete.activeItems[
+
+            itemIndex
+
+          ];
+
+
+        AutomatorSysFunctionsInsert(
+
+          autocomplete.activeField,
+
+          item
+
+        );
+
+
+      }
+    );
+
+
+  $(document)
+    .on(
+      'mousedown.AutomatorSysFunctionsAutocomplete',
+      function(event) {
+
+
+        if(
+          $(event.target).closest(
+            '#automator-sysfunctions-autocomplete, ' +
+            '.automator-sysfunctions'
+          ).length
+        ) {
+
+          return;
+
+        }
+
+
+        AutomatorSysFunctionsHide();
+
+
+      }
+    );
+
+
+  $(window)
+    .off(
+      'resize.AutomatorSysFunctionsAutocomplete ' +
+      'scroll.AutomatorSysFunctionsAutocomplete'
+    )
+    .on(
+      'resize.AutomatorSysFunctionsAutocomplete ' +
+      'scroll.AutomatorSysFunctionsAutocomplete',
+      function() {
+
+
+        const autocomplete =
+
+          window.AutomatorSysFunctionsAutocomplete;
+
+
+        if(
+          autocomplete.activeField &&
+          autocomplete.activeField.length
+        ) {
+
+          AutomatorSysFunctionsPosition(
+
+            autocomplete.activeField
+
+          );
+
+        }
+
+
+      }
+    );
+
+
+  return true;
+
+
+}
+
+
+
+$(function() {
+
+
+  AutomatorSysFunctionsBindEvents();
+
+
+});

@@ -21,7 +21,8 @@
       'tbl_sys_function_type',
       'tbl_sys_function_name',
       'tbl_sys_function_fn',
-      'tbl_sys_function_params'
+      'tbl_sys_function_params',
+      'tbl_sys_function_props'
       
     ];
 

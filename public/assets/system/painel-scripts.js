@@ -15228,10 +15228,212 @@ $(document).ready(function() {
   }
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o prefixo configurado no editor JSON
+  |--------------------------------------------------------------------------
+  */
 
-  function AutomatorJsonEditorParseValue(
+
+  function AutomatorJsonEditorGetPrefix(
+    editor
+  ) {
+
+
+    editor = $(editor);
+
+
+    if(!editor.length) {
+
+      return '';
+
+    }
+
+
+    return String(
+
+      editor.attr(
+
+        'data-automator-json-prefix'
+
+      ) || ''
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o sufixo configurado no editor JSON
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorGetSuffix(
+    editor
+  ) {
+
+
+    editor = $(editor);
+
+
+    if(!editor.length) {
+
+      return '';
+
+    }
+
+
+    return String(
+
+      editor.attr(
+
+        'data-automator-json-suffix'
+
+      ) || ''
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Remove prefixo e sufixo configurados do valor
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorStripAffixes(
+    editor,
     value = ''
   ) {
+
+
+    editor = $(editor);
+
+
+    value = String(
+
+      value === null ||
+
+      value === undefined
+
+        ? ''
+
+        : value
+
+    );
+
+
+    const prefix =
+
+      AutomatorJsonEditorGetPrefix(
+
+        editor
+
+      );
+
+
+    const suffix =
+
+      AutomatorJsonEditorGetSuffix(
+
+        editor
+
+      );
+
+
+    if(
+
+      prefix != '' &&
+
+      value.indexOf(prefix) === 0
+
+    ) {
+
+      value = value.substring(
+
+        prefix.length
+
+      );
+
+    }
+
+
+    if(
+
+      suffix != '' &&
+
+      value.length >= suffix.length &&
+
+      value.substring(
+
+        value.length -
+
+        suffix.length
+
+      ) == suffix
+
+    ) {
+
+      value = value.substring(
+
+        0,
+
+        value.length -
+
+        suffix.length
+
+      );
+
+    }
+
+
+    value = value.trim();
+
+
+    if(value == '') {
+
+      value = '{}';
+
+    }
+
+
+    return value;
+
+
+  }
+
+
+  function AutomatorJsonEditorParseValue(
+    value = '',
+    editor = null
+  ) {
+
+
+    if(
+
+      editor !== null &&
+
+      $(editor).length
+
+    ) {
+
+
+      value = AutomatorJsonEditorStripAffixes(
+
+        editor,
+
+        value
+
+      );
+
+
+    }
 
 
     if(
@@ -15277,6 +15479,224 @@ $(document).ready(function() {
       };
 
     }
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Retorna o identificador visual de um nó
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorGetNodeLabel(
+    node
+  ) {
+
+
+    node = $(node);
+
+
+    if(!node.length) {
+
+      return 'Raiz';
+
+    }
+
+
+    if(
+
+      node.attr(
+
+        'data-root'
+
+      ) == 'true'
+
+    ) {
+
+      return 'Raiz';
+
+    }
+
+
+    let key = String(
+
+      node
+        .children(
+          '.automator-json-editor-node-header'
+        )
+        .find(
+          '.automator-json-editor-node-key'
+        )
+        .first()
+        .val() || ''
+
+    ).trim();
+
+
+    if(key == '') {
+
+      key = 'Item sem nome';
+
+    }
+
+
+    return key;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza os marcadores dos containers filhos
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorRefreshChildMarkers(
+    container
+  ) {
+
+
+    container = $(container);
+
+
+    if(!container.length) {
+
+      return false;
+
+    }
+
+
+    let nodes = $();
+
+
+    if(
+
+      container.is(
+
+        '.automator-json-editor-node'
+
+      )
+
+    ) {
+
+      nodes = container.add(
+
+        container.find(
+
+          '.automator-json-editor-node'
+
+        )
+
+      );
+
+    } else {
+
+      nodes = container.find(
+
+        '.automator-json-editor-node'
+
+      );
+
+    }
+
+
+    nodes.each(function() {
+
+
+      const node = $(this);
+
+
+      const body = node
+        .children(
+          '.automator-json-editor-node-body'
+        )
+        .first();
+
+
+      const childrenContainer = body
+        .children(
+          '.automator-json-editor-node-children'
+        )
+        .first();
+
+
+      const marker = body
+        .children(
+          '.automator-json-editor-children-marker'
+        )
+        .first();
+
+
+      if(
+
+        !childrenContainer.length ||
+
+        !marker.length
+
+      ) {
+
+        return;
+
+      }
+
+
+      const nodeType =
+
+        AutomatorJsonEditorNormalizeType(
+
+          node.attr(
+
+            'data-node-type'
+
+          )
+
+        );
+
+
+      const nodeLabel =
+
+        AutomatorJsonEditorGetNodeLabel(
+
+          node
+
+        );
+
+
+      marker.find(
+
+        '.automator-json-editor-children-marker-name'
+
+      ).text(
+
+        nodeLabel
+
+      );
+
+
+      marker.find(
+
+        '.automator-json-editor-children-marker-type'
+
+      ).text(
+
+        nodeType == 'array'
+
+          ? 'Array'
+
+          : 'Objeto'
+
+      );
+
+
+    });
+
+
+    return true;
 
 
   }
@@ -15567,6 +15987,23 @@ $(document).ready(function() {
       parentType == 'array';
 
 
+    const nodeLabel =
+
+      isRoot === true
+
+        ? 'Raiz'
+
+        : String(
+
+            key || ''
+
+          ).trim() != ''
+
+          ? String(key)
+
+          : 'Item sem nome';
+
+
     let html = '';
 
 
@@ -15786,6 +16223,71 @@ $(document).ready(function() {
           nodeType == 'array'
 
         ) {
+
+
+          html +=
+
+            '<div class="' +
+
+              'automator-json-editor-children-marker ' +
+
+              'd-flex align-items-center gap-2 ' +
+
+              'small text-muted mb-2 px-2 py-1 ' +
+
+              'border-start border-3 border-primary bg-white' +
+
+            '">';
+
+
+            html +=
+
+              '<span>Itens pertencentes a:</span>';
+
+
+            html +=
+
+              '<strong class="' +
+
+                'automator-json-editor-children-marker-name ' +
+
+                'text-dark text-break' +
+
+              '">' +
+
+                AutomatorJsonEditorEscapeHtml(
+
+                  nodeLabel
+
+                ) +
+
+              '</strong>';
+
+
+            html +=
+
+              '<span class="' +
+
+                'badge text-bg-secondary ' +
+
+                'automator-json-editor-children-marker-type' +
+
+              '">' +
+
+                (
+
+                  nodeType == 'array'
+
+                    ? 'Array'
+
+                    : 'Objeto'
+
+                ) +
+
+              '</span>';
+
+
+          html += '</div>';
 
 
           html +=
@@ -16364,9 +16866,36 @@ $(document).ready(function() {
       );
 
 
+      const finalValue =
+
+        AutomatorJsonEditorJoinAffixes(
+
+          editor,
+
+          jsonValue
+
+        );
+
+
       valueInput.val(
 
+        finalValue
+
+      );
+
+
+      valueInput.attr(
+
+        'data-automator-json-internal-value',
+
         jsonValue
+
+      );
+
+
+      AutomatorJsonEditorRefreshChildMarkers(
+
+        editor
 
       );
 
@@ -16630,6 +17159,75 @@ $(document).ready(function() {
 
       bodyHtml +=
 
+        '<div class="' +
+
+          'automator-json-editor-children-marker ' +
+
+          'd-flex align-items-center gap-2 ' +
+
+          'small text-muted mb-2 px-2 py-1 ' +
+
+          'border-start border-3 border-primary bg-white' +
+
+        '">';
+
+
+        bodyHtml +=
+
+          '<span>Itens pertencentes a:</span>';
+
+
+        bodyHtml +=
+
+          '<strong class="' +
+
+            'automator-json-editor-children-marker-name ' +
+
+            'text-dark text-break' +
+
+          '">' +
+
+            AutomatorJsonEditorEscapeHtml(
+
+              AutomatorJsonEditorGetNodeLabel(
+
+                node
+
+              )
+
+            ) +
+
+          '</strong>';
+
+
+        bodyHtml +=
+
+          '<span class="' +
+
+            'badge text-bg-secondary ' +
+
+            'automator-json-editor-children-marker-type' +
+
+          '">' +
+
+            (
+
+              newType == 'array'
+
+                ? 'Array'
+
+                : 'Objeto'
+
+            ) +
+
+          '</span>';
+
+
+      bodyHtml += '</div>';
+
+
+      bodyHtml +=
+
         '<div ' +
 
           'class="automator-json-editor-node-children" ' +
@@ -16787,6 +17385,13 @@ $(document).ready(function() {
     );
 
 
+    AutomatorJsonEditorRefreshChildMarkers(
+
+      node
+
+    );
+
+
     return true;
 
 
@@ -16903,6 +17508,13 @@ $(document).ready(function() {
           );
 
 
+          AutomatorJsonEditorRefreshChildMarkers(
+
+            editor
+
+          );
+
+
           AutomatorJsonEditorSyncValue(
 
             editor,
@@ -16972,6 +17584,13 @@ $(document).ready(function() {
           );
 
 
+          AutomatorJsonEditorRefreshChildMarkers(
+
+            editor
+
+          );
+
+
           AutomatorJsonEditorSyncValue(
 
             editor,
@@ -17011,6 +17630,13 @@ $(document).ready(function() {
           );
 
 
+          AutomatorJsonEditorRefreshChildMarkers(
+
+            editor
+
+          );
+
+
           AutomatorJsonEditorSyncValue(
 
             editor,
@@ -17031,6 +17657,13 @@ $(document).ready(function() {
         '.automator-json-editor-node-key, ' +
         '.automator-json-editor-node-value',
         function() {
+
+
+          AutomatorJsonEditorRefreshChildMarkers(
+
+            editor
+
+          );
 
 
           AutomatorJsonEditorSyncValue(
@@ -17079,15 +17712,17 @@ $(document).ready(function() {
 
           try {
 
-            currentValue = JSON.parse(
 
-              String(
+            currentValue =
 
-                valueInput.val() || '{}'
+              AutomatorJsonEditorParseValue(
 
-              )
+                valueInput.val(),
 
-            );
+                editor
+
+              );
+
 
           } catch(error) {
 
@@ -17102,6 +17737,7 @@ $(document).ready(function() {
 
 
             return false;
+
 
           }
 
@@ -17129,6 +17765,13 @@ $(document).ready(function() {
               }
 
             )
+
+          );
+
+
+          AutomatorJsonEditorRefreshChildMarkers(
+
+            editor
 
           );
 
@@ -17238,8 +17881,11 @@ $(document).ready(function() {
 
 
     if(
+
       !valueInput.length ||
+
       !rootTree.length
+
     ) {
 
       return false;
@@ -17257,7 +17903,9 @@ $(document).ready(function() {
 
         AutomatorJsonEditorParseValue(
 
-          value
+          value,
+
+          editor
 
         );
 
@@ -17281,8 +17929,11 @@ $(document).ready(function() {
 
 
     if(
+
       parsedValue === undefined ||
+
       typeof parsedValue === 'function'
+
     ) {
 
       parsedValue = {};
@@ -17304,9 +17955,13 @@ $(document).ready(function() {
 
 
       if(
+
         jsonValue === undefined ||
+
         jsonValue === null ||
+
         jsonValue === ''
+
       ) {
 
         jsonValue = '{}';
@@ -17337,6 +17992,21 @@ $(document).ready(function() {
 
     valueInput.val(
 
+      AutomatorJsonEditorJoinAffixes(
+
+        editor,
+
+        jsonValue
+
+      )
+
+    );
+
+
+    valueInput.attr(
+
+      'data-automator-json-internal-value',
+
       jsonValue
 
     );
@@ -17364,6 +18034,13 @@ $(document).ready(function() {
 
 
     AutomatorJsonEditorBindEvents(
+
+      editor
+
+    );
+
+
+    AutomatorJsonEditorRefreshChildMarkers(
 
       editor
 
@@ -17452,7 +18129,9 @@ $(document).ready(function() {
 
         AutomatorJsonEditorParseValue(
 
-          valueInput.val()
+          valueInput.val(),
+
+          editor
 
         );
 
@@ -17500,6 +18179,13 @@ $(document).ready(function() {
 
 
     AutomatorJsonEditorBindEvents(
+
+      editor
+
+    );
+
+
+    AutomatorJsonEditorRefreshChildMarkers(
 
       editor
 
@@ -17561,6 +18247,58 @@ $(document).ready(function() {
 
   }
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Une prefixo, valor interno e sufixo
+  |--------------------------------------------------------------------------
+  */
+
+
+  function AutomatorJsonEditorJoinAffixes(
+    editor,
+    value = ''
+  ) {
+
+
+    editor = $(editor);
+
+
+    value = String(
+
+      value === null ||
+
+      value === undefined ||
+
+      value === ''
+
+        ? '{}'
+
+        : value
+
+    );
+
+
+    return (
+
+      AutomatorJsonEditorGetPrefix(
+
+        editor
+
+      ) +
+
+      value +
+
+      AutomatorJsonEditorGetSuffix(
+
+        editor
+
+      )
+
+    );
+
+
+  }
 
 
   function AutomatorJsonEditorObserveDOM() {
@@ -17665,3 +18403,305 @@ $(document).ready(function() {
     }
 
   );
+
+
+/*
+|--------------------------------------------------------------------------
+| AUTOMATOR LOGIN RETURN URL
+|--------------------------------------------------------------------------
+|
+| Recupera a URL salva antes do redirecionamento causado pela expiração da
+| sessão e a aplica ao retorno da API de login.
+|
+*/
+
+
+function AutomatorLoginGetStoredReturnURL() {
+
+
+  var returnURL = '';
+
+  var createdAt = 0;
+
+
+  try {
+
+
+    returnURL = String(
+
+      sessionStorage.getItem(
+
+        'automator.return.url'
+
+      ) || ''
+
+    );
+
+
+    createdAt = Number(
+
+      sessionStorage.getItem(
+
+        'automator.return.created'
+
+      ) || 0
+
+    );
+
+
+  } catch(error) {
+
+
+    return '';
+
+
+  }
+
+
+  if(returnURL == '') {
+
+    return '';
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Expiração do cache da URL
+  |--------------------------------------------------------------------------
+  |
+  | O endereço é aceito por até 2 horas.
+  |
+  */
+
+  if(
+
+    createdAt > 0 &&
+
+    Date.now() - createdAt > 7200000
+
+  ) {
+
+
+    AutomatorLoginClearStoredReturnURL();
+
+    return '';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Aceita somente URL relativa interna
+  |--------------------------------------------------------------------------
+  */
+
+  if(
+
+    returnURL.charAt(0) != '/' ||
+
+    returnURL.indexOf('//') == 0
+
+  ) {
+
+
+    AutomatorLoginClearStoredReturnURL();
+
+    return '';
+
+
+  }
+
+
+  return returnURL;
+
+
+}
+
+
+
+function AutomatorLoginClearStoredReturnURL() {
+
+
+  try {
+
+
+    sessionStorage.removeItem(
+
+      'automator.return.url'
+
+    );
+
+
+    sessionStorage.removeItem(
+
+      'automator.return.created'
+
+    );
+
+
+  } catch(error) {}
+
+
+  return true;
+
+
+}
+
+
+
+function AutomatorLoginApplyStoredReturnURL(
+  response = null
+) {
+
+
+  if(
+
+    !response ||
+
+    typeof response !== 'object'
+
+  ) {
+
+    return response;
+
+  }
+
+
+  var authenticated = (
+
+    response.auth_check === true ||
+
+    response.auth_check === 1 ||
+
+    response.auth_check === '1' ||
+
+    response.auth_check === 'true'
+
+  );
+
+
+  if(
+
+    response.status !== true ||
+
+    authenticated !== true
+
+  ) {
+
+    return response;
+
+  }
+
+
+  var returnURL =
+
+    AutomatorLoginGetStoredReturnURL();
+
+
+  if(returnURL == '') {
+
+    return response;
+
+  }
+
+
+  response.redirect_url =
+
+    returnURL;
+
+
+  AutomatorLoginClearStoredReturnURL();
+
+
+  return response;
+
+
+}
+
+
+
+/*
+|--------------------------------------------------------------------------
+| Intercepta o retorno do AJAX de login
+|--------------------------------------------------------------------------
+|
+| O prefilter envolve o callback success antes da requisição ser executada.
+| Dessa forma, o código atual do login recebe o redirect_url já corrigido.
+|
+*/
+
+if(
+
+  typeof jQuery !== 'undefined' &&
+
+  typeof jQuery.ajaxPrefilter === 'function'
+
+) {
+
+
+  jQuery.ajaxPrefilter(function(
+
+    options,
+
+    originalOptions,
+
+    jqXHR
+
+  ) {
+
+
+    var originalSuccess =
+
+      options.success;
+
+
+    options.success = function(
+
+      response,
+
+      textStatus,
+
+      currentXHR
+
+    ) {
+
+
+      response =
+
+        AutomatorLoginApplyStoredReturnURL(
+
+          response
+
+        );
+
+
+      if(
+
+        typeof originalSuccess === 'function'
+
+      ) {
+
+        return originalSuccess.call(
+
+          this,
+
+          response,
+
+          textStatus,
+
+          currentXHR
+
+        );
+
+      }
+
+
+    };
+
+
+  });
+
+
+}

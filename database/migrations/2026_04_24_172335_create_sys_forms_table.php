@@ -23,8 +23,8 @@
         $table->string('tbl_sys_form_name', 255)->unique();
         $table->string('tbl_sys_form_title', 255);
         $table->string('tbl_sys_form_cancel', 30)->default('Cancelar');
-        $table->string('tbl_sys_form_submit', 30)->default('Salvar');
-        $table->string('tbl_sys_form_method', 30)->default('POST');
+        $table->string('tbl_sys_form_submit', 30)->nullable();
+        $table->string('tbl_sys_form_method', 30)->nullable();
         $table->string('tbl_sys_form_route', 255)->nullable();
         $table->boolean('tbl_sys_form_modal')->default(false);
         $table->boolean('tbl_sys_form_admin')->default(false);

@@ -25,6 +25,7 @@
   use App\Models\SysMenusItemAccess;
   use App\Models\SysShortcode;
   use App\Models\SysNotification;
+  use App\Models\SysFunction;
   
 
   use Illuminate\Support\Facades\View;
@@ -39,6 +40,7 @@
 
   use App\Automator\AutomatorFields;
   use App\Http\Controllers\SystemController;
+  use App\Http\Controllers\AutomatorController;
 
 
 
@@ -1952,749 +1954,6 @@
 
 
     }
-    // public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
-
-
-    //   if($content === null || $content === '') {
-
-    //     return '';
-
-    //   }
-
-
-    //   if(!is_array($vars)) {
-
-    //     $vars = [];
-
-    //   }
-
-
-    //   if(!is_array($route)) {
-
-    //     $route = [];
-
-    //   }
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Remove <code>...</code> apenas quando envolve um shortcode
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $content = preg_replace('/<code>\s*(\[[^\]]+\])\s*<\/code>/i', '$1', $content);
-
-
-    //   $shortcodes = SysShortcode::get();
-
-
-    //   if($shortcodes->count() <= 0) {
-
-    //     return $content;
-
-    //   }
-
-
-    //   $shortcodesByCode = [];
-
-
-    //   foreach($shortcodes as $shortcodeConfig) {
-
-    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
-
-    //     if($shortcodeCode === '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $shortcodesByCode[$shortcodeCode] = $shortcodeConfig;
-
-    //   }
-
-
-    //   $resolveVars = function($attributes) use ($vars) {
-
-
-    //     $resolvedVars = $vars;
-
-
-    //     if(isset($attributes['vars']) && trim($attributes['vars']) !== '') {
-
-    //       $varsName = trim($attributes['vars']);
-
-    //       if(substr($varsName, 0, 1) === '$') {
-
-    //         $varsName = substr($varsName, 1);
-
-    //       }
-
-
-    //       if(isset($vars[$varsName]) && is_array($vars[$varsName])) {
-
-    //         $resolvedVars = $vars[$varsName];
-
-    //       }
-
-    //     }
-
-
-    //     if(!is_array($resolvedVars)) {
-
-    //       $resolvedVars = [];
-
-    //     }
-
-
-    //     return $resolvedVars;
-
-
-    //   };
-
-
-    //   $renderShortcodeConfig = function($shortcodeConfig, $attributes, $originalShortcode) use ($vars, $route, $resolveVars) {
-
-
-    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
-
-    //     $paramsRules = [];
-
-    //     $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
-
-
-    //     if($paramsJson !== '') {
-
-    //       $decodedParams = json_decode($paramsJson, true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
-
-    //         $paramsRules = $decodedParams;
-
-    //       }
-
-    //     }
-
-
-    //     if(count($paramsRules) >= 1) {
-
-    //       foreach($paramsRules as $paramName => $paramRule) {
-
-    //         $required = false;
-
-
-    //         if($paramRule === true) {
-
-    //           $required = true;
-
-    //         } elseif(is_array($paramRule) && isset($paramRule['required']) && $paramRule['required'] === true) {
-
-    //           $required = true;
-
-    //         }
-
-
-    //         if($required === true) {
-
-    //           if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
-
-    //             return $originalShortcode;
-
-    //           }
-
-    //         }
-
-    //       }
-
-    //     }
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Compatibilidade direta: system-form
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     if($shortcodeCode === 'system-form') {
-
-    //       $formName = $attributes['form'] ?? '';
-
-    //       if($formName === '') {
-
-    //         return '';
-
-    //       }
-
-
-    //       $formID = self::SysAutomatorGetFormIDByName($formName);
-
-
-    //       if($formID === null || $formID === '') {
-
-    //         return '';
-
-    //       }
-
-
-    //       $resolvedVars = $resolveVars($attributes);
-
-    //       $form = self::SysAutomatorRenderFormByID($formID, $resolvedVars);
-
-
-    //       if(is_array($form)) {
-
-    //         return $form['html'] ?? '';
-
-    //       }
-
-
-    //       if($form === null) {
-
-    //         return '';
-
-    //       }
-
-
-    //       return (string) $form;
-
-    //     }
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Compatibilidade direta: system-pages
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     if($shortcodeCode === 'system-pages') {
-
-    //       $view = $attributes['view'] ?? '';
-
-    //       if($view === '') {
-
-    //         return '';
-
-    //       }
-
-
-    //       if(!View::exists($view)) {
-
-    //         return '';
-
-    //       }
-
-
-    //       $resolvedVars = $resolveVars($attributes);
-
-    //       return view($view, $resolvedVars)->render();
-
-    //     }
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Execução padrão cadastrada em tbl_sys_shortcodes
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
-    //     $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
-
-    //     $class = self::SysAutomatorNormalizeShortcodeClass($class);
-
-
-    //     if(!$class || !$method) {
-
-    //       return $originalShortcode;
-
-    //     }
-
-
-    //     if(!method_exists($class, $method)) {
-
-    //       return $originalShortcode;
-
-    //     }
-
-
-    //     try {
-
-    //       $request = request();
-
-
-    //       $request->attributes->set('automator_shortcode_code', $shortcodeCode);
-    //       $request->attributes->set('automator_shortcode_params', $attributes);
-    //       $request->attributes->set('automator_shortcode_vars', $vars);
-    //       $request->attributes->set('automator_shortcode_route', $route);
-    //       $request->attributes->set('automator_shortcode_original', $originalShortcode);
-
-
-    //       foreach($attributes as $attributeKey => $attributeValue) {
-
-    //         if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
-
-    //           $request->attributes->set($attributeKey, $attributeValue);
-
-    //         }
-
-    //       }
-
-
-    //       $object = app($class);
-
-
-    //       $renderedContent = call_user_func(
-
-    //         [$object, $method],
-    //         $request,
-    //         $attributes,
-    //         $vars,
-    //         $route,
-    //         $originalShortcode
-
-    //       );
-
-
-    //       if($renderedContent instanceof \Illuminate\Contracts\View\View) {
-
-    //         return $renderedContent->render();
-
-    //       }
-
-
-    //       if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
-
-    //         return $renderedContent->getContent();
-
-    //       }
-
-
-    //       if($renderedContent instanceof \Illuminate\Http\Response) {
-
-    //         return $renderedContent->getContent();
-
-    //       }
-
-
-    //       if(is_array($renderedContent)) {
-
-    //         return $renderedContent['html'] ?? json_encode($renderedContent);
-
-    //       }
-
-
-    //       if($renderedContent === null) {
-
-    //         return '';
-
-    //       }
-
-
-    //       return (string) $renderedContent;
-
-
-    //     } catch(\Throwable $e) {
-
-    //       return $originalShortcode;
-
-    //     }
-
-
-    //   };
-
-
-    //   foreach($shortcodes as $shortcodeConfig) {
-
-    //     $shortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
-
-    //     if($shortcodeCode === '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $shortcodeCode = trim($shortcodeCode, '[]');
-    //     $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
-
-
-    //     if($shortcodeCode === '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
-
-
-    //     $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $shortcodesByCode, $renderShortcodeConfig) {
-
-
-    //       $originalShortcode = $matches[0] ?? '';
-
-    //       if($originalShortcode === '') {
-
-    //         return '';
-
-    //       }
-
-
-    //       $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
-
-    //       $currentShortcodeCode = trim($shortcodeConfig->tbl_sys_shortcode_code ?? '');
-
-
-    //       /*
-    //       |--------------------------------------------------------------------------
-    //       | Novo suporte sem quebrar o antigo:
-    //       |
-    //       | [automator function="system-form" ...]
-    //       | [automator function="system-pages" ...]
-    //       |
-    //       | Se a function apontar para um shortcode cadastrado, executa esse shortcode.
-    //       | Se não apontar, mantém o fluxo antigo do AutomatorController@getFunction,
-    //       | preservando [automator function="pagination" ...].
-    //       |--------------------------------------------------------------------------
-    //       */
-
-    //       if($currentShortcodeCode === 'automator') {
-
-    //         $dynamicFunction = trim($attributes['function'] ?? '');
-
-
-    //         if($dynamicFunction !== '' && isset($shortcodesByCode[$dynamicFunction])) {
-
-    //           $targetAttributes = $attributes;
-
-    //           unset($targetAttributes['function']);
-
-
-    //           return $renderShortcodeConfig(
-
-    //             $shortcodesByCode[$dynamicFunction],
-    //             $targetAttributes,
-    //             $originalShortcode
-
-    //           );
-
-    //         }
-
-    //       }
-
-
-    //       return $renderShortcodeConfig($shortcodeConfig, $attributes, $originalShortcode);
-
-
-    //     }, $content);
-
-    //   }
-
-
-    //   return $content;
-
-
-    // }
-
-
-
-    // public static function SysAutomatorRenderDynamicShortcodes($content, $vars = [], $route = []) {
-
-
-    //   if($content === null || $content === '') {
-
-    //     return '';
-
-    //   }
-
-
-    //   if(!is_array($vars)) {
-
-    //     $vars = [];
-
-    //   }
-
-
-    //   if(!is_array($route)) {
-
-    //     $route = [];
-
-    //   }
-
-
-    //   $shortcodes = SysShortcode::get();
-
-
-    //   if($shortcodes->count() <= 0) {
-
-    //     return $content;
-
-    //   }
-
-
-    //   foreach($shortcodes as $shortcodeConfig) {
-
-
-    //     $shortcodeCode = $shortcodeConfig->tbl_sys_shortcode_code ?? '';
-
-    //     $shortcodeCode = trim($shortcodeCode);
-
-
-    //     if($shortcodeCode == '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $shortcodeCode = trim($shortcodeCode, '[]');
-    //     $shortcodeCode = preg_replace('/\s+.*/', '', $shortcodeCode);
-
-
-    //     if($shortcodeCode == '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $pattern = '/\[' . preg_quote($shortcodeCode, '/') . '(\s+[^\]]*)?\]/';
-
-
-    //     $content = preg_replace_callback($pattern, function($matches) use ($shortcodeConfig, $vars, $route) {
-
-
-    //       $originalShortcode = $matches[0] ?? '';
-
-    //       if($originalShortcode == '') {
-
-    //         return '';
-
-    //       }
-
-
-    //       $attributes = self::SysAutomatorGetShortcodeAttributes($originalShortcode);
-
-
-    //       /*
-    //       |--------------------------------------------------------------------------
-    //       | Validação dos parâmetros do shortcode
-    //       |--------------------------------------------------------------------------
-    //       |
-    //       | tbl_sys_shortcode_params:
-    //       | {
-    //       |   "function": true,
-    //       |   "name": false
-    //       | }
-    //       |
-    //       | Quando o valor for true, o atributo é obrigatório.
-    //       | Se não for enviado, o shortcode original volta como texto.
-    //       |
-    //       */
-
-    //       $paramsRules = [];
-
-    //       $paramsJson = $shortcodeConfig->tbl_sys_shortcode_params ?? '';
-
-
-    //       if($paramsJson != '') {
-
-    //         $decodedParams = json_decode($paramsJson, true);
-
-    //         if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
-
-    //           $paramsRules = $decodedParams;
-
-    //         }
-
-    //       }
-
-
-    //       if(count($paramsRules) >= 1) {
-
-    //         foreach($paramsRules as $paramName => $required) {
-
-    //           if($required === true) {
-
-    //             if(!array_key_exists($paramName, $attributes) || $attributes[$paramName] === null || $attributes[$paramName] === '') {
-
-    //               return $originalShortcode;
-
-    //             }
-
-    //           }
-
-    //         }
-
-    //       }
-
-
-    //       /*
-    //       |--------------------------------------------------------------------------
-    //       | Localiza classe e método cadastrados no banco
-    //       |--------------------------------------------------------------------------
-    //       */
-
-    //       $class  = $shortcodeConfig->tbl_sys_shortcode_class ?? '';
-    //       $method = $shortcodeConfig->tbl_sys_shortcode_method ?? '';
-
-
-    //       $class = self::SysAutomatorNormalizeShortcodeClass($class);
-
-
-    //       if(!$class || !$method) {
-
-    //         return $originalShortcode;
-
-    //       }
-
-
-    //       if(!method_exists($class, $method)) {
-
-    //         return $originalShortcode;
-
-    //       }
-
-
-    //       try {
-
-
-    //         $request = request();
-
-
-    //         /*
-    //         |--------------------------------------------------------------------------
-    //         | Envia o Request junto com os parâmetros do shortcode
-    //         |--------------------------------------------------------------------------
-    //         |
-    //         | Assim o controller consegue ler:
-    //         |
-    //         | $request->attributes->get('automator_shortcode_params')
-    //         | $request->attributes->get('automator_shortcode_route')
-    //         | $request->attributes->get('automator_shortcode_vars')
-    //         |
-    //         */
-
-    //         $request->attributes->set('automator_shortcode_code', $shortcodeConfig->tbl_sys_shortcode_code);
-    //         $request->attributes->set('automator_shortcode_params', $attributes);
-    //         $request->attributes->set('automator_shortcode_vars', $vars);
-    //         $request->attributes->set('automator_shortcode_route', $route);
-    //         $request->attributes->set('automator_shortcode_original', $originalShortcode);
-
-
-    //         foreach($attributes as $attributeKey => $attributeValue) {
-
-    //           if(!$request->request->has($attributeKey) && !$request->query->has($attributeKey)) {
-
-    //             $request->attributes->set($attributeKey, $attributeValue);
-
-    //           }
-
-    //         }
-
-
-    //         $object = app($class);
-
-
-    //         /*
-    //         |--------------------------------------------------------------------------
-    //         | Chamada padrão
-    //         |--------------------------------------------------------------------------
-    //         |
-    //         | O método recebe:
-    //         | - Request
-    //         | - Parâmetros do shortcode
-    //         | - Variáveis da rota/view
-    //         | - Dados da rota
-    //         | - Shortcode original
-    //         |
-    //         | Exemplo:
-    //         | getFunction(Request $request, $shortcodeParams = [])
-    //         |
-    //         */
-
-    //         $renderedContent = call_user_func(
-
-    //           [$object, $method],
-    //           $request,
-    //           $attributes,
-    //           $vars,
-    //           $route,
-    //           $originalShortcode
-
-    //         );
-
-
-    //         if($renderedContent instanceof \Illuminate\Contracts\View\View) {
-
-    //           return $renderedContent->render();
-
-    //         }
-
-
-    //         if($renderedContent instanceof \Illuminate\Http\JsonResponse) {
-
-    //           return $renderedContent->getContent();
-
-    //         }
-
-
-    //         if($renderedContent instanceof \Illuminate\Http\Response) {
-
-    //           return $renderedContent->getContent();
-
-    //         }
-
-
-    //         if(is_array($renderedContent)) {
-
-    //           if(isset($renderedContent['html'])) {
-
-    //             return $renderedContent['html'];
-
-    //           }
-
-    //           return json_encode($renderedContent);
-
-    //         }
-
-
-    //         if($renderedContent === null) {
-
-    //           return '';
-
-    //         }
-
-
-    //         return (string) $renderedContent;
-
-
-    //       } catch(\Throwable $e) {
-
-
-    //         /*
-    //         |--------------------------------------------------------------------------
-    //         | Em caso de erro, mantém o shortcode como texto
-    //         |--------------------------------------------------------------------------
-    //         */
-
-    //         return $originalShortcode;
-
-
-    //       }
-
-
-    //     }, $content);
-
-
-    //   }
-
-
-    //   return $content;
-
-
-    // }
-
 
 
     public static function SysAutomatorSearchShortcode($slug, $vars = []) {
@@ -3312,82 +2571,7 @@
 
 
     }
-    // public static function SysAutomatoRenderRouteContent( $slug, $vars = [], $area = 'restrict' ) {
-
-
-    //   $routeName = str_replace('page-', '', $slug);
-
-    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-
-    //   if($route !== null) {
-
-    //     $route = $route->toArray();
-    //     $area  = $route['tbl_sys_route_area'];
-
-    //     if(count($vars) >= 1) {
-
-    //       $vars2 = [];
-    //       foreach ($vars as $varKey => $varValue) {
-            
-    //         if(!array_key_exists($varKey, $vars2)) {
-
-    //           // $vars2[$varKey] = $varValue;
-    //           $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
-
-    //         }
-
-    //       }
-
-    //       $vars = $vars2;
-
-    //     }
-
-    //     $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
-
-    //   } else {
-
-    //     $route = [
-
-    //       'tbl_sys_route_name'  => 'error-404',
-    //       'tbl_sys_route_title' => 'Erro 404',
-    //       'tbl_sys_route_area'  => 'public'
-        
-    //     ];
-
-    //     $conteudo = view('pages.404', [
-
-    //       'pageName' => $route['tbl_sys_route_title']
-
-    //     ])->render();
-        
-    //   }
-
-
-    //   if($route['tbl_sys_route_area'] == 'restrict') {
-
-    //     return view('layouts.painel-restrict', [
-
-    //       'content' => $conteudo,
-    //       'title'   => $route['tbl_sys_route_title'],
-    //       'page'    => $route['tbl_sys_route_name']
-          
-    //     ]);
-
-    //   } else {
-
-    //     return view('layouts.painel-public', [
-
-    //       'content' => $conteudo,
-    //       'title'   => $route['tbl_sys_route_title'],
-    //       'page'    => $route['tbl_sys_route_name']
-
-    //     ]);
-
-    //   }
-
-
-    // }
+    
 
     public static function SysAutomatoRenderRouteContent2($slug, $vars = [], $area = 'restrict') {
 
@@ -3396,85 +2580,6 @@
 
 
     }
-    // public static function SysAutomatoRenderRouteContent2( $slug, $vars = [], $area = 'restrict' ) {
-
-
-    //   $routeName = str_replace('page-', '', $slug);
-
-    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-
-    //   if($route !== null) {
-
-    //     $route = $route->toArray();
-    //     $area  = $route['tbl_sys_route_area'];
-
-    //     if(count($vars) >= 1) {
-
-    //       $vars2 = [];
-    //       foreach ($vars as $varKey => $varValue) {
-            
-    //         if(!array_key_exists($varKey, $vars2)) {
-
-    //           // $vars2[$varKey] = $varValue;
-    //           $vars2[$varKey] = ( (is_string($varValue)) ? str_replace('@replace(route["tbl_sys_route_name"])', $route["tbl_sys_route_name"], $varValue) : $varValue  );
-
-    //         }
-
-    //       }
-
-    //       $vars = $vars2;
-
-    //     }
-
-    //     // var_dump($route['tbl_sys_route_content']);
-
-    //     // $conteudo = self::SysAutomatorRenderSystemPageShortcode($route['tbl_sys_route_content'], $vars);
-    //     $conteudo = self::SysAutomatorRenderSystemPageWithShortcode($route['tbl_sys_route_content'], $vars);
-
-    //   } else {
-
-    //     $route = [
-
-    //       'tbl_sys_route_name'  => 'error-404',
-    //       'tbl_sys_route_title' => 'Erro 404',
-    //       'tbl_sys_route_area'  => 'public'
-        
-    //     ];
-
-    //     $conteudo = view('pages.404', [
-
-    //       'pageName' => $route['tbl_sys_route_title']
-
-    //     ])->render();
-        
-    //   }
-
-
-    //   if($route['tbl_sys_route_area'] == 'restrict') {
-
-    //     return view('layouts.painel-restrict', [
-
-    //       'content' => $conteudo,
-    //       'title'   => $route['tbl_sys_route_title'],
-    //       'page'    => $route['tbl_sys_route_name']
-          
-    //     ]);
-
-    //   } else {
-
-    //     return view('layouts.painel-public', [
-
-    //       'content' => $conteudo,
-    //       'title'   => $route['tbl_sys_route_title'],
-    //       'page'    => $route['tbl_sys_route_name']
-
-    //     ]);
-
-    //   }
-
-
-    // }
 
 
 
@@ -4398,9 +3503,7 @@
     |--------------------------------------------------------------------------
     */
 
-    public static function SysAutomatorNormalizePaginationWhereOperator(
-      $operator
-    ): string {
+    public static function SysAutomatorNormalizePaginationWhereOperator( $operator ): string {
 
 
       $operator = trim(
@@ -4459,15 +3562,14 @@
 
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Normaliza o comparador lógico da condição
     |--------------------------------------------------------------------------
     */
 
-    public static function SysAutomatorNormalizePaginationWhereBoolean(
-      $boolean
-    ): string {
+    public static function SysAutomatorNormalizePaginationWhereBoolean( $boolean ): string {
 
 
       $boolean = strtolower(
@@ -4490,15 +3592,14 @@
 
     }
 
+
     /*
     |--------------------------------------------------------------------------
     | Normaliza as condições where recebidas pela paginação
     |--------------------------------------------------------------------------
     */
 
-    public static function SysAutomatorNormalizePaginationWhereConditions(
-      $where
-    ): array {
+    public static function SysAutomatorNormalizePaginationWhereConditions( $where ): array {
 
 
       if(is_string($where)) {
@@ -4758,6 +3859,877 @@
     }
 
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza booleanos das configurações de funções internas
+    |--------------------------------------------------------------------------
+    */
+
+    private static function SysAutomatorNormalizeSysFunctionBoolean(
+      $value
+    ): bool {
+
+
+      return in_array(
+
+        $value,
+
+        [
+
+          true,
+          1,
+          '1',
+          'true',
+          'TRUE',
+
+        ],
+
+        true
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Interpreta a definição dos parâmetros de uma função interna
+    |--------------------------------------------------------------------------
+    */
+
+    private static function SysAutomatorParseSysFunctionParamsDefinition(
+      $definition
+    ): array {
+
+
+      $params = [];
+
+
+      if(is_object($definition)) {
+
+        $definition = (array) $definition;
+
+      }
+
+
+      if(is_array($definition)) {
+
+
+        foreach($definition as $paramName => $required) {
+
+
+          if(
+            !is_scalar($paramName) ||
+            trim((string) $paramName) === ''
+          ) {
+
+            continue;
+
+          }
+
+
+          $params[
+
+            trim(
+
+              (string) $paramName
+
+            )
+
+          ] = self::SysAutomatorNormalizeSysFunctionBoolean(
+
+            $required
+
+          );
+
+
+        }
+
+
+        return $params;
+
+
+      }
+
+
+      if(
+        !is_string($definition) ||
+        trim($definition) === ''
+      ) {
+
+        return $params;
+
+      }
+
+
+      $definition = trim(
+
+        $definition
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | JSON válido
+      |--------------------------------------------------------------------------
+      */
+
+      $decodedDefinition = json_decode(
+
+        $definition,
+
+        true
+
+      );
+
+
+      if(is_array($decodedDefinition)) {
+
+
+        foreach($decodedDefinition as $paramName => $required) {
+
+
+          if(
+            !is_scalar($paramName) ||
+            trim((string) $paramName) === ''
+          ) {
+
+            continue;
+
+          }
+
+
+          $params[
+
+            trim(
+
+              (string) $paramName
+
+            )
+
+          ] = self::SysAutomatorNormalizeSysFunctionBoolean(
+
+            $required
+
+          );
+
+
+        }
+
+
+        return $params;
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Formato utilizado atualmente nos Seeders
+      |--------------------------------------------------------------------------
+      |
+      | { 'data': true, 'lang': false }
+      |--------------------------------------------------------------------------
+      */
+
+      preg_match_all(
+
+        '/[\'"]([^\'"]+)[\'"]\s*:\s*(true|false|1|0)/i',
+
+        $definition,
+
+        $matches,
+
+        PREG_SET_ORDER
+
+      );
+
+
+      foreach($matches as $match) {
+
+
+        $paramName = trim(
+
+          (string) (
+
+            $match[1]
+
+            ?? ''
+
+          )
+
+        );
+
+
+        if($paramName === '') {
+
+          continue;
+
+        }
+
+
+        $params[$paramName] =
+
+          self::SysAutomatorNormalizeSysFunctionBoolean(
+
+            strtolower(
+
+              (string) (
+
+                $match[2]
+
+                ?? 'false'
+
+              )
+
+            )
+
+          );
+
+
+      }
+
+
+      return $params;
+
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Interpreta os parâmetros enviados em uma chamada @SysFunctions
+    |--------------------------------------------------------------------------
+    */
+
+    private static function SysAutomatorParseSysFunctionInvocationParams(
+      $paramsExpression
+    ): array {
+
+
+      $params = [];
+
+
+      if(
+        $paramsExpression === null ||
+        !is_scalar($paramsExpression)
+      ) {
+
+        return $params;
+
+      }
+
+
+      $paramsExpression = trim(
+
+        (string) $paramsExpression
+
+      );
+
+
+      if(
+        $paramsExpression === '' ||
+        $paramsExpression === '[]'
+      ) {
+
+        return $params;
+
+      }
+
+
+      preg_match_all(
+
+        '/[\'"]([^\'"]+)[\'"]\s*=>\s*(?:[\'"]((?:\\\\.|[^\'"\\\\])*)[\'"]|(-?\d+(?:\.\d+)?)|(true|false|null))/i',
+
+        $paramsExpression,
+
+        $matches,
+
+        PREG_SET_ORDER
+
+      );
+
+
+      foreach($matches as $match) {
+
+
+        $paramName = trim(
+
+          (string) (
+
+            $match[1]
+
+            ?? ''
+
+          )
+
+        );
+
+
+        if($paramName === '') {
+
+          continue;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | String
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+          isset($match[2]) &&
+          $match[2] !== ''
+        ) {
+
+
+          $paramValue = stripcslashes(
+
+            $match[2]
+
+          );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Número
+        |--------------------------------------------------------------------------
+        */
+
+        } elseif(
+          isset($match[3]) &&
+          $match[3] !== ''
+        ) {
+
+
+          $paramValue = str_contains(
+
+            $match[3],
+
+            '.'
+
+          )
+            ? (float) $match[3]
+            : (int) $match[3];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Booleano ou null
+        |--------------------------------------------------------------------------
+        */
+
+        } else {
+
+
+          $normalizedValue = strtolower(
+
+            (string) (
+
+              $match[4]
+
+              ?? 'null'
+
+            )
+
+          );
+
+
+          $paramValue = match($normalizedValue) {
+
+            'true'  => true,
+
+            'false' => false,
+
+            default => null,
+
+          };
+
+
+        }
+
+
+        $params[$paramName] =
+
+          $paramValue;
+
+
+      }
+
+
+      return $params;
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Executa uma função interna registrada no sistema
+    |--------------------------------------------------------------------------
+    */
+
+    private static function SysAutomatorExecuteSysFunction(
+      $functionName,
+      array $invocationParams = []
+    ): array {
+
+
+      $functionName = trim(
+
+        (string) $functionName
+
+      );
+
+
+      if($functionName === '') {
+
+        return [
+
+          'executed' => false,
+
+          'value' => null,
+
+        ];
+
+      }
+
+
+      try {
+
+
+        $functionConfig = SysFunction::where(
+
+          'tbl_sys_function_name',
+
+          $functionName
+
+        )->first();
+
+
+        if($functionConfig === null) {
+
+          return [
+
+            'executed' => false,
+
+            'value' => null,
+
+          ];
+
+        }
+
+
+        $methodName = trim(
+
+          (string) (
+
+            $functionConfig->tbl_sys_function_fn
+
+            ?? ''
+
+          )
+
+        );
+
+
+        if(
+          $methodName === '' ||
+          !method_exists(
+            AutomatorController::class,
+            $methodName
+          )
+        ) {
+
+          return [
+
+            'executed' => false,
+
+            'value' => null,
+
+          ];
+
+        }
+
+
+        $methodReflection = new \ReflectionMethod(
+
+          AutomatorController::class,
+
+          $methodName
+
+        );
+
+
+        if(!$methodReflection->isPublic()) {
+
+          return [
+
+            'executed' => false,
+
+            'value' => null,
+
+          ];
+
+        }
+
+
+        $paramsDefinition =
+
+          self::SysAutomatorParseSysFunctionParamsDefinition(
+
+            $functionConfig->tbl_sys_function_params
+
+            ?? []
+
+          );
+
+
+        $methodParams = [];
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Mantém a ordem registrada na definição dos parâmetros
+        |--------------------------------------------------------------------------
+        */
+
+        foreach($paramsDefinition as $paramName => $required) {
+
+
+          if(
+            !array_key_exists(
+              $paramName,
+              $invocationParams
+            )
+          ) {
+
+
+            if($required === true) {
+
+              return [
+
+                'executed' => false,
+
+                'value' => null,
+
+              ];
+
+            }
+
+
+            continue;
+
+          }
+
+
+          $methodParams[] =
+
+            $invocationParams[$paramName];
+
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Executa o método registrado
+        |--------------------------------------------------------------------------
+        |
+        | Os métodos atuais das funções internas são estáticos, porém o uso de
+        | call_user_func também mantém compatibilidade com métodos públicos
+        | chamados através da classe.
+        |--------------------------------------------------------------------------
+        */
+
+        $value = call_user_func_array(
+
+          [
+
+            AutomatorController::class,
+
+            $methodName,
+
+          ],
+
+          $methodParams
+
+        );
+
+
+        return [
+
+          'executed' => true,
+
+          'value' => $value,
+
+        ];
+
+
+      } catch(\Throwable $exception) {
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        \Illuminate\Support\Facades\Log::error(
+
+          'Falha ao executar função interna do Automator.',
+
+          [
+
+            'function' => $functionName,
+
+            'parameters' => $invocationParams,
+
+            'exception' => $exception->getMessage(),
+
+            'file' => $exception->getFile(),
+
+            'line' => $exception->getLine(),
+
+          ]
+
+        );
+
+
+        return [
+
+          'executed' => false,
+
+          'value' => null,
+
+        ];
+
+
+      }
+
+
+    }
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Resolve chamadas de funções internas
+    |--------------------------------------------------------------------------
+    |
+    | Exemplo:
+    |
+    | @SysFunctions(
+    |   'sysGetCurrentUserData',
+    |   [
+    |     'data' => 'tbl_user_ID'
+    |   ]
+    | )
+    |--------------------------------------------------------------------------
+    */
+
+    public static function SysAutomatorResolveSysFunctionsValue(
+      $value
+    ) {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Array
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_array($value)) {
+
+
+        foreach($value as $valueKey => $valueItem) {
+
+
+          $value[$valueKey] =
+
+            self::SysAutomatorResolveSysFunctionsValue(
+
+              $valueItem
+
+            );
+
+
+        }
+
+
+        return $value;
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Objeto
+      |--------------------------------------------------------------------------
+      */
+
+      if(is_object($value)) {
+
+
+        foreach(
+          get_object_vars($value)
+          as $valueKey => $valueItem
+        ) {
+
+
+          $value->{$valueKey} =
+
+            self::SysAutomatorResolveSysFunctionsValue(
+
+              $valueItem
+
+            );
+
+
+        }
+
+
+        return $value;
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Mantém valores que não são strings
+      |--------------------------------------------------------------------------
+      */
+
+      if(!is_string($value)) {
+
+        return $value;
+
+      }
+
+
+      $originalValue = $value;
+
+
+      $trimmedValue = trim(
+
+        $value
+
+      );
+
+
+      if(
+        $trimmedValue === '' ||
+        !str_starts_with(
+          $trimmedValue,
+          '@SysFunctions('
+        ) ||
+        !str_ends_with(
+          $trimmedValue,
+          ')'
+        )
+      ) {
+
+        return $value;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Identifica nome e parâmetros
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !preg_match(
+
+          '/^@SysFunctions\(\s*([\'"])([^\'"]+)\1\s*(?:,\s*(\[[\s\S]*\]))?\s*\)$/',
+
+          $trimmedValue,
+
+          $matches
+
+        )
+
+      ) {
+
+        return $value;
+
+      }
+
+
+      $functionName = trim(
+
+        (string) (
+
+          $matches[2]
+
+          ?? ''
+
+        )
+
+      );
+
+
+      $paramsExpression =
+
+        $matches[3]
+
+        ?? '[]';
+
+
+      $invocationParams =
+
+        self::SysAutomatorParseSysFunctionInvocationParams(
+
+          $paramsExpression
+
+        );
+
+
+      $execution =
+
+        self::SysAutomatorExecuteSysFunction(
+
+          $functionName,
+
+          $invocationParams
+
+        );
+
+
+      if(
+
+        !is_array($execution) ||
+
+        ($execution['executed'] ?? false) !== true
+
+      ) {
+
+        return $originalValue;
+
+      }
+
+
+      return $execution['value']
+
+        ?? null;
+
+
+    }
+
+
+
     /*
     |--------------------------------------------------------------------------
     | Aplica as condições where na consulta da paginação
@@ -4798,6 +4770,44 @@
       if(count($conditions) <= 0) {
 
         return $query;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Resolve funções internas nos valores das condições
+      |--------------------------------------------------------------------------
+      |
+      | A resolução ocorre somente em runtime, depois que o usuário já está
+      | autenticado. O banco continua armazenando a expressão original.
+      |--------------------------------------------------------------------------
+      */
+
+      foreach($conditions as $conditionIndex => $condition) {
+
+
+        if(
+          !is_array($condition) ||
+          !array_key_exists(
+            'value',
+            $condition
+          )
+        ) {
+
+          continue;
+
+        }
+
+
+        $conditions[$conditionIndex]['value'] =
+
+          self::SysAutomatorResolveSysFunctionsValue(
+
+            $condition['value']
+
+          );
+
 
       }
 
@@ -4843,7 +4853,6 @@
           |--------------------------------------------------------------------------
           */
 
-
           if($boolean !== 'or') {
 
 
@@ -4860,6 +4869,7 @@
 
             continue;
 
+
           }
 
 
@@ -4868,7 +4878,6 @@
           | Comparador OR
           |--------------------------------------------------------------------------
           */
-
 
           $whereQuery->orWhere(
 
@@ -4892,12 +4901,141 @@
 
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Aplica as condições where na consulta da paginação
+    |--------------------------------------------------------------------------
+    */
+
+    // public static function SysAutomatorApplyPaginationWhere( $query, $where ) {
+
+
+    //   if(is_callable($where)) {
+
+
+    //     $callbackQuery = $where(
+
+    //       $query
+
+    //     );
+
+
+    //     return $callbackQuery ?? $query;
+
+
+    //   }
+
+
+    //   $conditions =
+
+    //     self::SysAutomatorNormalizePaginationWhereConditions(
+
+    //       $where
+
+    //     );
+
+
+    //   if(count($conditions) <= 0) {
+
+    //     return $query;
+
+    //   }
+
+
+    //   $query->where(function($whereQuery) use (
+    //     $conditions
+    //   ) {
+
+
+    //     foreach(
+    //       $conditions
+    //       as $conditionIndex => $condition
+    //     ) {
+
+
+    //       $column =
+
+    //         $condition['column'];
+
+
+    //       $operator =
+
+    //         $condition['operator'];
+
+
+    //       $value =
+
+    //         $condition['value'];
+
+
+    //       $boolean =
+
+    //         $conditionIndex === 0
+
+    //           ? 'and'
+
+    //           : $condition['boolean'];
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Primeira condição ou comparador AND
+    //       |--------------------------------------------------------------------------
+    //       */
+
+
+    //       if($boolean !== 'or') {
+
+
+    //         $whereQuery->where(
+
+    //           $column,
+
+    //           $operator,
+
+    //           $value
+
+    //         );
+
+
+    //         continue;
+
+    //       }
+
+
+    //       /*
+    //       |--------------------------------------------------------------------------
+    //       | Comparador OR
+    //       |--------------------------------------------------------------------------
+    //       */
+
+
+    //       $whereQuery->orWhere(
+
+    //         $column,
+
+    //         $operator,
+
+    //         $value
+
+    //       );
+
+
+    //     }
+
+
+    //   });
+
+
+    //   return $query;
+
+
+    // }
+
     
 
-    public static function SysAutomatorPaginationData(
-      array $params,
-      Request $request
-    ) {
+    public static function SysAutomatorPaginationData( array $params, Request $request ) {
 
 
       $table = $params['table'];
@@ -5297,254 +5435,127 @@
 
 
     }
-    // public static function SysAutomatorPaginationData(array $params, Request $request) {
-        
-
-    //   $table = $params['table'];
-      
-    //   // Get per_page from request or params or session or default
-    //   $perPage = $request->input('per_page', 
-    //       $params['per_page'] ?? Session::get('per_page_' . $table, 15)
-    //   );
-      
-    //   // Ensure per_page is a valid integer
-    //   $perPage = max(1, min((int)$perPage, 100)); // Min 1, Max 100
-    //   Session::put('per_page_' . $table, $perPage);
-
-    //   $query = DB::table($table);
-
-    //   // Apply where conditions if provided
-    //   if (isset($params['where'])) {
-    //       $where = $params['where'];
-          
-    //       if (is_callable($where)) {
-    //           // If where is a closure, apply it
-    //           $query = $where($query);
-    //       } elseif (is_array($where)) {
-    //           // If where is an array of conditions
-    //           // var_dump($where);
-    //           foreach ($where as $condition) {
-    //               if (is_array($condition) && count($condition) >= 2) {
-    //                   if (count($condition) === 2) {
-    //                       // Simple condition: ['field', 'value']
-    //                       $query->where($condition[0], $condition[1]);
-    //                   } elseif (count($condition) === 3) {
-    //                       // Operator condition: ['field', 'operator', 'value']
-    //                       $query->where($condition[0], $condition[1], $condition[2]);
-    //                   }
-    //               }
-    //           }
-    //       } elseif (is_string($where)) {
-    //           // If where is a string, try to parse it as JSON or apply directly
-    //           try {
-    //               $whereArray = json_decode($where, true);
-    //               if (is_array($whereArray)) {
-    //                   foreach ($whereArray as $condition) {
-    //                       if (is_array($condition) && count($condition) >= 2) {
-    //                           if (count($condition) === 2) {
-    //                               $query->where($condition[0], $condition[1]);
-    //                           } elseif (count($condition) === 3) {
-    //                               $query->where($condition[0], $condition[1], $condition[2]);
-    //                           }
-    //                       }
-    //                   }
-    //               }
-    //           } catch (\Exception $e) {
-    //               // Ignore JSON parse errors
-    //           }
-    //       }
-    //   }
-
-    //   // Apply relationship filters if provided (for filtering by related table)
-    //   if (isset($params['with_where'])) {
-    //       $withWhere = $params['with_where'];
-          
-    //       if (is_array($withWhere)) {
-    //           foreach ($withWhere as $relation => $conditions) {
-    //               if (is_callable($conditions)) {
-    //                   $query->whereHas($relation, $conditions);
-    //               } elseif (is_array($conditions)) {
-    //                   $query->whereHas($relation, function($q) use ($conditions) {
-    //                       foreach ($conditions as $condition) {
-    //                           if (is_array($condition) && count($condition) >= 2) {
-    //                               if (count($condition) === 2) {
-    //                                   $q->where($condition[0], $condition[1]);
-    //                               } elseif (count($condition) === 3) {
-    //                                   $q->where($condition[0], $condition[1], $condition[2]);
-    //                               }
-    //                           }
-    //                       }
-    //                   });
-    //               }
-    //           }
-    //       }
-    //   }
-
-    //   // Search
-    //   if ($request->has('search') && isset($params['search_fields'])) {
-    //       $search = $request->input('search');
-    //       Session::put('search_' . $table, $search);
-          
-    //       $selectedFields = $request->input('search_in', array_keys($params['search_fields']));
-          
-    //       $query->where(function($q) use ($search, $selectedFields) {
-    //           foreach ($selectedFields as $field) {
-    //               $q->orWhere($field, 'like', '%' . $search . '%');
-    //           }
-    //       });
-    //   }
-
-    //   // Sorting
-    //   $sort = $request->input('sort', $params['default_sort'] ?? null);
-    //   $direction = $request->input('direction', $params['default_direction'] ?? 'asc');
-    //   if ($sort) {
-    //       $query->orderBy($sort, $direction);
-    //   }
-
-    //   $items = $query->paginate($perPage)->withQueryString();
-
-
-    //   return [
-
-    //     'items'          => $items,
-    //     'columns'        => $params['columns'],
-    //     'actions'        => $params['actions'] ?? [],
-    //     'index'          => $params['index'] ?? self::SysAutomatorGetPKColumn($table),
-    //     'header_actions' => $params['header_actions'] ?? [],
-    //     'list_actions'   => $params['list_actions'] ?? [],
-    //     'search_fields'  => $params['search_fields'] ?? [],
-    //     'modals'         => $params['modals'] ?? [],
-    //     'modal'          => $params['modal'] ?? null,
-    //     'page_name'      => $params['page_name'] ?? null,
-    //     'table'          => $table,
-    //     'sort'           => $sort,
-    //     'direction'      => $direction,
-    //     'action_urls'    => $params['action_urls'] ?? []
-      
-    //   ];
-
-
-    // }
-
-
+    
 
     public static function SysAutomatorPaginateDynamic(array $params, Request $request) {
-        $table = $params['table'];
+
+      $table = $params['table'];
+      
+      // Get per_page from request or params or session or default
+      $perPage = $request->input('per_page', 
+          $params['per_page'] ?? Session::get('per_page_' . $table, 15)
+      );
+      
+      // Ensure per_page is a valid integer
+      $perPage = max(1, min((int)$perPage, 100)); // Min 1, Max 100
+      Session::put('per_page_' . $table, $perPage);
+
+      $query = DB::table($table);
+
+      // Apply where conditions if provided
+      if (isset($params['where'])) {
+        $where = $params['where'];
         
-        // Get per_page from request or params or session or default
-        $perPage = $request->input('per_page', 
-            $params['per_page'] ?? Session::get('per_page_' . $table, 15)
-        );
+        if (is_callable($where)) {
+          // If where is a closure, apply it
+          $query = $where($query);
+        } elseif (is_array($where)) {
+          // If where is an array of conditions
+          foreach ($where as $condition) {
+            if (is_array($condition) && count($condition) >= 2) {
+              if (count($condition) === 2) {
+                // Simple condition: ['field', 'value']
+                $query->where($condition[0], $condition[1]);
+              } elseif (count($condition) === 3) {
+                // Operator condition: ['field', 'operator', 'value']
+                $query->where($condition[0], $condition[1], $condition[2]);
+              }
+            }
+          }
+        } elseif (is_string($where)) {
+          // If where is a string, try to parse it as JSON or apply directly
+          try {
+            $whereArray = json_decode($where, true);
+            if (is_array($whereArray)) {
+              foreach ($whereArray as $condition) {
+                if (is_array($condition) && count($condition) >= 2) {
+                  if (count($condition) === 2) {
+                    $query->where($condition[0], $condition[1]);
+                  } elseif (count($condition) === 3) {
+                    $query->where($condition[0], $condition[1], $condition[2]);
+                  }
+                }
+              }
+            }
+          } catch (\Exception $e) {
+            // Ignore JSON parse errors
+          }
+        }
+      }
+
+      // Apply relationship filters if provided (for filtering by related table)
+      if (isset($params['with_where'])) {
+        $withWhere = $params['with_where'];
         
-        // Ensure per_page is a valid integer
-        $perPage = max(1, min((int)$perPage, 100)); // Min 1, Max 100
-        Session::put('per_page_' . $table, $perPage);
-
-        $query = DB::table($table);
-
-        // Apply where conditions if provided
-        if (isset($params['where'])) {
-            $where = $params['where'];
-            
-            if (is_callable($where)) {
-                // If where is a closure, apply it
-                $query = $where($query);
-            } elseif (is_array($where)) {
-                // If where is an array of conditions
-                foreach ($where as $condition) {
-                    if (is_array($condition) && count($condition) >= 2) {
-                        if (count($condition) === 2) {
-                            // Simple condition: ['field', 'value']
-                            $query->where($condition[0], $condition[1]);
-                        } elseif (count($condition) === 3) {
-                            // Operator condition: ['field', 'operator', 'value']
-                            $query->where($condition[0], $condition[1], $condition[2]);
-                        }
+        if (is_array($withWhere)) {
+          foreach ($withWhere as $relation => $conditions) {
+            if (is_callable($conditions)) {
+              $query->whereHas($relation, $conditions);
+            } elseif (is_array($conditions)) {
+              $query->whereHas($relation, function($q) use ($conditions) {
+                foreach ($conditions as $condition) {
+                  if (is_array($condition) && count($condition) >= 2) {
+                    if (count($condition) === 2) {
+                      $q->where($condition[0], $condition[1]);
+                    } elseif (count($condition) === 3) {
+                      $q->where($condition[0], $condition[1], $condition[2]);
                     }
+                  }
                 }
-            } elseif (is_string($where)) {
-                // If where is a string, try to parse it as JSON or apply directly
-                try {
-                    $whereArray = json_decode($where, true);
-                    if (is_array($whereArray)) {
-                        foreach ($whereArray as $condition) {
-                            if (is_array($condition) && count($condition) >= 2) {
-                                if (count($condition) === 2) {
-                                    $query->where($condition[0], $condition[1]);
-                                } elseif (count($condition) === 3) {
-                                    $query->where($condition[0], $condition[1], $condition[2]);
-                                }
-                            }
-                        }
-                    }
-                } catch (\Exception $e) {
-                    // Ignore JSON parse errors
-                }
+              }); 
             }
+          }
         }
+      }
 
-        // Apply relationship filters if provided (for filtering by related table)
-        if (isset($params['with_where'])) {
-            $withWhere = $params['with_where'];
-            
-            if (is_array($withWhere)) {
-                foreach ($withWhere as $relation => $conditions) {
-                    if (is_callable($conditions)) {
-                        $query->whereHas($relation, $conditions);
-                    } elseif (is_array($conditions)) {
-                        $query->whereHas($relation, function($q) use ($conditions) {
-                            foreach ($conditions as $condition) {
-                                if (is_array($condition) && count($condition) >= 2) {
-                                    if (count($condition) === 2) {
-                                        $q->where($condition[0], $condition[1]);
-                                    } elseif (count($condition) === 3) {
-                                        $q->where($condition[0], $condition[1], $condition[2]);
-                                    }
-                                }
-                            }
-                        });
-                    }
-                }
-            }
-        }
+      // Search
+      if ($request->has('search') && isset($params['search_fields'])) {
+        $search = $request->input('search');
+        Session::put('search_' . $table, $search);
+        
+        $selectedFields = $request->input('search_in', array_keys($params['search_fields']));
+        
+        $query->where(function($q) use ($search, $selectedFields) {
+          foreach ($selectedFields as $field) {
+            $q->orWhere($field, 'like', '%' . $search . '%');
+          }
+        });
+      }
 
-        // Search
-        if ($request->has('search') && isset($params['search_fields'])) {
-            $search = $request->input('search');
-            Session::put('search_' . $table, $search);
-            
-            $selectedFields = $request->input('search_in', array_keys($params['search_fields']));
-            
-            $query->where(function($q) use ($search, $selectedFields) {
-                foreach ($selectedFields as $field) {
-                    $q->orWhere($field, 'like', '%' . $search . '%');
-                }
-            });
-        }
+      // Sorting
+      $sort = $request->input('sort', $params['default_sort'] ?? null);
+      $direction = $request->input('direction', $params['default_direction'] ?? 'asc');
+      if ($sort) {
+        $query->orderBy($sort, $direction);
+      }
 
-        // Sorting
-        $sort = $request->input('sort', $params['default_sort'] ?? null);
-        $direction = $request->input('direction', $params['default_direction'] ?? 'asc');
-        if ($sort) {
-            $query->orderBy($sort, $direction);
-        }
+      $items = $query->paginate($perPage)->withQueryString();
 
-        $items = $query->paginate($perPage)->withQueryString();
+      return view('system.pages.pagination', [
+        'items' => $items,
+        'columns' => $params['columns'],
+        'actions' => $params['actions'] ?? [],
+        'header_actions' => $params['header_actions'] ?? [],
+        'search_fields' => $params['search_fields'] ?? [],
+        'modals' => $params['modals'] ?? [],
+        'modal' => $params['modal'] ?? null,
+        'page_name' => $params['page_name'] ?? null,
+        'table' => $table,
+        'sort' => $sort,
+        'direction' => $direction,
+        'action_urls' => $params['action_urls'] ?? []
+      ]);
 
-        return view('system.pages.pagination', [
-            'items' => $items,
-            'columns' => $params['columns'],
-            'actions' => $params['actions'] ?? [],
-            'header_actions' => $params['header_actions'] ?? [],
-            'search_fields' => $params['search_fields'] ?? [],
-            'modals' => $params['modals'] ?? [],
-            'modal' => $params['modal'] ?? null,
-            'page_name' => $params['page_name'] ?? null,
-            'table' => $table,
-            'sort' => $sort,
-            'direction' => $direction,
-            'action_urls' => $params['action_urls'] ?? []
-        ]);
     }
 
 
@@ -5755,31 +5766,7 @@
 
 
     }
-    // public static function SysAutomatorGetFormUserAccessByID($formID) {
-
-
-    //   $formAdmin = SysForm::where('tbl_sys_form_id', $formID)->value('tbl_sys_form_admin');
-
-    //   if($formAdmin !== null) {
-
-    //     if($formAdmin == true) {
-
-    //       if(Auth::check()) {
-
-    //         $_user = Auth::user();
-
-    //       }
-
-    //     } else {
-
-    //     }
-
-    //   }
-
-    //   return false;
-
-
-    // }
+    
 
 
 
@@ -5802,7 +5789,6 @@
     }
 
 
-    // Modificado aqui
 
     public static function SysAutomatorGetFormDataBy($campo = 'tbl_sys_form_name', $valor = null) {
 
@@ -6168,288 +6154,6 @@
 
     }
 
-    // public static function SysAutomatorGetFormDataBy($campo = 'tbl_sys_form_name', $valor = null) {
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno padrão
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response = [
-
-    //     'status'  => false,
-    //     'message' => 'Formulário não encontrado.',
-    //     'form'    => null,
-    //     'fields'  => [],
-    //     'data'    => [],
-
-    //   ];
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Valida parâmetros
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   if($campo === null || $campo === '' || $valor === null || $valor === '') {
-
-    //     $response['message'] = 'Parâmetros inválidos para localizar o formulário.';
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Tabelas
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $formTable  = (new SysForm())->getTable();
-    //   $fieldTable = (new SysFormsField())->getTable();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Valida coluna de busca
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   if(!Schema::hasColumn($formTable, $campo)) {
-
-    //     $response['message'] = 'Campo informado para busca do formulário não existe.';
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca formulário
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $form = SysForm::where($campo, $valor)->first();
-
-
-    //   if($form === null) {
-
-    //     return $response;
-
-    //   }
-
-
-    //   $formData = $form->toArray();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca campos vinculados ao formulário
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $fieldsQuery = SysFormsField::where('tbl_sys_form_ID', $form->tbl_sys_form_ID);
-
-
-    //   if(Schema::hasColumn($fieldTable, 'tbl_sys_forms_field_ordem')) {
-
-    //     $fieldsQuery->orderBy('tbl_sys_forms_field_ordem', 'asc');
-
-    //   } else if(Schema::hasColumn($fieldTable, 'tbl_sys_forms_field_order')) {
-
-    //     $fieldsQuery->orderBy('tbl_sys_forms_field_order', 'asc');
-
-    //   }
-
-
-    //   $fields = $fieldsQuery
-    //     ->orderBy('tbl_sys_forms_field_ID', 'asc')
-    //     ->get();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Monta campos com relação do tipo de campo
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $fieldsData = [];
-
-
-    //   foreach($fields as $field) {
-
-
-    //     $fieldData = $field->toArray();
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Tipo do campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeData = null;
-
-
-    //     if(isset($field->tbl_sys_field_type_ID) && $field->tbl_sys_field_type_ID != '') {
-
-    //       $fieldType = SysFieldType::where('tbl_sys_field_type_ID', $field->tbl_sys_field_type_ID)->first();
-
-    //       if($fieldType !== null) {
-
-    //         $fieldTypeData = $fieldType->toArray();
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza JSONs do campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldProps = [];
-    //     $fieldAttrs = [];
-    //     $fieldConfig = [];
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_props']) && $fieldData['tbl_sys_forms_field_props'] != '') {
-
-    //       $decoded = json_decode($fieldData['tbl_sys_forms_field_props'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $fieldProps = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_attrs']) && $fieldData['tbl_sys_forms_field_attrs'] != '') {
-
-    //       $decoded = json_decode($fieldData['tbl_sys_forms_field_attrs'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $fieldAttrs = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_config']) && $fieldData['tbl_sys_forms_field_config'] != '') {
-
-    //       $decoded = json_decode($fieldData['tbl_sys_forms_field_config'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $fieldConfig = $decoded;
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza JSONs do tipo de campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeParams = [];
-
-
-    //     if(is_array($fieldTypeData) && isset($fieldTypeData['tbl_sys_field_type_params']) && $fieldTypeData['tbl_sys_field_type_params'] != '') {
-
-    //       $decoded = json_decode($fieldTypeData['tbl_sys_field_type_params'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $fieldTypeParams = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(is_array($fieldTypeData)) {
-
-    //       $fieldTypeData['params'] = $fieldTypeParams;
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Metadados compatíveis com AJAX e Blade
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldName = $fieldData['tbl_sys_forms_field_name'] ?? '';
-    //     $fieldID   = $fieldData['tbl_sys_forms_field_ID'] ?? '';
-
-    //     $fieldData['props']          = $fieldProps;
-    //     $fieldData['attrs']          = $fieldAttrs;
-    //     $fieldData['config']         = $fieldConfig;
-    //     $fieldData['field_type']     = $fieldTypeData;
-    //     $fieldData['field_name']     = $fieldName;
-    //     $fieldData['field_id']       = 'field_' . $fieldID;
-    //     $fieldData['field_selector'] = ($fieldName != '') ? '[name="' . $fieldName . '"]' : '';
-    //     $fieldData['value']          = '';
-    //     $fieldData['fillable']       = true;
-
-
-    //     $fieldsData[] = $fieldData;
-
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno final
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response['status']  = true;
-    //   $response['message'] = 'Formulário encontrado.';
-    //   $response['form']    = $formData;
-    //   $response['fields']  = $fieldsData;
-    //   $response['data']    = [];
-    //   $response['populate'] = [
-
-    //     'enabled' => true,
-    //     'source'  => 'external',
-    //     'action'  => null,
-    //     'id'      => null,
-    //     'values'  => [],
-
-    //   ];
-
-
-    //   return $response;
-
-
-    // }
 
 
     public static function SysAutomatorRenderFormBuilderFields() {
@@ -6687,260 +6391,6 @@
 
 
     }
-
-
-    // public static function SysAutomatorRenderFormByID($formID) {
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno padrão
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response = [
-
-    //     'status'  => false,
-    //     'message' => 'Formulário não encontrado.',
-    //     'form'    => null,
-    //     'fields'  => [],
-
-    //   ];
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Valida ID do formulário
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   if($formID === null || $formID === '' || $formID == 0) {
-
-    //     $response['message'] = 'ID do formulário inválido.';
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca formulário
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $form = SysForm::where('tbl_sys_form_ID', $formID)->first();
-
-
-    //   if($form === null) {
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca campos vinculados ao formulário
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $fields = SysFormsField::where('tbl_sys_form_ID', $form->tbl_sys_form_ID)
-    //     ->orderBy('tbl_sys_forms_field_order', 'asc')
-    //     ->orderBy('tbl_sys_forms_field_ID', 'asc')
-    //     ->get();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Monta array dos campos com dados do tipo de campo
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $fieldsData = [];
-
-
-    //   foreach($fields as $field) {
-
-
-    //     $fieldData = $field->toArray();
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Busca tipo do campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldType = null;
-
-
-    //     if(isset($field->tbl_sys_field_type_ID) && $field->tbl_sys_field_type_ID != '') {
-
-    //       $fieldType = SysFieldType::where('tbl_sys_field_type_ID', $field->tbl_sys_field_type_ID)->first();
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Dados do tipo de campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeData = null;
-
-
-    //     if($fieldType !== null) {
-
-    //       $fieldTypeData = $fieldType->toArray();
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza props JSON do campo, caso exista
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldProps = [];
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_props']) && $fieldData['tbl_sys_forms_field_props'] != '') {
-
-    //       $decodedProps = json_decode($fieldData['tbl_sys_forms_field_props'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedProps)) {
-
-    //         $fieldProps = $decodedProps;
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza attrs JSON do campo, caso exista
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldAttrs = [];
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_attrs']) && $fieldData['tbl_sys_forms_field_attrs'] != '') {
-
-    //       $decodedAttrs = json_decode($fieldData['tbl_sys_forms_field_attrs'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedAttrs)) {
-
-    //         $fieldAttrs = $decodedAttrs;
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza config JSON do campo, caso exista
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldConfig = [];
-
-
-    //     if(isset($fieldData['tbl_sys_forms_field_config']) && $fieldData['tbl_sys_forms_field_config'] != '') {
-
-    //       $decodedConfig = json_decode($fieldData['tbl_sys_forms_field_config'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedConfig)) {
-
-    //         $fieldConfig = $decodedConfig;
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza params JSON do tipo de campo, caso exista
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeParams = [];
-
-
-    //     if(is_array($fieldTypeData) && isset($fieldTypeData['tbl_sys_field_type_params']) && $fieldTypeData['tbl_sys_field_type_params'] != '') {
-
-    //       $decodedParams = json_decode($fieldTypeData['tbl_sys_field_type_params'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decodedParams)) {
-
-    //         $fieldTypeParams = $decodedParams;
-
-    //       }
-
-    //     }
-
-
-    //     if(is_array($fieldTypeData)) {
-
-    //       $fieldTypeData['params'] = $fieldTypeParams;
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Adiciona dados tratados ao campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldData['props']      = $fieldProps;
-    //     $fieldData['attrs']      = $fieldAttrs;
-    //     $fieldData['config']     = $fieldConfig;
-    //     $fieldData['field_type'] = $fieldTypeData;
-
-
-    //     $fieldsData[] = $fieldData;
-
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno final
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response['status']  = true;
-    //   $response['message'] = 'Formulário encontrado.';
-    //   $response['form']    = $form->toArray();
-    //   $response['fields']  = $fieldsData;
-
-
-    //   return $response;
-
-
-    // }
-
-
-    // Modificado aqui
 
 
 
@@ -7387,365 +6837,6 @@
 
     }
 
-    // public static function SysAutomatorGetPaginationDataBy($campo = 'tbl_sys_pagination_name', $valor = null) {
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno padrão
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response = [
-
-    //     'status'     => false,
-    //     'message'    => 'Paginação não encontrada.',
-    //     'pagination' => null,
-    //     'args'       => [],
-    //     'columns'    => [],
-
-    //   ];
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Valida parâmetros
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   if($campo === null || $campo === '' || $valor === null || $valor === '') {
-
-    //     $response['message'] = 'Parâmetros inválidos para localizar a paginação.';
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Tabelas
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $paginationTable = (new SysPagination())->getTable();
-    //   $argsTable       = (new SysPaginationsArg())->getTable();
-    //   $colsTable       = (new SysPaginationsCol())->getTable();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Valida coluna de busca
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   if(!Schema::hasColumn($paginationTable, $campo)) {
-
-    //     $response['message'] = 'Campo informado para busca da paginação não existe.';
-
-    //     return $response;
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca paginação
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $pagination = SysPagination::where($campo, $valor)->first();
-
-
-    //   if($pagination === null) {
-
-    //     return $response;
-
-    //   }
-
-
-    //   $paginationData = $pagination->toArray();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca argumentos da paginação
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $argsData = [];
-
-
-    //   $args = SysPaginationsArg::where('tbl_sys_pagination_ID', $pagination->tbl_sys_pagination_ID)
-    //     ->orderBy('tbl_sys_paginations_arg_ID', 'asc')
-    //     ->get();
-
-
-    //   foreach($args as $arg) {
-
-    //     $argData = $arg->toArray();
-
-    //     $argName  = $argData['tbl_sys_paginations_arg_name'] ?? null;
-    //     $argValue = $argData['tbl_sys_paginations_arg_value'] ?? null;
-
-
-    //     if($argName !== null && $argName !== '') {
-
-
-    //       $decoded = null;
-
-
-    //       if(is_string($argValue) && $argValue !== '') {
-
-    //         $decoded = json_decode($argValue, true);
-
-    //       }
-
-
-    //       if(json_last_error() === JSON_ERROR_NONE && $decoded !== null) {
-
-    //         $argsData[$argName] = $decoded;
-
-    //       } else {
-
-    //         $argsData[$argName] = $argValue;
-
-    //       }
-
-
-    //     }
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Busca colunas da paginação
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $colsQuery = SysPaginationsCol::where('tbl_sys_pagination_ID', $pagination->tbl_sys_pagination_ID);
-
-
-    //   if(Schema::hasColumn($colsTable, 'tbl_sys_paginations_col_ordem')) {
-
-    //     $colsQuery->orderBy('tbl_sys_paginations_col_ordem', 'asc');
-
-    //   }
-
-
-    //   $cols = $colsQuery
-    //     ->orderBy('tbl_sys_paginations_col_ID', 'asc')
-    //     ->get();
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Monta colunas com relação do tipo de campo
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $columnsData = [];
-
-
-    //   foreach($cols as $col) {
-
-
-    //     $colData = $col->toArray();
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Tipo de campo da coluna
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeData = null;
-
-
-    //     if(isset($col->tbl_sys_field_type_ID) && $col->tbl_sys_field_type_ID != '') {
-
-    //       $fieldType = SysFieldType::where('tbl_sys_field_type_ID', $col->tbl_sys_field_type_ID)->first();
-
-    //       if($fieldType !== null) {
-
-    //         $fieldTypeData = $fieldType->toArray();
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza JSONs da coluna
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $colProps  = [];
-    //     $colAttrs  = [];
-    //     $colHeader = [];
-    //     $colBody   = [];
-    //     $colConfig = [];
-
-
-    //     if(isset($colData['tbl_sys_paginations_col_props']) && $colData['tbl_sys_paginations_col_props'] != '') {
-
-    //       $decoded = json_decode($colData['tbl_sys_paginations_col_props'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $colProps = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($colData['tbl_sys_paginations_col_attrs']) && $colData['tbl_sys_paginations_col_attrs'] != '') {
-
-    //       $decoded = json_decode($colData['tbl_sys_paginations_col_attrs'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $colAttrs = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($colData['tbl_sys_paginations_col_header']) && $colData['tbl_sys_paginations_col_header'] != '') {
-
-    //       $decoded = json_decode($colData['tbl_sys_paginations_col_header'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $colHeader = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($colData['tbl_sys_paginations_col_body']) && $colData['tbl_sys_paginations_col_body'] != '') {
-
-    //       $decoded = json_decode($colData['tbl_sys_paginations_col_body'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $colBody = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(isset($colData['tbl_sys_paginations_col_config']) && $colData['tbl_sys_paginations_col_config'] != '') {
-
-    //       $decoded = json_decode($colData['tbl_sys_paginations_col_config'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $colConfig = $decoded;
-
-    //       }
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza params do tipo de campo
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $fieldTypeParams = [];
-
-
-    //     if(is_array($fieldTypeData) && isset($fieldTypeData['tbl_sys_field_type_params']) && $fieldTypeData['tbl_sys_field_type_params'] != '') {
-
-    //       $decoded = json_decode($fieldTypeData['tbl_sys_field_type_params'], true);
-
-    //       if(json_last_error() === JSON_ERROR_NONE && is_array($decoded)) {
-
-    //         $fieldTypeParams = $decoded;
-
-    //       }
-
-    //     }
-
-
-    //     if(is_array($fieldTypeData)) {
-
-    //       $fieldTypeData['params'] = $fieldTypeParams;
-
-    //     }
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Nome da coluna
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $columnName = $colData['tbl_sys_paginations_col_name']
-    //       ?? $colData['tbl_sys_paginations_col_field']
-    //       ?? $colData['tbl_sys_paginations_col_column']
-    //       ?? '';
-
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Adiciona dados tratados
-    //     |--------------------------------------------------------------------------
-    //     */
-
-    //     $colData['props']       = $colProps;
-    //     $colData['attrs']       = $colAttrs;
-    //     $colData['header']      = $colHeader;
-    //     $colData['body']        = $colBody;
-    //     $colData['config']      = $colConfig;
-    //     $colData['field_type']  = $fieldTypeData;
-    //     $colData['column_name'] = $columnName;
-
-
-    //     $columnsData[] = $colData;
-
-
-    //   }
-
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno final
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $response['status']     = true;
-    //   $response['message']    = 'Paginação encontrada.';
-    //   $response['pagination'] = $paginationData;
-    //   $response['args']       = $argsData;
-    //   $response['columns']    = $columnsData;
-
-
-    //   return $response;
-
-
-    // }
 
 
     public static function SysAutomatorNormalizePaginationParams($paginationResponse = [], $overrides = []) {
@@ -7996,205 +7087,6 @@
 
 
     }
-
-    // public static function SysAutomatorNormalizePaginationParams($paginationResponse = [], $overrides = []) {
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Retorno padrão no mesmo formato usado manualmente nos controllers
-    //   |--------------------------------------------------------------------------
-    //   */
-
-    //   $pagination = $paginationResponse['pagination'] ?? [];
-    //   $args       = $paginationResponse['args'] ?? [];
-    //   $columns    = $paginationResponse['columns'] ?? [];
-
-
-    //   if(!is_array($pagination)) {
-
-    //     $pagination = [];
-
-    //   }
-
-
-    //   if(!is_array($args)) {
-
-    //     $args = [];
-
-    //   }
-
-
-    //   if(!is_array($columns)) {
-
-    //     $columns = [];
-
-    //   }
-
-
-    //   $table = $pagination['tbl_sys_pagination_table'] ?? ($args['table'] ?? null);
-
-    //   $index = $args['index']
-    //     ?? ($pagination['tbl_sys_pagination_index'] ?? null)
-    //     ?? (($table != '' && Schema::hasTable($table)) ? self::SysAutomatorGetPKColumn($table) : null);
-
-
-    //   $params = [
-
-    //     'page_name'         => $args['page_name'] ?? ($pagination['tbl_sys_pagination_title'] ?? ($pagination['tbl_sys_pagination_name'] ?? null)),
-    //     'table'             => $table,
-    //     'index'             => $index,
-    //     'per_page'          => $args['per_page'] ?? ($pagination['tbl_sys_pagination_per_page'] ?? 15),
-    //     'actions'           => $args['actions'] ?? [],
-    //     'header_actions'    => $args['header_actions'] ?? [],
-    //     'list_actions'      => $args['list_actions'] ?? [],
-    //     'search_fields'     => $args['search_fields'] ?? [],
-    //     'modals'            => $args['modals'] ?? [],
-    //     'modal'             => $args['modal'] ?? null,
-    //     'action_urls'       => $args['action_urls'] ?? [],
-    //     'default_sort'      => $args['default_sort'] ?? ($args['order_by'] ?? null),
-    //     'default_direction' => $args['default_direction'] ?? ($args['order_direction'] ?? 'asc'),
-    //     'where'             => $args['where'] ?? null,
-    //     'with_where'        => $args['with_where'] ?? null,
-    //     'columns'           => [],
-
-    //   ];
-
-
-    //   foreach($columns as $column) {
-
-
-    //     if(!is_array($column)) {
-
-    //       continue;
-
-    //     } else {
-
-    //       $column['column_name'] = $column['column_name'] . '_' . $contar;
-
-    //     }
-
-
-    //     $columnName = $column['column_name']
-    //       ?? $column['tbl_sys_paginations_col_name']
-    //       ?? $column['tbl_sys_paginations_col_field']
-    //       ?? $column['tbl_sys_paginations_col_column']
-    //       ?? null;
-
-
-    //     if($columnName === null || $columnName === '') {
-
-    //       continue;
-
-    //     }
-
-
-    //     $props  = (isset($column['props']) && is_array($column['props'])) ? $column['props'] : [];
-    //     $attrs  = (isset($column['attrs']) && is_array($column['attrs'])) ? $column['attrs'] : [];
-    //     $header = (isset($column['header']) && is_array($column['header'])) ? $column['header'] : [];
-    //     $body   = (isset($column['body']) && is_array($column['body'])) ? $column['body'] : [];
-    //     $config = (isset($column['config']) && is_array($column['config'])) ? $column['config'] : [];
-
-
-    //     if(isset($header['classes']) && !isset($header['class'])) {
-
-    //       $header['class'] = $header['classes'];
-
-    //     }
-
-
-    //     if(isset($header['class']) && !isset($header['classes'])) {
-
-    //       $header['classes'] = $header['class'];
-
-    //     }
-
-
-    //     if(isset($body['classes']) && !isset($body['class'])) {
-
-    //       $body['class'] = $body['classes'];
-
-    //     }
-
-
-    //     if(isset($body['class']) && !isset($body['classes'])) {
-
-    //       $body['classes'] = $body['class'];
-
-    //     }
-
-
-    //     $sortable = $column['tbl_sys_paginations_col_sort']
-    //       ?? $column['tbl_sys_paginations_col_sortable']
-    //       ?? ($config['sortable'] ?? ($props['sortable'] ?? false));
-
-    //     $searchable = $column['tbl_sys_paginations_col_search']
-    //       ?? $column['tbl_sys_paginations_col_searchable']
-    //       ?? ($config['searchable'] ?? ($props['searchable'] ?? false));
-
-
-    //     $fieldType = $column['field_type'] ?? [];
-
-    //     $type = $config['type']
-    //       ?? $props['type']
-    //       ?? ($fieldType['tbl_sys_field_type_name'] ?? 'text');
-
-
-    //     $label = $column['tbl_sys_paginations_col_title']
-    //       ?? $column['tbl_sys_paginations_col_label']
-    //       ?? ($config['label'] ?? ($props['label'] ?? $columnName));
-
-
-    //     $params['columns'][$columnName] = array_merge($column, [
-
-    //       'type'       => $type,
-    //       'label'      => $label,
-    //       'sortable'   => self::SysAutomatorValueIsTruthy($sortable),
-    //       'searchable' => self::SysAutomatorValueIsTruthy($searchable),
-    //       'header'     => $header,
-    //       'body'       => $body,
-    //       'props'      => $props,
-    //       'attrs'      => $attrs,
-    //       'config'     => $config,
-    //       'field_type' => $fieldType,
-    //       'column_name' => $columnName,
-    //       'replaced'   => $column['replaced'] ?? ($config['replaced'] ?? ($props['replaced'] ?? [])),
-
-    //     ]);
-
-
-    //     if(self::SysAutomatorValueIsTruthy($searchable) && !isset($params['search_fields'][$columnName])) {
-
-    //       $params['search_fields'][$columnName] = $label;
-
-    //     }
-
-
-    //   }
-
-
-    //   foreach($args as $argKey => $argValue) {
-
-    //     if(!array_key_exists($argKey, $params)) {
-
-    //       $params[$argKey] = $argValue;
-
-    //     }
-
-    //   }
-
-
-    //   if(is_array($overrides) && count($overrides) >= 1) {
-
-    //     $params = array_replace_recursive($params, $overrides);
-
-    //   }
-
-
-    //   return $params;
-
-
-    // }
 
 
 
@@ -8854,60 +7746,54 @@
 
 
 
-    // Novas alterações aqui - START
+    public static function SysAutomatorGetCurrentUserTypesIDsForAccess() {
 
 
-      public static function SysAutomatorGetCurrentUserTypesIDsForAccess() {
+      $userTypesIDs = [];
 
 
-        $userTypesIDs = [];
-
-
-        if(!Auth::check()) {
-
-          return $userTypesIDs;
-
-        }
-
-
-        $user = Auth::user();
-
-
-        if($user == null) {
-
-          return $userTypesIDs;
-
-        }
-
-
-        if(method_exists($user, 'UserGetTypes')) {
-
-          $userTypesIDs = $user->UserGetTypes()
-            ->where('tbl_users_types.tbl_users_type_status', 'ativo')
-            ->pluck('tbl_users_types.tbl_users_type_ID')
-            ->toArray();
-
-        } elseif(method_exists($user, 'UserGetTypesIDs')) {
-
-          $userTypesIDs = $user->UserGetTypesIDs();
-
-        }
-
-
-        if(!is_array($userTypesIDs)) {
-
-          $userTypesIDs = [];
-
-        }
-
+      if(!Auth::check()) {
 
         return $userTypesIDs;
-
 
       }
 
 
-    // Novas alterações aqui - END
+      $user = Auth::user();
+
+
+      if($user == null) {
+
+        return $userTypesIDs;
+
+      }
+
+
+      if(method_exists($user, 'UserGetTypes')) {
+
+        $userTypesIDs = $user->UserGetTypes()
+          ->where('tbl_users_types.tbl_users_type_status', 'ativo')
+          ->pluck('tbl_users_types.tbl_users_type_ID')
+          ->toArray();
+
+      } elseif(method_exists($user, 'UserGetTypesIDs')) {
+
+        $userTypesIDs = $user->UserGetTypesIDs();
+
+      }
+
+
+      if(!is_array($userTypesIDs)) {
+
+        $userTypesIDs = [];
+
+      }
+
+
+      return $userTypesIDs;
+
+
+    }
 
 
     public static function SysAutomatorRenderFormRequestByID($formID, $request) {
@@ -9405,7 +8291,7 @@
         $fieldType = 'select';
       }
 
-      if(!in_array($fieldType, ['select', 'checkbox', 'radio'])) {
+      if(!in_array($fieldType, ['select', 'checkbox', 'radio', 'hidden'])) {
         $fieldType = 'select';
       }
 

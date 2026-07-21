@@ -45,6 +45,8 @@ window.SysAutomatorPaginationEditor = (function () {
     actionBuilderForms:          {},
     actionBuilderAvailableForms: [],
 
+    selectEnumOptionsCache: {},
+
     validation: {
 
       valid:  false,
@@ -4164,6 +4166,76 @@ window.SysAutomatorPaginationEditor = (function () {
   ) {
 
 
+    if(
+
+      value === null ||
+
+      value === undefined
+
+    ) {
+
+      return '';
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com o formato estruturado utilizado anteriormente
+    |--------------------------------------------------------------------------
+    |
+    | Caso algum valor ainda chegue como objeto do editor JSON anterior,
+    | converte a estrutura novamente para texto JavaScript antes de preencher
+    | o textarea.
+    |--------------------------------------------------------------------------
+    */
+
+
+    if(
+
+      value &&
+
+      typeof value === 'object'
+
+    ) {
+
+
+      if(
+
+        typeof parseJsonToJavascriptCallback ===
+
+        'function'
+
+      ) {
+
+
+        value = parseJsonToJavascriptCallback(
+
+          value
+
+        );
+
+
+      } else {
+
+
+        value = String(
+
+          value.code ||
+
+          value.value ||
+
+          ''
+
+        );
+
+
+      }
+
+
+    }
+
+
     value = String(
 
       value || ''
@@ -4172,14 +4244,25 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     if(
+
       value == '' ||
+
       value == 'null' ||
+
       value == 'undefined'
+
     ) {
 
       return '';
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Função tradicional
+    |--------------------------------------------------------------------------
+    */
 
 
     const functionBodyMatch = value.match(
@@ -4200,6 +4283,13 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Arrow function com bloco
+    |--------------------------------------------------------------------------
+    */
+
+
     const arrowFunctionBodyMatch = value.match(
 
       /^(?:async\s+)?(?:\([^)]*\)|[a-zA-Z_$][a-zA-Z0-9_$]*)\s*=>\s*\{([\s\S]*)\}$/i
@@ -4216,6 +4306,13 @@ window.SysAutomatorPaginationEditor = (function () {
       ).trim();
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Arrow function com retorno direto
+    |--------------------------------------------------------------------------
+    */
 
 
     const arrowFunctionExpressionMatch = value.match(
@@ -4242,6 +4339,13 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | O valor já representa somente o corpo da função
+    |--------------------------------------------------------------------------
+    */
 
 
     return value;
@@ -4509,7 +4613,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
       title: title,
 
-      loadMethod: 'GET',
+      loadMethod:
+
+        loadAction != ''
+
+          ? 'GET'
+
+          : '',
 
       loadRoute: loadRoute,
 
@@ -4529,19 +4639,23 @@ window.SysAutomatorPaginationEditor = (function () {
 
       scrollable: true,
 
+      /*
+      |--------------------------------------------------------------------------
+      | O textarea recebe somente o corpo textual do callback
+      |--------------------------------------------------------------------------
+      */
+
       callback:
 
-        parseJavascriptCallbackToJson(
+        normalizePaginationButtonActionBuilderFunctionValue(
 
-          callbackData.callback ||
-
-          ''
+          callbackData.callback || ''
 
         ),
 
-      beforeShow: {},
+      beforeShow: '',
 
-      afterHide: {},
+      afterHide: '',
 
     };
 
@@ -4723,9 +4837,15 @@ window.SysAutomatorPaginationEditor = (function () {
 
         ),
 
+      /*
+      |--------------------------------------------------------------------------
+      | Os textareas recebem somente o corpo textual das funções
+      |--------------------------------------------------------------------------
+      */
+
       callback:
 
-        parseJavascriptCallbackToJson(
+        normalizePaginationButtonActionBuilderFunctionValue(
 
           callbackValue
 
@@ -4733,7 +4853,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
       beforeShow:
 
-        parseJavascriptCallbackToJson(
+        normalizePaginationButtonActionBuilderFunctionValue(
 
           beforeShowValue
 
@@ -4741,7 +4861,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
       afterHide:
 
-        parseJavascriptCallbackToJson(
+        normalizePaginationButtonActionBuilderFunctionValue(
 
           afterHideValue
 
@@ -5054,16 +5174,48 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
-    value = String(
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com os valores estruturados utilizados anteriormente
+    |--------------------------------------------------------------------------
+    */
 
-      value === null ||
-      value === undefined
 
-        ? ''
+    if(
 
-        : value
+      value &&
 
-    );
+      typeof value === 'object'
+
+    ) {
+
+
+      value =
+
+        normalizePaginationButtonActionBuilderFunctionValue(
+
+          value
+
+        );
+
+
+    } else {
+
+
+      value = String(
+
+        value === null ||
+
+        value === undefined
+
+          ? ''
+
+          : value
+
+      );
+
+
+    }
 
 
     field.val(
@@ -5076,7 +5228,9 @@ window.SysAutomatorPaginationEditor = (function () {
     const editorID = String(
 
       field.attr(
+
         'data-automator-editor-id'
+
       ) ||
 
       field.attr('id') ||
@@ -5087,9 +5241,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     if(
+
       editorID != '' &&
+
       window.AutomatorEditors &&
+
       window.AutomatorEditors[editorID]
+
     ) {
 
 
@@ -5099,8 +5257,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       if(
+
         editorInstance.visual &&
+
         editorInstance.visual.length
+
       ) {
 
         editorInstance.visual.html(
@@ -5113,8 +5274,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       if(
+
         editorInstance.code &&
+
         editorInstance.code.length
+
       ) {
 
         editorInstance.code.val(
@@ -5127,8 +5291,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
       if(
+
         editorInstance.source &&
+
         editorInstance.source.length
+
       ) {
 
         editorInstance.source.val(
@@ -6776,6 +6943,13 @@ window.SysAutomatorPaginationEditor = (function () {
     let callbackBody = '';
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Callback nativo de envio do formulário
+    |--------------------------------------------------------------------------
+    */
+
+
     if(submitAction != '') {
 
 
@@ -6807,11 +6981,18 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Callback adicional informado no textarea
+    |--------------------------------------------------------------------------
+    */
+
+
     const customCallback =
 
-      parseJsonToJavascriptCallback(
+      normalizePaginationButtonActionBuilderFunctionValue(
 
-        values.callback
+        values.callback || ''
 
       );
 
@@ -6921,6 +7102,13 @@ window.SysAutomatorPaginationEditor = (function () {
   ) {
 
 
+    value = normalizePaginationButtonActionBuilderFunctionValue(
+
+      value
+
+    );
+
+
     value = String(
 
       value || ''
@@ -6935,21 +7123,33 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Referência direta de função
+    |--------------------------------------------------------------------------
+    */
+
+
     if(
-      /^function\s*\(/.test(
+
+      /^[a-zA-Z_$][a-zA-Z0-9_$]*(?:\.[a-zA-Z_$][a-zA-Z0-9_$]*)*$/.test(
+
         value
-      ) ||
-      /^\([^)]*\)\s*=>/.test(
-        value
-      ) ||
-      /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(
-        value
+
       )
+
     ) {
 
       return value;
 
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Gera a função padrão utilizada pelos modais do sistema
+    |--------------------------------------------------------------------------
+    */
 
 
     return (
@@ -6964,6 +7164,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
   }
+
 
   /*
   |--------------------------------------------------------------------------
@@ -7033,38 +7234,18 @@ window.SysAutomatorPaginationEditor = (function () {
     );
 
 
-    const callbackBody =
-
-      parseJsonToJavascriptCallback(
-
-        values.callback
-
-      );
-
-
-    const beforeShowBody =
-
-      parseJsonToJavascriptCallback(
-
-        values.beforeShow
-
-      );
-
-
-    const afterHideBody =
-
-      parseJsonToJavascriptCallback(
-
-        values.afterHide
-
-      );
+    /*
+    |--------------------------------------------------------------------------
+    | Os valores já são texto JavaScript vindo dos textareas
+    |--------------------------------------------------------------------------
+    */
 
 
     const callback =
 
       normalizePaginationButtonActionBuilderFunction(
 
-        callbackBody
+        values.callback || ''
 
       );
 
@@ -7073,7 +7254,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
       normalizePaginationButtonActionBuilderFunction(
 
-        beforeShowBody
+        values.beforeShow || ''
 
       );
 
@@ -7082,7 +7263,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
       normalizePaginationButtonActionBuilderFunction(
 
-        afterHideBody
+        values.afterHide || ''
 
       );
 
@@ -8852,6 +9033,8 @@ window.SysAutomatorPaginationEditor = (function () {
 
     let connector = 'AND';
 
+    let uid = '';
+
 
     if(Array.isArray(filter)) {
 
@@ -8899,6 +9082,21 @@ window.SysAutomatorPaginationEditor = (function () {
         filter
 
       );
+
+
+      uid = String(
+
+        filter.uid ||
+
+        filter.id ||
+
+        filter.filterID ||
+
+        filter.filter_id ||
+
+        ''
+
+      ).trim();
 
 
       column = String(
@@ -8953,7 +9151,11 @@ window.SysAutomatorPaginationEditor = (function () {
 
           ? ''
 
-          : String(value);
+          : String(
+
+              value
+
+            );
 
 
       connector = normalizePaginationQueryFilterConnector(
@@ -8974,13 +9176,6 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     }
-
-
-    /*
-    |--------------------------------------------------------------------------
-    | Converte operadores do banco para as opções visuais do editor
-    |--------------------------------------------------------------------------
-    */
 
 
     const visualOperators = {
@@ -9023,6 +9218,8 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
     return {
+
+      uid: uid,
 
       column: column,
 
@@ -9471,25 +9668,15 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
-  | Renderiza um card de filtro
+  | Gera um identificador único para o filtro
   |--------------------------------------------------------------------------
   */
 
 
-  function renderPaginationQueryFilterCard(
-    filter = {},
-    openCard = true
-  ) {
+  function createPaginationQueryFilterUID() {
 
 
-    filter = normalizePaginationQueryFilter(
-
-      filter
-
-    );
-
-
-    const filterUID =
+    return (
 
       'automator-pagination-query-filter-' +
 
@@ -9501,7 +9688,61 @@ window.SysAutomatorPaginationEditor = (function () {
 
         Math.random() * 999999
 
+      )
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Renderiza um card de filtro
+  |--------------------------------------------------------------------------
+  */
+
+
+  function renderPaginationQueryFilterCard(
+    filterData = {},
+    filterIndex = 0,
+    openCard = true
+  ) {
+
+
+    filterIndex = Number(
+
+      filterIndex
+
+    );
+
+
+    if(
+      !Number.isFinite(
+        filterIndex
+      ) ||
+      filterIndex < 0
+    ) {
+
+      filterIndex = 0;
+
+    }
+
+
+    const filter =
+
+      normalizePaginationQueryFilter(
+
+        filterData,
+
+        filterIndex
+
       );
+
+
+    const filterUID =
+
+      createPaginationQueryFilterUID();
 
 
     const card = $(
@@ -9510,13 +9751,13 @@ window.SysAutomatorPaginationEditor = (function () {
 
         'class="' +
 
-          'card shadow-sm mb-3 ' +
+          'card border rounded-0 mb-2 ' +
 
           'automator-pagination-editor-query-filter-item' +
 
         '" ' +
 
-        'data-filter-uid="' +
+        'data-automator-pagination-query-filter-id="' +
 
           escapeHtml(
 
@@ -9528,111 +9769,151 @@ window.SysAutomatorPaginationEditor = (function () {
 
       '>' +
 
-        '<div class="card-header p-0 bg-white">' +
+        '<div ' +
 
-          '<div class="d-flex align-items-center">' +
+          'class="' +
 
-            '<button ' +
+            'card-header py-2 px-2 bg-light ' +
 
-              'type="button" ' +
+            'd-flex align-items-center gap-2' +
 
-              'class="' +
+          '"' +
 
-                'btn border-0 px-3 py-2 ' +
+        '>' +
 
-                'automator-pagination-editor-query-filter-sort-handle' +
+          '<button ' +
 
-              '" ' +
+            'type="button" ' +
 
-              'title="Ordenar filtro"' +
+            'class="' +
 
-            '>' +
+              'btn btn-sm border-0 p-1 ' +
 
-              '<i class="fa fa-grip-vertical text-muted"></i>' +
+              'automator-pagination-editor-query-filter-sort-handle' +
 
-            '</button>' +
+            '" ' +
 
-            '<button ' +
+            'title="Ordenar"' +
 
-              'type="button" ' +
+          '>' +
 
-              'class="' +
+            '<i class="fa fa-grip-vertical"></i>' +
 
-                'btn border-0 text-start flex-grow-1 py-2 ' +
+          '</button>' +
 
-                'automator-pagination-editor-query-filter-collapse' +
+          '<button ' +
 
-                (
+            'type="button" ' +
 
-                  openCard === true
+            'class="' +
 
-                    ? ''
+              'btn border-0 bg-transparent p-0 flex-grow-1 ' +
 
-                    : ' collapsed'
+              'text-start fw-semibold small ' +
 
-                ) +
+              'automator-pagination-editor-query-filter-toggle' +
 
-              '" ' +
+            '" ' +
 
-              'data-bs-toggle="collapse" ' +
+            'data-bs-toggle="collapse" ' +
 
-              'data-bs-target="#' +
+            'data-bs-target="#' +
 
-                escapeHtml(
+              escapeHtml(
 
-                  filterUID
+                filterUID
 
-                ) +
+              ) +
 
-              '-body" ' +
+            '-body" ' +
 
-              'aria-expanded="' +
+            'aria-expanded="' +
 
-                (
+              (
 
-                  openCard === true
+                openCard === true
 
-                    ? 'true'
+                  ? 'true'
 
-                    : 'false'
+                  : 'false'
 
-                ) +
+              ) +
 
-              '"' +
+            '"' +
 
-            '>' +
+          '>' +
 
-              '<span class="' +
+            '<span class="automator-pagination-editor-query-filter-title">' +
 
-                'fw-semibold small ' +
+              'Filtro ' +
 
-                'automator-pagination-editor-query-filter-title' +
+              (
 
-              '">' +
+                filterIndex + 1
 
-                'Filtro' +
+              ) +
 
-              '</span>' +
+            '</span>' +
 
-              '<i class="' +
+          '</button>' +
 
-                'fa float-end mt-1 ' +
+          '<button ' +
 
-                (
+            'type="button" ' +
 
-                  openCard === true
+            'class="' +
 
-                    ? 'fa-chevron-up'
+              'btn btn-sm border-0 p-1 ' +
 
-                    : 'fa-chevron-down'
+              'automator-pagination-editor-query-filter-collapse' +
 
-                ) +
+            '" ' +
 
-              '"></i>' +
+            'data-bs-toggle="collapse" ' +
 
-            '</button>' +
+            'data-bs-target="#' +
 
-          '</div>' +
+              escapeHtml(
+
+                filterUID
+
+              ) +
+
+            '-body" ' +
+
+            'aria-expanded="' +
+
+              (
+
+                openCard === true
+
+                  ? 'true'
+
+                  : 'false'
+
+              ) +
+
+            '"' +
+
+          '>' +
+
+            '<i class="' +
+
+              'fa ' +
+
+              (
+
+                openCard === true
+
+                  ? 'fa-chevron-up'
+
+                  : 'fa-chevron-down'
+
+              ) +
+
+            '"></i>' +
+
+          '</button>' +
 
         '</div>' +
 
@@ -9748,7 +10029,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
                   'form-control form-control-sm ' +
 
-                  'automator-pagination-editor-query-filter-value' +
+                  'automator-pagination-editor-query-filter-value ' +
+
+                  'automator-sysfunctions' +
 
                 '" ' +
 
@@ -10856,11 +11139,20 @@ window.SysAutomatorPaginationEditor = (function () {
     ).remove();
 
 
+    const filterIndex = list.find(
+
+      '.automator-pagination-editor-query-filter-item'
+
+    ).length;
+
+
     const card = renderPaginationQueryFilterCard(
 
       filter,
 
-      openCard
+      filterIndex,
+
+      openCard === true
 
     );
 
@@ -23215,6 +23507,7 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+
     $(document)
       .off(
         'input.automator-pagination-editor-column-property change.automator-pagination-editor-column-property',
@@ -23223,11 +23516,14 @@ window.SysAutomatorPaginationEditor = (function () {
       .on(
         'input.automator-pagination-editor-column-property change.automator-pagination-editor-column-property',
         selectors.columnPropertyInput,
-        function() {
+        function(event) {
+
+
+          const input = $(this);
 
 
           if(
-            $(this).hasClass(
+            input.hasClass(
               'automator-pagination-editor-dynamic-relation-property'
             )
           ) {
@@ -23237,11 +23533,107 @@ window.SysAutomatorPaginationEditor = (function () {
           }
 
 
+          const propertyPath = String(
+
+            input.attr(
+
+              'data-property-path'
+
+            ) || ''
+
+          ).trim();
+
+
           updateSelectedColumnFromProperties();
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Mudança da coluna da tabela
+          |--------------------------------------------------------------------------
+          |
+          | As opções ENUM são carregadas somente após a coluna ter sido salva
+          | no estado interno do editor.
+          |--------------------------------------------------------------------------
+          */
+
+          if(
+            event.type == 'change' &&
+            propertyPath == 'name'
+          ) {
+
+
+            const selectedItem =
+
+              getSelectedColumnItem();
+
+
+            if(
+              selectedItem.length &&
+              isPaginationSelectColumn(
+
+                selectedItem.data(
+
+                  'automator-pagination-column'
+
+                ) || {}
+
+              )
+            ) {
+
+
+              loadPaginationSelectColumnEnumOptions(
+
+                selectedItem,
+
+                {
+
+                  force: true,
+
+                  rerender: true,
+
+                  markChanged: true,
+
+                }
+
+              );
+
+
+            }
+
+
+          }
 
 
         }
       );
+    // $(document)
+    //   .off(
+    //     'input.automator-pagination-editor-column-property change.automator-pagination-editor-column-property',
+    //     selectors.columnPropertyInput
+    //   )
+    //   .on(
+    //     'input.automator-pagination-editor-column-property change.automator-pagination-editor-column-property',
+    //     selectors.columnPropertyInput,
+    //     function() {
+
+
+    //       if(
+    //         $(this).hasClass(
+    //           'automator-pagination-editor-dynamic-relation-property'
+    //         )
+    //       ) {
+
+    //         return;
+
+    //       }
+
+
+    //       updateSelectedColumnFromProperties();
+
+
+    //     }
+    //   );
 
 
     $(document)
@@ -24479,6 +24871,916 @@ window.SysAutomatorPaginationEditor = (function () {
 
   /*
   |--------------------------------------------------------------------------
+  | Verifica se a coluna utiliza o tipo select
+  |--------------------------------------------------------------------------
+  */
+
+  function isPaginationSelectColumn(
+    column = {}
+  ) {
+
+
+    column = normalizePlainObject(
+
+      column
+
+    );
+
+
+    const columnType = String(
+
+      column.type ||
+
+      column.field_type ||
+
+      column.type_name ||
+
+      column.tbl_sys_field_type_name ||
+
+      ''
+
+    )
+      .trim()
+      .toLowerCase();
+
+
+    return columnType == 'select';
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Normaliza opções de uma coluna select
+  |--------------------------------------------------------------------------
+  |
+  | Formatos aceitos:
+  |
+  | {
+  |   ativo: 'Ativo'
+  | }
+  |
+  | [
+  |   {
+  |     value: 'ativo',
+  |     label: 'Ativo'
+  |   }
+  | ]
+  |--------------------------------------------------------------------------
+  */
+
+  function normalizePaginationSelectOptions(
+    options = {}
+  ) {
+
+
+    const normalizedOptions = {};
+
+
+    if(
+      options === null ||
+      options === undefined
+    ) {
+
+      return normalizedOptions;
+
+    }
+
+
+    if(Array.isArray(options)) {
+
+
+      options.forEach(function(option, optionIndex) {
+
+
+        if(
+          option &&
+          typeof option === 'object'
+        ) {
+
+
+          const optionValue = String(
+
+            option.value !== undefined
+
+              ? option.value
+
+              : option.key !== undefined
+
+                ? option.key
+
+                : optionIndex
+
+          );
+
+
+          const optionLabel = String(
+
+            option.label !== undefined
+
+              ? option.label
+
+              : option.text !== undefined
+
+                ? option.text
+
+                : optionValue
+
+          );
+
+
+          if(optionValue != '') {
+
+            normalizedOptions[optionValue] = optionLabel;
+
+          }
+
+
+          return;
+
+
+        }
+
+
+        const optionValue = String(
+
+          optionIndex
+
+        );
+
+
+        normalizedOptions[optionValue] = String(
+
+          option
+
+        );
+
+
+      });
+
+
+      return normalizedOptions;
+
+
+    }
+
+
+    if(
+      options &&
+      typeof options === 'object'
+    ) {
+
+
+      Object.keys(options).forEach(function(optionValue) {
+
+
+        const option = options[optionValue];
+
+
+        if(
+          option &&
+          typeof option === 'object'
+        ) {
+
+
+          const normalizedValue = String(
+
+            option.value !== undefined
+
+              ? option.value
+
+              : optionValue
+
+          );
+
+
+          const normalizedLabel = String(
+
+            option.label !== undefined
+
+              ? option.label
+
+              : option.text !== undefined
+
+                ? option.text
+
+                : normalizedValue
+
+          );
+
+
+          if(normalizedValue != '') {
+
+            normalizedOptions[normalizedValue] = normalizedLabel;
+
+          }
+
+
+          return;
+
+
+        }
+
+
+        normalizedOptions[
+
+          String(optionValue)
+
+        ] = String(
+
+          option === null ||
+          option === undefined
+
+            ? optionValue
+
+            : option
+
+        );
+
+
+      });
+
+
+    }
+
+
+    return normalizedOptions;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Combina opções automáticas e manuais
+  |--------------------------------------------------------------------------
+  */
+
+  function mergePaginationSelectOptions(
+    currentOptions = {},
+    databaseOptions = []
+  ) {
+
+
+    const mergedOptions =
+
+      normalizePaginationSelectOptions(
+
+        currentOptions
+
+      );
+
+
+    if(!Array.isArray(databaseOptions)) {
+
+      return mergedOptions;
+
+    }
+
+
+    databaseOptions.forEach(function(option) {
+
+
+      option = normalizePlainObject(
+
+        option
+
+      );
+
+
+      const optionValue = String(
+
+        option.value === null ||
+        option.value === undefined
+
+          ? ''
+
+          : option.value
+
+      );
+
+
+      if(optionValue == '') {
+
+        return;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Preserva labels personalizados
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        Object.prototype.hasOwnProperty.call(
+
+          mergedOptions,
+
+          optionValue
+
+        )
+      ) {
+
+        return;
+
+      }
+
+
+      mergedOptions[optionValue] = String(
+
+        option.label === null ||
+        option.label === undefined ||
+        option.label === ''
+
+          ? optionValue
+
+          : option.label
+
+      );
+
+
+    });
+
+
+    return mergedOptions;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Caminho de persistência das opções do select
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationSelectOptionsPath() {
+
+
+    return 'props.options';
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Recupera opções atuais da coluna
+  |--------------------------------------------------------------------------
+  */
+
+  function getPaginationColumnSelectOptions(
+    column = {}
+  ) {
+
+
+    column = normalizePaginationColumnData(
+
+      column
+
+    );
+
+
+    return normalizePaginationSelectOptions(
+
+      getNestedValue(
+
+        column.values,
+
+        getPaginationSelectOptionsPath(),
+
+        {}
+
+      )
+
+    );
+
+
+  }
+
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Define opções da coluna
+  |--------------------------------------------------------------------------
+  */
+
+  function setPaginationColumnSelectOptions(
+    column = {},
+    options = {}
+  ) {
+
+
+    column = normalizePaginationColumnData(
+
+      column
+
+    );
+
+
+    setNestedValue(
+
+      column.values,
+
+      getPaginationSelectOptionsPath(),
+
+      normalizePaginationSelectOptions(
+
+        options
+
+      )
+
+    );
+
+
+    return column;
+
+
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Carrega opções ENUM para uma coluna select
+  |--------------------------------------------------------------------------
+  */
+
+  function loadPaginationSelectColumnEnumOptions(
+    item,
+    options = {}
+  ) {
+
+
+    item = $(item);
+
+
+    options = $.extend(
+
+      {
+
+        force: false,
+
+        rerender: true,
+
+        markChanged: true,
+
+        callback: null,
+
+      },
+
+      options
+
+    );
+
+
+    if(!item.length) {
+
+
+      if(typeof options.callback === 'function') {
+
+        options.callback(false, []);
+
+      }
+
+
+      return false;
+
+    }
+
+
+    let column = normalizePaginationColumnData(
+
+      $.extend(
+
+        true,
+
+        {},
+
+        item.data(
+
+          'automator-pagination-column'
+
+        ) || {}
+
+      )
+
+    );
+
+
+    if(!isPaginationSelectColumn(column)) {
+
+
+      if(typeof options.callback === 'function') {
+
+        options.callback(false, []);
+
+      }
+
+
+      return false;
+
+    }
+
+
+    const tableName = String(
+
+      $(selectors.table).val() ||
+
+      state.selectedTable ||
+
+      ''
+
+    ).trim();
+
+
+    const columnName = String(
+
+      column.name ||
+
+      ''
+
+    ).trim();
+
+
+    if(
+      tableName == '' ||
+      columnName == ''
+    ) {
+
+
+      if(typeof options.callback === 'function') {
+
+        options.callback(false, []);
+
+      }
+
+
+      return false;
+
+    }
+
+
+    const cacheKey =
+
+      tableName +
+
+      '.' +
+
+      columnName;
+
+
+    function applyEnumOptions(
+      databaseOptions = [],
+      isEnum = false
+    ) {
+
+
+      databaseOptions = Array.isArray(
+
+        databaseOptions
+
+      )
+        ? databaseOptions
+        : [];
+
+
+      state.selectEnumOptionsCache[cacheKey] = {
+
+        isEnum: isEnum === true,
+
+        options: databaseOptions,
+
+      };
+
+
+      if(isEnum !== true) {
+
+
+        if(typeof options.callback === 'function') {
+
+          options.callback(false, databaseOptions);
+
+        }
+
+
+        return false;
+
+      }
+
+
+      column = normalizePaginationColumnData(
+
+        $.extend(
+
+          true,
+
+          {},
+
+          item.data(
+
+            'automator-pagination-column'
+
+          ) || column
+
+        )
+
+      );
+
+
+      const currentOptions =
+
+        getPaginationColumnSelectOptions(
+
+          column
+
+        );
+
+
+      const mergedOptions =
+
+        mergePaginationSelectOptions(
+
+          currentOptions,
+
+          databaseOptions
+
+        );
+
+
+      const previousOptionsJSON = JSON.stringify(
+
+        currentOptions
+
+      );
+
+
+      const mergedOptionsJSON = JSON.stringify(
+
+        mergedOptions
+
+      );
+
+
+      if(previousOptionsJSON == mergedOptionsJSON) {
+
+
+        if(typeof options.callback === 'function') {
+
+          options.callback(true, databaseOptions);
+
+        }
+
+
+        return true;
+
+      }
+
+
+      column = setPaginationColumnSelectOptions(
+
+        column,
+
+        mergedOptions
+
+      );
+
+
+      item.data(
+
+        'automator-pagination-column',
+
+        column
+
+      );
+
+
+      if(options.rerender === true) {
+
+
+        renderColumnProperties(
+
+          item
+
+        );
+
+
+      } else {
+
+
+        const dynamicList = $(selectors.proprietiesPanel)
+          .find(
+
+            selectors.columnDynamicList +
+
+            '[data-property-path="' +
+
+              escapeSelectorValue(
+
+                getPaginationSelectOptionsPath()
+
+              ) +
+
+            '"]'
+
+          )
+          .first();
+
+
+        if(dynamicList.length) {
+
+
+          dynamicList
+            .find(
+              selectors.columnDynamicListItems
+            )
+            .attr(
+
+              'data-value',
+
+              JSON.stringify(
+
+                mergedOptions
+
+              )
+
+            );
+
+
+          initializeColumnDynamicLists(
+
+            dynamicList
+
+          );
+
+
+        }
+
+
+      }
+
+
+      renderPaginationPreview();
+
+
+      if(options.markChanged === true) {
+
+        setSaveState(true);
+
+        syncEditorState();
+
+      }
+
+
+      if(typeof options.callback === 'function') {
+
+        options.callback(true, databaseOptions);
+
+      }
+
+
+      return true;
+
+
+    }
+
+
+    if(
+      options.force !== true &&
+      Object.prototype.hasOwnProperty.call(
+
+        state.selectEnumOptionsCache,
+
+        cacheKey
+
+      )
+    ) {
+
+
+      const cachedData = normalizePlainObject(
+
+        state.selectEnumOptionsCache[cacheKey]
+
+      );
+
+
+      return applyEnumOptions(
+
+        Array.isArray(cachedData.options)
+
+          ? cachedData.options
+
+          : [],
+
+        cachedData.isEnum === true
+
+      );
+
+    }
+
+
+    requestDatabaseData(
+
+      {
+
+        'data-type': 'get-table-enum-options',
+
+        'table-name': tableName,
+
+        'column-name': columnName,
+
+      },
+
+      function(response) {
+
+
+        applyEnumOptions(
+
+          response && Array.isArray(response.data)
+
+            ? response.data
+
+            : [],
+
+          response &&
+
+          AutomatorNormalizeBoolean(
+
+            response.is_enum
+
+          ) === true
+
+        );
+
+
+      },
+
+      function() {
+
+
+        state.selectEnumOptionsCache[cacheKey] = {
+
+          isEnum: false,
+
+          options: [],
+
+        };
+
+
+        if(typeof options.callback === 'function') {
+
+          options.callback(false, []);
+
+        }
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Atualiza opções da coluna select atualmente selecionada
+  |--------------------------------------------------------------------------
+  */
+
+  function refreshSelectedPaginationSelectEnumOptions(
+    options = {}
+  ) {
+
+
+    const item = getSelectedColumnItem();
+
+
+    if(!item.length) {
+
+      return false;
+
+    }
+
+
+    return loadPaginationSelectColumnEnumOptions(
+
+      item,
+
+      options
+
+    );
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
   | Renderiza propriedades da coluna
   |--------------------------------------------------------------------------
   */
@@ -24501,7 +25803,9 @@ window.SysAutomatorPaginationEditor = (function () {
     const column = normalizePaginationColumnData(
 
       item.data(
+
         'automator-pagination-column'
+
       ) || {}
 
     );
@@ -24582,7 +25886,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
           escapeHtml(
 
-            pagination.description || ''
+            pagination.description ||
+
+            ''
 
           ) +
 
@@ -24843,6 +26149,54 @@ window.SysAutomatorPaginationEditor = (function () {
         panel,
 
         state.initialized === true
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Carrega opções automáticas de colunas ENUM
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      isPaginationSelectColumn(
+
+        column
+
+      ) &&
+      String(
+
+        column.name ||
+
+        ''
+
+      ).trim() != ''
+    ) {
+
+
+      loadPaginationSelectColumnEnumOptions(
+
+        item,
+
+        {
+
+          force: false,
+
+          rerender: true,
+
+          /*
+          |--------------------------------------------------------------------------
+          | Ao apenas abrir uma coluna existente não marca alteração.
+          |--------------------------------------------------------------------------
+          */
+
+          markChanged: false,
+
+        }
 
       );
 
@@ -26616,6 +27970,7 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+
   /*
   |--------------------------------------------------------------------------
   | Renderiza campo de propriedade
@@ -26658,7 +28013,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
     const fieldDescription = String(
 
-      fieldConfig.description || ''
+      fieldConfig.description ||
+
+      ''
 
     );
 
@@ -26692,7 +28049,27 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Lista dinâmica
+    |--------------------------------------------------------------------------
+    */
+
     if(fieldType == 'dynamic-list') {
+
+
+      const isSelectOptions =
+
+        fieldPath == getPaginationSelectOptionsPath();
+
+
+      const addButtonText =
+
+        isSelectOptions === true
+
+          ? 'Adicionar opção'
+
+          : 'Adicionar substituição';
 
 
       return (
@@ -26703,11 +28080,35 @@ window.SysAutomatorPaginationEditor = (function () {
 
             'mb-3 automator-pagination-editor-column-dynamic-list' +
 
+            (
+
+              isSelectOptions === true
+
+                ? ' automator-pagination-editor-column-select-options'
+
+                : ''
+
+            ) +
+
           '" ' +
 
           'data-property-path="' +
 
             escapeHtml(fieldPath) +
+
+          '" ' +
+
+          'data-dynamic-list-mode="' +
+
+            (
+
+              isSelectOptions === true
+
+                ? 'select-options'
+
+                : 'replacement'
+
+            ) +
 
           '"' +
 
@@ -26718,6 +28119,20 @@ window.SysAutomatorPaginationEditor = (function () {
             escapeHtml(fieldLabel) +
 
           '</label>' +
+
+          (
+
+            fieldDescription != ''
+
+              ? '<div class="form-text mb-2">' +
+
+                  escapeHtml(fieldDescription) +
+
+                '</div>'
+
+              : ''
+
+          ) +
 
           '<div ' +
 
@@ -26759,7 +28174,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
             '<i class="fa fa-plus me-1"></i>' +
 
-            'Adicionar substituição' +
+            escapeHtml(addButtonText) +
 
           '</button>' +
 
@@ -26770,6 +28185,12 @@ window.SysAutomatorPaginationEditor = (function () {
 
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tabelas e colunas dinâmicas
+    |--------------------------------------------------------------------------
+    */
 
     if(
       fieldType == 'dynamic-table-list' ||
@@ -26960,6 +28381,12 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Select
+    |--------------------------------------------------------------------------
+    */
+
     if(fieldType == 'select') {
 
 
@@ -26970,13 +28397,13 @@ window.SysAutomatorPaginationEditor = (function () {
       );
 
 
-      let options = '';
+      let optionsHTML = '';
 
 
       if(fieldPath == 'name') {
 
 
-        options +=
+        optionsHTML +=
 
           '<option ' +
 
@@ -27005,12 +28432,38 @@ window.SysAutomatorPaginationEditor = (function () {
           '</option>';
 
 
-      } else if(fieldNullable === true) {
+      } else {
 
 
-        options +=
+        optionsHTML +=
 
-          '<option value="">' +
+          '<option value=""' +
+
+            (
+
+              fieldRequired === true
+
+                ? ' disabled="disabled"'
+
+                : ''
+
+            ) +
+
+            (
+
+              String(
+
+                currentValue || ''
+
+              ).trim() == ''
+
+                ? ' selected="selected"'
+
+                : ''
+
+            ) +
+
+          '>' +
 
             '- Selecione -' +
 
@@ -27027,7 +28480,7 @@ window.SysAutomatorPaginationEditor = (function () {
       ).forEach(function(value) {
 
 
-        options +=
+        optionsHTML +=
 
           '<option value="' +
 
@@ -27138,7 +28591,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
           '>' +
 
-            options +
+            optionsHTML +
 
           '</select>' +
 
@@ -27164,6 +28617,12 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    /*
+    |--------------------------------------------------------------------------
+    | Texto e número
+    |--------------------------------------------------------------------------
+    */
+
     const inputType =
 
       fieldType == 'number'
@@ -27178,11 +28637,9 @@ window.SysAutomatorPaginationEditor = (function () {
 
     if(fieldPath == 'configs.size-value') {
 
-
       inputAttributes +=
 
         ' data-automator-pagination-column-size-value="true"';
-
 
     }
 
@@ -27280,6 +28737,8 @@ window.SysAutomatorPaginationEditor = (function () {
 
           '"' +
 
+          inputAttributes +
+
           (
 
             fieldRequired === true
@@ -27290,26 +28749,7 @@ window.SysAutomatorPaginationEditor = (function () {
 
           ) +
 
-          (
-
-            fieldConfig.maxlength
-
-              ? ' maxlength="' +
-
-                  parseInt(
-                    fieldConfig.maxlength,
-                    10
-                  ) +
-
-                '"'
-
-              : ''
-
-          ) +
-
-          inputAttributes +
-
-        ' />' +
+        '/>' +
 
         (
 
@@ -28067,6 +29507,13 @@ window.SysAutomatorPaginationEditor = (function () {
   }
 
 
+
+  /*
+  |--------------------------------------------------------------------------
+  | Adiciona item em uma lista dinâmica
+  |--------------------------------------------------------------------------
+  */
+
   function addColumnDynamicListItem(
     dynamicList,
     key = '',
@@ -28091,6 +29538,49 @@ window.SysAutomatorPaginationEditor = (function () {
     }
 
 
+    const listMode = String(
+
+      dynamicList.attr(
+
+        'data-dynamic-list-mode'
+
+      ) || 'replacement'
+
+    ).trim();
+
+
+    const isSelectOptions =
+
+      listMode == 'select-options';
+
+
+    const keyLabel =
+
+      isSelectOptions === true
+
+        ? 'Valor'
+
+        : 'Valor original';
+
+
+    const valueLabel =
+
+      isSelectOptions === true
+
+        ? 'Label'
+
+        : 'Novo valor';
+
+
+    const deleteLabel =
+
+      isSelectOptions === true
+
+        ? 'Excluir opção'
+
+        : 'Excluir substituição';
+
+
     const item = $(
 
       '<div class="' +
@@ -28103,83 +29593,93 @@ window.SysAutomatorPaginationEditor = (function () {
 
         '<div class="card-body p-2">' +
 
-          '<div class="mb-2">' +
+          '<div class="row g-2">' +
 
-            '<label class="form-label small fw-semibold mb-1">' +
+            '<div class="col-12 col-md-6">' +
 
-              'Valor original' +
+              '<label class="form-label small fw-semibold mb-1">' +
 
-            '</label>' +
+                escapeHtml(keyLabel) +
 
-            '<input ' +
+              '</label>' +
 
-              'type="text" ' +
+              '<input ' +
 
-              'class="' +
+                'type="text" ' +
 
-                'form-control form-control-sm ' +
+                'class="' +
 
-                'automator-pagination-editor-column-dynamic-list-key' +
+                  'form-control form-control-sm ' +
 
-              '" ' +
+                  'automator-pagination-editor-column-dynamic-list-key' +
 
-              'value="' +
+                '" ' +
 
-                escapeHtml(key) +
+                'value="' +
 
-              '" ' +
+                  escapeHtml(key) +
 
-            '/>' +
+                '" ' +
+
+              '/>' +
+
+            '</div>' +
+
+            '<div class="col-12 col-md-6">' +
+
+              '<label class="form-label small fw-semibold mb-1">' +
+
+                escapeHtml(valueLabel) +
+
+              '</label>' +
+
+              '<input ' +
+
+                'type="text" ' +
+
+                'class="' +
+
+                  'form-control form-control-sm ' +
+
+                  'automator-pagination-editor-column-dynamic-list-value' +
+
+                '" ' +
+
+                'value="' +
+
+                  escapeHtml(value) +
+
+                '" ' +
+
+              '/>' +
+
+            '</div>' +
+
+            '<div class="col-12">' +
+
+              '<button ' +
+
+                'type="button" ' +
+
+                'class="' +
+
+                  'btn btn-sm btn-outline-danger w-100 ' +
+
+                  'automator-pagination-editor-column-dynamic-list-delete' +
+
+                '"' +
+
+              '>' +
+
+                '<i class="fa fa-trash me-1"></i>' +
+
+                escapeHtml(deleteLabel) +
+
+              '</button>' +
+
+            '</div>' +
 
           '</div>' +
-
-          '<div class="mb-2">' +
-
-            '<label class="form-label small fw-semibold mb-1">' +
-
-              'Novo valor' +
-
-            '</label>' +
-
-            '<input ' +
-
-              'type="text" ' +
-
-              'class="' +
-
-                'form-control form-control-sm ' +
-
-                'automator-pagination-editor-column-dynamic-list-value' +
-
-              '" ' +
-
-              'value="' +
-
-                escapeHtml(value) +
-
-              '" ' +
-
-            '/>' +
-
-          '</div>' +
-
-          '<button ' +
-
-            'type="button" ' +
-
-            'class="' +
-
-              'btn btn-sm btn-danger w-100 ' +
-
-              'automator-pagination-editor-column-dynamic-list-delete' +
-
-            '"' +
-
-          '>' +
-
-            'Excluir substituição' +
-
-          '</button>' +
 
         '</div>' +
 
@@ -28191,10 +29691,14 @@ window.SysAutomatorPaginationEditor = (function () {
     item
       .find('input')
       .addClass(
+
         'automator-pagination-editor-column-property-dynamic'
+
       )
       .on(
+
         'input change',
+
         function() {
 
 
@@ -28202,10 +29706,15 @@ window.SysAutomatorPaginationEditor = (function () {
 
 
         }
+
       );
 
 
-    itemsContainer.append(item);
+    itemsContainer.append(
+
+      item
+
+    );
 
 
     return item;

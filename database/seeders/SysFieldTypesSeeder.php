@@ -13,6 +13,327 @@
   class SysFieldTypesSeeder extends Seeder {
     
 
+    private function normalizeBooleanFieldPropertyConfig(
+      array $params,
+      string $propertyName,
+      array $propertyConfig
+    ): array {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Garante o accordion de configurações
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !isset($params['configs']) ||
+
+        !is_array($params['configs'])
+
+      ) {
+
+        $params['configs'] = [
+
+          'label'  => 'Configurações',
+          'fields' => [],
+
+        ];
+
+      }
+
+
+      if(
+
+        !isset($params['configs']['label']) ||
+
+        trim((string) $params['configs']['label']) === ''
+
+      ) {
+
+        $params['configs']['label'] =
+
+          'Configurações';
+
+      }
+
+
+      if(
+
+        !isset($params['configs']['fields']) ||
+
+        !is_array($params['configs']['fields'])
+
+      ) {
+
+        $params['configs']['fields'] = [];
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Não substitui uma configuração específica já existente
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        !array_key_exists(
+
+          $propertyName,
+
+          $params['configs']['fields']
+
+        )
+
+      ) {
+
+        $params['configs']['fields'][$propertyName] =
+
+          $propertyConfig;
+
+      }
+
+
+      return $params;
+
+
+    }
+
+
+    private function normalizeFormFieldTypeParams(
+      array $field
+    ): array {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Componentes de layout não representam controles de formulário
+      |--------------------------------------------------------------------------
+      |
+      | breakpoint, breakline, title, paragraph e componentes similares não
+      | precisam receber disabled ou readonly.
+      |
+      */
+
+      $isLayout = (
+
+        isset($field['tbl_sys_field_type_layout']) &&
+
+        (
+
+          $field['tbl_sys_field_type_layout'] === true ||
+
+          $field['tbl_sys_field_type_layout'] === 1 ||
+
+          $field['tbl_sys_field_type_layout'] === '1' ||
+
+          $field['tbl_sys_field_type_layout'] === 'true'
+
+        )
+
+      );
+
+
+      if($isLayout === true) {
+
+        return $field;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Tipos sem controle de entrada
+      |--------------------------------------------------------------------------
+      */
+
+      $fieldTypeName = strtolower(
+
+        trim(
+
+          (string) (
+
+            $field['tbl_sys_field_type_name']
+
+            ?? ''
+
+          )
+
+        )
+
+      );
+
+
+      $ignoredFieldTypes = [
+
+        'breakpoint',
+        'breakline',
+        'paragraph',
+        'title',
+        'pagination',
+        'shortcode',
+
+      ];
+
+
+      if(
+
+        in_array(
+
+          $fieldTypeName,
+
+          $ignoredFieldTypes,
+
+          true
+
+        )
+
+      ) {
+
+        return $field;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Decodifica os parâmetros atuais
+      |--------------------------------------------------------------------------
+      */
+
+      $paramsValue =
+
+        $field['tbl_sys_field_type_params']
+
+        ?? [];
+
+
+      if(is_object($paramsValue)) {
+
+        $paramsValue = (array) $paramsValue;
+
+      }
+
+
+      if(!is_array($paramsValue)) {
+
+
+        if(
+
+          is_string($paramsValue) &&
+
+          trim($paramsValue) !== ''
+
+        ) {
+
+          $decodedParams = json_decode(
+
+            $paramsValue,
+
+            true
+
+          );
+
+
+          $paramsValue = is_array($decodedParams)
+
+            ? $decodedParams
+
+            : [];
+
+        } else {
+
+          $paramsValue = [];
+
+        }
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Propriedade disabled
+      |--------------------------------------------------------------------------
+      */
+
+      $paramsValue = $this->normalizeBooleanFieldPropertyConfig(
+
+        $paramsValue,
+
+        'disabled',
+
+        [
+
+          'label'       => 'Desabilitado',
+          'type'        => 'select',
+          'required'    => 'true',
+          'nullable'    => 'false',
+          'description' => 'Impede a interação com o campo e não envia seu valor durante o submit.',
+          'default'     => 'false',
+          'values'      => [
+
+            'false' => 'Não',
+            'true'  => 'Sim',
+
+          ],
+
+        ]
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Propriedade readonly
+      |--------------------------------------------------------------------------
+      */
+
+      $paramsValue = $this->normalizeBooleanFieldPropertyConfig(
+
+        $paramsValue,
+
+        'readonly',
+
+        [
+
+          'label'       => 'Somente leitura',
+          'type'        => 'select',
+          'required'    => 'true',
+          'nullable'    => 'false',
+          'description' => 'Permite visualizar o valor, mas impede sua edição.',
+          'default'     => 'false',
+          'values'      => [
+
+            'false' => 'Não',
+            'true'  => 'Sim',
+
+          ],
+
+        ]
+
+      );
+
+
+      $field['tbl_sys_field_type_params'] = json_encode(
+
+        $paramsValue,
+
+        JSON_UNESCAPED_UNICODE |
+
+        JSON_UNESCAPED_SLASHES
+
+      );
+
+
+      return $field;
+
+
+    }
+
 
     /**
      * Run the database seeds.
@@ -2531,6 +2852,126 @@
             'tbl_sys_field_type_description' => 'Uma lista suspensa com uma seleção de escolhas que você especifica.',
             'tbl_sys_field_type_layout'      => false,
             'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados do tipo seleção',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "props" => [
+
+                  'label'  => 'Opções',
+                  'fields' => [
+
+                    "replaced" => [
+
+                      "label"       => "Valores",
+                      "type"        => "dynamic-list",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      'description' => 'As opções são carregadas automaticamente quando a coluna selecionada for do tipo ENUM. Também é possível adicionar ou alterar opções manualmente.',
+                      "default"     => [],
+
+                    ]
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
             'tbl_sys_field_type_params'      => json_encode([
               
               'wrapper' => [
@@ -3275,6 +3716,7 @@
                       "select"   => "Caixa de seleção",
                       "checkbox" => "Botões de seleção",
                       "radio"    => "Lista de seleção",
+                      "hidden"   => "Oculto",
 
                     ]
 
@@ -4388,7 +4830,7 @@
             'tbl_sys_field_type_title'       => 'JSON',
             'tbl_sys_field_type_description' => 'Um campo para armazenar valores em forma de json dentro do banco de dados.',
             'tbl_sys_field_type_locked'      => true,
-            'tbl_sys_field_type_params' => json_encode([
+            'tbl_sys_field_type_params'      => json_encode([
 
               'wrapper' => [
 
@@ -5110,9 +5552,22 @@
       ];
 
 
-      foreach ($campos as $field) {
-        
-        SysFieldType::Create($field);
+      foreach($campos as $field) {
+
+
+        $field = $this->normalizeFormFieldTypeParams(
+
+          $field
+
+        );
+
+
+        SysFieldType::Create(
+
+          $field
+
+        );
+
 
       }
 

@@ -1269,6 +1269,20 @@
 
                     $fieldClass = $configContentFieldArgs['class'] ?? 'form-floating mb-3';
 
+                    $fieldInputClass = trim(
+
+                      (string) (
+
+                        $configContentFieldArgs['inputClass']
+
+                        ?? $configContentFieldArgs['input_class']
+
+                        ?? ''
+
+                      )
+
+                    );
+
                     $fieldLabel = $configContentFieldArgs['label'] ?? $configContentFieldKey;
                     
                     $fieldPlacehold = ( (isset($configContentFieldArgs['placeholder'])) ? $configContentFieldArgs['placeholder'] : ( ($configContentFieldArgs['label']) ? $configContentFieldArgs['label'] :  $configContentFieldKey) );
@@ -1469,7 +1483,7 @@
                     <div class="{!! $fieldClass !!}">
 
                       <textarea
-                        class="form-control automator-pagination-editor-setting"
+                        class="form-control automator-pagination-editor-setting{!! $fieldInputClass != '' ? ' ' . e($fieldInputClass) : '' !!}"
                         id="{!! $configContentFieldKey !!}"
                         name="{!! $fieldName !!}"
                         placeholder="{!! $fieldLabel !!}"
@@ -1492,11 +1506,11 @@
 
                       <input
                         type="{!! $fieldType !!}"
-                        class="form-control automator-pagination-editor-setting"
+                        class="form-control automator-pagination-editor-setting{!! $fieldInputClass != '' ? ' ' . e($fieldInputClass) : '' !!}"
                         id="{!! $configContentFieldKey !!}"
                         name="{!! $fieldName !!}"
                         placeholder="{!! $fieldPlacehold !!}"
-                        value="{!! $fieldValue !!}"
+                        value="{!! e($fieldValue) !!}"
                         {!! ($fieldRequired ? ' required' : '') !!}
                         {!! ($fieldDisabled ? ' disabled' : '') !!}
                       />

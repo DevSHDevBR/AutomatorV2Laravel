@@ -2719,7 +2719,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Callback',
                 'tbl_sys_forms_field_name'     => 'callback',
                 'tbl_sys_forms_field_index'    => 'callback',
@@ -2729,7 +2729,7 @@
 
                     "wrapper_class" => "col-12",
 
-                    "rows" => 3
+                    "rows" => 3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -2742,7 +2742,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Before Show',
                 'tbl_sys_forms_field_name'     => 'beforeShow',
                 'tbl_sys_forms_field_index'    => 'beforeShow',
@@ -2752,7 +2752,7 @@
 
                     "wrapper_class" => "col-12",
 
-                    "rows" => 3
+                    "rows" => 3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -2765,7 +2765,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'After Hide',
                 'tbl_sys_forms_field_name'     => 'afterHide',
                 'tbl_sys_forms_field_index'    => 'afterHide',
@@ -2775,7 +2775,7 @@
 
                     "wrapper_class" => "col-12",
 
-                    "rows" => 3
+                    "rows" => 3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -3150,7 +3150,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Callback',
                 'tbl_sys_forms_field_name'     => 'callback',
                 'tbl_sys_forms_field_index'    => 'callback',
@@ -3159,7 +3159,7 @@
 
                     "wrapper_class"=>"col-12",
 
-                    "rows"=>3
+                    "rows"=>3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -3172,7 +3172,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Before Show',
                 'tbl_sys_forms_field_name'     => 'beforeShow',
                 'tbl_sys_forms_field_index'    => 'beforeShow',
@@ -3181,7 +3181,7 @@
 
                   "wrapper_class"=>"col-12",
 
-                  "rows"=>3
+                  "rows"=>3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -3194,7 +3194,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('json', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'After Hide',
                 'tbl_sys_forms_field_name'     => 'afterHide',
                 'tbl_sys_forms_field_index'    => 'afterHide',
@@ -3203,7 +3203,7 @@
 
                   "wrapper_class"=>"col-12",
 
-                  "rows"=>3
+                  "rows"=>3,
 
                 ]),
                 'tbl_sys_forms_field_attrs'    => '',
@@ -3219,6 +3219,176 @@
           ],
           
         // OPEN FORM MODAL - END
+
+
+        // VISUALIZAR NOTIFICAÇÕES - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-user-notification',
+            'tbl_sys_form_title'    => 'Visualizar Notificação',
+            'tbl_sys_form_cancel'   => 'Fechar',
+            'tbl_sys_form_submit'   => 'Atualizar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => false,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2, 3, 4],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode(["type" => "int"]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Usuário',
+                'tbl_sys_forms_field_name'     => 'tbl_user_ID',
+                'tbl_sys_forms_field_index'    => 'userID',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => "",
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "type"          => "hidden",
+                  "relation"      => [
+
+                    "table"   => "tbl_users",
+                    "value"   => "tbl_user_ID",
+                    "label"   => "tbl_user_ID",
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Titulo',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12",
+                  "readonly"      => true,
+                  "disabled"      => true
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Mensagem',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_text',
+                'tbl_sys_forms_field_index'    => 'text',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12",
+                  "readonly"      => true,
+                  "disabled"      => true,
+                  "rows" => 4
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Status',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_opened',
+                'tbl_sys_forms_field_index'    => 'opened',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 0,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    0 => "Fechada",
+                    1 => "Aberta",
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('datetime', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Data de envio',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_notification_created_at',
+                'tbl_sys_forms_field_index'    => 'created_at',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-6",
+                  "readonly"      => true,
+                  "disabled"      => true,
+                  "format"        => "Y-m-d H:i:s",
+                  "display"       => "d/m/Y - H:i:s",
+                  "attrs"         => [
+
+                    "format"  => "Y-m-d H:i:s",
+                    "display" => "d/m/Y - H:i:s"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1, 2, 3, 4]
+              
+              ],
+
+            ]
+
+          ],
+
+        // VISUALIZAR NOTIFICAÇÕES - END
 
 
       ];
