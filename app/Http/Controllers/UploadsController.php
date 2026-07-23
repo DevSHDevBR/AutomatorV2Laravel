@@ -2268,6 +2268,645 @@
 
     }
 
+    public function deleteUpload(
+      Request $request
+    ) {
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Sessão
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+
+        Auth::check() !== true ||
+
+        Auth::id() === null
+
+      ) {
+
+
+        return response()->json([
+
+          'status'          => false,
+          'authenticated'   => false,
+          'session_expired' => true,
+          'title'           => 'Sessão expirada',
+          'message'         => SysAutomator::SysAutomatorGetTranslateWord(
+            'Sua sessão expirou. Faça o login novamente para continuar.'
+          ),
+          'login_url'       => SysAutomator::SysAutomatorGetRouteLinkByName(
+            'admin-login',
+            [],
+            true
+          ),
+
+        ], 401);
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Validação
+      |--------------------------------------------------------------------------
+      */
+
+      $validatedData = $request->validate(
+
+        [
+
+          'uploads' => [
+
+            'required',
+            'array',
+            'min:1',
+
+          ],
+
+          'uploads.*' => [
+
+            'required',
+            'integer',
+            'distinct',
+
+          ],
+
+        ],
+
+        [
+
+          'uploads.required' =>
+
+            'Selecione pelo menos um arquivo para realizar a exclusão.',
+
+          'uploads.array' =>
+
+            'A lista de arquivos informada é inválida.',
+
+          'uploads.min' =>
+
+            'Selecione pelo menos um arquivo para realizar a exclusão.',
+
+          'uploads.*.required' =>
+
+            'Não foi possível identificar um dos arquivos selecionados.',
+
+          'uploads.*.integer' =>
+
+            'Um dos arquivos informados possui um identificador inválido.',
+
+          'uploads.*.distinct' =>
+
+            'A lista contém arquivos repetidos.',
+
+        ]
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Normaliza os IDs
+      |--------------------------------------------------------------------------
+      */
+
+      $uploadIDs = array_values(
+
+        array_unique(
+
+          array_filter(
+
+            array_map(
+
+              function($uploadID) {
+
+
+                if(!is_numeric($uploadID)) {
+
+                  return null;
+
+                }
+
+
+                $uploadID = (int) $uploadID;
+
+
+                return $uploadID > 0
+
+                  ? $uploadID
+
+                  : null;
+
+
+              },
+
+              $validatedData['uploads']
+
+              ?? []
+
+            ),
+
+            function($uploadID) {
+
+
+              return $uploadID !== null;
+
+
+            }
+
+          )
+
+        )
+
+      );
+
+
+      if(count($uploadIDs) <= 0) {
+
+
+        return response()->json([
+
+          'status'  => false,
+          'title'   => 'Arquivos inválidos',
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Não foi possível identificar os arquivos que devem ser excluídos.'
+          ),
+
+        ], 422);
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Localiza os registros
+      |--------------------------------------------------------------------------
+      */
+
+      $uploads = SysUpload::whereIn(
+
+        'tbl_sys_upload_ID',
+
+        $uploadIDs
+
+      )->get();
+
+
+      if($uploads->count() <= 0) {
+
+
+        return response()->json([
+
+          'status'  => false,
+          'title'   => 'Arquivos não encontrados',
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Nenhum dos arquivos selecionados foi encontrado.'
+          ),
+
+        ], 404);
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Diretório público
+      |--------------------------------------------------------------------------
+      */
+
+      $publicDirectory = realpath(
+
+        public_path()
+
+      );
+
+
+      if($publicDirectory === false) {
+
+
+        return response()->json([
+
+          'status'  => false,
+          'title'   => 'Diretório indisponível',
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Não foi possível acessar o diretório público do sistema.'
+          ),
+
+        ], 500);
+
+
+      }
+
+
+      $publicDirectory = rtrim(
+
+        str_replace(
+
+          '\\',
+
+          '/',
+
+          $publicDirectory
+
+        ),
+
+        '/'
+
+      );
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Prepara os arquivos para exclusão
+      |--------------------------------------------------------------------------
+      |
+      | Antes de excluir os registros no banco, cada arquivo físico é renomeado
+      | temporariamente. Se a transação do banco falhar, os arquivos poderão ser
+      | restaurados para seus nomes originais.
+      |
+      */
+
+      $temporaryFiles = [];
+
+
+      try {
+
+
+        foreach($uploads as $upload) {
+
+
+          $directory = $this->normalizeUploadDirectory(
+
+            $upload->tbl_sys_upload_directory
+
+          );
+
+
+          $fileName = basename(
+
+            (string) $upload->tbl_sys_upload_file
+
+          );
+
+
+          if($fileName === '') {
+
+            continue;
+
+          }
+
+
+          $absoluteFilePath = public_path(
+
+            str_replace(
+
+              '/',
+
+              DIRECTORY_SEPARATOR,
+
+              $directory
+
+            ) .
+
+            DIRECTORY_SEPARATOR .
+
+            $fileName
+
+          );
+
+
+          $absoluteFilePathNormalized = str_replace(
+
+            '\\',
+
+            '/',
+
+            $absoluteFilePath
+
+          );
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Proteção contra caminhos externos ao diretório público
+          |--------------------------------------------------------------------------
+          */
+
+          if(
+
+            !str_starts_with(
+
+              $absoluteFilePathNormalized,
+
+              $publicDirectory . '/'
+
+            )
+
+          ) {
+
+
+            throw new \RuntimeException(
+
+              'O caminho físico do arquivo não pertence ao diretório público.'
+
+            );
+
+
+          }
+
+
+          if(!is_file($absoluteFilePath)) {
+
+            continue;
+
+          }
+
+
+          $temporaryFileName =
+
+            '.automator-delete-' .
+
+            Str::uuid()->toString() .
+
+            '-' .
+
+            $fileName;
+
+
+          $temporaryFilePath =
+
+            dirname($absoluteFilePath) .
+
+            DIRECTORY_SEPARATOR .
+
+            $temporaryFileName;
+
+
+          if(
+
+            @rename(
+
+              $absoluteFilePath,
+
+              $temporaryFilePath
+
+            ) !== true
+
+          ) {
+
+
+            throw new \RuntimeException(
+
+              'Não foi possível preparar o arquivo para exclusão.'
+
+            );
+
+
+          }
+
+
+          $temporaryFiles[] = [
+
+            'original' =>
+
+              $absoluteFilePath,
+
+            'temporary' =>
+
+              $temporaryFilePath,
+
+          ];
+
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Exclui os registros
+        |--------------------------------------------------------------------------
+        */
+
+        DB::transaction(
+
+          function() use (
+
+            $uploads
+
+          ) {
+
+
+            foreach($uploads as $upload) {
+
+
+              $upload->delete();
+
+
+            }
+
+
+          }
+
+        );
+
+
+      } catch(\Throwable $exception) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Restaura os arquivos físicos
+        |--------------------------------------------------------------------------
+        */
+
+        foreach(
+
+          array_reverse(
+
+            $temporaryFiles
+
+          ) as $temporaryFile
+
+        ) {
+
+
+          if(
+
+            is_file(
+
+              $temporaryFile['temporary']
+
+            ) &&
+
+            !is_file(
+
+              $temporaryFile['original']
+
+            )
+
+          ) {
+
+
+            @rename(
+
+              $temporaryFile['temporary'],
+
+              $temporaryFile['original']
+
+            );
+
+
+          }
+
+
+        }
+
+
+        report(
+
+          $exception
+
+        );
+
+
+        return response()->json([
+
+          'status'  => false,
+          'title'   => 'Erro ao excluir arquivos',
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Não foi possível concluir a exclusão dos arquivos selecionados.'
+          ),
+
+        ], 500);
+
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Remove definitivamente os arquivos temporários
+      |--------------------------------------------------------------------------
+      */
+
+      foreach($temporaryFiles as $temporaryFile) {
+
+
+        if(
+
+          is_file(
+
+            $temporaryFile['temporary']
+
+          )
+
+        ) {
+
+
+          try {
+
+
+            @unlink(
+
+              $temporaryFile['temporary']
+
+            );
+
+
+          } catch(\Throwable $exception) {
+
+
+            report(
+
+              $exception
+
+            );
+
+
+          }
+
+
+        }
+
+
+      }
+
+
+      $deletedIDs = $uploads
+        ->pluck(
+
+          'tbl_sys_upload_ID'
+
+        )
+        ->map(
+
+          function($uploadID) {
+
+
+            return (int) $uploadID;
+
+
+          }
+
+        )
+        ->values()
+        ->toArray();
+
+
+      $deletedCount = count(
+
+        $deletedIDs
+
+      );
+
+
+      return response()->json([
+
+        'status' => true,
+
+        'title' =>
+
+          $deletedCount > 1
+
+            ? 'Arquivos excluídos'
+
+            : 'Arquivo excluído',
+
+        'message' =>
+
+          $deletedCount > 1
+
+            ? SysAutomator::SysAutomatorGetTranslateWord(
+                'Os arquivos selecionados foram excluídos com sucesso.'
+              )
+
+            : SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo selecionado foi excluído com sucesso.'
+              ),
+
+        'data' => [
+
+          'deleted_ids' =>
+
+            $deletedIDs,
+
+          'deleted_count' =>
+
+            $deletedCount,
+
+        ],
+
+      ], 200);
+
+
+    }
+
 
 
   }

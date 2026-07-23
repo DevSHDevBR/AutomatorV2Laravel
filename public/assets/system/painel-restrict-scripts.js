@@ -1236,15 +1236,403 @@ function AutomatorSessionBindInteractionEvents() {
 
 
 
+function AutomatorSessionRequestIsPasswordValidation(
+  settings = null
+) {
+
+
+  if(
+
+    !settings ||
+
+    typeof settings !== 'object'
+
+  ) {
+
+    return false;
+
+  }
+
+
+  var requestData =
+
+    settings.data !== undefined
+
+      ? settings.data
+
+      : null;
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Dados enviados como objeto
+  |--------------------------------------------------------------------------
+  */
+
+  if(
+
+    requestData &&
+
+    typeof requestData === 'object' &&
+
+    !(requestData instanceof FormData)
+
+  ) {
+
+
+    if(
+
+      String(
+
+        requestData.acao
+
+        || ''
+
+      ).trim() === 'validar-senha'
+
+    ) {
+
+      return true;
+
+    }
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Dados enviados como FormData
+  |--------------------------------------------------------------------------
+  */
+
+  if(
+
+    typeof FormData !== 'undefined' &&
+
+    requestData instanceof FormData
+
+  ) {
+
+
+    if(
+
+      String(
+
+        requestData.get(
+
+          'acao'
+
+        )
+
+        || ''
+
+      ).trim() === 'validar-senha'
+
+    ) {
+
+      return true;
+
+    }
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Dados enviados como query string
+  |--------------------------------------------------------------------------
+  */
+
+  if(typeof requestData === 'string') {
+
+
+    try {
+
+
+      var requestParams =
+
+        new URLSearchParams(
+
+          requestData
+
+        );
+
+
+      if(
+
+        String(
+
+          requestParams.get(
+
+            'acao'
+
+          )
+
+          || ''
+
+        ).trim() === 'validar-senha'
+
+      ) {
+
+        return true;
+
+      }
+
+
+    } catch(error) {
+
+
+      if(
+
+        /(^|&)acao=validar-senha(&|$)/.test(
+
+          requestData
+
+        )
+
+      ) {
+
+        return true;
+
+      }
+
+
+    }
+
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Cabeçalho explícito
+  |--------------------------------------------------------------------------
+  |
+  | Mantém suporte para chamadas que futuramente sejam identificadas por
+  | cabeçalho, sem exigir nova alteração no gerenciador de sessão.
+  |
+  */
+
+  var headers =
+
+    settings.headers &&
+
+    typeof settings.headers === 'object'
+
+      ? settings.headers
+
+      : {};
+
+
+  var requestType = String(
+
+    headers['X-Automator-Request-Type']
+
+    || headers['x-automator-request-type']
+
+    || ''
+
+  )
+    .trim()
+    .toLowerCase();
+
+
+  return requestType ===
+
+    'password-validation';
+
+
+}
+
+
+
+function AutomatorSessionPasswordValidationIsExpired(
+  xhr = null
+) {
+
+
+  if(!xhr) {
+
+    return false;
+
+  }
+
+
+  var status = Number(
+
+    xhr.status
+
+    || 0
+
+  );
+
+
+  var response =
+
+    xhr.responseJSON &&
+
+    typeof xhr.responseJSON === 'object'
+
+      ? xhr.responseJSON
+
+      : {};
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Expiração explicitamente informada pela API
+  |--------------------------------------------------------------------------
+  */
+
+  if(
+
+    response.session_expired === true ||
+
+    response.session_expired === 1 ||
+
+    response.session_expired === '1' ||
+
+    response.session_expired === 'true' ||
+
+    response.authenticated === false ||
+
+    response.authenticated === 0 ||
+
+    response.authenticated === '0' ||
+
+    response.authenticated === 'false'
+
+  ) {
+
+    return true;
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | CSRF expirado
+  |--------------------------------------------------------------------------
+  |
+  | O status 419 representa expiração do token ou da sessão e deve continuar
+  | redirecionando normalmente.
+  |
+  */
+
+  if(status === 419) {
+
+    return true;
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Resposta redirecionada para a página de login
+  |--------------------------------------------------------------------------
+  */
+
+  var responseURL = String(
+
+    xhr.responseURL
+
+    || ''
+
+  );
+
+
+  if(
+
+    responseURL !== '' &&
+
+    typeof AutomatorSessionIsLoginURL ===
+
+    'function' &&
+
+    AutomatorSessionIsLoginURL(
+
+      responseURL
+
+    ) === true
+
+  ) {
+
+    return true;
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | HTML da tela de login
+  |--------------------------------------------------------------------------
+  */
+
+  var responseText = String(
+
+    xhr.responseText
+
+    || ''
+
+  );
+
+
+  if(
+
+    responseText !== '' &&
+
+    responseText.indexOf(
+
+      'name="login"'
+
+    ) >= 0 &&
+
+    responseText.indexOf(
+
+      'name="password"'
+
+    ) >= 0
+
+  ) {
+
+    return true;
+
+  }
+
+
+  /*
+  |--------------------------------------------------------------------------
+  | Senha incorreta
+  |--------------------------------------------------------------------------
+  |
+  | Um HTTP 401 isolado na operação validar-senha não representa sessão
+  | expirada. O próprio modal de confirmação exibirá a mensagem retornada.
+  |
+  */
+
+  return false;
+
+
+}
+
+
 function AutomatorSessionBindAjaxError() {
 
 
   $(document)
+
     .off(
+
       'ajaxError.AutomatorSession'
+
     )
+
     .on(
+
       'ajaxError.AutomatorSession',
+
       function(
 
         event,
@@ -1255,6 +1643,12 @@ function AutomatorSessionBindAjaxError() {
 
       ) {
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Logout manual ou redirecionamento já iniciado
+        |--------------------------------------------------------------------------
+        */
 
         if(
 
@@ -1269,13 +1663,37 @@ function AutomatorSessionBindAjaxError() {
         }
 
 
+        /*
+        |--------------------------------------------------------------------------
+        | Requisição interna de verificação de sessão
+        |--------------------------------------------------------------------------
+        |
+        | A requisição check-session já possui seu próprio tratamento no
+        | callback error e não deve ser processada novamente pelo evento global.
+        |
+        */
+
         if(
 
           settings &&
 
           settings.headers &&
 
-          settings.headers['X-Automator-Session-Check']
+          (
+
+            settings.headers[
+
+              'X-Automator-Session-Check'
+
+            ] ||
+
+            settings.headers[
+
+              'x-automator-session-check'
+
+            ]
+
+          )
 
         ) {
 
@@ -1283,6 +1701,83 @@ function AutomatorSessionBindAjaxError() {
 
         }
 
+
+        /*
+        |--------------------------------------------------------------------------
+        | Validação de senha
+        |--------------------------------------------------------------------------
+        |
+        | A rota administrativa pode responder HTTP 401 quando a senha digitada
+        | está incorreta. Esse status, isoladamente, não significa que a sessão
+        | expirou.
+        |
+        | Para este tipo de requisição, o redirecionamento só será realizado
+        | quando a resposta indicar explicitamente:
+        |
+        | - session_expired = true;
+        | - authenticated = false;
+        | - HTTP 419;
+        | - redirecionamento para a tela de login;
+        | - HTML correspondente à tela de login.
+        |
+        | Caso seja apenas uma senha incorreta, o modal continuará aberto e o
+        | próprio callback error da confirmação exibirá a mensagem retornada.
+        |
+        */
+
+        if(
+
+          typeof AutomatorSessionRequestIsPasswordValidation ===
+
+          'function' &&
+
+          AutomatorSessionRequestIsPasswordValidation(
+
+            settings
+
+          ) === true
+
+        ) {
+
+
+          if(
+
+            typeof AutomatorSessionPasswordValidationIsExpired ===
+
+            'function' &&
+
+            AutomatorSessionPasswordValidationIsExpired(
+
+              xhr
+
+            ) === true
+
+          ) {
+
+
+            AutomatorSessionForceLogin(
+
+              xhr
+
+            );
+
+
+          }
+
+
+          return;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Demais requisições AJAX
+        |--------------------------------------------------------------------------
+        |
+        | Mantém integralmente o funcionamento atual para qualquer outra ação.
+        |
+        */
 
         if(
 
@@ -1294,16 +1789,19 @@ function AutomatorSessionBindAjaxError() {
 
         ) {
 
+
           AutomatorSessionForceLogin(
 
             xhr
 
           );
 
+
         }
 
 
       }
+
     );
 
 
@@ -1311,6 +1809,81 @@ function AutomatorSessionBindAjaxError() {
 
 
 }
+// function AutomatorSessionBindAjaxError() {
+
+
+//   $(document)
+//     .off(
+//       'ajaxError.AutomatorSession'
+//     )
+//     .on(
+//       'ajaxError.AutomatorSession',
+//       function(
+
+//         event,
+
+//         xhr,
+
+//         settings
+
+//       ) {
+
+
+//         if(
+
+//           window.__automatorManualLogout === true ||
+
+//           window.AutomatorSessionManager.redirecting === true
+
+//         ) {
+
+//           return;
+
+//         }
+
+
+//         if(
+
+//           settings &&
+
+//           settings.headers &&
+
+//           settings.headers['X-Automator-Session-Check']
+
+//         ) {
+
+//           return;
+
+//         }
+
+
+//         if(
+
+//           AutomatorSessionResponseIsExpired(
+
+//             xhr
+
+//           )
+
+//         ) {
+
+//           AutomatorSessionForceLogin(
+
+//             xhr
+
+//           );
+
+//         }
+
+
+//       }
+//     );
+
+
+//   return true;
+
+
+// }
 
 
 

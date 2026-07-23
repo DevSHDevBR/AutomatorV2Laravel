@@ -7518,29 +7518,1329 @@
   }
 
 
-  window.AutomatorGaleriaUploadsSubmitDelete = function(
-    button = null
+  function AutomatorGaleriaUploadsNormalizeDeleteIDs(
+    uploadIDs = []
   ) {
 
 
-    var form = document.getElementById(
+    if(!Array.isArray(uploadIDs)) {
 
-      'automator-galeria-uploads-delete-form'
+
+      uploadIDs = [
+
+        uploadIDs,
+
+      ];
+
+
+    }
+
+
+    var normalizedIDs = [];
+
+
+    uploadIDs.forEach(
+
+      function(uploadID) {
+
+
+        uploadID = String(
+
+          uploadID
+
+          || ''
+
+        ).trim();
+
+
+        if(
+
+          uploadID == '' ||
+
+          normalizedIDs.indexOf(
+
+            uploadID
+
+          ) >= 0
+
+        ) {
+
+          return;
+
+        }
+
+
+        normalizedIDs.push(
+
+          uploadID
+
+        );
+
+
+      }
 
     );
 
 
-    if(!form || !button || button.disabled === true) {
+    return normalizedIDs;
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsGetSelectedDeleteIDs() {
+
+
+    var uploadIDs = [];
+
+
+    document.querySelectorAll(
+
+      '#automator-galeria-uploads-area-itens ' +
+
+      '.automator-galeria-upload-checkbox:checked'
+
+    ).forEach(
+
+      function(checkbox) {
+
+
+        uploadIDs.push(
+
+          checkbox.value
+
+        );
+
+
+      }
+
+    );
+
+
+    return AutomatorGaleriaUploadsNormalizeDeleteIDs(
+
+      uploadIDs
+
+    );
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsGetDeleteConfirmationMessage(
+    button = null,
+    uploadIDs = []
+  ) {
+
+
+    var message = button
+
+      ? String(
+
+          button.getAttribute(
+
+            'data-delete-message-confirm'
+
+          )
+
+          || ''
+
+        ).trim()
+
+      : '';
+
+
+    if(message == '') {
+
+
+      var deleteSelectedButton =
+
+        document.getElementById(
+
+          'automator-galeria-uploads-delete-selected'
+
+        );
+
+
+      if(deleteSelectedButton) {
+
+
+        message = String(
+
+          deleteSelectedButton.getAttribute(
+
+            'data-delete-message-confirm'
+
+          )
+
+          || ''
+
+        ).trim();
+
+
+      }
+
+
+    }
+
+
+    if(message != '') {
+
+      return message;
+
+    }
+
+
+    return uploadIDs.length > 1
+
+      ? 'Para excluir estes arquivos é necessário confirmar sua senha. Esta ação não poderá ser desfeita.'
+
+      : 'Para excluir este arquivo é necessário confirmar sua senha. Esta ação não poderá ser desfeita.';
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsRemoveDeletedItems(
+    uploadIDs = [],
+    callback = null
+  ) {
+
+
+    uploadIDs =
+
+      AutomatorGaleriaUploadsNormalizeDeleteIDs(
+
+        uploadIDs
+
+      );
+
+
+    var items = [];
+
+
+    uploadIDs.forEach(
+
+      function(uploadID) {
+
+
+        var item = document.querySelector(
+
+          '#automator-galeria-uploads-area-itens ' +
+
+          '.automator-galeria-upload-item' +
+
+          '[data-automator-upload-id="' +
+
+          CSS.escape(
+
+            uploadID
+
+          ) +
+
+          '"]'
+
+        );
+
+
+        if(item) {
+
+          items.push(item);
+
+        }
+
+
+      }
+
+    );
+
+
+    function finish() {
+
+
+      var state =
+
+        window.AutomatorGaleriaUploadState;
+
+
+      var itemsContainer = document.getElementById(
+
+        'automator-galeria-uploads-area-itens'
+
+      );
+
+
+      var emptyContainer = document.getElementById(
+
+        'automator-galeria-uploads-empty'
+
+      );
+
+
+      var selectionButton = document.getElementById(
+
+        'automator-galeria-uploads-select-items'
+
+      );
+
+
+      var remainingItems = itemsContainer
+
+        ? itemsContainer.querySelectorAll(
+
+            '.automator-galeria-upload-item'
+
+          ).length
+
+        : 0;
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Finaliza o modo de seleção
+      |--------------------------------------------------------------------------
+      */
+
+      state.selectionMode = false;
+
+
+      if(selectionButton) {
+
+
+        selectionButton.classList.remove(
+
+          'active'
+
+        );
+
+
+        selectionButton.setAttribute(
+
+          'aria-pressed',
+
+          'false'
+
+        );
+
+
+      }
+
+
+      AutomatorGaleriaUploadsUpdateSelectionMode();
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Exibe estado vazio
+      |--------------------------------------------------------------------------
+      */
+
+      if(emptyContainer) {
+
+
+        emptyContainer.classList.toggle(
+
+          'd-none',
+
+          remainingItems > 0
+
+        );
+
+
+      }
+
+
+      AutomatorGaleriaUploadsScheduleTitleTooltips();
+
+
+      if(typeof callback === 'function') {
+
+        callback();
+
+      }
+
+
+    }
+
+
+    if(items.length <= 0) {
+
+
+      finish();
+
+
+      return true;
+
+    }
+
+
+    var removedItems = 0;
+
+
+    items.forEach(
+
+      function(item) {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Remove tooltips existentes
+        |--------------------------------------------------------------------------
+        */
+
+        item.querySelectorAll(
+
+          '[data-bs-toggle="tooltip"]'
+
+        ).forEach(
+
+          function(element) {
+
+
+            if(
+
+              typeof bootstrap !== 'undefined' &&
+
+              typeof bootstrap.Tooltip !== 'undefined'
+
+            ) {
+
+
+              var tooltip =
+
+                bootstrap.Tooltip.getInstance(
+
+                  element
+
+                );
+
+
+              if(tooltip) {
+
+                tooltip.dispose();
+
+              }
+
+
+            }
+
+
+          }
+
+        );
+
+
+        $(item).stop(
+
+          true,
+
+          true
+
+        ).fadeOut(
+
+          300,
+
+          function() {
+
+
+            item.remove();
+
+
+            removedItems++;
+
+
+            if(removedItems >= items.length) {
+
+              finish();
+
+            }
+
+
+          }
+
+        );
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsPerformDelete(
+    uploadIDs = []
+  ) {
+
+
+    uploadIDs =
+
+      AutomatorGaleriaUploadsNormalizeDeleteIDs(
+
+        uploadIDs
+
+      );
+
+
+    if(uploadIDs.length <= 0) {
+
+
+      AutomatorGaleriaUploadsShowMessage(
+
+        'Atenção',
+
+        'Selecione pelo menos um arquivo para realizar a exclusão.'
+
+      );
+
+
+      AutomatorPageLoader(
+
+        'hide',
+
+        function() {
+
+
+          AutomatorSetActionStatus(
+
+            false
+
+          );
+
+
+        },
+
+        150
+
+      );
+
 
       return false;
 
     }
 
 
+    var wrapper = document.getElementById(
+
+      'automator-galeria-uploads-wrapper'
+
+    );
+
+
+    var route = wrapper
+
+      ? String(
+
+          wrapper.getAttribute(
+
+            'data-automator-upload-delete-route'
+
+          )
+
+          || ''
+
+        ).trim()
+
+      : '';
+
+
+    if(route == '') {
+
+
+      AutomatorGaleriaUploadsShowMessage(
+
+        'Erro',
+
+        'A rota responsável pela exclusão não foi configurada.',
+
+        3000,
+
+        function() {
+
+
+          AutomatorPageLoader(
+
+            'hide',
+
+            function() {
+
+
+              AutomatorSetActionStatus(
+
+                false
+
+              );
+
+
+            },
+
+            150
+
+          );
+
+
+        }
+
+      );
+
+
+      return false;
+
+    }
+
+
+    AutomatorGaleriaUploadsSetPageScrollLocked(
+
+      true
+
+    );
+
+
+    $.ajax({
+
+      url: route,
+
+      type: 'POST',
+
+      data: {
+
+        uploads:
+
+          uploadIDs,
+
+      },
+
+      headers: {
+
+        'X-CSRF-TOKEN':
+
+          typeof window.AutomatorGetCSRFToken ===
+
+          'function'
+
+            ? AutomatorGetCSRFToken()
+
+            : '',
+
+        'Accept':
+
+          'application/json',
+
+      },
+
+      dataType: 'json',
+
+
+      success: function(
+        response
+      ) {
+
+
+        var success =
+
+          typeof window.AutomatorNormalizeBoolean ===
+
+          'function'
+
+            ? AutomatorNormalizeBoolean(
+
+                response &&
+
+                response.status
+
+              )
+
+            : (
+
+                response &&
+
+                (
+                  response.status === true ||
+
+                  response.status === 1 ||
+
+                  response.status === '1' ||
+
+                  response.status === 'true'
+                )
+
+              );
+
+
+        var title = response && response.title
+
+          ? response.title
+
+          : (
+
+              success === true
+
+                ? 'Sucesso'
+
+                : 'Erro'
+
+            );
+
+
+        var message = response && response.message
+
+          ? response.message
+
+          : (
+
+              success === true
+
+                ? 'Os arquivos foram excluídos com sucesso.'
+
+                : 'Não foi possível excluir os arquivos selecionados.'
+
+            );
+
+
+        var deletedIDs = (
+
+          success === true &&
+
+          response &&
+
+          response.data &&
+
+          Array.isArray(
+
+            response.data.deleted_ids
+
+          )
+
+        )
+
+          ? response.data.deleted_ids
+
+          : uploadIDs;
+
+
+        AutomatorCreateAutoCloseToastAlert(
+
+          'automator-galeria-delete-result-' +
+
+          Date.now(),
+
+          'center',
+
+          'middle',
+
+          true,
+
+          true,
+
+          title,
+
+          message,
+
+          null,
+
+          false,
+
+          function() {
+
+
+            if(success === true) {
+
+
+              AutomatorGaleriaUploadsRemoveDeletedItems(
+
+                deletedIDs,
+
+                function() {
+
+
+                  AutomatorGaleriaUploadsSetPageScrollLocked(
+
+                    false
+
+                  );
+
+
+                  AutomatorPageLoader(
+
+                    'hide',
+
+                    function() {
+
+
+                      AutomatorSetActionStatus(
+
+                        false
+
+                      );
+
+
+                    },
+
+                    150
+
+                  );
+
+
+                }
+
+              );
+
+
+            } else {
+
+
+              AutomatorGaleriaUploadsSetPageScrollLocked(
+
+                false
+
+              );
+
+
+              AutomatorPageLoader(
+
+                'hide',
+
+                function() {
+
+
+                  AutomatorSetActionStatus(
+
+                    false
+
+                  );
+
+
+                },
+
+                150
+
+              );
+
+
+            }
+
+
+          },
+
+          3000
+
+        );
+
+
+      },
+
+
+      error: function(
+        xhr
+      ) {
+
+
+        if(
+
+          typeof window.AutomatorSessionResponseIsExpired ===
+
+          'function' &&
+
+          AutomatorSessionResponseIsExpired(
+
+            xhr
+
+          )
+
+        ) {
+
+
+          AutomatorGaleriaUploadsSetPageScrollLocked(
+
+            false
+
+          );
+
+
+          AutomatorSessionForceLogin(
+
+            xhr
+
+          );
+
+
+          return;
+
+        }
+
+
+        var title =
+
+          xhr.responseJSON &&
+
+          xhr.responseJSON.title
+
+            ? xhr.responseJSON.title
+
+            : 'Erro';
+
+
+        var message =
+
+          xhr.responseJSON &&
+
+          xhr.responseJSON.message
+
+            ? xhr.responseJSON.message
+
+            : 'Não foi possível excluir os arquivos selecionados.';
+
+
+        AutomatorCreateAutoCloseToastAlert(
+
+          'automator-galeria-delete-request-error-' +
+
+          Date.now(),
+
+          'center',
+
+          'middle',
+
+          true,
+
+          true,
+
+          title,
+
+          message,
+
+          null,
+
+          false,
+
+          function() {
+
+
+            AutomatorGaleriaUploadsSetPageScrollLocked(
+
+              false
+
+            );
+
+
+            AutomatorPageLoader(
+
+              'hide',
+
+              function() {
+
+
+                AutomatorSetActionStatus(
+
+                  false
+
+                );
+
+
+              },
+
+              150
+
+            );
+
+
+          },
+
+          3000
+
+        );
+
+
+      },
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsRequestDeleteConfirmation(
+    uploadIDs = [],
+    button = null
+  ) {
+
+
+    uploadIDs =
+
+      AutomatorGaleriaUploadsNormalizeDeleteIDs(
+
+        uploadIDs
+
+      );
+
+
+    if(uploadIDs.length <= 0) {
+
+
+      AutomatorGaleriaUploadsShowMessage(
+
+        'Atenção',
+
+        'Selecione pelo menos um arquivo para realizar a exclusão.'
+
+      );
+
+
+      AutomatorGaleriaUploadsUpdateDeleteButton();
+
+
+      return false;
+
+    }
+
+
+    if(
+
+      typeof window.AutomatorCreateSecurityConfirmationModal !==
+
+      'function'
+
+    ) {
+
+
+      AutomatorGaleriaUploadsShowMessage(
+
+        'Erro',
+
+        'A função de confirmação de segurança não está disponível.'
+
+      );
+
+
+      return false;
+
+    }
+
+
+    AutomatorGetActionStatus(
+
+      function() {
+
+
+        AutomatorSetActionStatus(
+
+          true,
+
+          function() {
+
+
+            var message =
+
+              AutomatorGaleriaUploadsGetDeleteConfirmationMessage(
+
+                button,
+
+                uploadIDs
+
+              );
+
+
+            AutomatorCreateSecurityConfirmationModal({
+
+              type:
+
+                uploadIDs.length > 1
+
+                  ? 'galeria-delete-selected'
+
+                  : 'galeria-delete-item',
+
+              button:
+
+                button,
+
+              wrapper:
+
+                document.getElementById(
+
+                  'automator-galeria-uploads-wrapper'
+
+                ),
+
+              items:
+
+                uploadIDs,
+
+              item_id:
+
+                uploadIDs.length === 1
+
+                  ? uploadIDs[0]
+
+                  : null,
+
+              title:
+
+                'Confirmação de Segurança',
+
+              message:
+
+                message,
+
+              /*
+              |--------------------------------------------------------------------------
+              | A validação da senha não precisa de um toast próprio
+              |--------------------------------------------------------------------------
+              |
+              | Após a senha ser validada, o loader continua visível e a exclusão
+              | é executada. O resultado da exclusão possui seu próprio toast.
+              |
+              */
+
+              skipSuccessToast:
+
+                true,
+
+              keepPageLoaderOnSuccess:
+
+                true,
+
+              keepPageLoaderOnCancel:
+
+                false,
+
+              resetActionStatusOnShown:
+
+                false,
+
+              resetActionStatusOnCancel:
+
+                true,
+
+              resetActionStatusOnSuccess:
+
+                false,
+
+              cancelCallback: function() {
+
+
+                AutomatorGaleriaUploadsSetPageScrollLocked(
+
+                  false
+
+                );
+
+
+              },
+
+              successCallback: function(
+                context
+              ) {
+
+
+                AutomatorGaleriaUploadsPerformDelete(
+
+                  context.items
+
+                  || []
+
+                );
+
+
+              },
+
+            });
+
+
+          }
+
+        );
+
+
+      }
+
+    );
+
+
     return false;
 
 
+  }
+
+
+
+  window.AutomatorGaleriaUploadsSubmitDelete = function(
+    button = null
+  ) {
+
+
+    if(
+
+      !button ||
+
+      button.disabled === true
+
+    ) {
+
+      return false;
+
+    }
+
+
+    var uploadIDs =
+
+      AutomatorGaleriaUploadsGetSelectedDeleteIDs();
+
+
+    if(uploadIDs.length <= 0) {
+
+
+      AutomatorGaleriaUploadsUpdateDeleteButton();
+
+
+      return false;
+
+    }
+
+
+    return AutomatorGaleriaUploadsRequestDeleteConfirmation(
+
+      uploadIDs,
+
+      button
+
+    );
+
+
   };
+
+
+  function AutomatorGaleriaUploadsSubmitDeleteItem(
+    button = null
+  ) {
+
+
+    if(
+
+      !button ||
+
+      button.disabled === true
+
+    ) {
+
+      return false;
+
+    }
+
+
+    var uploadID = String(
+
+      button.getAttribute(
+
+        'data-automator-upload-delete'
+
+      )
+
+      || ''
+
+    ).trim();
+
+
+    if(uploadID == '') {
+
+
+      AutomatorGaleriaUploadsShowMessage(
+
+        'Erro',
+
+        'Não foi possível identificar o arquivo que deve ser excluído.'
+
+      );
+
+
+      return false;
+
+    }
+
+
+    return AutomatorGaleriaUploadsRequestDeleteConfirmation(
+
+      [
+
+        uploadID,
+
+      ],
+
+      button
+
+    );
+
+
+  }
+
+
+  function AutomatorGaleriaUploadsInitializeDeleteActions() {
+
+
+    $(document)
+
+      .off(
+
+        'click.AutomatorGaleriaUploadsDeleteItem',
+
+        '[data-automator-upload-delete]'
+
+      )
+
+      .on(
+
+        'click.AutomatorGaleriaUploadsDeleteItem',
+
+        '[data-automator-upload-delete]',
+
+        function(event) {
+
+
+          event.preventDefault();
+
+          event.stopPropagation();
+
+          event.stopImmediatePropagation();
+
+
+          var state =
+
+            window.AutomatorGaleriaUploadState;
+
+
+          if(state.selectionMode === true) {
+
+            return false;
+
+          }
+
+
+          AutomatorGaleriaUploadsSubmitDeleteItem(
+
+            this
+
+          );
+
+
+          return false;
+
+
+        }
+
+      );
+
+
+    return true;
+
+
+  }
 
 
   function AutomatorGaleriaUploadsBuildPreview(
@@ -10978,6 +12278,9 @@
 
 
     }
+
+
+    AutomatorGaleriaUploadsInitializeDeleteActions();
 
 
     AutomatorGaleriaUploadsUpdateSelectionMode();
