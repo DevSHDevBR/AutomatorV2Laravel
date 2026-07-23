@@ -162,6 +162,15 @@
         'tbl_sys_config_value'       => '1'
 
       ]);
+
+
+      SysConfig::Create([
+
+        'tbl_sys_config_name'        => 'system-default-uploads-dir',
+        'tbl_sys_config_description' => "[sysfunction return=" . '"string"' . " fn=" . '"translate"' . " params=" . '"Diretório padrão de uploads do sistema"' . "]",
+        'tbl_sys_config_value'       => 'uploads'
+
+      ]);
     
 
     }

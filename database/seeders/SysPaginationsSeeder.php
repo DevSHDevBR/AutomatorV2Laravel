@@ -2962,6 +2962,536 @@
         // USER NOTIFICATIONS - END
 
 
+
+        // MIDIA TYPES - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-galeria-uploads-types-pagination',
+            'tbl_sys_pagination_route'  => 'admin-galeria-uploads-types',
+            'tbl_sys_pagination_title'  => 'Paginação tipos de midia',
+            'tbl_sys_pagination_table'  => 'tbl_sys_uploads_types',
+            'tbl_sys_pagination_index'  => 'tbl_sys_uploads_type_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-galeria-uploads-types-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'add' => [
+
+                    'route'  => 'admin-api-galeria-uploads-types-store',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-galeria-uploads-types-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'delete' => [
+
+                    'route'  => 'admin-api-galeria-uploads-types-delete',
+                    'params' => [],
+                    'show'   => false,
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_uploads_type_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ]
+
+                    ]
+                  
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'header_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                    [
+
+                      'type'    => 'button',
+                      'action'  => 'add',
+                      'id'      => 'btn-add-galeria-upload-type',
+                      'class'   => 'btn btn-success',
+                      'icon'    => 'plus',
+                      'text'    => 'Novo Tipo de mídia',
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+
+                    ]
+
+                  ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-edit-galeria-upload-type',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'pencil',
+                    'text'    => 'Editar Tipo de mídia',
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'delete',
+                    'id'      => 'btn-delete-galeria-upload-type',
+                    'class'   => 'btn-danger',
+                    'icon'    => 'trash',
+                    'text'    => 'Excluir Tipo de mídia',
+                    'onclick' => '',
+
+                  ]
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_uploads_type_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_uploads_type_name',
+                'tbl_sys_paginations_col_title'  => 'Type',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_uploads_type_title',
+                'tbl_sys_paginations_col_title'  => 'Nome',
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+
+            ],
+
+          ],
+
+        // MIDIA TYPES - END
+
+
+
+        // LANGUAGUES - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-languages-pagination',
+            'tbl_sys_pagination_route'  => 'admin-languages',
+            'tbl_sys_pagination_title'  => 'Paginação idiomas',
+            'tbl_sys_pagination_table'  => 'tbl_sys_translations',
+            'tbl_sys_pagination_index'  => 'tbl_sys_translation_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-languages-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'add' => [
+
+                    'route'  => 'admin-api-languages-store',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-languages-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'delete' => [
+
+                    'route'  => 'admin-api-languages-delete',
+                    'params' => [],
+                    'show'   => false,
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_translation_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ]
+
+                    ]
+                  
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'header_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                    [
+
+                      'type'    => 'button',
+                      'action'  => 'add',
+                      'id'      => 'btn-add-language',
+                      'class'   => 'btn btn-success',
+                      'icon'    => 'plus',
+                      'text'    => 'Novo Idioma',
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+
+                    ]
+
+                  ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-edit-language',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'pencil',
+                    'text'    => 'Editar Idioma',
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'delete',
+                    'id'      => 'btn-delete-language',
+                    'class'   => 'btn-danger',
+                    'icon'    => 'trash',
+                    'text'    => 'Excluir Idioma',
+                    'onclick' => '',
+
+                  ]
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_translation_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_translation_key',
+                'tbl_sys_paginations_col_title'  => 'Key',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_translation_name',
+                'tbl_sys_paginations_col_title'  => 'Nome',
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+
+            ],
+
+          ],
+
+        // LANGUAGUES - END
+
+
+
+        // FUNCTIONS - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-functions-pagination',
+            'tbl_sys_pagination_route'  => 'admin-functions',
+            'tbl_sys_pagination_title'  => 'Paginação Funções',
+            'tbl_sys_pagination_table'  => 'tbl_sys_functions',
+            'tbl_sys_pagination_index'  => 'tbl_sys_function_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-functions-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'add' => [
+
+                    'route'  => 'admin-api-functions-store',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-functions-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'header_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                    [
+
+                      'type'    => 'button',
+                      'action'  => 'add',
+                      'id'      => 'btn-add-function',
+                      'class'   => 'btn btn-success',
+                      'icon'    => 'plus',
+                      'text'    => 'Nova Função',
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+
+                    ]
+
+                  ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-edit-function',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'pencil',
+                    'text'    => 'Editar Função',
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  // [
+
+                  //   'type'    => 'button',
+                  //   'action'  => 'delete',
+                  //   'id'      => 'btn-delete-language',
+                  //   'class'   => 'btn-danger',
+                  //   'icon'    => 'trash',
+                  //   'text'    => 'Excluir Idioma',
+                  //   'onclick' => '',
+
+                  // ]
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols' => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_function_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_function_type',
+                'tbl_sys_paginations_col_title'  => 'Tipo',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_function_name',
+                'tbl_sys_paginations_col_title'  => 'Nome',
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => false,
+                'cols_access'                    => [1]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_function_fn',
+                'tbl_sys_paginations_col_title'  => 'Função',
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => false,
+                'cols_access'                    => [1]
+
+              ],
+
+            ],
+
+          ],
+
+        // FUNCTIONS - END
+
+
       ];
 
 

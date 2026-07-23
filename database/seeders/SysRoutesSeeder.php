@@ -163,7 +163,6 @@
             'tbl_sys_route_method'     => 'dashboard',
             'tbl_sys_route_args'       => '',
             'tbl_sys_route_content'    => '<code>[automator function="system-pages" view="system.pages.dashboard"]</code>',
-            // 'tbl_sys_route_content'    => '<code>[system-pages view="system.pages.dashboard"]</code>',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2, 3, 4]
@@ -336,7 +335,7 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'getFunction',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-midia-types-pagination"]</code>',
+            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-galeria-uploads-types-pagination"]</code>',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-galeria',
@@ -354,7 +353,7 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'getData',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '<code>[automator function="get-data" table="tbl_sys_field_types" index="tbl_sys_field_type_ID"]</code>',
+            'tbl_sys_route_content'    => '[automator function="get-data" table="tbl_sys_uploads_types" index="tbl_sys_uploads_type_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-galeria',
@@ -372,7 +371,7 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'storeData',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_uploads_types" form="admin-midia-types"]',
+            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_uploads_types" form="admin-galeria-uploads-types"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-galeria',
@@ -390,7 +389,7 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'updateData',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '<code>[automator function="update-data" table="tbl_sys_uploads_types" index="tbl_sys_uploads_type_ID"]</code>',
+            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_uploads_types" index="tbl_sys_uploads_type_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-galeria',
@@ -428,13 +427,31 @@
 
             'tbl_sys_route_name'       => 'admin-galeria-uploads',
             'tbl_sys_route_title'      => 'Gerenciar Uploads',
-            'tbl_sys_route_permalink'  => 'gerenciar-uplodas',
+            'tbl_sys_route_permalink'  => 'gerenciar-uploads',
             'tbl_sys_route_api'        => false,
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'GET',
             'tbl_sys_route_controller' => 'UploadsController',
             'tbl_sys_route_method'     => 'index',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '<code>[automator function="system-pages" view="system.pages.galeria"]</code>',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-galeria',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-galeria-uploads-load',
+            'tbl_sys_route_title'      => 'API - Uploads LOAD',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'UploadsController',
+            'tbl_sys_route_method'     => 'loadMore',
             'tbl_sys_route_args'       => '',
             'tbl_sys_route_content'    => '',
             'tbl_sys_route_area'       => 'restrict',
@@ -451,10 +468,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'GET',
-            'tbl_sys_route_controller' => 'AutomatorController',
-            'tbl_sys_route_method'     => 'getData',
+            'tbl_sys_route_controller' => 'UploadsController',
+            'tbl_sys_route_method'     => 'getUpload',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '<code>[automator function="get-data" table="tbl_sys_field_types" index="tbl_sys_field_type_ID"]</code>',
+            'tbl_sys_route_content'    => '',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-galeria',
@@ -1904,7 +1921,7 @@
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-automator',
-            'user_types'               => [1]
+            'user_types'               => [1, 2]
 
           ],
           [
@@ -1918,11 +1935,11 @@
             'tbl_sys_route_controller' => 'AutomatorController',
             'tbl_sys_route_method'     => 'getData',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '<code>[automator function="get-data" table="tbl_sys_shortcodes" index="tbl_sys_shortcode_ID"]</code>',
+            'tbl_sys_route_content'    => '[automator function="get-data" table="tbl_sys_shortcodes" index="tbl_sys_shortcode_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
-            'tbl_sys_route_parent_id'  => '',
-            'user_types'               => [1]
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
 
           ],
           [
@@ -1940,7 +1957,7 @@
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-automator',
-            'user_types'               => [1]
+            'user_types'               => [1, 2]
 
           ],
           [
@@ -1958,7 +1975,7 @@
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-automator',
-            'user_types'               => [1]
+            'user_types'               => [1, 2]
 
           ],
           [
@@ -1982,6 +1999,106 @@
 
 
         // AUTOMATOR => SHORTCODES - END
+
+
+
+        // AUTOMATOR => FUNCTIONS - START
+
+
+          [
+
+            'tbl_sys_route_name'       => 'admin-functions',
+            'tbl_sys_route_title'      => 'Gerenciar Funções',
+            'tbl_sys_route_permalink'  => 'gerenciar-funcoes',
+            'tbl_sys_route_api'        => false,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'GET',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getFunction',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-functions-pagination"]</code>',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-functions-get',
+            'tbl_sys_route_title'      => 'API - Functions GET',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'GET',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getData',
+            'tbl_sys_route_args'       => '{id?}',
+            'tbl_sys_route_content'    => '[automator function="get-data" table="tbl_sys_functions" index="tbl_sys_function_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-functions-store',
+            'tbl_sys_route_title'      => 'API - Functions STORE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'storeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_functions" form="admin-functions"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-functions-update',
+            'tbl_sys_route_title'      => 'API - Functions UPDATE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'updateData',
+            'tbl_sys_route_args'       => '{id?}',
+            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_functions" form="admin-functions" index="tbl_sys_function_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-functions-delete',
+            'tbl_sys_route_title'      => 'API - Functions DELETE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getFunction',
+            'tbl_sys_route_args'       => '{id?}',
+            'tbl_sys_route_content'    => '[automator function="delete-data" table="tbl_sys_functions" index="tbl_sys_function_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1]
+
+          ],
+
+
+        // AUTOMATOR => FUNCTIONS - END
 
 
 
@@ -2013,10 +2130,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'GET',
-            'tbl_sys_route_controller' => 'TranslationsController',
-            'tbl_sys_route_method'     => 'getTranslation',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getData',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '',
+            'tbl_sys_route_content'    => '[automator function="get-data" table="tbl_sys_translations" index="tbl_sys_translation_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2]
@@ -2030,10 +2147,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'POST',
-            'tbl_sys_route_controller' => 'TranslationsController',
-            'tbl_sys_route_method'     => 'storeTranslation',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'storeData',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '',
+            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_translations" form="admin-languages"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2]
@@ -2047,10 +2164,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'POST',
-            'tbl_sys_route_controller' => 'TranslationsController',
-            'tbl_sys_route_method'     => 'updateTranslation',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'updateData',
             'tbl_sys_route_args'       => '{id?}',
-            'tbl_sys_route_content'    => '',
+            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_translations" index="tbl_sys_translation_ID"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'user_types'               => [1, 2]

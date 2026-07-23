@@ -5375,6 +5375,244 @@
           
           ],
 
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 6,
+            'tbl_sys_field_type_name'        => 'icon-picker',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldIconPicker',
+            'tbl_sys_field_type_icon'        => 'icons',
+            'tbl_sys_field_type_title'       => 'Icon Picker',
+            'tbl_sys_field_type_description' => 'Uma entrada de texto básica, útil para armazenar valores de classe de icones do font-awesome.',
+            'tbl_sys_field_type_layout'      => false,
+            'tbl_sys_field_type_configs'     => '',
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de um icone salvo no banco de dados',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
+            'tbl_sys_field_type_params' => json_encode([
+
+              'wrapper' => [
+
+                'label'  => 'Tamanho do campo',
+                'fields' => [
+
+                  'column-xs' => [
+                    'label'   => 'Tamanho XS',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-sm' => [
+                    'label'   => 'Tamanho SM',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-md' => [
+                    'label'   => 'Tamanho MD',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-lg' => [
+                    'label'   => 'Tamanho LG',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xl' => [
+                    'label'   => 'Tamanho XL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xxl' => [
+                    'label'   => 'Tamanho XXL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                ]
+
+              ],
+              "configs"    => [
+                
+                'label'  => 'Configurações',
+                'fields' => [
+
+                  "required" => [
+
+                    "label"       => "Obrigatório",
+                    "type"        => "select",
+                    "required"    => "true",
+                    "nullable"    => "false",
+                    "description" => "Campo Obrigatório.",
+                    "default"     => "false",
+                    "values"      => [
+
+                      "false" => "Não",
+                      "true"  => "Sim"
+
+                    ]
+
+                  ],
+                  "value" => [
+
+                    "label"       => "Valor Padrão",
+                    "type"        => "text",
+                    "nullable"    => "true",
+                    'required'    => "false",
+                    "placeholder" => "",
+                    "description" => "Valor padrão.",
+                    "default"     => "",
+
+                  ],
+
+                ]
+
+              ],
+              'aparencia' => [
+                  
+                'label'  => 'Aparência',
+                'fields' => [
+
+                  'class'  => [
+
+                    'label'   => 'Classes Adicionais',
+                    'field'   => 'text',
+                    'default' => ''
+
+                  ],
+
+                  'style'  => [
+
+                    'label'   => 'Estilo adicional',
+                    'field'   => 'editor-css',
+                    'class'   => 'textarea-css-editor',
+                    'default' => ''
+
+                  ]
+
+                ]
+
+              ]
+
+            ]),
+          
+          ],
+
+
+
         // Avançado - END
         
 
@@ -5544,6 +5782,281 @@
             ]),
             'tbl_sys_field_type_locked' => true,
             'tbl_sys_field_type_params' => ''
+          
+          ],
+
+
+
+          [
+
+            'tbl_sys_field_type_group_ID'    => 1,
+            'tbl_sys_field_type_name'        => 'slug',
+            'tbl_sys_field_type_class'       => 'AutomatorFieldSlug',
+            'tbl_sys_field_type_icon'        => 'text-width',
+            'tbl_sys_field_type_title'       => 'Slug',
+            'tbl_sys_field_type_description' => 'Uma entrada de texto básica, útil para armazenar valores de texto que são convertidos para formatação de slug.',
+            'tbl_sys_field_type_layout'      => false,
+            'tbl_sys_field_type_configs'     => '',
+            'tbl_sys_field_type_locked'      => true,
+            'tbl_sys_field_type_pagination' => json_encode([
+
+              "description" => 'Exibição simples de dados do tipo texto com formatação de slug.',
+              'args' => [
+
+                "header"      => [
+                  
+                  'label'  => 'Cabeçalho',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+                "body"    => [
+                  
+                  'label'  => 'Conteudo',
+                  'fields' => [
+
+                    "class" => [
+
+                      "label"       => "Classe",
+                      "type"        => "text",
+                      "nullable"    => "true",
+                      'required'    => "false",
+                      "placeholder" => "",
+                      "description" => "Valor padrão.",
+                      "default"     => "",
+
+                    ],
+
+                  ]
+
+                ],
+
+                'canSearch' => [
+
+                  'label' => 'Busca',
+                  'fields' => [
+
+                    "search" => [
+
+                      "label"       => "Ativo na busca?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+                'canSort' => [
+
+                  'label' => 'Ordenação',
+                  'fields' => [
+
+                    "sort" => [
+
+                      "label"       => "Habilitar ordenação?",
+                      "type"        => "select",
+                      "required"    => "true",
+                      "nullable"    => "false",
+                      "description" => "",
+                      "default"     => "false",
+                      "values"      => [
+
+                        "false" => "Não",
+                        "true"  => "Sim"
+
+                      ]
+
+                    ],
+
+                  ]
+
+                ],
+
+              ]
+
+            ]),
+            'tbl_sys_field_type_params' => json_encode([
+
+              'wrapper' => [
+
+                'label'  => 'Tamanho do campo',
+                'fields' => [
+
+                  'column-xs' => [
+                    'label'   => 'Tamanho XS',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-sm' => [
+                    'label'   => 'Tamanho SM',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 12,
+                  ],
+
+                  'column-md' => [
+                    'label'   => 'Tamanho MD',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-lg' => [
+                    'label'   => 'Tamanho LG',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xl' => [
+                    'label'   => 'Tamanho XL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                  'column-xxl' => [
+                    'label'   => 'Tamanho XXL',
+                    'field'   => 'range',
+                    'minval'  => 1,
+                    'maxval'  => 12,
+                    'default' => 6,
+                  ],
+
+                ]
+
+              ],
+              "configs"    => [
+                
+                'label'  => 'Configurações',
+                'fields' => [
+
+                  "required" => [
+
+                    "label"       => "Obrigatório",
+                    "type"        => "select",
+                    "required"    => "true",
+                    "nullable"    => "false",
+                    "description" => "Campo Obrigatório.",
+                    "default"     => "false",
+                    "values"      => [
+
+                      "false" => "Não",
+                      "true"  => "Sim"
+
+                    ]
+
+                  ],
+                  "value" => [
+
+                    "label"       => "Valor Padrão",
+                    "type"        => "text",
+                    "nullable"    => "true",
+                    'required'    => "false",
+                    "placeholder" => "",
+                    "description" => "Valor padrão.",
+                    "default"     => "",
+
+                  ],
+
+                ]
+
+              ],
+              "advanced" => [
+
+                'label'  => 'Avançado',
+                'fields' => [
+
+                  'minlenght' => [
+
+                    'label'    => 'Minímo de caracteres',
+                    'field'    => "input[type='number']",
+                    'default'  => "",
+                    "nullable" => "true",
+                    'required' => "false"
+
+                  ],
+                  'maxlenght' => [
+
+                    'label'    => 'Máximo de caracteres',
+                    'field'    => "input[type='number']",
+                    'default'  => "",
+                    "nullable" => "true",
+                    'required' => "false"
+
+                  ],
+                  "mask" => [
+
+                    "label"       => "Máscara",
+                    "type"        => "input[type='text']",
+                    "nullable"    => "true",
+                    "placeholder" => "",
+                    "description" => "Mascara de caracteres permitidos.",
+                    "default"     => "",
+
+                  ],
+
+                ]
+
+              ],
+              'aparencia' => [
+                  
+                'label'  => 'Aparência',
+                'fields' => [
+
+                  'class'  => [
+
+                    'label'   => 'Classes Adicionais',
+                    'field'   => 'text',
+                    'default' => ''
+
+                  ],
+
+                  'style'  => [
+
+                    'label'   => 'Estilo adicional',
+                    'field'   => 'editor-css',
+                    'class'   => 'textarea-css-editor',
+                    'default' => ''
+
+                  ]
+
+                ]
+
+              ]
+
+            ]),
+          
           ],
 
 

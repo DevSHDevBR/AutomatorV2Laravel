@@ -32,7 +32,8 @@
         SysMenusItemsSeeder::class,
         SysFormsSeeder::class,
         SysShortcodesSeeder::class,
-        SysPaginationsSeeder::class
+        SysPaginationsSeeder::class,
+        SysUploadsTypesSeeder::class
 
       ]);
 

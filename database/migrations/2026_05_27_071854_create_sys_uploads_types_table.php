@@ -21,6 +21,7 @@
         
         $table->id('tbl_sys_uploads_type_ID');
         $table->string('tbl_sys_uploads_type_icon', 255)->nullable()->default('picture');
+        $table->string('tbl_sys_uploads_type_mine', 255);
         $table->string('tbl_sys_uploads_type_name', 255)->unique();
         $table->string('tbl_sys_uploads_type_title', 255);
         $table->text('tbl_sys_uploads_type_description')->nullable();

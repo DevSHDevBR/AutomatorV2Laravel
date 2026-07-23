@@ -3804,121 +3804,614 @@ function AutomatorCreateViewModal(payload, options) {
   |--------------------------------------------------------------------------
   */
 
-  function _populateFields(modalEl, data) {
+  function _populateFields(
+    modalEl,
+    data
+  ) {
 
-    if(!modalEl || !data || typeof data !== 'object') {
+    if(
+      !modalEl ||
+      !data ||
+      typeof data !== 'object'
+    ) {
+
       return false;
+
     }
 
-    function _normalizeValues(value) {
+
+    /*
+    |--------------------------------------------------------------------------
+    | Normaliza valores de campos múltiplos
+    |--------------------------------------------------------------------------
+    */
+
+    function _normalizeValues(
+      value
+    ) {
 
       var values = [];
 
-      if(value === null || value === undefined || value === '') {
+
+      if(
+        value === null ||
+        value === undefined ||
+        value === ''
+      ) {
+
         return values;
+
       }
 
+
       if(Array.isArray(value)) {
+
         values = value;
+
       } else if(typeof value === 'object') {
+
         values = Object.keys(value);
+
       } else if(typeof value === 'string') {
+
 
         try {
 
-          var decoded = JSON.parse(value);
+
+          var decoded = JSON.parse(
+
+            value
+
+          );
+
 
           if(Array.isArray(decoded)) {
+
             values = decoded;
-          } else if(decoded !== null && typeof decoded === 'object') {
-            values = Object.keys(decoded);
+
+          } else if(
+            decoded !== null &&
+            typeof decoded === 'object'
+          ) {
+
+            values = Object.keys(
+
+              decoded
+
+            );
+
           } else {
+
             values = value.split(',');
+
           }
 
-        } catch(e) {
+
+        } catch(error) {
+
+
           values = value.split(',');
+
+
         }
 
+
       } else {
+
         values = [value];
+
       }
 
+
       return values.map(function(item) {
+
         return String(item).trim();
+
       });
 
     }
 
+
+    /*
+    |--------------------------------------------------------------------------
+    | Percorre todos os valores retornados pelo request
+    |--------------------------------------------------------------------------
+    */
+
     Object.keys(data).forEach(function(fieldName) {
 
-      var value  = data[fieldName];
+
+      var value = data[fieldName];
+
+
       var fields = modalEl.querySelectorAll(
-        '[name="' + fieldName + '"], [name="' + fieldName + '[]"], [data-automator-field-name="' + fieldName + '"]'
+
+        '[name="' + fieldName + '"], ' +
+
+        '[name="' + fieldName + '[]"], ' +
+
+        '[data-automator-field-name="' + fieldName + '"]'
+
       );
+
 
       fields.forEach(function(field) {
 
+
         var tagName = field.tagName.toLowerCase();
-        var type    = (field.getAttribute('type') || '').toLowerCase();
 
-        if(type == 'checkbox') {
+        var type = String(
 
-          var checkboxValues = _normalizeValues(value);
+          field.getAttribute('type') || ''
 
-          field.checked = (checkboxValues.length > 0)
-            ? checkboxValues.includes(String(field.value))
-            : false;
+        ).toLowerCase();
 
-        } else if(type == 'radio') {
 
-          field.checked = (String(field.value) == String(value));
+        /*
+        |--------------------------------------------------------------------------
+        | ICON PICKER
+        |--------------------------------------------------------------------------
+        |
+        | O valor não deve permanecer no campo text.
+        |
+        | AutomatorIconPickerSetValue transfere o valor para o hidden, limpa o
+        | campo visível e atualiza o ícone exibido à esquerda.
+        |
+        */
 
-        } else if(tagName == 'select' && field.multiple) {
+        if(
+          field.classList.contains(
+            'automator-input-icon-picker'
+          )
+        ) {
 
-          var selectedValues = _normalizeValues(value);
 
-          Array.from(field.options).forEach(function(option) {
-            option.selected = selectedValues.includes(String(option.value));
-          });
+          if(
+            typeof window.AutomatorIconPickerInitialize ===
+            'function'
+          ) {
 
-        } else if(tagName == 'textarea' && field.classList.contains('automator-editor')) {
 
-          var editorContent = (value !== null && value !== undefined) ? String(value) : '';
+            window.AutomatorIconPickerInitialize(
 
-          field.value = editorContent;
+              field
 
-          var editorId = field.getAttribute('data-automator-editor-id') || field.getAttribute('id') || '';
+            );
 
-          if(editorId && window.AutomatorEditors && window.AutomatorEditors[editorId]) {
-
-            var editorInstance = window.AutomatorEditors[editorId];
-
-            if(editorInstance.visual && editorInstance.visual.length) {
-              editorInstance.visual.html(editorContent);
-            }
-
-            if(editorInstance.code && editorInstance.code.length) {
-              editorInstance.code.val(editorContent);
-            }
 
           }
 
-        } else {
 
-          field.value = (value !== null && value !== undefined) ? value : '';
+          if(
+            typeof window.AutomatorIconPickerSetValue ===
+            'function'
+          ) {
+
+
+            window.AutomatorIconPickerSetValue(
+
+              field,
+
+              value !== null &&
+              value !== undefined
+
+                ? String(value)
+
+                : '',
+
+              false
+
+            );
+
+
+          } else {
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fallback para carregamento fora de ordem
+            |--------------------------------------------------------------------------
+            */
+
+            field.value =
+
+              value !== null &&
+              value !== undefined
+
+                ? String(value)
+
+                : '';
+
+
+          }
+
+
+          return;
 
         }
 
-        field.dispatchEvent(new Event('change', { bubbles: true }));
+
+        /*
+        |--------------------------------------------------------------------------
+        | Hidden criado pelo icon-picker
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+          type === 'hidden' &&
+          field.classList.contains(
+            'automator-input-icon-picker-value'
+          )
+        ) {
+
+
+          field.value =
+
+            value !== null &&
+            value !== undefined
+
+              ? String(value)
+
+              : '';
+
+
+          return;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Checkbox
+        |--------------------------------------------------------------------------
+        */
+
+        if(type === 'checkbox') {
+
+
+          var checkboxValues =
+
+            _normalizeValues(
+
+              value
+
+            );
+
+
+          field.checked =
+
+            checkboxValues.length > 0
+
+              ? checkboxValues.includes(
+                  String(field.value)
+                )
+
+              : false;
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Radio
+        |--------------------------------------------------------------------------
+        */
+
+        } else if(type === 'radio') {
+
+
+          field.checked = (
+
+            String(field.value) ===
+            String(value)
+
+          );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Select múltiplo
+        |--------------------------------------------------------------------------
+        */
+
+        } else if(
+          tagName === 'select' &&
+          field.multiple
+        ) {
+
+
+          var selectedValues =
+
+            _normalizeValues(
+
+              value
+
+            );
+
+
+          Array.from(field.options).forEach(function(option) {
+
+
+            option.selected = selectedValues.includes(
+
+              String(option.value)
+
+            );
+
+
+          });
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Editor
+        |--------------------------------------------------------------------------
+        */
+
+        } else if(
+          tagName === 'textarea' &&
+          field.classList.contains(
+            'automator-editor'
+          )
+        ) {
+
+
+          var editorContent =
+
+            value !== null &&
+            value !== undefined
+
+              ? String(value)
+
+              : '';
+
+
+          field.value = editorContent;
+
+
+          var editorId =
+
+            field.getAttribute(
+              'data-automator-editor-id'
+            ) ||
+
+            field.getAttribute('id') ||
+
+            '';
+
+
+          if(
+            editorId &&
+            window.AutomatorEditors &&
+            window.AutomatorEditors[editorId]
+          ) {
+
+
+            var editorInstance =
+
+              window.AutomatorEditors[editorId];
+
+
+            if(
+              editorInstance.visual &&
+              editorInstance.visual.length
+            ) {
+
+
+              editorInstance.visual.html(
+
+                editorContent
+
+              );
+
+
+            }
+
+
+            if(
+              editorInstance.code &&
+              editorInstance.code.length
+            ) {
+
+
+              editorInstance.code.val(
+
+                editorContent
+
+              );
+
+
+            }
+
+
+          }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Campos comuns
+        |--------------------------------------------------------------------------
+        */
+
+        } else {
+
+
+          field.value =
+
+            value !== null &&
+            value !== undefined
+
+              ? value
+
+              : '';
+
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Dispara alteração somente para campos comuns
+        |--------------------------------------------------------------------------
+        */
+
+        field.dispatchEvent(
+
+          new Event(
+            'change',
+            {
+              bubbles: true
+            }
+          )
+
+        );
+
 
       });
 
+
     });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inicializa novamente os icon-pickers do modal
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+      typeof window.AutomatorIconPickerInitializeAll ===
+      'function'
+    ) {
+
+
+      window.AutomatorIconPickerInitializeAll(
+
+        modalEl
+
+      );
+
+
+    }
+
 
     return true;
 
   }
+  
+  // function _populateFields(modalEl, data) {
+
+  //   if(!modalEl || !data || typeof data !== 'object') {
+  //     return false;
+  //   }
+
+  //   function _normalizeValues(value) {
+
+  //     var values = [];
+
+  //     if(value === null || value === undefined || value === '') {
+  //       return values;
+  //     }
+
+  //     if(Array.isArray(value)) {
+  //       values = value;
+  //     } else if(typeof value === 'object') {
+  //       values = Object.keys(value);
+  //     } else if(typeof value === 'string') {
+
+  //       try {
+
+  //         var decoded = JSON.parse(value);
+
+  //         if(Array.isArray(decoded)) {
+  //           values = decoded;
+  //         } else if(decoded !== null && typeof decoded === 'object') {
+  //           values = Object.keys(decoded);
+  //         } else {
+  //           values = value.split(',');
+  //         }
+
+  //       } catch(e) {
+  //         values = value.split(',');
+  //       }
+
+  //     } else {
+  //       values = [value];
+  //     }
+
+  //     return values.map(function(item) {
+  //       return String(item).trim();
+  //     });
+
+  //   }
+
+  //   Object.keys(data).forEach(function(fieldName) {
+
+  //     var value  = data[fieldName];
+  //     var fields = modalEl.querySelectorAll(
+  //       '[name="' + fieldName + '"], [name="' + fieldName + '[]"], [data-automator-field-name="' + fieldName + '"]'
+  //     );
+
+  //     fields.forEach(function(field) {
+
+  //       var tagName = field.tagName.toLowerCase();
+  //       var type    = (field.getAttribute('type') || '').toLowerCase();
+
+  //       if(type == 'checkbox') {
+
+  //         var checkboxValues = _normalizeValues(value);
+
+  //         field.checked = (checkboxValues.length > 0)
+  //           ? checkboxValues.includes(String(field.value))
+  //           : false;
+
+  //       } else if(type == 'radio') {
+
+  //         field.checked = (String(field.value) == String(value));
+
+  //       } else if(tagName == 'select' && field.multiple) {
+
+  //         var selectedValues = _normalizeValues(value);
+
+  //         Array.from(field.options).forEach(function(option) {
+  //           option.selected = selectedValues.includes(String(option.value));
+  //         });
+
+  //       } else if(tagName == 'textarea' && field.classList.contains('automator-editor')) {
+
+  //         var editorContent = (value !== null && value !== undefined) ? String(value) : '';
+
+  //         field.value = editorContent;
+
+  //         var editorId = field.getAttribute('data-automator-editor-id') || field.getAttribute('id') || '';
+
+  //         if(editorId && window.AutomatorEditors && window.AutomatorEditors[editorId]) {
+
+  //           var editorInstance = window.AutomatorEditors[editorId];
+
+  //           if(editorInstance.visual && editorInstance.visual.length) {
+  //             editorInstance.visual.html(editorContent);
+  //           }
+
+  //           if(editorInstance.code && editorInstance.code.length) {
+  //             editorInstance.code.val(editorContent);
+  //           }
+
+  //         }
+
+  //       } else {
+
+  //         field.value = (value !== null && value !== undefined) ? value : '';
+
+  //       }
+
+  //       field.dispatchEvent(new Event('change', { bubbles: true }));
+
+  //     });
+
+  //   });
+
+  //   return true;
+
+  // }
 
 
   /*
