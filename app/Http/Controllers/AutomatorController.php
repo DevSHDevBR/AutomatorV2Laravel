@@ -906,135 +906,6 @@
 
 
     }
-    // public function getFunction(Request $request, $shortcodeParams = []) {
-
-
-    //   // return $request;
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Quando vier de um shortcode
-    //   |--------------------------------------------------------------------------
-    //   |
-    //   | Exemplo:
-    //   | [automator function="pagination" name="shortcodes-pagination"]
-    //   |
-    //   | O shortcode é cadastrado no banco como:
-    //   | class  = AutomatorController
-    //   | method = getFunction
-    //   |
-    //   | Então esta função precisa identificar o atributo "function" e chamar
-    //   | a função correspondente dentro deste mesmo controller.
-    //   |
-    //   */
-
-    //   if(!is_array($shortcodeParams) || count($shortcodeParams) <= 0) {
-
-    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
-
-    //   }
-
-
-
-    //   if(is_array($shortcodeParams) && count($shortcodeParams) >= 1 && isset($shortcodeParams['function'])) {
-
-
-    //     // return $shortcodeParams;
-    //     $function = trim($shortcodeParams['function']);
-
-
-    //     if($function == '') {
-
-    //       return '';
-
-    //     }
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Normaliza nomes com hífen
-    //     |--------------------------------------------------------------------------
-    //     |
-    //     | pagination  => pagination
-    //     | get-data    => getData
-    //     | store-data  => storeData
-    //     | update-data => updateData
-    //     | delete-data => deleteData
-    //     |
-    //     */
-
-    //     $method = Str::camel($function);
-
-    //     // return $method;
-
-
-    //     /*
-    //     |--------------------------------------------------------------------------
-    //     | Lista de funções permitidas para shortcode automator
-    //     |--------------------------------------------------------------------------
-    //     |
-    //     | Evita que qualquer método público do controller seja chamado apenas
-    //     | alterando o conteúdo do shortcode no banco.
-    //     |
-    //     */
-
-    //     $allowedMethods = [
-
-    //       'pagination',
-    //       'getData',
-    //       'getDataByTableModel',
-    //       'getDataByTableModelName',
-    //       'getDataByModel',
-    //       'storeData',
-    //       'updateData',
-    //       'deleteData',
-
-    //     ];
-
-
-    //     if(!in_array($method, $allowedMethods)) {
-
-    //       return '';
-
-    //     }
-
-
-    //     if(!method_exists($this, $method)) {
-
-    //       return '';
-
-    //     }
-
-
-    //     return $this->{$method}($request, $shortcodeParams);
-
-
-    //   }
-
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Quando vier diretamente da rota
-    //   |--------------------------------------------------------------------------
-    //   |
-    //   | Exemplo:
-    //   | rota admin-shortcodes chama AutomatorController@getFunction.
-    //   | Nesse caso, renderiza o conteúdo da rota e processa os shortcodes
-    //   | cadastrados dentro da coluna tbl_sys_route_content.
-    //   |
-    //   */
-
-    //   $slug = $request->route('pageSlug');
-
-    //   // return $slug;
-
-    //   return SysAutomator::SysAutomatorSearchShortcode($slug, [
-
-    //     'request' => $request
-
-    //   ]);
-
-
-    // }
 
 
 
@@ -2426,419 +2297,194 @@
 
     }
 
-    // Update 2
-    // public function updateData(Request $request, $shortcodeParams = []) {
 
 
-    //   $slug = $request->route('pageSlug');
+    public function deleteData(Request $request, $shortcodeParams = []) {
 
-    //   $routeName = str_replace('page-', '', $slug);
+      $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
-    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
+      $table = $attributes['table'] ?? null;
+      $index = $attributes['index'] ?? null;
+      $id    = $request->input('id') ?? null;
 
-    //   $atributes = [];
+      if($table === null || $table === '' || !Schema::hasTable($table)) {
 
-    //   if($route && isset($route->tbl_sys_route_content)) {
+        return response()->json([
+          'status'  => false,
+          'message' => 'Tabela inválida.'
+        ], 400);
 
-    //     $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
+      }
 
-    //   }
+      if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
 
+        return response()->json([
+          'status'  => false,
+          'message' => 'Índice inválido.'
+        ], 400);
 
-    //   if(!is_array($shortcodeParams)) {
+      }
 
-    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
+      if($id === null || $id === '') {
 
-    //   }
+        return response()->json([
+          'status'  => false,
+          'message' => 'ID não informado.'
+        ], 400);
 
+      }
 
-    //   if(is_array($shortcodeParams) && count($shortcodeParams) >= 1) {
+      /*
+       |--------------------------------------------------------------------------
+       | Localiza automaticamente uma coluna *_locked
+       |--------------------------------------------------------------------------
+       */
 
-    //     foreach($shortcodeParams as $paramKey => $paramValue) {
+      $lockedColumn = null;
 
-    //       $atributes[$paramKey] = $paramValue;
+      foreach (Schema::getColumnListing($table) as $column) {
 
-    //     }
+        if(Str::endsWith($column, '_locked')) {
 
-    //   }
+          $lockedColumn = $column;
+          break;
 
+        }
 
-    //   $table = $atributes['table'] ?? null;
-    //   $index = $atributes['index'] ?? null;
+      }
 
+      /*
+       |--------------------------------------------------------------------------
+       | Exclusão de um único registro
+       |--------------------------------------------------------------------------
+       */
 
-    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+      if(!is_array($id)) {
 
-    //     return response()->json([
+        if($lockedColumn !== null) {
 
-    //       'status'  => false,
-    //       'message' => 'Tabela inválida.'
+          $locked = DB::table($table)
+                    ->where($index, $id)
+                    ->value($lockedColumn);
 
-    //     ], 400);
+          if(filter_var($locked, FILTER_VALIDATE_BOOLEAN)) {
 
-    //   }
+            return response()->json([
+              'status'  => false,
+              'title'   => 'Erro',
+              'message' => 'Este registro não pode ser excluído.'
+            ]);
 
+          }
 
-    //   $modelClass = null;
-    //   $modelInstance = null;
+        }
 
+        $deleted = DB::table($table)
+            ->where($index, $id)
+            ->delete();
 
-    //   if(isset($atributes['model']) && $atributes['model'] !== '') {
+        if(!$deleted) {
 
-    //     $modelClass = $this->getAutomatorModelClassByName($atributes['model']);
+          return response()->json([
+            'status'  => false,
+            'title'   => 'Erro',
+            'message' => 'Nenhum registro foi excluído.'
+          ]);
 
-    //   }
+        }
 
+      }
 
-    //   if($modelClass === null) {
+      /*
+       |--------------------------------------------------------------------------
+       | Exclusão múltipla
+       |--------------------------------------------------------------------------
+       */
 
-    //     $modelClass = $this->getAutomatorModelClassByTable($table);
+      else {
 
-    //   }
+        $total = count($id);
 
+        if($total < 1) {
 
-    //   if($modelClass !== null) {
+          return response()->json([
+            'status'  => false,
+            'message' => 'ID não informado.'
+          ], 400);
 
-    //     $modelInstance = new $modelClass;
+        }
 
-    //   }
+        $deletedCount = 0;
+        $lockedCount  = 0;
 
+        foreach($id as $item) {
 
-    //   if(($index === null || $index === '') && $modelInstance !== null) {
+          if($lockedColumn !== null) {
 
-    //     $index = $modelInstance->getKeyName();
+            $locked = DB::table($table)
+                      ->where($index, $item)
+                      ->value($lockedColumn);
 
-    //   }
+            if(filter_var($locked, FILTER_VALIDATE_BOOLEAN)) {
 
+              $lockedCount++;
+              continue;
 
-    //   if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+            }
 
-    //     return response()->json([
+          }
 
-    //       'status'  => false,
-    //       'message' => 'Índice inválido.'
+          $deleted = DB::table($table)
+                    ->where($index, $item)
+                    ->delete();
 
-    //     ], 400);
+          if($deleted) {
 
-    //   }
+            $deletedCount++;
 
+          }
 
-    //   $id = $request->input($index) ?? $request->route($index) ?? $request->get($index) ?? $request->input('id') ?? $request->route('id') ?? $request->get('id') ?? null;
+        }
 
+        if($deletedCount == 0) {
 
-    //   if($id === null || $id === '') {
+          return response()->json([
+            'status'  => false,
+            'title'   => 'Erro',
+            'message' => $lockedCount > 0
+                ? 'Nenhum registro foi excluído. Todos os itens selecionados estão bloqueados.'
+                : 'Nenhum registro foi excluído.'
+          ]);
 
-    //     return response()->json([
+        }
 
-    //       'status'  => false,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('ID não informado.'),
-    //       'data'    => $request->all()
+        if($lockedCount > 0) {
 
-    //     ], 400);
+          return response()->json([
+            'status'  => true,
+            'title'   => 'Sucesso',
+            'message' => 'Alguns itens não puderam ser excluídos porque estão bloqueados.'
+          ]);
 
-    //   }
+        }
 
+      }
 
-    //   $formID = $request->input('automatorFormID');
+      return response()->json([
+          'status'  => true,
+          'title'   => 'Sucesso',
+          'message' => 'Registro removido com sucesso.'
+      ]);
 
-    //   $data = $request->except([
+    }
+    // public function deleteData(Request $request, $shortcodeParams = []) {
 
-    //     '_token',
-    //     '_method',
-    //     'automatorFormID',
-    //     'id'
+    //   $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
-    //   ]);
 
-
-    //   /*
-    //   |--------------------------------------------------------------------------
-    //   | Relacionamentos enviados pelo shortcode
-    //   |--------------------------------------------------------------------------
-    //   |
-    //   | Exemplo:
-    //   | [automator function="update-data" table="tbl_users" index="tbl_user_ID" with="UserGetTypes:ids"]
-    //   |
-    //   | O campo esperado no formulário será:
-    //   | UserGetTypesIDs[]
-    //   |
-    //   */
-
-    //   $with = $atributes['with'] ?? null;
-
-    //   $syncRelationships = [];
-
-
-    //   if($with !== null && $with !== '') {
-
-    //     if(is_string($with)) {
-
-    //       $with = explode(',', $with);
-
-    //     }
-
-
-    //     if(is_array($with) && count($with) >= 1) {
-
-    //       foreach($with as $relationshipConfig) {
-
-    //         $relationshipConfig = trim($relationshipConfig);
-
-    //         if($relationshipConfig === '') {
-
-    //           continue;
-
-    //         }
-
-
-    //         $relationshipName = $relationshipConfig;
-    //         $relationshipMode = null;
-
-
-    //         if(strpos($relationshipConfig, ':') !== false) {
-
-    //           $relationshipParts = explode(':', $relationshipConfig);
-
-    //           $relationshipName = trim($relationshipParts[0] ?? '');
-    //           $relationshipMode = trim($relationshipParts[1] ?? '');
-
-    //         }
-
-
-    //         if($relationshipName === '' || $relationshipMode !== 'ids') {
-
-    //           continue;
-
-    //         }
-
-
-    //         $fieldName = $relationshipName . 'IDs';
-
-
-    //         $syncRelationships[] = [
-
-    //           'relationship' => $relationshipName,
-    //           'field'        => $fieldName
-
-    //         ];
-
-    //       }
-
-    //     }
-
-    //   }
-
-
-    //   $updateData = [];
-
-
-    //   foreach($data as $field => $value) {
-
-    //     if(Schema::hasColumn($table, $field) && $field != $index) {
-
-    //       $updateData[$field] = $value;
-
-    //     }
-
-    //   }
-
-
-    //   $hasRelationshipSync = count($syncRelationships) >= 1;
-
-
-    //   if(count($updateData) <= 0 && !$hasRelationshipSync) {
-
-    //     return response()->json([
-
-    //       'status'  => false,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Nenhuma informação válida foi enviada.')
-
-    //     ], 400);
-
-    //   }
-
-
-    //   $uniqueColumns = $this->getUniqueColumns($table);
-
-    //   foreach($uniqueColumns as $column) {
-
-    //     if(isset($updateData[$column])) {
-
-    //       $query = DB::table($table)->where($column, $updateData[$column]);
-
-    //       $query->where($index, '!=', $id);
-
-    //       if($query->exists()) {
-
-    //         return response()->json([
-
-    //           'status'  => false,
-    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //           'message' => SysAutomator::SysAutomatorGetTranslateWord('O valor para o campo') . " '" . self::getAutomatorFormFieldNameByFormID($formID, $column) . "' " . SysAutomator::SysAutomatorGetTranslateWord('já existe em outro registro.')
-
-    //         ], 400);
-
-    //       }
-
-    //     }
-
-    //   }
-
-
-    //   try {
-
-    //     DB::beginTransaction();
-
-
-    //     if(count($updateData) >= 1) {
-
-    //       DB::table($table)->where($index, $id)->update($updateData);
-
-    //     }
-
-
-    //     if($hasRelationshipSync) {
-
-    //       if($modelClass === null || $modelInstance === null) {
-
-    //         DB::rollBack();
-
-    //         return response()->json([
-
-    //           'status'  => false,
-    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //           'message' => 'Nenhuma Model foi encontrada para sincronizar os relacionamentos.'
-
-    //         ], 400);
-
-    //       }
-
-
-    //       $modelItem = $modelClass::where($index, $id)->first();
-
-
-    //       if(!$modelItem) {
-
-    //         DB::rollBack();
-
-    //         return response()->json([
-
-    //           'status'  => false,
-    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //           'message' => 'Registro não encontrado para sincronizar os relacionamentos.'
-
-    //         ], 404);
-
-    //       }
-
-
-    //       foreach($syncRelationships as $syncRelationship) {
-
-    //         $relationshipName = $syncRelationship['relationship'];
-    //         $fieldName        = $syncRelationship['field'];
-
-
-    //         if(!method_exists($modelItem, $relationshipName)) {
-
-    //           continue;
-
-    //         }
-
-
-    //         $ids = $request->input($fieldName, []);
-
-
-    //         if($ids === null || $ids === '') {
-
-    //           $ids = [];
-
-    //         }
-
-
-    //         if(!is_array($ids)) {
-
-    //           $ids = [$ids];
-
-    //         }
-
-
-    //         $ids = array_values(array_filter($ids, function($value) {
-
-    //           return $value !== null && $value !== '';
-
-    //         }));
-
-
-    //         $ids = array_map(function($value) {
-
-    //           return (int) $value;
-
-    //         }, $ids);
-
-
-    //         $modelItem->{$relationshipName}()->sync($ids);
-
-    //       }
-
-    //     }
-
-
-    //     DB::commit();
-
-
-    //     return response()->json([
-
-    //       'status'  => true,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
-
-    //     ]);
-
-
-    //   } catch(\Throwable $e) {
-
-    //     DB::rollBack();
-
-    //     return response()->json([
-
-    //       'status'  => false,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //       'message' => $e->getMessage()
-
-    //     ], 500);
-
-    //   }
-
-
-    // }
-
-    // public function updateData(Request $request, $shortcodeParams = []) {
-
-
-    //   $slug = $request->route('pageSlug');
-
-    //   $routeName = str_replace('page-', '', $slug);
-
-    //   $route = SysRoute::where('tbl_sys_route_name', $routeName)->first();
-
-    //   $atributes = SysAutomator::SysAutomatorGetShortcodeAttributes($route->tbl_sys_route_content);
-
-    //   if(!is_array($shortcodeParams)) {
-
-    //     $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
-
-    //   }
-
-
-    //   $table = ( ( isset($shortcodeParams['table']) ) ? $shortcodeParams['table'] : ( ($atributes['table']) ? $atributes['table'] : null ) );
-    //   $index = ( ( isset($shortcodeParams['index']) ) ? $shortcodeParams['index'] : ( ($atributes['index']) ? $atributes['index'] : null ) );
-    //   $id = $request->input($atributes['index']) ?? null;
-    //   // $id    = ( ($request->route('id')) ? $request->route('id') : ( ($request->get('id')) ? $request->get('id') : ( ($request->input($atributes['index'])) ? $request->input($atributes['index']) : null ) ) );
-    //   // $table = $shortcodeParams['table'] ?? null;
-    //   // $index = $shortcodeParams['index'] ?? null;
-    //   // $id    = $request->route('id') ?? $request->get('id') ?? null;
+    //   $table = $attributes['table'] ?? null;
+    //   $index = $attributes['index'] ?? null;
+    //   $id    = $request->input('id') ?? null;
 
 
     //   if($table === null || $table === '' || !Schema::hasTable($table)) {
@@ -2870,149 +2516,51 @@
     //     return response()->json([
 
     //       'status'  => false,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('ID não informado.'),
-    //       'data' => $request->all()
+    //       'message' => 'ID não informado.'
 
     //     ], 400);
 
     //   }
 
+    //   if(!is_array($id)) {
 
-    //   $formID = $request->input('automatorFormID');
-    //   $data   = $request->except([
+    //     DB::table($table)->where($index, $id)->delete();
 
-    //     '_token',
-    //     '_method',
-    //     'automatorFormID',
-    //     'id'
+    //   } else {
 
-    //   ]);
+    //     $total = count($id);
+    //     if($total >= 1) {
 
+    //       foreach ($id as $item) {
 
-    //   $updateData = [];
+    //         DB::table($table)->where($index, $item)->delete();
 
-
-    //   foreach($data as $field => $value) {
-
-    //     if(Schema::hasColumn($table, $field) && $field != $index) {
-
-    //       $updateData[$field] = $value;
-
-    //     }
-
-    //   }
-
-
-    //   if(count($updateData) <= 0) {
-
-    //     return response()->json([
-
-    //       'status'  => false,
-    //       'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Nenhuma informação válida foi enviada.')
-
-    //     ], 400);
-
-    //   }
-
-
-    //   // Validação de colunas únicas para updateData
-    //   $uniqueColumns = $this->getUniqueColumns($table);
-    //   foreach ($uniqueColumns as $column) {
-    //     if (isset($updateData[$column])) {
-    //       $query = DB::table($table)->where($column, $updateData[$column]);
-    //       // Excluir o registro atual da validação
-    //       $query->where($index, '!=', $id);
-    //       if ($query->exists()) {
-    //         return response()->json([
-    //           'status'  => false,
-    //           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-    //           'message' => SysAutomator::SysAutomatorGetTranslateWord('O valor para o campo') . " '" . self::getAutomatorFormFieldNameByFormID($formID, $column) . "' " . SysAutomator::SysAutomatorGetTranslateWord('já existe em outro registro.')
-    //         ], 400);
     //       }
-    //     }
-    //   }
 
-    //   DB::table($table)->where($index, $id)->update($updateData);
+    //     } else {
+
+    //       return response()->json([
+
+    //         'status'  => false,
+    //         'message' => 'ID não informado.'
+
+    //       ], 400);
+
+    //     }
+
+    //   }
 
 
     //   return response()->json([
 
     //     'status'  => true,
-    //     'title'   => SysAutomator::SysAutomatorGetTranslateWord('SUCESSO'),
-    //     'message' => SysAutomator::SysAutomatorGetTranslateWord('Registro atualizado com sucesso.')
+    //     'title'   => 'Sucesso',
+    //     'message' => 'Registro removido com sucesso.'
 
     //   ]);
 
 
     // }
-
-
-
-    public function deleteData(Request $request, $shortcodeParams = []) {
-
-
-      if(!is_array($shortcodeParams)) {
-
-        $shortcodeParams = $request->attributes->get('automator_shortcode_params', []);
-
-      }
-
-
-      $table = $shortcodeParams['table'] ?? null;
-      $index = $shortcodeParams['index'] ?? null;
-      $id    = $request->route('id') ?? $request->get('id') ?? null;
-
-
-      if($table === null || $table === '' || !Schema::hasTable($table)) {
-
-        return response()->json([
-
-          'status'  => false,
-          'message' => 'Tabela inválida.'
-
-        ], 400);
-
-      }
-
-
-      if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
-
-        return response()->json([
-
-          'status'  => false,
-          'message' => 'Índice inválido.'
-
-        ], 400);
-
-      }
-
-
-      if($id === null || $id === '') {
-
-        return response()->json([
-
-          'status'  => false,
-          'message' => 'ID não informado.'
-
-        ], 400);
-
-      }
-
-
-      DB::table($table)->where($index, $id)->delete();
-
-
-      return response()->json([
-
-        'status'  => true,
-        'message' => 'Registro removido com sucesso.'
-
-      ]);
-
-
-    }
 
 
     /*

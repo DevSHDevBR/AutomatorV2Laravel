@@ -955,10 +955,9 @@
 
       @if(!empty($search_fields))
 
-        <div class="col-12 col-sm-auto">
+        <div class="col-12 col-sm-auto col-md-7">
 
           <form method="GET" class="row g-3 align-items-end automator-ajax-ignore">
-
 
              @foreach(request()->except(['search', 'search_in', 'page']) as $requestKey => $requestValue)
 
@@ -1065,10 +1064,25 @@
 
           @endforeach
 
+          <div class="col-12">
+
+            <label for="per_page" class="form-label small fw-medium mb-1">{!! SysAutomator::SysAutomatorGetTranslateWord('Registros/Página') !!}</label>
+
+            <select name="per_page" id="per_page" onchange="this.form.submit()" class="form-select">
+
+              @foreach($perPageOptions as $perPageOption)
+
+                <option value="{{ $perPageOption }}" {{ (int) $currentPerPage === (int) $perPageOption ? 'selected' : '' }}>{{ $perPageOption }}</option>
+              
+              @endforeach
+            
+            </select>
+          
+          </div>
+
         </form>
 
       </div>
-
 
     </div>
 
@@ -1145,7 +1159,7 @@
 
           <div class="col-12 col-sm-auto">
 
-            <button type="button" id="automator-pagination-delete-selected" class="btn btn-danger js-automator-pagination-delete-selected" disabled data-delete-message-confirm="{{ e($deleteMessageConfirm) }}" onclick="return AutomatorPaginationSubmitDelete(this)">{!! SysAutomator::SysAutomatorGetTranslateWord('Excluir Selecionado(s)') !!}</button>
+            <button data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['delete'], true) !!}" type="button" id="automator-pagination-delete-selected" class="btn btn-danger js-automator-pagination-delete-selected" disabled data-delete-message-confirm="{{ e($deleteMessageConfirm) }}" onclick="return AutomatorPaginationSubmitDelete(this)">{!! SysAutomator::SysAutomatorGetTranslateWord('Excluir Selecionado(s)') !!}</button>
           
           </div>
 
@@ -1469,7 +1483,7 @@
 
                       <td class="text-end text-nowrap">
 
-                        <div class="d-flex justify-content-end gap-2">
+                        <div class="d-none d-md-flex justify-content-end gap-2">
 
                           @foreach($list_actions as $listAction)
 
@@ -1562,6 +1576,7 @@
                                     @if($isDeleteAction)
 
                                       data-original-onclick="{!! e($listOnclick) !!}"
+                                      data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['delete'], true) !!}"
                                       onclick="return AutomatorPaginationConfirmDeleteItem(this)"
 
                                     @elseif($listOnclick !== '')
@@ -1613,6 +1628,165 @@
                             @endif
 
                           @endforeach
+
+                        </div>
+
+                        <div class="d-table d-md-none">
+                          
+                          <div class="btn-group dropstart">
+                            <button type="button" class="btn btn-sm btn-primary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                              {!! SysAutomator::SysAutomatorGetTranslateWord('Ações') !!}
+                            </button>
+                            <ul class="dropdown-menu">
+                              
+                              @foreach($list_actions as $listAction)
+
+                                @php
+
+                                  $actAdd  = true;
+                                  $actOn   = true;
+                                  $listAct = null;
+
+
+                                  if(isset($listAction['action'])) {
+
+                                    $actAdd  = false;
+                                    $listAct = $actions[$listAction['action']] ?? null;
+
+
+                                    if(
+
+                                      is_array($listAct) &&
+                                      isset($listAct['route']) &&
+                                      SysAutomator::SysAutomatorCheckUserAccess($listAct['route'])
+                                    
+                                    ) {
+
+                                      $actAdd = true;
+                                      $actOn  = $checkActionRoles($item, $listAct['roles'] ?? []);
+
+                                    }
+
+                                  }
+
+
+                                  $listType       = $listAction['type'] ?? 'button';
+                                  $listActionName = $listAction['action'] ?? '';
+                                  $isDeleteAction = ($listActionName === 'delete');
+                                  $listID         = ($listAction['id'] ?? 'btn-action') . '-' . $itemID;
+                                  $listClass      = ( str_replace(['btn-primary', 'btn-warning', 'btn-danger', 'text-white'], '', ($listAction['class'] ?? '')) ) . ' btn btn-sm d-inline-flex align-items-center py-2 text-center';
+                                  $listIcon       = $renderIcon($listAction['icon'] ?? null);
+                                  $listText       = SysAutomator::SysAutomatorGetTranslateWord($listAction['text'] ?? '');
+
+                                  $listOnclick = isset($listAction['onclick'])
+
+                                    ? $replaceActionVars(
+
+                                      $listAction['onclick'],
+
+                                      $item
+
+                                    )
+
+                                    : '';
+
+                                  $listHref = isset($listAction['href'])
+
+                                    ? $replaceActionVars(
+
+                                      $listAction['href'],
+
+                                      $item
+
+                                    )
+
+                                    : '#';
+
+
+                                  if($isDeleteAction) {
+
+                                    $listClass .= ' js-automator-pagination-delete-item';
+
+                                  }
+
+                                @endphp
+
+                                @if($actAdd)
+
+                                  @if(!$actOn)
+
+                                    <li>
+                                      
+                                      <button type="button" id="{{ $listID }}" class="{{ $listClass }} dropdown-item disabled" disabled >{!! $listText !!}</button>
+
+                                    </li>
+                                  
+                                  @else
+                                    
+                                    @if($listType === 'button')
+                                      
+                                      <li>
+                                        <button type="button" id="{{ $listID }}" class="{!! $listClass !!} dropdown-item"  data-automator-action="{{ $listActionName }}" data-automator-item-id="{{ $itemID }}" data-delete-message-confirm="{!! e($deleteMessageConfirm) !!}"
+                                          
+                                          @if($isDeleteAction)
+
+                                            data-original-onclick="{!! e($listOnclick) !!}"
+                                            data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['delete'], true) !!}"
+                                            onclick="return AutomatorPaginationConfirmDeleteItem(this)"
+
+                                          @elseif($listOnclick !== '')
+
+                                            onclick="{!! $listOnclick !!}"
+
+                                          @endif
+                                        >
+                                          {!! $listText !!}
+                                        </button>
+                                      </li>
+
+                                    @else
+
+                                      <li>
+                                        <a
+                                          id="{{ $listID }}"
+                                          href="{{ $isDeleteAction ? '#' : $listHref }}"
+                                          class="{{ $listClass }} dropdown-item"
+                                          data-automator-action="{{ $listActionName }}"
+                                          data-automator-item-id="{{ $itemID }}"
+                                          data-delete-message-confirm="{{ e($deleteMessageConfirm) }}"
+
+                                          @if(isset($listAction['target']) && !$isDeleteAction)
+
+                                            target="{{ $listAction['target'] }}"
+
+                                          @endif
+
+                                          @if($isDeleteAction)
+
+                                            data-original-href="{{ e($listHref) }}"
+                                            data-original-onclick="{{ e($listOnclick) }}"
+                                            onclick="return AutomatorPaginationConfirmDeleteItem(this)"
+
+                                          @elseif($listOnclick !== '')
+
+                                            onclick="{{ $listOnclick }}"
+
+                                          @endif
+                                        >
+                                          {!! $listText !!}
+                                        </a>
+                                      </li>
+                                      
+                                    @endif
+
+                                  @endif
+
+                                @endif
+
+                              @endforeach
+
+                            </ul>
+                          </div>
 
                         </div>
 

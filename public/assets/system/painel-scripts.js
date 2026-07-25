@@ -1157,12 +1157,194 @@ function AutomatorPaginationSelectAll(checkbox) {
 }
 
 
+function AutomatorPaginationDeleteValidatedCallback2(context = {}) {
+
+  console.log('Confirmação de senha validada para exclusão:', context);
+
+  $.ajax({
+    url: context.original_href,
+    type: 'POST',
+    data: {
+      id: context.items
+    },
+    headers: {
+      'X-CSRF-TOKEN': AutomatorGetCSRFToken(),
+      'Accept': 'application/json'
+    },
+    dataType: 'json',
+    success: function(response) {
+
+      console.log(response);
+      var responseTitle   = response.title || '';
+      var responseMessage = response.message || '';
+      if(response.status == true || response.status == 'true' || response.status == 1 || response.status == '1') {
+
+        $('#page-loader').css('z-index', '');
+        AutomatorPageLoader('hide', function() {
+
+          AutomatorCreateAutoCloseToastAlert(
+            'automator-success-message',
+            'center',
+            'middle',
+            true,
+            true,
+            responseTitle,
+            responseMessage,
+            function() {
+
+              AutomatorSetActionStatus(false, function() {
+                location.reload();
+              });
+
+            },
+            false,
+            null,
+            3000
+          );
+
+        });
+
+      }
+
+    },
+    error: function(xhr) {
+
+      var responseTitle   = 'Erro';
+      var responseMessage = 'Não foi possível completar sua Solicitação.';
+
+      if(xhr.responseJSON && xhr.responseJSON.title) {
+        responseTitle = xhr.responseJSON.title;
+      }
+
+      if(xhr.responseJSON && xhr.responseJSON.message) {
+        responseMessage = xhr.responseJSON.message;
+      } else if(xhr.responseText) {
+        responseMessage = xhr.responseText;
+      }
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-security-confirmation-request-error',
+        'center',
+        'middle',
+        true,
+        true,
+        responseTitle,
+        responseMessage,
+        function() {
+
+          $('#page-loader').css('z-index', '');
+
+          AutomatorPageLoader('hide', function() {
+
+            AutomatorSetActionStatus(false);
+
+          });
+
+        },
+        false,
+        null,
+        5000
+      );
+
+    }
+
+  });
+
+}
+
 
 function AutomatorPaginationDeleteValidatedCallback(context = {}) {
 
   console.log('Confirmação de senha validada para exclusão:', context);
 
-  AutomatorSetActionStatus(false);
+
+  $.ajax({
+    url: context.original_href,
+    type: 'POST',
+    data: {
+      id: context.items
+    },
+    headers: {
+      'X-CSRF-TOKEN': AutomatorGetCSRFToken(),
+      'Accept': 'application/json'
+    },
+    dataType: 'json',
+    success: function(response) {
+
+      var responseTitle   = response.title || '';
+      var responseMessage = response.message || '';
+      if(response.status == true || response.status == 'true' || response.status == 1 || response.status == '1') {
+
+        $('#page-loader').css('z-index', '');
+        AutomatorPageLoader('hide', function() {
+
+          AutomatorCreateAutoCloseToastAlert(
+            'automator-success-message',
+            'center',
+            'middle',
+            true,
+            true,
+            responseTitle,
+            responseMessage,
+            function() {
+
+              AutomatorSetActionStatus(false, function() {
+                location.reload();
+              });
+
+            },
+            false,
+            null,
+            3000
+          );
+
+        });
+
+      }
+
+    },
+    error: function(xhr) {
+
+      var responseTitle   = 'Erro';
+      var responseMessage = 'Não foi possível completar sua Solicitação.';
+
+      if(xhr.responseJSON && xhr.responseJSON.title) {
+        responseTitle = xhr.responseJSON.title;
+      }
+
+      if(xhr.responseJSON && xhr.responseJSON.message) {
+        responseMessage = xhr.responseJSON.message;
+      } else if(xhr.responseText) {
+        responseMessage = xhr.responseText;
+      }
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-security-confirmation-request-error',
+        'center',
+        'middle',
+        true,
+        true,
+        responseTitle,
+        responseMessage,
+        function() {
+
+          $('#page-loader').css('z-index', '');
+
+          AutomatorPageLoader('hide', function() {
+
+            AutomatorSetActionStatus(false);
+
+          });
+
+        },
+        false,
+        null,
+        5000
+      );
+
+    }
+
+  });
 
   return true;
 
@@ -1637,10 +1819,11 @@ function AutomatorPaginationConfirmDeleteItem(btn) {
         type: 'pagination-delete-item',
         button: btn,
         wrapper: wrapper,
-        item_id: btn.getAttribute('data-automator-item-id'),
+        items: btn.getAttribute('data-automator-item-id'),
         original_onclick: btn.getAttribute('data-original-onclick') || '',
         original_href: btn.getAttribute('data-original-href') || '',
         message: message,
+        skipSuccessToast: true,
         resetActionStatusOnCancel: true,
         resetActionStatusOnSuccess: false,
         successCallback: function(context) {
@@ -1698,10 +1881,12 @@ function AutomatorPaginationSubmitDelete(btn = null) {
           return item.value;
         }),
         message: message,
+        skipSuccessToast: true,
+        original_href: btn.getAttribute('data-original-href') || '',
         resetActionStatusOnCancel: true,
         resetActionStatusOnSuccess: false,
         successCallback: function(context) {
-          AutomatorPaginationDeleteValidatedCallback(context);
+          AutomatorPaginationDeleteValidatedCallback2(context);
         }
       });
 
