@@ -219,7 +219,12 @@
 </style>
 
 
+<script>
+  
+  window.AutomatorPaginationRoutes = {};
+  window.AutomatorPaginationRoutes.add = "{!! SysAutomator::SysAutomatorGetRouteLinkByName('admin-api-menus-store', true) !!}";;
 
+</script>
 <div class="page-card mb-4">
   
   <div class="page-card-body">
@@ -228,7 +233,7 @@
 
       <div class="col-12 col-sm-auto">
 
-        <button type="button" class="btn btn-success border d-inline-flex align-items-center justify-content-center gap-2 w-100">{!! SysAutomator::SysAutomatorGetTranslateWord($textos['create-new-menu']) !!}</button>
+        <button type="button" class="btn btn-success border d-inline-flex align-items-center justify-content-center gap-2 w-100" onclick="AutomatorPaginationCreateModalForm('modal-lg', 'Criar Novo Menu', 19, '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });">{!! SysAutomator::SysAutomatorGetTranslateWord($textos['create-new-menu']) !!}</button>
 
       </div>
       <div class="col-12 col-sm-auto">
@@ -316,7 +321,7 @@
                 <option {!! ( (isset($currentMenuData['menu']['tbl_sys_nav_ID'])) ? ( ($currentMenuData['menu']['tbl_sys_nav_ID'] == '' || $currentMenuData['menu']['tbl_sys_nav_ID'] == null) ? 'selected ' : '' ) : '' ) !!}value="">- {!! SysAutomator::SysAutomatorGetTranslateWord($textos['select']) !!} -</option>
                 @foreach($navs as $navKey => $nav)
 
-                  <option {!! ( (isset($currentMenuData['menu']['tbl_sys_nav_ID'])) ? ( ($currentMenuData['menu']['tbl_sys_nav_ID'] == $nav['tbl_sys_nav_ID']) ? 'selected ' : '' ) : '') !!}value="{{ $nav['tbl_sys_nav_ID'] }}">{!! $nav['tbl_sys_nav_title'] !!}</option>
+                  <option {!! ( (isset($currentMenuData['menu']['tbl_sys_nav_ID'])) ? ( ($currentMenuData['menu']['tbl_sys_nav_ID'] == $nav['tbl_sys_nav_ID']) ? 'selected ' : '' ) : '') !!}value="{{ $nav['tbl_sys_nav_ID'] }}"{!! ( (SysAutomator::SysAutomatorNavHasMenu($nav['tbl_sys_nav_ID']) == true) ? ' disabled' : '' ) !!}>{!! $nav['tbl_sys_nav_title'] !!}</option>
 
                 @endforeach
 
@@ -351,7 +356,7 @@
 
           <div class="col-12 pb-3 mb-3 border-bottom">
 
-            <button type="button" class="btn btn-info border d-inline-flex align-items-center justify-content-center gap-2 text-white"><i class="fa fa-plus text-white"></i> {!! SysAutomator::SysAutomatorGetTranslateWord($textos['add-menu-item']) !!}</button>
+            <button type="button" class="btn btn-info border d-inline-flex align-items-center justify-content-center gap-2 text-white" onclick="addMenuItem(this)"><i class="fa fa-plus text-white"></i> {!! SysAutomator::SysAutomatorGetTranslateWord($textos['add-menu-item']) !!}</button>
             
           </div>
           
@@ -530,21 +535,26 @@
                           
                           </div>
 
-                          <div class="col-12 col-md-6 icon-picker-container">
-                            
-                            <label for="tbl_sys_menu_item_icon-{{ $mID }}" class="form-label fw-bold text-uppercase small mb-1">{{ SysAutomator::SysAutomatorGetTranslateWord($textos['icon']) }}</label>
+                          <div class="col-12 col-md-6 icon-picker-container" data-automator-icon-picker="true" >
+
+                            <label for="tbl_sys_menu_item_icon_search-{{ $mID }}" class="form-label fw-bold text-uppercase small mb-1" >{{ SysAutomator::SysAutomatorGetTranslateWord($textos['icon']) }}</label>
+
+                            <input type="hidden" id="tbl_sys_menu_item_icon-{{ $mID }}" name="tbl_sys_menu_item_icon" value="{{ trim(str_replace(['fa-solid fa-', 'fa fa-', 'fas fa-'], '', $mIcone)) }}" class="icon-picker-value" />
+
                             <div class="icon-search-wrapper">
-                              
-                              <i class="fa fa-{{ $mIcone ?: 'search' }} icon-search-prefix current-icon-display"></i>
-                              <input id="tbl_sys_menu_item_icon-{{ $mID }}" type="text" name="tbl_sys_menu_item_icon" value="{{ str_replace('fa-solid fa-', '', $mIcone) }}" class="form-control form-control-sm icon-search-input" placeholder="{{ SysAutomator::SysAutomatorGetTranslateWord($textos['icon-search']) }}" onfocus="showIconPicker(this)" onkeyup="filterIcons(this)" />
-                            
+
+                              <i class="fa fa-{{ $mIcone !== '' ? trim(str_replace(['fa-solid fa-', 'fa fa-', 'fas fa-'], '', $mIcone)) : 'magnifying-glass' }} icon-search-prefix current-icon-display" aria-hidden="true"></i>
+
+                              <input id="tbl_sys_menu_item_icon_search-{{ $mID }}" type="text" value="" class="form-control form-control-sm icon-search-input" placeholder="{{ SysAutomator::SysAutomatorGetTranslateWord($textos['icon-search']) }}" autocomplete="off" onfocus="showIconPicker(this)" oninput="filterIcons(this)" />
+
                             </div>
-                            <div class="icon-picker-dropdown">
-                              
+
+                            <div class="icon-picker-dropdown" role="listbox" aria-label="{{ SysAutomator::SysAutomatorGetTranslateWord($textos['icon']) }}">
+
                               <div class="icon-picker-grid"></div>
-                            
+
                             </div>
-                          
+
                           </div>
 
                           @if($deleteON == true)
@@ -569,7 +579,7 @@
                             <label for="tbl_sys_menu_item_admin-{{ $mID }}" class="form-label fw-bold text-uppercase small mb-1">{!! SysAutomator::SysAutomatorGetTranslateWord($textos['admin-area']) !!}</label>
                             <select id="tbl_sys_menu_item_admin-{{ $mID }}" name="tbl_sys_menu_item_admin" class="form-select form-select-sm" onchange="atualizarDisplayUsersTypes(this)">
                               
-                              @if($_nav['tbl_sys_nav_admin'] == true)
+                              @if( (isset($_nav['tbl_sys_nav_admin'])) && ($_nav['tbl_sys_nav_admin'] == true) )
                                 
                                 <option value="1" selected>{!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}</option>
                                 <option value="0" disabled>{!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}</option>
@@ -973,7 +983,7 @@
 
               @else
 
-                <div class="text-center fs-4">{!! SysAutomator::SysAutomatorGetTranslateWord('Nenhum item cadastrado!') !!}</div>
+                <div id="menu-sortable-list-empty" class="text-center fs-4">{!! SysAutomator::SysAutomatorGetTranslateWord('Nenhum item cadastrado!') !!}</div>
 
               @endif
 
@@ -1191,6 +1201,301 @@
   };
 
 
+  function AutomatorMenuCurrentUserIsDeveloper() {
+
+
+    @php
+
+      $automatorMenuUserIsDeveloper = false;
+
+
+      if(
+
+        isset($user) &&
+
+        is_array($user) &&
+
+        isset($user['tbl_user_types_IDs']) &&
+
+        is_array($user['tbl_user_types_IDs']) &&
+
+        isset($usersTypes) &&
+
+        is_array($usersTypes)
+
+      ) {
+
+
+        foreach($user['tbl_user_types_IDs'] as $automatorMenuUserTypeID) {
+
+
+          if(!isset($usersTypes[$automatorMenuUserTypeID])) {
+
+            continue;
+
+          }
+
+
+          $automatorMenuUserTypeName = mb_strtolower(
+
+            trim(
+
+              (string) $usersTypes[$automatorMenuUserTypeID]
+
+            ),
+
+            'UTF-8'
+
+          );
+
+
+          if($automatorMenuUserTypeName === 'desenvolvedor') {
+
+
+            $automatorMenuUserIsDeveloper = true;
+
+            break;
+
+
+          }
+
+
+        }
+
+
+      }
+
+    @endphp
+
+
+    return {!! $automatorMenuUserIsDeveloper === true ? 'true' : 'false' !!};
+
+
+  }
+
+
+
+  function AutomatorMenuRemoveLockedFields(
+    container = document
+  ) {
+
+
+    if(
+
+      AutomatorMenuCurrentUserIsDeveloper() ===
+
+      true
+
+    ) {
+
+      return true;
+
+    }
+
+
+    if(!container) {
+
+      container = document;
+
+    }
+
+
+    var lockedFields = [];
+
+
+    if(
+
+      container.matches &&
+
+      container.matches(
+
+        'select[name="tbl_sys_menu_item_locked"]'
+
+      )
+
+    ) {
+
+
+      lockedFields.push(
+
+        container
+
+      );
+
+
+    }
+
+
+    if(container.querySelectorAll) {
+
+
+      container.querySelectorAll(
+
+        'select[name="tbl_sys_menu_item_locked"]'
+
+      ).forEach(function(lockedField) {
+
+
+        if(!lockedFields.includes(lockedField)) {
+
+
+          lockedFields.push(
+
+            lockedField
+
+          );
+
+
+        }
+
+
+      });
+
+
+    }
+
+
+    lockedFields.forEach(function(lockedField) {
+
+
+      var fieldContainer = lockedField.closest(
+
+        '.col-12'
+
+      );
+
+
+      if(fieldContainer) {
+
+
+        fieldContainer.remove();
+
+
+      } else {
+
+
+        lockedField.remove();
+
+
+      }
+
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorMenuObserveLockedFields() {
+
+
+    AutomatorMenuRemoveLockedFields(
+
+      document
+
+    );
+
+
+    if(
+
+      AutomatorMenuCurrentUserIsDeveloper() ===
+
+      true
+
+    ) {
+
+      return true;
+
+    }
+
+
+    if(
+
+      window.AutomatorMenuLockedFieldsObserver
+
+    ) {
+
+
+      window.AutomatorMenuLockedFieldsObserver.disconnect();
+
+
+    }
+
+
+    window.AutomatorMenuLockedFieldsObserver =
+
+      new MutationObserver(function(mutations) {
+
+
+        mutations.forEach(function(mutation) {
+
+
+          mutation.addedNodes.forEach(function(node) {
+
+
+            if(
+
+              !node ||
+
+              node.nodeType !== 1
+
+            ) {
+
+              return;
+
+            }
+
+
+            AutomatorMenuRemoveLockedFields(
+
+              node
+
+            );
+
+
+          });
+
+
+        });
+
+
+      });
+
+
+    window.AutomatorMenuLockedFieldsObserver.observe(
+
+      document.getElementById(
+
+        'menu-sortable-list'
+
+      )
+
+      || document.body,
+
+      {
+
+        childList:
+
+          true,
+
+        subtree:
+
+          true,
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
 
   document.addEventListener('DOMContentLoaded', function () {
 
@@ -1289,6 +1594,7 @@
     // Agora chamamos as funções após suas definições
     window.initAllSortables();
     initIconPickers();
+    AutomatorMenuObserveLockedFields();
 
 
     window.refreshMenuStructure = function () {
@@ -1432,6 +1738,24 @@
     };
 
 
+    $(document).on(
+
+      'change keyup',
+
+      '[name="tbl_sys_menu_item_index"]',
+
+      function() {
+
+        updateMenuItemAdminState(
+
+          $(this).closest('.menu-item-wrapper')
+
+        );
+
+      }
+
+    );
+
 
     // Fechar picker ao clicar fora
     document.addEventListener('click', function(e) {
@@ -1450,76 +1774,844 @@
 
 
 
-  // Funções do Icon Picker
-  function initIconPickers() {
-    
-    document.querySelectorAll('.icon-picker-grid').forEach(grid => {
-      
-      renderIcons(grid, faIcons);
-    
-    });
-  
-  }
+    function AutomatorMenuNormalizeIconValue(
+      value = ''
+    ) {
 
 
+      value = String(
 
-  function renderIcons(grid, icons) {
-    
-    grid.innerHTML = '';
-    
-    if (icons.length === 0) {
+        value
 
-      grid.innerHTML = '<div class="icon-picker-no-results" style="grid-column: 1 / -1;">Nenhum ícone encontrado</div>';
-      return;
+        || ''
+
+      ).trim();
+
+
+      value = value.replace(
+
+        /^(fa-solid|fa-regular|fa-brands|fa|fas|far|fab)\s+/,
+
+        ''
+
+      );
+
+
+      value = value.replace(
+
+        /^fa-/,
+
+        ''
+
+      );
+
+
+      return value.trim();
+
 
     }
-    
-    icons.forEach(icon => {
 
-      const item = document.createElement('div');
-      item.className = 'icon-picker-item';
-      item.innerHTML = `<i class="fa fa-${icon}"></i><span>${icon}</span>`;
-      item.onclick = function() {
 
-        const container = grid.closest('.icon-picker-container');
-        const input = container.querySelector('.icon-search-input');
-        const display = container.querySelector('.current-icon-display');
-        input.value = icon;
-        display.className = `fa fa-${icon} text-gray-400 current-icon-display`;
-        container.querySelector('.icon-picker-dropdown').style.display = 'none';
-        setMenuChanged();
+
+    function AutomatorMenuGetIconPickerElements(
+      element = null
+    ) {
+
+
+      if(!element) {
+
+        return null;
+
+      }
+
+
+      var container = element.closest(
+
+        '.icon-picker-container'
+
+      );
+
+
+      if(!container) {
+
+        return null;
+
+      }
+
+
+      return {
+
+        container:
+
+          container,
+
+        searchInput:
+
+          container.querySelector(
+
+            '.icon-search-input'
+
+          ),
+
+        valueInput:
+
+          container.querySelector(
+
+            '.icon-picker-value'
+
+          ),
+
+        display:
+
+          container.querySelector(
+
+            '.current-icon-display'
+
+          ),
+
+        dropdown:
+
+          container.querySelector(
+
+            '.icon-picker-dropdown'
+
+          ),
+
+        grid:
+
+          container.querySelector(
+
+            '.icon-picker-grid'
+
+          ),
 
       };
 
-      grid.appendChild(item);
 
-    });
-
-  }
+    }
 
 
 
-  function showIconPicker(input) {
-
-    const container = input.closest('.icon-picker-container');
-    const dropdown = container.querySelector('.icon-picker-dropdown');
-    document.querySelectorAll('.icon-picker-dropdown').forEach(d => d.style.display = 'none');
-    dropdown.style.display = 'block';
-    filterIcons(input);
-
-  }
+    function AutomatorMenuUpdateIconPickerDisplay(
+      container = null
+    ) {
 
 
+      if(!container) {
 
-  function filterIcons(input) {
+        return false;
 
-    const term = input.value.toLowerCase();
-    const container = input.closest('.icon-picker-container');
-    const grid = container.querySelector('.icon-picker-grid');
-    const filtered = faIcons.filter(icon => icon.includes(term));
-    renderIcons(grid, filtered);
+      }
 
-  }
+
+      var valueInput = container.querySelector(
+
+        '.icon-picker-value'
+
+      );
+
+
+      var display = container.querySelector(
+
+        '.current-icon-display'
+
+      );
+
+
+      if(!display) {
+
+        return false;
+
+      }
+
+
+      var iconValue = AutomatorMenuNormalizeIconValue(
+
+        valueInput
+
+          ? valueInput.value
+
+          : ''
+
+      );
+
+
+      display.className =
+
+        'fa fa-' +
+
+        (
+
+          iconValue !== ''
+
+            ? iconValue
+
+            : 'magnifying-glass'
+
+        ) +
+
+        ' icon-search-prefix current-icon-display';
+
+
+      return true;
+
+
+    }
+
+
+
+    function initIconPickers(
+      container = document
+    ) {
+
+
+      if(!container) {
+
+        container = document;
+
+      }
+
+
+      var iconPickers = [];
+
+
+      if(
+
+        container.matches &&
+
+        container.matches(
+
+          '.icon-picker-container'
+
+        )
+
+      ) {
+
+        iconPickers.push(
+
+          container
+
+        );
+
+      }
+
+
+      if(container.querySelectorAll) {
+
+
+        container
+
+          .querySelectorAll(
+
+            '.icon-picker-container'
+
+          )
+
+          .forEach(function(iconPicker) {
+
+
+            if(!iconPickers.includes(iconPicker)) {
+
+              iconPickers.push(
+
+                iconPicker
+
+              );
+
+            }
+
+
+          });
+
+
+      }
+
+
+      iconPickers.forEach(function(iconPicker) {
+
+
+        var elements =
+
+          AutomatorMenuGetIconPickerElements(
+
+            iconPicker
+
+          );
+
+
+        if(!elements) {
+
+          return;
+
+        }
+
+
+        if(elements.valueInput) {
+
+
+          elements.valueInput.value =
+
+            AutomatorMenuNormalizeIconValue(
+
+              elements.valueInput.value
+
+            );
+
+
+        }
+
+
+        if(elements.searchInput) {
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | O input visível serve somente para pesquisa
+          |--------------------------------------------------------------------------
+          */
+
+          elements.searchInput.removeAttribute(
+
+            'name'
+
+          );
+
+
+          elements.searchInput.value = '';
+
+
+        }
+
+
+        AutomatorMenuUpdateIconPickerDisplay(
+
+          iconPicker
+
+        );
+
+
+        if(elements.grid) {
+
+
+          renderIcons(
+
+            elements.grid,
+
+            faIcons
+
+          );
+
+
+        }
+
+
+        iconPicker.setAttribute(
+
+          'data-automator-icon-picker-initialized',
+
+          'true'
+
+        );
+
+
+      });
+
+
+      return true;
+
+
+    }
+
+
+
+    function renderIcons(
+      grid = null,
+      icons = []
+    ) {
+
+
+      if(!grid) {
+
+        return false;
+
+      }
+
+
+      grid.innerHTML = '';
+
+
+      if(!Array.isArray(icons)) {
+
+        icons = [];
+
+      }
+
+
+      if(icons.length <= 0) {
+
+
+        grid.innerHTML =
+
+          '<div ' +
+
+            'class="icon-picker-no-results" ' +
+
+            'style="grid-column: 1 / -1;"' +
+
+          '>' +
+
+            'Nenhum ícone encontrado' +
+
+          '</div>';
+
+
+        return true;
+
+      }
+
+
+      icons.forEach(function(icon) {
+
+
+        icon = AutomatorMenuNormalizeIconValue(
+
+          icon
+
+        );
+
+
+        if(icon === '') {
+
+          return;
+
+        }
+
+
+        var item = document.createElement(
+
+          'button'
+
+        );
+
+
+        item.type = 'button';
+
+
+        item.className =
+
+          'icon-picker-item border-0 bg-transparent';
+
+
+        item.setAttribute(
+
+          'data-automator-icon-value',
+
+          icon
+
+        );
+
+
+        item.setAttribute(
+
+          'role',
+
+          'option'
+
+        );
+
+
+        item.setAttribute(
+
+          'aria-label',
+
+          icon
+
+        );
+
+
+        item.innerHTML =
+
+          '<i class="fa fa-' +
+
+            icon +
+
+          '"></i>' +
+
+          '<span>' +
+
+            icon +
+
+          '</span>';
+
+
+        item.addEventListener(
+
+          'click',
+
+          function(event) {
+
+
+            event.preventDefault();
+
+            event.stopPropagation();
+
+
+            var elements =
+
+              AutomatorMenuGetIconPickerElements(
+
+                grid
+
+              );
+
+
+            if(!elements) {
+
+              return false;
+
+            }
+
+
+            if(elements.valueInput) {
+
+
+              elements.valueInput.value =
+
+                icon;
+
+
+              elements.valueInput.dispatchEvent(
+
+                new Event(
+
+                  'change',
+
+                  {
+
+                    bubbles: true,
+
+                  }
+
+                )
+
+              );
+
+
+            }
+
+
+            if(elements.searchInput) {
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Limpa o filtro após selecionar
+              |--------------------------------------------------------------------------
+              */
+
+              elements.searchInput.value = '';
+
+
+            }
+
+
+            AutomatorMenuUpdateIconPickerDisplay(
+
+              elements.container
+
+            );
+
+
+            if(elements.dropdown) {
+
+
+              elements.dropdown.style.display =
+
+                'none';
+
+
+            }
+
+
+            setMenuChanged();
+
+
+            return false;
+
+
+          }
+
+        );
+
+
+        grid.appendChild(
+
+          item
+
+        );
+
+
+      });
+
+
+      return true;
+
+
+    }
+
+
+
+    function showIconPicker(
+      input = null
+    ) {
+
+
+      var elements =
+
+        AutomatorMenuGetIconPickerElements(
+
+          input
+
+        );
+
+
+      if(!elements) {
+
+        return false;
+
+      }
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Fecha os demais pickers
+      |--------------------------------------------------------------------------
+      */
+
+      document.querySelectorAll(
+
+        '.icon-picker-dropdown'
+
+      ).forEach(function(dropdown) {
+
+
+        if(dropdown !== elements.dropdown) {
+
+
+          dropdown.style.display =
+
+            'none';
+
+
+        }
+
+
+      });
+
+
+      /*
+      |--------------------------------------------------------------------------
+      | Toda vez que receber foco, começa sem filtro
+      |--------------------------------------------------------------------------
+      */
+
+      if(elements.searchInput) {
+
+
+        elements.searchInput.value = '';
+
+
+      }
+
+
+      if(elements.grid) {
+
+
+        renderIcons(
+
+          elements.grid,
+
+          faIcons
+
+        );
+
+
+      }
+
+
+      if(elements.dropdown) {
+
+
+        elements.dropdown.style.display =
+
+          'block';
+
+
+      }
+
+
+      return true;
+
+
+    }
+
+
+
+    function filterIcons(
+      input = null
+    ) {
+
+
+      var elements =
+
+        AutomatorMenuGetIconPickerElements(
+
+          input
+
+        );
+
+
+      if(!elements || !elements.grid) {
+
+        return false;
+
+      }
+
+
+      var term = String(
+
+        elements.searchInput
+
+          ? elements.searchInput.value
+
+          : ''
+
+      )
+        .trim()
+        .toLowerCase();
+
+
+      var filteredIcons = faIcons.filter(
+
+        function(icon) {
+
+
+          return String(
+
+            icon
+
+          )
+            .toLowerCase()
+            .includes(
+
+              term
+
+            );
+
+
+        }
+
+      );
+
+
+      renderIcons(
+
+        elements.grid,
+
+        filteredIcons
+
+      );
+
+
+      if(elements.dropdown) {
+
+
+        elements.dropdown.style.display =
+
+          'block';
+
+
+      }
+
+
+      return true;
+
+
+    }
+
+
+
+    function AutomatorMenuClearIcon(
+      element = null
+    ) {
+
+
+      var elements =
+
+        AutomatorMenuGetIconPickerElements(
+
+          element
+
+        );
+
+
+      if(!elements) {
+
+        return false;
+
+      }
+
+
+      if(elements.valueInput) {
+
+
+        elements.valueInput.value = '';
+
+
+        elements.valueInput.dispatchEvent(
+
+          new Event(
+
+            'change',
+
+            {
+
+              bubbles: true,
+
+            }
+
+          )
+
+        );
+
+
+      }
+
+
+      if(elements.searchInput) {
+
+
+        elements.searchInput.value = '';
+
+
+      }
+
+
+      AutomatorMenuUpdateIconPickerDisplay(
+
+        elements.container
+
+      );
+
+
+      setMenuChanged();
+
+
+      return true;
+
+
+    }
+
 
 
 
@@ -1542,71 +2634,362 @@
 
 
   function toggleSubmenuDisplay(btn) {
-    
+
+
     var el = $(btn);
-    var icon = el.find('i');
-    var pai = el.closest('.menu-item-wrapper');
-    var submenus = pai.find('.submenu-list');
-    if(submenus.hasClass('d-none')) {
-    
-      submenus.removeClass('d-none');
-      icon.removeClass('rotate-180');
-    
-    } else {
-    
-      submenus.addClass('d-none');
-      icon.addClass('rotate-180');
-    
+
+    var pai = el.closest(
+
+      '.menu-item-wrapper'
+
+    );
+
+
+    if(pai.length <= 0) {
+
+      return false;
+
     }
-  
+
+
+    var submenuList = pai.find(
+
+      '> .menu-item > .submenu-list'
+
+    );
+
+
+    if(submenuList.length <= 0) {
+
+
+      submenuList = pai.find(
+
+        '> .menu-item .submenu-list'
+
+      ).first();
+
+
+    }
+
+
+    if(submenuList.length <= 0) {
+
+      return false;
+
+    }
+
+
+    var icon = el.find(
+
+      'i'
+
+    ).first();
+
+
+    if(
+
+      submenuList.hasClass(
+
+        'd-none'
+
+      )
+
+    ) {
+
+
+      submenuList.removeClass(
+
+        'd-none'
+
+      );
+
+
+      icon.removeClass(
+
+        'fa-chevron-down rotate-180'
+
+      );
+
+
+      icon.addClass(
+
+        'fa-chevron-up'
+
+      );
+
+
+      el.attr(
+
+        'aria-expanded',
+
+        'true'
+
+      );
+
+
+    } else {
+
+
+      submenuList.addClass(
+
+        'd-none'
+
+      );
+
+
+      icon.removeClass(
+
+        'fa-chevron-up'
+
+      );
+
+
+      icon.addClass(
+
+        'fa-chevron-down'
+
+      );
+
+
+      el.attr(
+
+        'aria-expanded',
+
+        'false'
+
+      );
+
+
+    }
+
+
+    return false;
+
+
   }
 
 
 
-  function atualizarTipoMenu(field) {
+  function atualizarTipoMenu(
+    field
+  ) {
+
 
     var el = $(field);
-    var valor = el.val();
-    var wrapper = el.closest('.menu-item-wrapper');
-    var submenus = wrapper.find('.submenu-list');
-    var hasSubmenus = submenus.find('.menu-item-wrapper').length > 0;
 
-    // Regra: Não permitir alterar para link se tiver sub-menus
-    if (valor === 'link' && hasSubmenus) {
+    var valor = String(
 
-      alert('Não é possível alterar um menu para o tipo "Link" quando ele tiver sub-menus incluídos nele. Por favor, remova todos os sub-menus primeiro.');
-      el.val('route'); 
-      return;
+      el.val()
+
+      || ''
+
+    );
+
+
+    var wrapper = el.closest(
+
+      '.menu-item-wrapper'
+
+    );
+
+
+    var content = el.closest(
+
+      '.menu-item-body'
+
+    );
+
+
+    var submenuList = wrapper.children(
+
+      '.submenu-list'
+
+    );
+
+
+    var hasSubmenus = (
+
+      submenuList.find(
+
+        '> .menu-item-wrapper'
+
+      ).length > 0
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Link não pode possuir submenu
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+      (
+        valor === 'link' ||
+        valor === 'divider'
+      ) &&
+      
+      hasSubmenus
+
+    ) {
+
+
+      alert(
+
+        'Não é possível alterar um menu para o tipo "' +
+
+        valor +
+
+        '" quando ele possui submenus. Remova os submenus antes de alterar o tipo.'
+
+      );
+
+
+      el.val(
+
+        el.attr(
+
+          'data-automator-previous-value'
+
+        )
+
+        || 'route'
+
+      );
+
+
+      return false;
 
     }
 
-    var pai = el.parent().parent();
-    var paginas = pai.find('.menu-itens-pagina');
-    var link = pai.find('.menu-itens-link');
 
-    if(valor == 'route') {
-      
-      paginas.removeClass('d-none');
-      link.addClass('d-none');
-      link.find('input').val('');
-    
-    } else if(valor == 'link') {
+    el.attr(
 
-      paginas.addClass('d-none');
-      paginas.find('select').val('0');
-      link.removeClass('d-none');
-    
+      'data-automator-previous-value',
+
+      valor
+
+    );
+
+
+    var routeContainer = content.find(
+
+      '.menu-itens-rota'
+
+    );
+
+
+    var linkContainer = content.find(
+
+      '.menu-itens-link'
+
+    );
+
+
+    var routeSelect = routeContainer.find(
+
+      'select[name="tbl_sys_route_ID"]'
+
+    );
+
+
+    var linkInput = linkContainer.find(
+
+      'input[name="tbl_sys_menu_item_link"]'
+
+    );
+
+
+    if(valor === 'route') {
+
+
+      routeContainer.removeClass(
+
+        'd-none'
+
+      );
+
+
+      linkContainer.addClass(
+
+        'd-none'
+
+      );
+
+
+      linkInput.val(
+
+        ''
+
+      );
+
+
+    } else if(valor === 'link') {
+
+
+      routeContainer.addClass(
+
+        'd-none'
+
+      );
+
+
+      routeSelect.val(
+
+        '0'
+
+      );
+
+
+      linkContainer.removeClass(
+
+        'd-none'
+
+      );
+
+
     } else {
-      
-      paginas.addClass('d-none');
-      paginas.find('select').val('0');
-      link.addClass('d-none');
-      link.find('input').val('');
-    
+
+
+      routeContainer.addClass(
+
+        'd-none'
+
+      );
+
+
+      routeSelect.val(
+
+        '0'
+
+      );
+
+
+      linkContainer.addClass(
+
+        'd-none'
+
+      );
+
+
+      linkInput.val(
+
+        ''
+
+      );
+
+
     }
-    
+
+
     setMenuChanged();
-  
+
+
+    return true;
+
+
   }
 
 
@@ -1705,175 +3088,1299 @@
 
 
   function deleteMenuItem(id, btn) {
-    
-    const wrapper = btn.closest('.menu-item-wrapper');
-    const hasSubmenus = wrapper.querySelector('.submenu-list') && wrapper.querySelector('.submenu-list').children.length > 0;
-    let message = "Tem certeza que deseja remover este item?";
-    
-    if (hasSubmenus) {
 
-      message = "Este menu possui sub-menus. Remover este item também irá remover todos os sub-menus existentes dentro dele. Deseja continuar?";
+
+    var wrapper = btn
+
+      ? btn.closest(
+
+          '.menu-item-wrapper'
+
+        )
+
+      : null;
+
+
+    if(!wrapper) {
+
+      return false;
 
     }
 
-    if (confirm(message)) {
 
-      wrapper.remove();
+    var parentMenuWrapper = null;
+
+
+    if(
+
+      wrapper.classList.contains(
+
+        'submenu-item'
+
+      )
+
+    ) {
+
+
+      var parentList = wrapper.closest(
+
+        '.submenu-list'
+
+      );
+
+
+      if(parentList) {
+
+
+        parentMenuWrapper = parentList.closest(
+
+          '.menu-item-wrapper'
+
+        );
+
+
+      }
+
+
+    }
+
+
+    var submenuList = wrapper.querySelector(
+
+      ':scope > .menu-item > .submenu-list'
+
+    );
+
+
+    if(!submenuList) {
+
+
+      submenuList = wrapper.querySelector(
+
+        ':scope > .menu-item .submenu-list'
+
+      );
+
+
+    }
+
+
+    var hasSubmenus = (
+
+      submenuList &&
+
+      submenuList.querySelectorAll(
+
+        ':scope > .menu-item-wrapper.submenu-item'
+
+      ).length > 0
+
+    );
+
+
+    var message =
+
+      'Tem certeza que deseja remover este item?';
+
+
+    if(hasSubmenus) {
+
+
+      message =
+
+        'Este menu possui sub-menus. Remover este item também irá remover todos os sub-menus existentes dentro dele. Deseja continuar?';
+
+
+    }
+
+
+    if(confirm(message) !== true) {
+
+      return false;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove tooltips do item
+    |--------------------------------------------------------------------------
+    */
+
+    wrapper.querySelectorAll(
+
+      '[data-bs-toggle="tooltip"]'
+
+    ).forEach(function(element) {
+
+
+      var tooltip =
+
+        bootstrap.Tooltip.getInstance(
+
+          element
+
+        );
+
+
+      if(tooltip) {
+
+        tooltip.dispose();
+
+      }
+
+
+    });
+
+
+    wrapper.remove();
+
+
+    if(parentMenuWrapper) {
+
+
+      AutomatorMenuUpdateSubmenuListState(
+
+        parentMenuWrapper,
+
+        false
+
+      );
+
+
+    }
+
+
+    if(
+
+      typeof window.refreshMenuStructure ===
+
+      'function'
+
+    ) {
+
+
       window.refreshMenuStructure();
-      setMenuChanged();
-  
+
+
     }
+
+
+    if(
+
+      typeof window.initAllSortables ===
+
+      'function'
+
+    ) {
+
+
+      window.initAllSortables();
+
+
+    }
+
+
+    AutomatorMenuUpdateEmptyListState();
+
+
+    setMenuChanged();
+
+
+    return false;
+
+
+  }
+
+
+  function AutomatorMenuCreateTemporaryItemID() {
+
+
+    return 'temp' +
+
+      Date.now() +
+
+      Math.floor(
+
+        Math.random() *
+
+        999999
+
+      );
+
 
   }
 
 
 
+  function AutomatorMenuUpdateSubmenuListState(
+    menuWrapper,
+    forceOpen = false
+  ) {
+
+
+    if(!menuWrapper) {
+
+      return false;
+
+    }
+
+
+    var submenuList = menuWrapper.querySelector(
+
+      ':scope > .menu-item > .submenu-list'
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Compatibilidade com a estrutura atual do Blade
+    |--------------------------------------------------------------------------
+    |
+    | Atualmente a lista é filha direta de .menu-item.
+    |
+    */
+
+    if(!submenuList) {
+
+      submenuList = menuWrapper.querySelector(
+
+        ':scope > .menu-item .submenu-list'
+
+      );
+
+    }
+
+
+    if(!submenuList) {
+
+      submenuList = document.createElement(
+
+        'div'
+
+      );
+
+
+      submenuList.className =
+
+        'submenu-list transition-transform duration-200 mx-3 my-0 d-none';
+
+
+      submenuList.setAttribute(
+
+        'data-parent-id',
+
+        menuWrapper.dataset.id
+
+        || ''
+
+      );
+
+
+      var menuItem = menuWrapper.querySelector(
+
+        ':scope > .menu-item'
+
+      );
+
+
+      if(menuItem) {
+
+        menuItem.appendChild(
+
+          submenuList
+
+        );
+
+      }
+
+
+    }
+
+
+    var menuID = String(
+
+      menuWrapper.dataset.id
+
+      || ''
+
+    );
+
+
+    var submenuItems = submenuList.querySelectorAll(
+
+      ':scope > .menu-item-wrapper.submenu-item'
+
+    );
+
+
+    var hasSubmenus =
+
+      submenuItems.length > 0;
+
+
+    var chevronButton = menuWrapper.querySelector(
+
+      ':scope > .menu-item ' +
+
+      '.chevron-btn-' +
+
+      CSS.escape(
+
+        menuID
+
+      )
+
+    );
+
+
+    var banButton = menuWrapper.querySelector(
+
+      ':scope > .menu-item ' +
+
+      '.ban-icon-' +
+
+      CSS.escape(
+
+        menuID
+
+      )
+
+    );
+
+
+    if(hasSubmenus === true) {
+
+
+      if(chevronButton) {
+
+        chevronButton.classList.remove(
+
+          'd-none'
+
+        );
+
+      }
+
+
+      if(banButton) {
+
+        banButton.classList.add(
+
+          'd-none'
+
+        );
+
+      }
+
+
+      if(forceOpen === true) {
+
+
+        submenuList.classList.remove(
+
+          'd-none'
+
+        );
+
+
+        if(chevronButton) {
+
+
+          var chevronIcon =
+
+            chevronButton.querySelector(
+
+              'i'
+
+            );
+
+
+          if(chevronIcon) {
+
+
+            chevronIcon.classList.remove(
+
+              'fa-chevron-down'
+
+            );
+
+
+            chevronIcon.classList.add(
+
+              'fa-chevron-up'
+
+            );
+
+
+            chevronIcon.classList.remove(
+
+              'rotate-180'
+
+            );
+
+
+          }
+
+
+          chevronButton.setAttribute(
+
+            'aria-expanded',
+
+            'true'
+
+          );
+
+
+        }
+
+
+      }
+
+
+    } else {
+
+
+      submenuList.classList.add(
+
+        'd-none'
+
+      );
+
+
+      if(chevronButton) {
+
+
+        chevronButton.classList.add(
+
+          'd-none'
+
+        );
+
+
+        chevronButton.setAttribute(
+
+          'aria-expanded',
+
+          'false'
+
+        );
+
+
+      }
+
+
+      if(banButton) {
+
+        banButton.classList.remove(
+
+          'd-none'
+
+        );
+
+      }
+
+
+    }
+
+
+    return submenuList;
+
+
+  }
+
+
   function addSubmenu(menuId) {
 
-    const menuWrapper = document.querySelector(`[data-id="${menuId}"]`);
-    if (!menuWrapper) return;
 
-    // Verificar se o menu é do tipo link
-    const tipoSelect = menuWrapper.querySelector('select[name="tbl_menu_type"]');
-    if (tipoSelect && tipoSelect.value === 'link') {
-        alert('Não é possível adicionar sub-menus a um menu do tipo "Link".');
-        return;
+    var menuWrapper = document.querySelector(
+
+      '#menu-sortable-list ' +
+
+      '> .menu-item-wrapper[data-id="' +
+
+      CSS.escape(
+
+        String(
+
+          menuId
+
+        )
+
+      ) +
+
+      '"]'
+
+    );
+
+
+    if(!menuWrapper) {
+
+      return false;
+
     }
 
-    let submenuList = menuWrapper.querySelector('.submenu-list');
-    if (!submenuList) {
-        submenuList = document.createElement('div');
-        submenuList.className = 'submenu-list transition-transform duration-200 ml-12 mt-3 space-y-3';
-        submenuList.dataset.parentId = menuId;
-        menuWrapper.appendChild(submenuList);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Verifica o tipo do menu principal
+    |--------------------------------------------------------------------------
+    */
+
+    var contentMenu = menuWrapper.querySelector(
+
+      ':scope > .menu-item > [id^="content-item-"]'
+
+    );
+
+
+    var tipoSelect = contentMenu
+
+      ? contentMenu.querySelector(
+
+          'select[name="tbl_sys_menu_item_type"]'
+
+        )
+
+      : null;
+
+
+    if(
+
+      tipoSelect &&
+
+      (
+        tipoSelect.value === 'link' ||
+        tipoSelect.value === 'divider'
+      )
+
+    ) {
+
+
+      alert(
+
+        'Não é possível adicionar sub-menus a um menu do tipo "' +
+
+        tipoSelect.value +
+
+        '".'
+
+      );
+
+
+      return false;
+
     }
 
-    menuWrapper.querySelector('.chevron-btn').classList.remove('d-none');
-    menuWrapper.querySelector('.ban-icon').classList.add('d-none');
 
-    // Gera um ID temporário para o novo submenu
-    const tempId = 'temp-' + Date.now();
-    
-    const newSubmenuHTML = `
-        <div class="menu-item-wrapper submenu-item" data-id="${tempId}">
-            <div class="menu-item group group-child bg-white border border-gray-200 rounded-lg shadow-sm hover:border-blue-400 transition-all">
-                <div class="flex items-center p-3 cursor-move handle">
-                    <div class="mr-3 text-gray-400" style="margin-right: 10px;">
-                        <i class="fa-solid fa-grip-vertical"></i>
-                    </div>
-                    <div class="flex-1 flex items-center gap-3">
-                        <div>
-                            <span class="menu-item-nome font-bold text-gray-800 text-sm">Novo Submenu</span>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <span class="menu-item-status text-xs font-medium px-2 py-1 rounded-full bg-green-100 text-green-700">
-                            Ativo
-                        </span>
-                        <button type="button" onclick="toggleAccordion('item-${tempId}')" class="text-gray-400 hover:text-blue-600 p-1 tooltip-icon" data-tooltip="Editar">
-                            <i id="icon-item-${tempId}" class="fa-solid fa-pencil transition-transform duration-200"></i>
-                        </button>
-                        <button type="button" onclick="deleteMenuItem(null, this)" class="text-gray-400 hover:text-red-600 p-1 tooltip-icon" data-tooltip="Remover">
-                            <i class="fa-solid fa-trash transition-transform duration-200"></i>
-                        </button>
-                    </div>
-                </div>
+    /*
+    |--------------------------------------------------------------------------
+    | Localiza ou cria a lista
+    |--------------------------------------------------------------------------
+    */
 
-                <div id="content-item-${tempId}" class="border-t border-gray-100 p-4 bg-gray-50 rounded-b-lg">
-                    <input type="hidden" class="menu-item-parent-val" value="${menuId}" />
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Rótulo de Navegação</label>
-                            <input type="text" name="tbl_menu_nome" value="Novo Submenu" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" onkeyup="atualizarNomeMenu(this)" />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Status do Menu</label>
-                            <select name="tbl_menu_status" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" onchange="return atualizarStatusMenu(this)">
-                                <option value="ativo" selected>Ativo</option>
-                                <option value="inativo">Inativo</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">ID do Menu</label>
-                            <input type="text" name="tbl_menu_index" value="" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Classes do Menu</label>
-                            <input type="text" name="tbl_menu_class" value="" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Tipo do Menu</label>
-                            <select name="tbl_menu_type" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" onchange="atualizarTipoMenu(this)">
-                                <option value="pagina" selected>Pagina</option>
-                                <option value="link">Link</option>
-                                <option value="button">Botão</option>
-                            </select>
-                        </div>
-                        <div class="menu-itens-pagina">
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Pagina do Menu</label>
-                            <select name="tbl_menu_pagina_ID" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
-                                <option value="0" selected>- Selecione -</option>
-                                @foreach($paginas as $pagina)
-                                    <option value="{{ $pagina->tbl_pagina_ID }}">{{ $pagina->tbl_pagina_titulo }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="menu-itens-link d-none">
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Link do Menu</label>
-                            <input type="text" name="tbl_menu_link" value="" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Propriedades do Menu</label>
-                            <input type="text" name="tbl_menu_props" value="" class="w-full text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" />
-                        </div>
-                        <div class="icon-picker-container">
-                            <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Icone do Menu</label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                    <i class="fa-solid fa-search text-gray-400 current-icon-display"></i>
-                                </div>
-                                <input type="text" name="tbl_menu_icone" value="" class="icon-search-input w-full pl-10 text-sm border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500" placeholder="Pesquisar ícone..." onfocus="showIconPicker(this)" onkeyup="filterIcons(this)" />
-                            </div>
-                            <div class="icon-picker-dropdown">
-                                <div class="icon-picker-grid">
-                                    <!-- Ícones serão carregados via JS -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+    var submenuList = menuWrapper.querySelector(
+
+      ':scope > .menu-item > .submenu-list'
+
+    );
+
+
+    if(!submenuList) {
+
+
+      submenuList = menuWrapper.querySelector(
+
+        ':scope > .menu-item .submenu-list'
+
+      );
+
+
+    }
+
+
+    if(!submenuList) {
+
+
+      submenuList = document.createElement(
+
+        'div'
+
+      );
+
+
+      submenuList.className =
+
+        'submenu-list transition-transform duration-200 mx-3 my-0 d-none';
+
+
+      submenuList.setAttribute(
+
+        'data-parent-id',
+
+        menuId
+
+      );
+
+
+      var menuItem = menuWrapper.querySelector(
+
+        ':scope > .menu-item'
+
+      );
+
+
+      if(!menuItem) {
+
+        return false;
+
+      }
+
+
+      menuItem.appendChild(
+
+        submenuList
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ID temporário
+    |--------------------------------------------------------------------------
+    */
+
+    var tempId =
+
+      AutomatorMenuCreateTemporaryItemID();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTML do submenu
+    |--------------------------------------------------------------------------
+    */
+
+    var newSubmenuHTML = `
+
+      <div class="menu-item-wrapper submenu-item" data-id="${tempId}">
+
+        <div class="menu-item group group-child bg-white border rounded-2 card transition-all">
+
+          <div class="card-body d-flex align-items-center py-2 px-3 cursor-move handle">
+
+            <span class="text-secondary me-3">
+
+              <i class="fa fa-grip-vertical"></i>
+
+            </span>
+
+            <div class="flex-grow-1 d-flex align-items-center gap-3">
+
+              <span class="menu-item-nome fw-bold text-dark">
+                Novo Submenu
+              </span>
+
             </div>
+
+            <div class="d-flex align-items-center gap-3">
+
+              <span class="menu-item-status badge rounded-pill text-bg-success">
+                {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-ativo'])) !!}
+              </span>
+
+              <button
+                type="button"
+                onclick="toggleAccordion('item-${tempId}')"
+                class="btn btn-link btn-sm text-secondary p-1"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['edit-menu']) !!}"
+              >
+
+                <i
+                  id="icon-item-${tempId}"
+                  class="fa fa-pencil transition-transform duration-200"
+                ></i>
+
+              </button>
+
+              <button
+                type="button"
+                onclick="deleteMenuItem('${tempId}', this)"
+                class="btn btn-link btn-sm text-danger p-1"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['remove-menu']) !!}"
+              >
+
+                <i class="fa-solid fa-trash"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div id="content-item-${tempId}" class="menu-item-body">
+
+            <input
+              type="hidden"
+              class="menu-item-parent-val"
+              value="${menuId}"
+            />
+
+            <div class="row g-3">
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_title-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-rotulo']) !!}
+                </label>
+
+                <input
+                  type="text"
+                  id="tbl_sys_menu_item_title-${tempId}"
+                  name="tbl_sys_menu_item_title"
+                  value="Novo Submenu"
+                  class="form-control form-control-sm"
+                  onkeyup="atualizarNomeMenu(this)"
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-rotulo']) !!}"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_status-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-status']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_status-${tempId}"
+                  name="tbl_sys_menu_item_status"
+                  class="form-select form-select-sm"
+                  onchange="return atualizarStatusMenu(this)"
+                >
+
+                  <option value="ativo" selected>
+                    {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-ativo'])) !!}
+                  </option>
+
+                  <option value="inativo">
+                    {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-inativo'])) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_index-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-id']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_index-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_index"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-id']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_class-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-classes']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_class-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_class"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-classes']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_type-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-type']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_type-${tempId}"
+                  name="tbl_sys_menu_item_type"
+                  class="form-select form-select-sm"
+                  data-automator-previous-value="route"
+                  onchange="atualizarTipoMenu(this)"
+                >
+
+                  <option value="route" selected>
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['page']) !!}
+                  </option>
+
+                  <option value="link">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}
+                  </option>
+
+                  <option value="button">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['button']) !!}
+                  </option>
+
+                  <option value="divider">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['divider']) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6 menu-itens-rota">
+
+                <label
+                  for="tbl_sys_route_ID-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['page']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_route_ID-${tempId}"
+                  name="tbl_sys_route_ID"
+                  class="form-select form-select-sm"
+                >
+
+                  <option value="0" selected>
+                    - {!! SysAutomator::SysAutomatorGetTranslateWord($textos['select']) !!} -
+                  </option>
+
+                  @foreach($paginas as $pagina)
+
+                    <option value="{{ $pagina->tbl_sys_route_ID }}">
+                      {{ $pagina->tbl_sys_route_title }}
+                    </option>
+
+                  @endforeach
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6 menu-itens-link d-none">
+
+                <label
+                  for="tbl_sys_menu_item_link-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_link-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_link"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_locked-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['admin-locked']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_locked-${tempId}"
+                  name="tbl_sys_menu_item_locked"
+                  class="form-select form-select-sm"
+                >
+
+                  <option value="1">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}
+                  </option>
+
+                  <option value="0" selected>
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 m-0 p-0"></div>
+
+              <div class="col-12 col-md-5">
+
+                <label
+                  for="tbl_sys_menu_item_admin-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['admin-area']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_admin-${tempId}"
+                  name="tbl_sys_menu_item_admin"
+                  class="form-select form-select-sm"
+                  onchange="atualizarDisplayUsersTypes(this)"
+                >
+
+                  <option value="1" selected>
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}
+                  </option>
+
+                  <option value="0">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div
+                id="tbl_sys_menu_item_users_types-${tempId}"
+                class="col-12 col-md-7 menu-itens-users-types"
+              >
+
+                <div class="col-12">
+
+                  <span class="form-label fw-bold text-uppercase small mb-1">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['permissions']) !!}
+                  </span>
+
+                </div>
+
+                <div class="dropdown">
+
+                  <button
+                    id="tbl_sys_menu_item_access_${tempId}-btn"
+                    type="button"
+                    class="btn btn-sm dropdown-toggle form-select"
+                    data-bs-toggle="dropdown"
+                    data-bs-auto-close="outside"
+                    aria-expanded="false"
+                  >
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['permissions']) !!}
+                    -
+                    <i>
+                      <b>0</b>
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['selected']) !!}
+                    </i>
+                  </button>
+
+                  <div class="dropdown-menu p-2 shadow" style="min-width: 220px;">
+
+                    @foreach($usersTypes as $_userTypeID => $_userTypeName)
+
+                      <div class="form-check mb-2">
+
+                        <label
+                          for="tbl_sys_menu_item_access_${tempId}-{{ $_userTypeID }}"
+                          class="form-check-label small w-100"
+                        >
+
+                          <input
+                            id="tbl_sys_menu_item_access_${tempId}-{{ $_userTypeID }}"
+                            onchange="atualizarContagemUserTypesCheckbox(this)"
+                            name="tbl_sys_menu_item_access"
+                            type="checkbox"
+                            value="{{ $_userTypeID }}"
+                            class="form-check-input"
+                          />
+
+                          {!! $_userTypeName !!}
+
+                        </label>
+
+                      </div>
+
+                    @endforeach
+
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div class="col-12 mt-4">
+
+                <div class="col-12 mb-3">
+
+                  <span class="form-label fw-bold text-uppercase small mb-1 me-2">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['props']) !!}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    style="font-size: 10px;"
+                    data-bs-toggle="tooltip"
+                    data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['add-prop']) !!}"
+                    onclick="addMenuProp('${tempId}', this, true);"
+                  >
+
+                    <i class="fa fa-plus"></i>
+
+                  </button>
+
+                </div>
+
+                <div
+                  class="col-12 menu-item-props-subs"
+                  data-item="${tempId}"
+                  data-zero="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['no-props-found-in-menu-item']) !!}"
+                >
+
+                  <div class="row">
+
+                    <div class="col-12 text-center">
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no-props-found-in-menu-item']) !!}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
         </div>
+
+      </div>
+
     `;
 
-    submenuList.insertAdjacentHTML('afterbegin', newSubmenuHTML);
-    
-    // Reinicializar os icon pickers para o novo elemento
-    initIconPickers();
-    
-    // Reinicializar os sortables
-    window.initAllSortables();
-    
-    // Abrir o accordion do novo submenu com scroll suave e foco
-    setTimeout(() => {
-        const newWrapper = document.querySelector(`[data-id="${tempId}"]`);
-        if (newWrapper) {
-            // Scroll suave até o novo item
-            newWrapper.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            // Abrir o accordion
-            // toggleAccordion('item-' + tempId);
-            // Dar foco ao campo de nome
-            const nomeInput = newWrapper.querySelector('input[name="tbl_menu_nome"]');
-            if (nomeInput) {
-                setTimeout(() => {
-                    nomeInput.focus();
-                    nomeInput.select();
-                }, 300);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Insere no topo
+    |--------------------------------------------------------------------------
+    */
+
+    submenuList.insertAdjacentHTML(
+
+      'afterbegin',
+
+      newSubmenuHTML
+
+    );
+
+
+    var newWrapper = submenuList.querySelector(
+
+      ':scope > .menu-item-wrapper[data-id="' +
+
+      CSS.escape(
+
+        tempId
+
+      ) +
+
+      '"]'
+
+    );
+
+    updateMenuItemAdminState(
+
+      $(newWrapper)
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Abre a lista e atualiza os controles do menu pai
+    |--------------------------------------------------------------------------
+    */
+
+    AutomatorMenuUpdateSubmenuListState(
+
+      menuWrapper,
+
+      true
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Atualiza estrutura e ordenação
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+      typeof window.refreshMenuStructure ===
+
+      'function'
+
+    ) {
+
+
+      window.refreshMenuStructure();
+
+
+    }
+
+
+    if(
+
+      typeof window.initAllSortables ===
+
+      'function'
+
+    ) {
+
+
+      window.initAllSortables();
+
+
+    }
+
+
+    if(
+
+      typeof AutomatorInitBootstrapTooltips ===
+
+      'function' &&
+
+      newWrapper
+
+    ) {
+
+
+      AutomatorInitBootstrapTooltips(
+
+        newWrapper
+
+      );
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scroll e foco
+    |--------------------------------------------------------------------------
+    */
+
+    window.requestAnimationFrame(
+
+      function() {
+
+
+        window.requestAnimationFrame(
+
+          function() {
+
+
+            if(!newWrapper) {
+
+              return;
+
             }
-        }
-    }, 100);
-    
+
+
+            newWrapper.scrollIntoView({
+
+              behavior:
+
+                'smooth',
+
+              block:
+
+                'center',
+
+              inline:
+
+                'nearest',
+
+            });
+
+
+            var firstInput =
+
+              newWrapper.querySelector(
+
+                'input[name="tbl_sys_menu_item_title"]'
+
+              );
+
+
+            if(firstInput) {
+
+
+              setTimeout(
+
+                function() {
+
+
+                  firstInput.focus();
+
+                  firstInput.select();
+
+
+                },
+
+                350
+
+              );
+
+
+            }
+
+
+          }
+
+        );
+
+
+      }
+
+    );
+
+
     setMenuChanged();
+
+
+    return false;
+
+
   }
 
 
@@ -1996,210 +4503,2929 @@
   }
 
 
-  function saveMenu() {
+  function AutomatorMenuCreateUsersTypesHTML(
+    itemID
+  ) {
 
-    const menuData = [];
 
-    const idMapping = new Map();
-    let nextId = 1;
+    var retorno = '';
 
-    const allWrappers = document.querySelectorAll('.menu-item-wrapper');
-    allWrappers.forEach(wrapper => {
-      idMapping.set(wrapper, nextId++);
-    });
 
-    // ── Helper: abre accordion, faz scroll e foca o campo ──────────────────────
-    const focarItem = (wrapper, campoEl = null) => {
+    retorno +=
 
-      const id = wrapper.dataset.id;
+      '<div ' +
 
-      wrapper.querySelector('.menu-item').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        'id="tbl_sys_menu_item_users_types-' +
 
-      const content = document.getElementById('content-item-' + id);
-      if (content && content.classList.contains('d-none')) {
-        toggleAccordion('item-' + id);
+        itemID +
+
+        '" ' +
+
+        'class="col-12 col-md-8 menu-itens-users-types"' +
+
+      '>' +
+
+        "\n";
+
+
+      retorno +=
+
+        '<div class="col-12">' +
+
+          '<span class="form-label fw-bold text-uppercase small mb-1">' +
+
+            "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['permissions']) !!}" +
+
+          '</span>' +
+
+        '</div>' +
+
+        "\n";
+
+
+      retorno +=
+
+        '<div class="dropdown">' +
+
+          "\n";
+
+
+        retorno +=
+
+          '<button ' +
+
+            'id="tbl_sys_menu_item_access_' +
+
+            itemID +
+
+            '-btn" ' +
+
+            'type="button" ' +
+
+            'class="btn btn-sm dropdown-toggle form-select" ' +
+
+            'data-bs-toggle="dropdown" ' +
+
+            'data-bs-auto-close="outside" ' +
+
+            'aria-expanded="false"' +
+
+          '>' +
+
+            "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['permissions']) !!}" +
+
+            ' - ' +
+
+            '<i>' +
+
+              '<b>0</b> ' +
+
+              "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['selected']) !!}" +
+
+            '</i>' +
+
+          '</button>' +
+
+          "\n";
+
+
+        retorno +=
+
+          '<div class="dropdown-menu p-2 shadow" style="min-width: 220px;">' +
+
+            "\n";
+
+
+          @foreach($usersTypes as $_userTypeID => $_userTypeName)
+
+            retorno +=
+
+              '<div class="form-check mb-2">' +
+
+                "\n";
+
+
+              retorno +=
+
+                '<label ' +
+
+                  'for="tbl_sys_menu_item_access_' +
+
+                  itemID +
+
+                  '-{{ $_userTypeID }}" ' +
+
+                  'class="form-check-label small w-100"' +
+
+                '>' +
+
+                  "\n";
+
+
+                retorno +=
+
+                  '<input ' +
+
+                    'id="tbl_sys_menu_item_access_' +
+
+                    itemID +
+
+                    '-{{ $_userTypeID }}" ' +
+
+                    'onchange="atualizarContagemUserTypesCheckbox(this)" ' +
+
+                    'name="tbl_sys_menu_item_access" ' +
+
+                    'type="checkbox" ' +
+
+                    'value="{{ $_userTypeID }}" ' +
+
+                    'class="form-check-input" ' +
+
+                  '/>' +
+
+                  "\n";
+
+
+                retorno +=
+
+                  "{!! addslashes($_userTypeName) !!}" +
+
+                  "\n";
+
+
+              retorno +=
+
+                '</label>' +
+
+                "\n";
+
+
+            retorno +=
+
+              '</div>' +
+
+              "\n";
+
+          @endforeach
+
+
+        retorno +=
+
+          '</div>' +
+
+          "\n";
+
+
+      retorno +=
+
+        '</div>' +
+
+        "\n";
+
+
+    retorno +=
+
+      '</div>' +
+
+      "\n";
+
+
+    return retorno;
+
+
+  }
+
+
+  function AutomatorMenuCreateRoutesOptionsHTML() {
+
+
+    var retorno = '';
+
+
+    retorno +=
+
+      '<option value="0" selected>' +
+
+        '- ' +
+
+        "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['select']) !!}" +
+
+        ' -' +
+
+      '</option>' +
+
+      "\n";
+
+
+    @foreach($paginas as $pagina)
+
+      retorno +=
+
+        '<option value="{{ $pagina->tbl_sys_route_ID }}">' +
+
+          "{!! addslashes($pagina->tbl_sys_route_title) !!}" +
+
+        '</option>' +
+
+        "\n";
+
+    @endforeach
+
+
+    return retorno;
+
+
+  }
+
+
+  function updateMenuItemAdminState(item) {
+
+
+    if(!item || !item.length) {
+
+      item = $(item);
+
+    }
+
+
+    var indexField = item.find(
+      '[name="tbl_sys_menu_item_index"]'
+    );
+
+
+    var adminField = item.find(
+      '[name="tbl_sys_menu_item_admin"]'
+    );
+
+
+    if(
+      !indexField.length ||
+      !adminField.length
+    ) {
+
+      return;
+
+    }
+
+
+    var hasAdminIndex = $.trim(
+      indexField.val()
+    ) !== '';
+
+
+    if(hasAdminIndex) {
+
+
+      adminField
+        .val('1')
+        .trigger('change');
+
+
+      adminField.find('option[value="0"]')
+        .prop('disabled', true);
+
+
+    } else {
+
+
+      adminField.find('option[value="0"]')
+        .prop('disabled', false);
+
+
+    }
+
+
+  }
+
+
+  function AutomatorMenuUpdateEmptyListState() {
+
+
+    var menuList = document.getElementById(
+
+      'menu-sortable-list'
+
+    );
+
+
+    if(!menuList) {
+
+      return false;
+
+    }
+
+
+    var emptyMessage = document.getElementById(
+
+      'menu-sortable-list-empty'
+
+    );
+
+
+    var menuItems = menuList.querySelectorAll(
+
+      ':scope > .menu-item-wrapper'
+
+    );
+
+
+    if(menuItems.length >= 1) {
+
+
+      if(emptyMessage) {
+
+        emptyMessage.remove();
+
       }
 
-      if (campoEl) {
-        setTimeout(() => {
-          campoEl.focus();
-          if (typeof campoEl.select === 'function') campoEl.select();
-        }, 300);
-      }
-
-    };
-
-    const processWrapper = (wrapper, order, parentId) => {
-
-      const currentNewId = idMapping.get(wrapper);
-
-      // ── extractItemData inline com validação ──────────────────────────────────
-      const id        = wrapper.dataset.id;
-      const isSub     = wrapper.classList.contains('submenu-item');
-      const contentEl = wrapper.querySelector(`:scope > .menu-item > [id^="content-item-"]`);
-
-      const findVal = (name, type = 'input') => {
-        const el         = contentEl ? contentEl.querySelector(`${type}[name="${name}"]`) : null;
-        const fallbackEl = wrapper.querySelector(`:scope > .menu-item > [id^="content-item-"] ${type}[name="${name}"]`);
-        return (el || fallbackEl)?.value ?? '';
-      };
-
-      // ── Validação: campos obrigatórios ────────────────────────────────────────
-      const nome  = contentEl?.querySelector('input[name="tbl_sys_menu_item_title"]');
-      const tipo  = contentEl?.querySelector('select[name="tbl_sys_menu_item_type"]');
-      const pag   = contentEl?.querySelector('select[name="tbl_sys_route_ID"]');
-
-      if (!nome || !nome.value.trim()) {
-        focarItem(wrapper, nome);
-        alert('Erro: Configuração incompleta do menu!\n\n- Rótulo de Navegação é obrigatório\n\nPor favor, complete a configuração do menu destacado.');
-        return false;
-      }
-
-      if (!tipo || !tipo.value) {
-        focarItem(wrapper, tipo);
-        alert('Erro: Configuração incompleta do menu!\n\n- Tipo do Menu é obrigatório\n\nPor favor, complete a configuração do menu destacado.');
-        return false;
-      }
-
-      if (tipo.value === 'route' && (!pag || !pag.value || pag.value === '0')) {
-        focarItem(wrapper, pag);
-        alert('Erro: Configuração incompleta do menu!\n\n- Página do Menu é obrigatória para menus do tipo "Página"\n\nPor favor, complete a configuração do menu destacado.');
-        return false;
-      }
-
-      // ── Validação + captura de props ──────────────────────────────────────────
-      const propKeyPrefix   = isSub ? `menu-item-prop-${id}-sub-key-`   : `menu-item-prop-${id}-key-`;
-      const propValuePrefix = isSub ? `menu-item-prop-${id}-sub-value-` : `menu-item-prop-${id}-value-`;
-      const propsClass      = isSub ? '.menu-item-props-subs' : '.menu-item-props';
-      const propsContainer  = contentEl?.querySelector(`${propsClass}[data-item="${id}"]`);
-
-      let propsProcessado = '';
-
-      if (propsContainer) {
-
-        const propItems  = propsContainer.querySelectorAll('.menu-item-props-item');
-        const keysVistas = [];
-        const propsObj   = {};
-
-        for (const propItem of propItems) {
-
-          const keyInput   = propItem.querySelector(`input[id^="${propKeyPrefix}"]`);
-          const valueInput = propItem.querySelector(`input[id^="${propValuePrefix}"]`);
-
-          if (!keyInput || !valueInput) continue;
-
-          const k = keyInput.value.trim();
-          const v = valueInput.value.trim();
-
-          // Regra 1: valor preenchido sem nome
-          if (k === '' && v !== '') {
-            focarItem(wrapper, keyInput);
-            alert(
-              'Erro: Propriedade inválida no menu "' + nome.value.trim() + '"!\n\n' +
-              '- A propriedade com valor "' + v + '" não possui nome definido.\n\n' +
-              'Por favor, preencha o nome da propriedade destacada.'
-            );
-            return false;
-          }
-
-          // Regra 2: nome duplicado
-          if (k !== '') {
-            if (keysVistas.includes(k)) {
-              focarItem(wrapper, keyInput);
-              alert(
-                'Erro: Propriedade duplicada no menu "' + nome.value.trim() + '"!\n\n' +
-                '- Já existe uma propriedade com o nome "' + k + '".\n\n' +
-                'Cada propriedade deve ter um nome único.'
-              );
-              return false;
-            }
-            keysVistas.push(k);
-            propsObj[k] = v;
-          }
-
-        }
-
-        if (Object.keys(propsObj).length > 0) {
-          propsProcessado = JSON.stringify(propsObj);
-        }
-
-      }
-
-      // ── Ícone ─────────────────────────────────────────────────────────────────
-      let iconeRaw      = findVal('tbl_sys_menu_item_icon');
-      let iconeStripped = iconeRaw.replace(/^fa(-solid)?\s+fa-/, '').trim();
-      let iconeProcessado = iconeStripped ? 'fa fa-' + iconeStripped : '';
-
-      // ── Access ────────────────────────────────────────────────────────────────
-      const accessInputs = contentEl
-        ? contentEl.querySelectorAll('input[name="tbl_sys_menu_item_access"]:checked')
-        : [];
-      const accessValues = Array.from(accessInputs).map(el => el.value);
-
-      // ── Monta objeto do item ──────────────────────────────────────────────────
-      const data = {
-        tbl_sys_menu_item_ID:        currentNewId,
-        tbl_sys_menu_item_title:     findVal('tbl_sys_menu_item_title'),
-        tbl_sys_menu_item_status:    findVal('tbl_sys_menu_item_status', 'select'),
-        tbl_sys_menu_item_index:     findVal('tbl_sys_menu_item_index'),
-        tbl_sys_menu_item_class:     findVal('tbl_sys_menu_item_class'),
-        tbl_sys_menu_item_type:      findVal('tbl_sys_menu_item_type', 'select'),
-        tbl_sys_route_ID:            findVal('tbl_sys_route_ID', 'select') || 0,
-        tbl_sys_menu_item_link:      findVal('tbl_sys_menu_item_link'),
-        tbl_sys_menu_item_props:     propsProcessado,
-        tbl_sys_menu_item_icon:      iconeProcessado,
-        tbl_sys_menu_item_admin:     findVal('tbl_sys_menu_item_admin', 'select'),
-        tbl_sys_menu_item_access:    accessValues,
-        tbl_sys_menu_item_parent_id: parentId,
-        tbl_sys_menu_item_ordem:     order
-      };
-
-      // Campo condicional: só existe no DOM quando deleteON == true no PHP
-      const lockedEl = contentEl?.querySelector(`select[name="tbl_sys_menu_item_locked"]`);
-      if (lockedEl) {
-        data.tbl_sys_menu_item_locked = lockedEl.value;
-      }
-
-      menuData.push(data);
-
-      // ── Processa filhos ───────────────────────────────────────────────────────
-      const subList  = wrapper.querySelector('.submenu-list');
-      if (subList) {
-        const children = Array.from(subList.children).filter(c => c.classList.contains('menu-item-wrapper'));
-        for (let i = 0; i < children.length; i++) {
-          const result = processWrapper(children[i], i + 1, currentNewId);
-          if (result === false) return false;
-        }
-      }
 
       return true;
 
-    };
-
-    // ── Percorre os itens de nível superior ─────────────────────────────────────
-    const topLevelItems = Array.from(document.querySelectorAll('#menu-sortable-list > .menu-item-wrapper'));
-    for (let i = 0; i < topLevelItems.length; i++) {
-      const result = processWrapper(topLevelItems[i], i + 1, 0);
-      if (result === false) return;
     }
 
-    // ── Payload que seria enviado ao AJAX ────────────────────────────────────────
-    const payload = {
-      _token: document.querySelector('meta[name="csrf-token"]')?.content ?? '{{ csrf_token() }}',
-      menus: menuData
-    };
 
-    console.group('saveMenu — payload que seria enviado ao AJAX');
-    console.log('URL destino :', '{!! $routes["menu-update"] !!}');
-    console.log('Método      :', 'POST');
-    console.log('Total itens :', menuData.length);
-    console.table(menuData);
-    console.log('Payload completo:', payload);
-    console.groupEnd();
+    if(!emptyMessage) {
+
+
+      emptyMessage = document.createElement(
+
+        'div'
+
+      );
+
+
+      emptyMessage.id =
+
+        'menu-sortable-list-empty';
+
+
+      emptyMessage.className =
+
+        'text-center fs-4';
+
+
+      emptyMessage.innerHTML =
+
+        "{!! SysAutomator::SysAutomatorGetTranslateWord('Nenhum item cadastrado!') !!}";
+
+
+      menuList.appendChild(
+
+        emptyMessage
+
+      );
+
+
+    }
+
+
+    return true;
+
+
+  }
+
+
+  function addMenuItem(
+    btn = null
+  ) {
+
+
+    var menuList = document.getElementById(
+
+      'menu-sortable-list'
+
+    );
+
+
+    if(!menuList) {
+
+      return false;
+
+    }
+
+
+    if(btn) {
+
+
+      var tooltipInstance =
+
+        bootstrap.Tooltip.getInstance(
+
+          btn
+
+        );
+
+
+      if(tooltipInstance) {
+
+        tooltipInstance.hide();
+
+      }
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | ID temporário
+    |--------------------------------------------------------------------------
+    */
+
+    var tempId =
+
+      AutomatorMenuCreateTemporaryItemID();
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTML auxiliar
+    |--------------------------------------------------------------------------
+    */
+
+    var routesOptionsHTML =
+
+      AutomatorMenuCreateRoutesOptionsHTML();
+
+
+    var usersTypesHTML =
+
+      AutomatorMenuCreateUsersTypesHTML(
+
+        tempId
+
+      );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | HTML do item principal
+    |--------------------------------------------------------------------------
+    */
+
+    var newMenuItemHTML = `
+
+      <div class="menu-item-wrapper" data-id="${tempId}">
+
+        <div class="menu-item card border group-parent">
+
+          <div class="card-body d-flex align-items-center py-2 px-3 handle">
+
+            <span class="text-secondary me-3">
+
+              <i class="fa fa-grip-vertical"></i>
+
+            </span>
+
+            <div class="flex-grow-1 d-flex align-items-center gap-3">
+
+              <span class="menu-item-nome fw-bold text-dark">
+                Novo Item
+              </span>
+
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+
+              <span class="menu-item-status badge rounded-pill text-bg-success">
+                {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-ativo'])) !!}
+              </span>
+
+              <button
+                type="button"
+                onclick="toggleAccordion('item-${tempId}')"
+                class="btn btn-link btn-sm text-secondary p-1"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['edit-menu']) !!}"
+              >
+
+                <i
+                  id="icon-item-${tempId}"
+                  class="fa-solid fa-pencil"
+                ></i>
+
+              </button>
+
+              <button
+                type="button"
+                onclick="addSubmenu('${tempId}')"
+                class="btn btn-link btn-sm text-secondary p-1"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['add-submenu-item']) !!}"
+              >
+
+                <i class="fa-solid fa-plus"></i>
+
+              </button>
+
+              <button
+                type="button"
+                onclick="toggleSubmenuDisplay(this)"
+                class="btn btn-link btn-sm text-secondary p-1 chevron-btn chevron-btn-${tempId} d-none"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['collapse-menu']) !!}"
+                aria-expanded="false"
+              >
+
+                <i
+                  id="icon2-item-${tempId}"
+                  class="fa-solid fa-chevron-up"
+                ></i>
+
+              </button>
+
+              <button
+                type="button"
+                class="btn btn-link btn-sm text-secondary p-1 ban-icon ban-icon-${tempId}"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['no-submenus']) !!}"
+              >
+
+                <i
+                  id="ban-icon2-item-${tempId}"
+                  class="fa-solid fa-ban"
+                ></i>
+
+              </button>
+
+              <button
+                type="button"
+                onclick="deleteMenuItem('${tempId}', this)"
+                class="btn btn-link btn-sm text-danger p-1"
+                data-bs-toggle="tooltip"
+                data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['remove-menu']) !!}"
+              >
+
+                <i class="fa-solid fa-trash"></i>
+
+              </button>
+
+            </div>
+
+          </div>
+
+          <div id="content-item-${tempId}" class="menu-item-body">
+
+            <input
+              type="hidden"
+              class="menu-item-parent-val"
+              value="0"
+            />
+
+            <div class="row g-3">
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_title-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-rotulo']) !!}
+                </label>
+
+                <input
+                  type="text"
+                  id="tbl_sys_menu_item_title-${tempId}"
+                  name="tbl_sys_menu_item_title"
+                  value="Novo Item"
+                  class="form-control form-control-sm"
+                  onkeyup="atualizarNomeMenu(this)"
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-rotulo']) !!}"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_status-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-status']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_status-${tempId}"
+                  name="tbl_sys_menu_item_status"
+                  class="form-select form-select-sm"
+                  onchange="return atualizarStatusMenu(this)"
+                >
+
+                  <option value="ativo" selected>
+                    {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-ativo'])) !!}
+                  </option>
+
+                  <option value="inativo">
+                    {!! ucfirst(SysAutomator::SysAutomatorGetTranslateWord($textos['status-inativo'])) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_index-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-id']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_index-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_index"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-id']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_class-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-classes']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_class-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_class"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-classes']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_type-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-item-type']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_type-${tempId}"
+                  name="tbl_sys_menu_item_type"
+                  class="form-select form-select-sm"
+                  data-automator-previous-value="route"
+                  onchange="atualizarTipoMenu(this)"
+                >
+
+                  <option value="route" selected>
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['page']) !!}
+                  </option>
+
+                  <option value="link">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}
+                  </option>
+
+                  <option value="button">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['button']) !!}
+                  </option>
+
+                  <option value="divider">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['divider']) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6 menu-itens-rota">
+
+                <label
+                  for="tbl_sys_route_ID-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['page']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_route_ID-${tempId}"
+                  name="tbl_sys_route_ID"
+                  class="form-select form-select-sm"
+                >
+
+                  ${routesOptionsHTML}
+
+                </select>
+
+              </div>
+
+              <div class="col-12 col-md-6 menu-itens-link d-none">
+
+                <label
+                  for="tbl_sys_menu_item_link-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}
+                </label>
+
+                <input
+                  id="tbl_sys_menu_item_link-${tempId}"
+                  type="text"
+                  name="tbl_sys_menu_item_link"
+                  value=""
+                  placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['link']) !!}"
+                  class="form-control form-control-sm"
+                />
+
+              </div>
+
+              <div
+                class="col-12 col-md-6 icon-picker-container"
+                data-automator-icon-picker="true"
+              >
+
+                <label
+                  for="tbl_sys_menu_item_icon_search-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['icon']) !!}
+                </label>
+
+                <input
+                  type="hidden"
+                  id="tbl_sys_menu_item_icon-${tempId}"
+                  name="tbl_sys_menu_item_icon"
+                  value=""
+                  class="icon-picker-value"
+                />
+
+                <div class="icon-search-wrapper">
+
+                  <i
+                    class="fa fa-magnifying-glass icon-search-prefix current-icon-display"
+                    aria-hidden="true"
+                  ></i>
+
+                  <input
+                    id="tbl_sys_menu_item_icon_search-${tempId}"
+                    type="text"
+                    value=""
+                    class="form-control form-control-sm icon-search-input"
+                    placeholder="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['icon-search']) !!}"
+                    autocomplete="off"
+                    onfocus="showIconPicker(this)"
+                    oninput="filterIcons(this)"
+                  />
+
+                </div>
+
+                <div
+                  class="icon-picker-dropdown"
+                  role="listbox"
+                  aria-label="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['icon']) !!}"
+                >
+
+                  <div class="icon-picker-grid"></div>
+
+                </div>
+
+              </div>
+
+              <div class="col-12 col-md-6">
+
+                <label
+                  for="tbl_sys_menu_item_locked-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['admin-locked']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_locked-${tempId}"
+                  name="tbl_sys_menu_item_locked"
+                  class="form-select form-select-sm"
+                >
+
+                  <option value="1">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}
+                  </option>
+
+                  <option value="0" selected>
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}
+                  </option>
+
+                </select>
+
+              </div>
+
+              <div class="col-12 m-0 p-0"></div>
+
+              <div class="col-12 col-md-4">
+
+                <label
+                  for="tbl_sys_menu_item_admin-${tempId}"
+                  class="form-label fw-bold text-uppercase small mb-1"
+                >
+                  {!! SysAutomator::SysAutomatorGetTranslateWord($textos['admin-area']) !!}
+                </label>
+
+                <select
+                  id="tbl_sys_menu_item_admin-${tempId}"
+                  name="tbl_sys_menu_item_admin"
+                  class="form-select form-select-sm"
+                  onchange="atualizarDisplayUsersTypes(this)"
+                >
+
+                  @if( (isset($_nav['tbl_sys_nav_admin'])) && ($_nav['tbl_sys_nav_admin'] == true))
+
+                    <option value="1" selected>
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}
+                    </option>
+
+                    <option value="0" disabled>
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}
+                    </option>
+
+                  @else
+
+                    <option value="1" selected>
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['yes']) !!}
+                    </option>
+
+                    <option value="0">
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no']) !!}
+                    </option>
+
+                  @endif
+
+                </select>
+
+              </div>
+
+              ${usersTypesHTML}
+
+              <div class="col-12 mt-4">
+
+                <div class="col-12 mb-3">
+
+                  <span class="form-label fw-bold text-uppercase small mb-1 me-2">
+                    {!! SysAutomator::SysAutomatorGetTranslateWord($textos['props']) !!}
+                  </span>
+
+                  <button
+                    type="button"
+                    class="btn btn-secondary btn-sm"
+                    style="font-size: 10px;"
+                    data-bs-toggle="tooltip"
+                    data-bs-title="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['add-prop']) !!}"
+                    onclick="addMenuProp('${tempId}', this);"
+                  >
+
+                    <i class="fa fa-plus"></i>
+
+                  </button>
+
+                </div>
+
+                <div
+                  class="col-12 menu-item-props"
+                  data-item="${tempId}"
+                  data-zero="{!! SysAutomator::SysAutomatorGetTranslateWord($textos['no-props-found-in-menu-item']) !!}"
+                >
+
+                  <div class="row">
+
+                    <div class="col-12 text-center">
+                      {!! SysAutomator::SysAutomatorGetTranslateWord($textos['no-props-found-in-menu-item']) !!}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+          <div
+            class="submenu-list transition-transform duration-200 mx-3 my-0 d-none"
+            data-parent-id="${tempId}"
+          ></div>
+
+        </div>
+
+      </div>
+
+    `;
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove mensagem vazia
+    |--------------------------------------------------------------------------
+    */
+
+    var emptyMessage = document.getElementById(
+
+      'menu-sortable-list-empty'
+
+    );
+
+
+    if(emptyMessage) {
+
+      emptyMessage.remove();
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Insere no topo
+    |--------------------------------------------------------------------------
+    */
+
+    menuList.insertAdjacentHTML(
+
+      'afterbegin',
+
+      newMenuItemHTML
+
+    );
+
+
+    var newWrapper = menuList.querySelector(
+
+      ':scope > .menu-item-wrapper[data-id="' +
+
+      CSS.escape(
+
+        tempId
+
+      ) +
+
+      '"]'
+
+    );
+
+
+    if(!newWrapper) {
+
+      return false;
+
+    }
+
+    updateMenuItemAdminState(
+      $(newWrapper)
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inicializa componentes do novo item
+    |--------------------------------------------------------------------------
+    */
+
+    initIconPickers(
+
+      newWrapper
+
+    );
+
+
+    if(
+
+      typeof window.refreshMenuStructure ===
+
+      'function'
+
+    ) {
+
+
+      window.refreshMenuStructure();
+
+
+    }
+
+
+    if(
+
+      typeof window.initAllSortables ===
+
+      'function'
+
+    ) {
+
+
+      window.initAllSortables();
+
+
+    }
+
+
+    if(
+
+      typeof AutomatorInitBootstrapTooltips ===
+
+      'function'
+
+    ) {
+
+
+      AutomatorInitBootstrapTooltips(
+
+        newWrapper
+
+      );
+
+
+    } else {
+
+
+      newWrapper.querySelectorAll(
+
+        '[data-bs-toggle="tooltip"]'
+
+      ).forEach(function(element) {
+
+
+        var tooltip =
+
+          bootstrap.Tooltip.getInstance(
+
+            element
+
+          );
+
+
+        if(tooltip) {
+
+          tooltip.dispose();
+
+        }
+
+
+        new bootstrap.Tooltip(
+
+          element
+
+        );
+
+
+      });
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Scroll e foco
+    |--------------------------------------------------------------------------
+    */
+
+    window.requestAnimationFrame(
+
+      function() {
+
+
+        window.requestAnimationFrame(
+
+          function() {
+
+
+            newWrapper.scrollIntoView({
+
+              behavior:
+
+                'smooth',
+
+              block:
+
+                'center',
+
+              inline:
+
+                'nearest',
+
+            });
+
+
+            var firstInput = newWrapper.querySelector(
+
+              'input[name="tbl_sys_menu_item_title"]'
+
+            );
+
+
+            if(firstInput) {
+
+
+              setTimeout(
+
+                function() {
+
+
+                  firstInput.focus();
+
+                  firstInput.select();
+
+
+                },
+
+                350
+
+              );
+
+
+            }
+
+
+          }
+
+        );
+
+
+      }
+
+    );
+
+
+    AutomatorMenuUpdateEmptyListState();
+
+
+    setMenuChanged();
+
 
     return false;
 
+
   }
+
+
+  function AutomatorMenuGetDatabaseItemID(
+    clientID
+  ) {
+
+
+    clientID = String(
+
+      clientID
+
+      || ''
+
+    ).trim();
+
+
+    if(clientID === '') {
+
+      return null;
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | IDs temporários não existem no banco
+    |--------------------------------------------------------------------------
+    */
+
+    if(
+
+      clientID.indexOf(
+
+        'temp'
+
+      ) === 0
+
+    ) {
+
+      return null;
+
+    }
+
+
+    if(
+
+      !/^[0-9]+$/.test(
+
+        clientID
+
+      )
+
+    ) {
+
+      return null;
+
+    }
+
+
+    var databaseID = parseInt(
+
+      clientID,
+
+      10
+
+    );
+
+
+    if(
+
+      !Number.isInteger(
+
+        databaseID
+
+      ) ||
+
+      databaseID <= 0
+
+    ) {
+
+      return null;
+
+    }
+
+
+    return databaseID;
+
+
+  }
+
+
+  function AutomatorMenuBuildPayload() {
+
+
+    var menuTitle = String(
+
+      document.getElementById(
+
+        'current-menu-title'
+
+      ).value
+
+      || ''
+
+    ).trim();
+
+
+    var menuIndex = String(
+
+      document.getElementById(
+
+        'current-menu-index'
+
+      ).value
+
+      || ''
+
+    ).trim();
+
+
+    var menuClass = String(
+
+      document.getElementById(
+
+        'current-menu-class'
+
+      ).value
+
+      || ''
+
+    ).trim();
+
+
+    var menuNavID = String(
+
+      document.getElementById(
+
+        'current-menu-nav-id'
+
+      ).value
+
+      || ''
+
+    ).trim();
+
+
+    if(menuTitle === '') {
+
+
+      var menuTitleField =
+
+        document.getElementById(
+
+          'current-menu-title'
+
+        );
+
+
+      menuTitleField.focus();
+
+      menuTitleField.select();
+
+
+      AutomatorCreateAutoCloseToastAlert(
+
+        'automator-menu-title-required',
+
+        'center',
+
+        'middle',
+
+        true,
+
+        true,
+
+        'Atenção',
+
+        'O nome do menu é obrigatório.',
+
+        null,
+
+        false,
+
+        null,
+
+        5000
+
+      );
+
+
+      return null;
+
+
+    }
+
+
+    // if(menuNavID === '') {
+
+
+    //   document.getElementById(
+
+    //     'current-menu-nav-id'
+
+    //   ).focus();
+
+
+    //   AutomatorCreateAutoCloseToastAlert(
+
+    //     'automator-menu-nav-required',
+
+    //     'center',
+
+    //     'middle',
+
+    //     true,
+
+    //     true,
+
+    //     'Atenção',
+
+    //     'Selecione a posição de navegação do menu.',
+
+    //     null,
+
+    //     false,
+
+    //     null,
+
+    //     5000
+
+    //   );
+
+
+    //   return null;
+
+
+    // }
+
+
+    var items = [];
+
+    var globalOrder = 0;
+
+
+    function processMenuWrapper(
+      wrapper,
+      parentClientID = null
+    ) {
+
+
+      if(!wrapper) {
+
+        return false;
+
+      }
+
+
+      globalOrder++;
+
+
+      var clientID = String(
+
+        wrapper.dataset.id
+
+        || ''
+
+      );
+
+
+      var itemData = extractItemData(
+
+        wrapper,
+
+        globalOrder,
+
+        parentClientID
+
+      );
+
+
+      if(!itemData) {
+
+        return false;
+
+      }
+
+
+      itemData.client_id =
+
+        clientID;
+
+
+      itemData.database_id =
+
+        AutomatorMenuGetDatabaseItemID(
+
+          clientID
+
+        );
+
+
+      itemData.parent_client_id =
+
+        parentClientID;
+
+
+      itemData.tbl_sys_menu_item_ordem =
+
+        globalOrder;
+
+
+      itemData.tbl_sys_menu_item_parent_id =
+
+        parentClientID === null
+
+          ? 0
+
+          : parentClientID;
+
+
+      items.push(
+
+        itemData
+
+      );
+
+
+      var submenuList = wrapper.querySelector(
+
+        ':scope > .menu-item > .submenu-list'
+
+      );
+
+
+      if(!submenuList) {
+
+
+        submenuList = wrapper.querySelector(
+
+          ':scope > .menu-item .submenu-list'
+
+        );
+
+
+      }
+
+
+      if(submenuList) {
+
+
+        var submenuWrappers = Array.from(
+
+          submenuList.children
+
+        ).filter(function(element) {
+
+
+          return (
+
+            element.classList.contains(
+
+              'menu-item-wrapper'
+
+            ) &&
+
+            element.classList.contains(
+
+              'submenu-item'
+
+            )
+
+          );
+
+
+        });
+
+
+        submenuWrappers.forEach(function(submenuWrapper) {
+
+
+          processMenuWrapper(
+
+            submenuWrapper,
+
+            clientID
+
+          );
+
+
+        });
+
+
+      }
+
+
+      return true;
+
+
+    }
+
+
+    var mainList = document.getElementById(
+
+      'menu-sortable-list'
+
+    );
+
+
+    if(!mainList) {
+
+      return null;
+
+    }
+
+
+    var mainWrappers = Array.from(
+
+      mainList.children
+
+    ).filter(function(element) {
+
+
+      return (
+
+        element.classList.contains(
+
+          'menu-item-wrapper'
+
+        ) &&
+
+        !element.classList.contains(
+
+          'submenu-item'
+
+        )
+
+      );
+
+
+    });
+
+
+    mainWrappers.forEach(function(wrapper) {
+
+
+      processMenuWrapper(
+
+        wrapper,
+
+        null
+
+      );
+
+
+    });
+
+
+    return {
+
+      _token:
+
+        AutomatorGetCSRFToken(),
+
+      menu: {
+
+        tbl_sys_menu_ID:
+
+          {{ (int) $currentMenu }},
+
+        tbl_sys_menu_title:
+
+          menuTitle,
+
+        tbl_sys_menu_index:
+
+          menuIndex,
+
+        tbl_sys_menu_class:
+
+          menuClass,
+
+        tbl_sys_nav_ID:
+
+          menuNavID,
+
+      },
+
+      items:
+
+        items,
+
+    };
+
+
+  }
+
+
+  function AutomatorMenuFinishRequest() {
+
+
+    $('#page-loader').css(
+
+      'z-index',
+
+      ''
+
+    );
+
+
+    AutomatorPageLoader(
+
+      'hide',
+
+      function() {
+
+
+        AutomatorSetActionStatus(
+
+          false
+
+        );
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+  function AutomatorMenuSubmitPayload(
+    payload
+  ) {
+
+
+    if(
+
+      !payload ||
+
+      typeof payload !== 'object'
+
+    ) {
+
+
+      AutomatorMenuFinishRequest();
+
+
+      return false;
+
+    }
+
+
+    AutomatorSetActionStatus(
+
+      true
+
+    );
+
+
+    $('#page-loader').css(
+
+      'z-index',
+
+      '1085'
+
+    );
+
+
+    AutomatorPageLoader(
+
+      'show',
+
+      function() {
+
+
+        $.ajax({
+
+          url:
+
+            '{!! $routes["menu-update"] !!}',
+
+          type:
+
+            'POST',
+
+          data:
+
+            JSON.stringify(
+
+              payload
+
+            ),
+
+          processData:
+
+            false,
+
+          contentType:
+
+            'application/json; charset=UTF-8',
+
+          dataType:
+
+            'json',
+
+          headers: {
+
+            'X-CSRF-TOKEN':
+
+              payload._token,
+
+            'Accept':
+
+              'application/json',
+
+          },
+
+          success: function(response) {
+
+
+            var responseStatus = (
+
+              response &&
+
+              (
+
+                response.status === true ||
+
+                response.status === 1 ||
+
+                response.status === '1' ||
+
+                response.status === 'true'
+
+              )
+
+            );
+
+
+            var responseTitle =
+
+              response &&
+
+              response.title
+
+                ? response.title
+
+                : (
+
+                    responseStatus === true
+
+                      ? 'Sucesso'
+
+                      : 'Atenção'
+
+                  );
+
+
+            var responseMessage =
+
+              response &&
+
+              response.message
+
+                ? response.message
+
+                : (
+
+                    responseStatus === true
+
+                      ? 'As alterações do menu foram salvas com sucesso.'
+
+                      : 'Não foi possível salvar as alterações do menu.'
+
+                  );
+
+
+            if(responseStatus === true) {
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | O commit foi concluído
+              |--------------------------------------------------------------------------
+              */
+
+              menuChanged = false;
+
+              window.onbeforeunload = null;
+
+
+              AutomatorCreateAutoCloseToastAlert(
+
+                'automator-menu-update-success-' +
+
+                Date.now(),
+
+                'center',
+
+                'middle',
+
+                true,
+
+                true,
+
+                responseTitle,
+
+                responseMessage,
+
+                null,
+
+                false,
+
+                function() {
+
+
+                  AutomatorSetActionStatus(
+
+                    false
+
+                  );
+
+
+                  var redirectURL =
+
+                    response.redirect_url
+
+                    || window.location.href;
+
+
+                  window.location.href =
+
+                    redirectURL;
+
+
+                },
+
+                5000
+
+              );
+
+
+              return false;
+
+
+            }
+
+
+            AutomatorCreateAutoCloseToastAlert(
+
+              'automator-menu-update-error-' +
+
+              Date.now(),
+
+              'center',
+
+              'middle',
+
+              true,
+
+              true,
+
+              responseTitle,
+
+              responseMessage,
+
+              null,
+
+              false,
+
+              function() {
+
+
+                AutomatorMenuFinishRequest();
+
+
+              },
+
+              5000
+
+            );
+
+
+            return false;
+
+
+          },
+
+          error: function(xhr) {
+
+
+            if(
+
+              typeof AutomatorSessionResponseIsExpired ===
+
+              'function' &&
+
+              AutomatorSessionResponseIsExpired(
+
+                xhr
+
+              ) === true
+
+            ) {
+
+
+              AutomatorSessionForceLogin(
+
+                xhr
+
+              );
+
+
+              return false;
+
+            }
+
+
+            var responseTitle =
+
+              'Erro';
+
+
+            var responseMessage =
+
+              'Não foi possível salvar as alterações do menu.';
+
+
+            if(
+
+              xhr.responseJSON &&
+
+              xhr.responseJSON.title
+
+            ) {
+
+
+              responseTitle =
+
+                xhr.responseJSON.title;
+
+
+            }
+
+
+            if(
+
+              xhr.responseJSON &&
+
+              xhr.responseJSON.message
+
+            ) {
+
+
+              responseMessage =
+
+                xhr.responseJSON.message;
+
+
+            } else if(xhr.responseText) {
+
+
+              responseMessage =
+
+                xhr.responseText;
+
+
+            }
+
+
+            AutomatorCreateAutoCloseToastAlert(
+
+              'automator-menu-update-request-error-' +
+
+              Date.now(),
+
+              'center',
+
+              'middle',
+
+              true,
+
+              true,
+
+              responseTitle,
+
+              responseMessage,
+
+              null,
+
+              false,
+
+              function() {
+
+
+                AutomatorMenuFinishRequest();
+
+
+              },
+
+              5000
+
+            );
+
+
+            return false;
+
+
+          },
+
+        });
+
+
+      }
+
+    );
+
+
+    return true;
+
+
+  }
+
+
+
+  function AutomatorMenuCreateSecurityConfirmation(
+    payload
+  ) {
+
+
+    if(
+
+      typeof AutomatorCreateSecurityConfirmationModal !==
+
+      'function'
+
+    ) {
+
+
+      AutomatorCreateAutoCloseToastAlert(
+
+        'automator-menu-security-function-error',
+
+        'center',
+
+        'middle',
+
+        true,
+
+        true,
+
+        'Erro',
+
+        'A função de confirmação de segurança não foi localizada.',
+
+        null,
+
+        false,
+
+        function() {
+
+
+          AutomatorMenuFinishRequest();
+
+
+        },
+
+        5000
+
+      );
+
+
+      return false;
+
+    }
+
+
+    AutomatorCreateSecurityConfirmationModal({
+
+      type:
+
+        'menu-update',
+
+      title:
+
+        'Confirmação de Segurança',
+
+      message:
+
+        'Para salvar as alterações deste menu, confirme sua senha. Esta validação é necessária porque itens e permissões poderão ser alterados ou removidos.',
+
+      keepPageLoaderOnSuccess:
+
+        true,
+
+      keepPageLoaderOnCancel:
+
+        false,
+
+      skipSuccessToast:
+
+        true,
+
+      resetActionStatusOnShown:
+
+        true,
+
+      resetActionStatusOnCancel:
+
+        true,
+
+      resetActionStatusOnSuccess:
+
+        false,
+
+      cancelCallback: function() {
+
+
+        $('#page-loader').css(
+
+          'z-index',
+
+          ''
+
+        );
+
+
+      },
+
+      successCallback: function() {
+
+
+        $('#page-loader').css(
+
+          'z-index',
+
+          '1085'
+
+        );
+
+
+        AutomatorMenuSubmitPayload(
+
+          payload
+
+        );
+
+
+      },
+
+    });
+
+
+    return true;
+
+
+  }
+
+
+  function saveMenu() {
+
+
+    if(
+
+      validateMenuStructure() !==
+
+      true
+
+    ) {
+
+      return false;
+
+    }
+
+
+    var payload =
+
+      AutomatorMenuBuildPayload();
+
+
+    if(!payload) {
+
+      return false;
+
+    }
+
+
+    AutomatorGetActionStatus(function() {
+
+
+      AutomatorSetActionStatus(
+
+        true,
+
+        function() {
+
+
+          AutomatorMenuCreateSecurityConfirmation(
+
+            payload
+
+          );
+
+
+        }
+
+      );
+
+
+    });
+
+
+    return false;
+
+
+  }
+
+  // function saveMenu() {
+
+
+  //   if(
+
+  //     validateMenuStructure() !==
+
+  //     true
+
+  //   ) {
+
+  //     return false;
+
+  //   }
+
+
+  //   var menuTitle = String(
+
+  //     document.getElementById(
+
+  //       'current-menu-title'
+
+  //     ).value
+
+  //     || ''
+
+  //   ).trim();
+
+
+  //   var menuIndex = String(
+
+  //     document.getElementById(
+
+  //       'current-menu-index'
+
+  //     ).value
+
+  //     || ''
+
+  //   ).trim();
+
+
+  //   var menuClass = String(
+
+  //     document.getElementById(
+
+  //       'current-menu-class'
+
+  //     ).value
+
+  //     || ''
+
+  //   ).trim();
+
+
+  //   var menuNavID = String(
+
+  //     document.getElementById(
+
+  //       'current-menu-nav-id'
+
+  //     ).value
+
+  //     || ''
+
+  //   ).trim();
+
+
+  //   if(menuTitle === '') {
+
+
+  //     var menuTitleField =
+
+  //       document.getElementById(
+
+  //         'current-menu-title'
+
+  //       );
+
+
+  //     menuTitleField.focus();
+
+  //     menuTitleField.select();
+
+
+  //     alert(
+
+  //       'O nome do menu é obrigatório.'
+
+  //     );
+
+
+  //     return false;
+
+  //   }
+
+
+  //   if(menuNavID === '') {
+
+
+  //     document.getElementById(
+
+  //       'current-menu-nav-id'
+
+  //     ).focus();
+
+
+  //     alert(
+
+  //       'Selecione a posição de navegação do menu.'
+
+  //     );
+
+
+  //     return false;
+
+  //   }
+
+
+  //   var items = [];
+
+  //   var globalOrder = 0;
+
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | Processa um item e seus submenus
+  //   |--------------------------------------------------------------------------
+  //   |
+  //   | A ordem é global e segue exatamente o fluxo visual:
+  //   |
+  //   | menu principal;
+  //   | submenus do menu principal;
+  //   | próximo menu principal;
+  //   | submenus do próximo menu principal.
+  //   |
+  //   */
+
+  //   function processMenuWrapper(
+  //     wrapper,
+  //     parentClientID = null
+  //   ) {
+
+
+  //     if(!wrapper) {
+
+  //       return false;
+
+  //     }
+
+
+  //     globalOrder++;
+
+
+  //     var clientID = String(
+
+  //       wrapper.dataset.id
+
+  //       || ''
+
+  //     );
+
+
+  //     var itemData = extractItemData(
+
+  //       wrapper,
+
+  //       globalOrder,
+
+  //       parentClientID
+
+  //     );
+
+
+  //     if(!itemData) {
+
+  //       return false;
+
+  //     }
+
+
+  //     itemData.client_id =
+
+  //       clientID;
+
+
+  //     itemData.database_id =
+
+  //       AutomatorMenuGetDatabaseItemID(
+
+  //         clientID
+
+  //       );
+
+
+  //     itemData.parent_client_id =
+
+  //       parentClientID;
+
+
+  //     itemData.tbl_sys_menu_item_ordem =
+
+  //       globalOrder;
+
+
+  //     /*
+  //     |--------------------------------------------------------------------------
+  //     | O pai será resolvido no controller
+  //     |--------------------------------------------------------------------------
+  //     |
+  //     | Isso é necessário quando um item principal e seus submenus são novos,
+  //     | pois ainda não existe um ID real no banco.
+  //     |
+  //     */
+
+  //     itemData.tbl_sys_menu_item_parent_id =
+
+  //       parentClientID === null
+
+  //         ? 0
+
+  //         : parentClientID;
+
+
+  //     items.push(
+
+  //       itemData
+
+  //     );
+
+
+  //     var submenuList = wrapper.querySelector(
+
+  //       ':scope > .menu-item > .submenu-list'
+
+  //     );
+
+
+  //     if(!submenuList) {
+
+
+  //       submenuList = wrapper.querySelector(
+
+  //         ':scope > .menu-item .submenu-list'
+
+  //       );
+
+
+  //     }
+
+
+  //     if(submenuList) {
+
+
+  //       var submenuWrappers = Array.from(
+
+  //         submenuList.children
+
+  //       ).filter(function(element) {
+
+
+  //         return (
+
+  //           element.classList.contains(
+
+  //             'menu-item-wrapper'
+
+  //           ) &&
+
+  //           element.classList.contains(
+
+  //             'submenu-item'
+
+  //           )
+
+  //         );
+
+
+  //       });
+
+
+  //       submenuWrappers.forEach(function(submenuWrapper) {
+
+
+  //         processMenuWrapper(
+
+  //           submenuWrapper,
+
+  //           clientID
+
+  //         );
+
+
+  //       });
+
+
+  //     }
+
+
+  //     return true;
+
+
+  //   }
+
+
+  //   /*
+  //   |--------------------------------------------------------------------------
+  //   | Percorre os menus principais pela ordem atual do DOM
+  //   |--------------------------------------------------------------------------
+  //   */
+
+  //   var mainList = document.getElementById(
+
+  //     'menu-sortable-list'
+
+  //   );
+
+
+  //   var mainWrappers = Array.from(
+
+  //     mainList.children
+
+  //   ).filter(function(element) {
+
+
+  //     return (
+
+  //       element.classList.contains(
+
+  //         'menu-item-wrapper'
+
+  //       ) &&
+
+  //       !element.classList.contains(
+
+  //         'submenu-item'
+
+  //       )
+
+  //     );
+
+
+  //   });
+
+
+  //   mainWrappers.forEach(function(wrapper) {
+
+
+  //     processMenuWrapper(
+
+  //       wrapper,
+
+  //       null
+
+  //     );
+
+
+  //   });
+
+
+  //   var payload = {
+
+  //     _token:
+
+  //       document.querySelector(
+
+  //         'meta[name="csrf-token"]'
+
+  //       ).getAttribute(
+
+  //         'content'
+
+  //       ),
+
+  //     menu: {
+
+  //       tbl_sys_menu_ID:
+
+  //         {{ (int) $currentMenu }},
+
+  //       tbl_sys_menu_title:
+
+  //         menuTitle,
+
+  //       tbl_sys_menu_index:
+
+  //         menuIndex,
+
+  //       tbl_sys_menu_class:
+
+  //         menuClass,
+
+  //       tbl_sys_nav_ID:
+
+  //         menuNavID,
+
+  //     },
+
+  //     items:
+
+  //       items,
+
+  //   };
+
+
+  //   AutomatorGetActionStatus(function() {
+
+
+  //     AutomatorSetActionStatus(
+
+  //       true,
+
+  //       function() {
+
+
+  //         AutomatorPageLoader(
+
+  //           'show',
+
+  //           function() {
+
+
+  //             $.ajax({
+
+  //               url:
+
+  //                 '{!! $routes["menu-update"] !!}',
+
+  //               type:
+
+  //                 'POST',
+
+  //               data:
+
+  //                 JSON.stringify(
+
+  //                   payload
+
+  //                 ),
+
+  //               processData:
+
+  //                 false,
+
+  //               contentType:
+
+  //                 'application/json; charset=UTF-8',
+
+  //               dataType:
+
+  //                 'json',
+
+  //               headers: {
+
+  //                 'X-CSRF-TOKEN':
+
+  //                   payload._token,
+
+  //                 'Accept':
+
+  //                   'application/json',
+
+  //               },
+
+  //               success: function(response) {
+
+
+  //                 if(
+
+  //                   response &&
+
+  //                   response.status === true
+
+  //                 ) {
+
+
+  //                   /*
+  //                   |--------------------------------------------------------------------------
+  //                   | Desativa o alerta de alterações somente após o commit
+  //                   |--------------------------------------------------------------------------
+  //                   */
+
+  //                   menuChanged = false;
+
+
+  //                   var redirectURL =
+
+  //                     response.redirect_url
+
+  //                     || window.location.href;
+
+
+  //                   window.location.href =
+
+  //                     redirectURL;
+
+
+  //                   return false;
+
+  //                 }
+
+
+  //                 var message =
+
+  //                   'Não foi possível salvar as alterações do menu.';
+
+
+  //                 if(
+
+  //                   response &&
+
+  //                   response.message
+
+  //                 ) {
+
+
+  //                   message =
+
+  //                     response.message;
+
+
+  //                 }
+
+
+  //                 alert(
+
+  //                   message
+
+  //                 );
+
+
+  //                 AutomatorPageLoader(
+
+  //                   'hide',
+
+  //                   function() {
+
+
+  //                     AutomatorSetActionStatus(
+
+  //                       false
+
+  //                     );
+
+
+  //                   }
+
+  //                 );
+
+
+  //                 return false;
+
+
+  //               },
+
+  //               error: function(xhr) {
+
+
+  //                 var message =
+
+  //                   'Não foi possível salvar as alterações do menu.';
+
+
+  //                 if(
+
+  //                   xhr.responseJSON &&
+
+  //                   xhr.responseJSON.message
+
+  //                 ) {
+
+
+  //                   message =
+
+  //                     xhr.responseJSON.message;
+
+
+  //                 } else if(xhr.responseText) {
+
+
+  //                   message =
+
+  //                     xhr.responseText;
+
+
+  //                 }
+
+
+  //                 alert(
+
+  //                   message
+
+  //                 );
+
+
+  //                 AutomatorPageLoader(
+
+  //                   'hide',
+
+  //                   function() {
+
+
+  //                     AutomatorSetActionStatus(
+
+  //                       false
+
+  //                     );
+
+
+  //                   }
+
+  //                 );
+
+
+  //                 return false;
+
+
+  //               },
+
+  //             });
+
+
+  //           }
+
+  //         );
+
+
+  //       }
+
+  //     );
+
+
+  //   });
+
+
+  //   return false;
+
+
+  // }
 
 
   function menuPropHTML(menuID, propID = 0, isSub = false) {
@@ -2208,6 +7434,46 @@
     var propName   = "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-prop-name']) !!}";
     var propValue  = "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-prop-value']) !!}";
     var propRemove = "{!! SysAutomator::SysAutomatorGetTranslateWord($textos['menu-prop-remove']) !!}";
+
+
+    menuID = String(
+
+      menuID
+
+      || ''
+
+    );
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Protege o ID utilizado dentro do atributo onclick
+    |--------------------------------------------------------------------------
+    |
+    | O atributo HTML já utiliza aspas duplas. Por isso, o ID deve ser enviado
+    | ao JavaScript entre aspas simples, escapando previamente qualquer barra
+    | invertida ou aspas simples que possam existir no valor.
+    |
+    */
+
+    var menuIDArgument = menuID
+
+      .replace(
+
+        /\\/g,
+
+        '\\\\'
+
+      )
+
+      .replace(
+
+        /'/g,
+
+        "\\'"
+
+      );
+
 
     var retorno  = '<div class="row menu-item-props-item" data-prop="' + propID + '">' + "\n";
           
@@ -2234,11 +7500,21 @@
           retorno += '</div>' + "\n";
 
 
-          retorno += '<div class="col-12 col-md-2 mb-3"><button class="btn btn-danger btn-sm w-100 text-center h-100" data-bs-toggle="tooltip" data-bs-title="' + propRemove + '" onclick="removeMenuProp(' + menuID + ', ' + propID + ', this' + ( (isSub == true) ? ', true' : '' ) + ')"><i class="fa fa-trash"></i></button></div>' + "\n";
+          retorno += '<div class="col-12 col-md-2 mb-3">' + "\n";
+
+            retorno += '<button type="button" class="btn btn-danger btn-sm w-100 text-center h-100" data-bs-toggle="tooltip" data-bs-title="' + propRemove + '" onclick="return removeMenuProp(\'' + menuIDArgument + '\', ' + propID + ', this, ' + ( (isSub == true) ? 'true' : 'false' ) + ');">' + "\n";
+
+              retorno += '<i class="fa fa-trash"></i>' + "\n";
+
+            retorno += '</button>' + "\n";
+
+          retorno += '</div>' + "\n";
 
         retorno += '</div>' + "\n";
 
+
     return retorno;
+
 
   }
 
@@ -2276,7 +7552,8 @@
 
     if (menuPropsTotal <= 0) {
 
-      menuProps.html(propHTML);
+      menuProps.empty();
+      menuProps.append(propHTML);
 
     } else {
 
@@ -2317,40 +7594,55 @@
 
   function removeMenuProp(menuID, propID, btn = null, isSub = false) {
 
-    if (btn) {
+      var menuProp = $(btn).closest('.menu-item-props-item');
 
-      var tooltipInstance = bootstrap.Tooltip.getInstance(btn);
+      if(menuProp.length <= 0) {
 
-      if (tooltipInstance) {
-
-        tooltipInstance.hide();
-        // tooltipInstance.dispose();
+          return false;
 
       }
 
-    }
+      var menuProps = menuProp.closest(
 
-    var menuType = ( (isSub == true) ? ".menu-item-props-subs" : ".menu-item-props" );
-    var menuProps = $(menuType + "[data-item='" + menuID + "']");
-    var menuProp  = menuProps.find(".menu-item-props-item[data-prop='" + propID + "']");
+          (isSub == true)
 
-    menuProp.remove();
+              ? '.menu-item-props-subs'
 
-    var menuPorpsCount = menuProps.find(".menu-item-props-item");
+              : '.menu-item-props'
 
-    if (menuPorpsCount.length <= 0) {
-
-      menuProps.html(
-        '<div class="row">' +
-          '<div class="col-12 text-center">' +
-              '{{ SysAutomator::SysAutomatorGetTranslateWord($textos["no-props-found-in-menu-item"]) }}' +
-          '</div>' +
-        '</div>'
       );
 
-    }
+      if(menuProps.length <= 0) {
 
-    setMenuChanged();
+          return false;
+
+      }
+
+      menuProp.remove();
+
+      var menuPropsCount = menuProps.find('.menu-item-props-item');
+
+      if(menuPropsCount.length <= 0) {
+
+          menuProps.html(
+
+              '<div class="row">' +
+
+                  '<div class="col-12 text-center">' +
+
+                      menuProps.attr('data-zero') +
+
+                  '</div>' +
+
+              '</div>'
+
+          );
+
+      }
+
+      setMenuChanged();
+
+      return false;
 
   }
 
@@ -2358,150 +7650,591 @@
 
   function atualizarContagemUserTypesCheckbox(btn) {
 
-    var el     = $(btn);
-    var elID   = el.attr('id');
-    var quebra = elID.split('-');
 
-    var drop      = '#' + quebra[0] + '-btn';
-    var dropdown  = $(drop);
-    var countEl   = dropdown.find('b');
+    var checkbox = $(btn);
 
-    var total = parseInt(countEl.html()) || 0;
 
-    if (el.is(':checked')) {
+    var dropdown = checkbox.closest(
 
-        total++;
+      '.dropdown'
 
-    } else {
+    );
 
-        total--;
+
+    var countEl = dropdown.find(
+
+      '> button.dropdown-toggle b'
+
+    );
+
+
+    if(countEl.length <= 0) {
+
+      return false;
 
     }
 
-    if (total < 0) {
-        total = 0;
-    }
 
-    countEl.html(total);
+    var checkedItems = dropdown.find(
+
+      'input[name="tbl_sys_menu_item_access"]:checked'
+
+    );
+
+
+    countEl.html(
+
+      checkedItems.length
+
+    );
+
+
+    setMenuChanged();
+
+
+    return true;
+
 
   }
 
 
 
   function atualizarDisplayUsersTypes(btn) {
-    
-    var el = $(btn);
-    var valor = el.val()
-    var elID  = el.attr('id');
-    var quebra = elID.split('-');
-    var usersType = $('#tbl_sys_menu_item_users_types-' + quebra[1]);
 
-    usersType.find('button.dropdown-toggle').find('b').html('0');
-    usersType.find('input[type="checkbox"]').prop('checked', false);
+
+    var el = $(btn);
+
+    var valor = el.val();
+
+
+    var content = el.closest(
+
+      '.menu-item-body'
+
+    );
+
+
+    var usersType = content.find(
+
+      '.menu-itens-users-types'
+
+    ).first();
+
+
+    if(usersType.length <= 0) {
+
+      return false;
+
+    }
+
+
+    usersType.find(
+
+      'button.dropdown-toggle b'
+
+    ).html(
+
+      '0'
+
+    );
+
+
+    usersType.find(
+
+      'input[type="checkbox"]'
+
+    ).prop(
+
+      'checked',
+
+      false
+
+    );
+
 
     if(valor == 1) {
 
-      usersType.removeClass('d-none');
+
+      usersType.removeClass(
+
+        'd-none'
+
+      );
+
 
     } else {
-      
-      usersType.addClass('d-none');
+
+
+      usersType.addClass(
+
+        'd-none'
+
+      );
+
 
     }
+
+
+    setMenuChanged();
+
+
+    return true;
+
 
   }
 
 
-  function extractItemData(wrapper, order, parentId) {
+  function extractItemData(
+    wrapper,
+    order,
+    parentId
+  ) {
 
-    const id    = wrapper.dataset.id;
-    const isSub = wrapper.classList.contains('submenu-item');
 
-    // Container do conteúdo do item atual (evita capturar campos de submenus filhos)
-    const contentEl = wrapper.querySelector(`:scope > .menu-item > [id^="content-item-"]`);
+    if(!wrapper) {
 
-    const findVal = (name, type = 'input') => {
-      const el = contentEl
-        ? contentEl.querySelector(`${type}[name="${name}"]`)
-        : null;
-      const fallbackEl = wrapper.querySelector(`:scope > .menu-item > [id^="content-item-"] ${type}[name="${name}"]`);
-      const finalEl = el || fallbackEl;
-      return finalEl ? finalEl.value : '';
-    };
+      return null;
 
-    // ── Ícone: normaliza prefixo para não duplicar ────────────────────────────
-    let iconeRaw      = findVal('tbl_sys_menu_item_icon');
-    let iconeStripped = iconeRaw.replace(/^fa(-solid)?\s+fa-/, '').trim();
-    let iconeProcessado = iconeStripped ? 'fa fa-' + iconeStripped : '';
+    }
 
-    // ── Props: captura pares key/value com seletor preciso por tipo ───────────
-    const propsClass     = isSub ? '.menu-item-props-subs' : '.menu-item-props';
-    const propsContainer = contentEl
-      ? contentEl.querySelector(propsClass + `[data-item="${id}"]`)
-      : wrapper.querySelector(propsClass + `[data-item="${id}"]`);
 
-    let propsProcessado = '';
-    if (propsContainer) {
-      const propItems = propsContainer.querySelectorAll('.menu-item-props-item');
-      if (propItems.length > 0) {
-        const propsObj = {};
-        propItems.forEach(propItem => {
-          // Seletor via fragmento de id para diferenciar item principal de submenu:
-          // principal: menu-item-prop-{id}-key-{n}
-          // submenu:   menu-item-prop-{id}-sub-key-{n}
-          const keyInput   = isSub
-            ? propItem.querySelector(`input[id^="menu-item-prop-${id}-sub-key-"]`)
-            : propItem.querySelector(`input[id^="menu-item-prop-${id}-key-"]`);
-          const valueInput = isSub
-            ? propItem.querySelector(`input[id^="menu-item-prop-${id}-sub-value-"]`)
-            : propItem.querySelector(`input[id^="menu-item-prop-${id}-value-"]`);
-          if (keyInput && valueInput) {
-            const k = keyInput.value.trim();
-            const v = valueInput.value.trim();
-            if (k !== '') {
-              propsObj[k] = v;
-            }
-          }
-        });
-        if (Object.keys(propsObj).length > 0) {
-          propsProcessado = JSON.stringify(propsObj);
-        }
+    var id = String(
+
+      wrapper.dataset.id
+
+      || ''
+
+    );
+
+
+    var isSubmenu = wrapper.classList.contains(
+
+      'submenu-item'
+
+    );
+
+
+    var contentEl = wrapper.querySelector(
+
+      ':scope > .menu-item > [id^="content-item-"]'
+
+    );
+
+
+    if(!contentEl) {
+
+      return null;
+
+    }
+
+
+    function findValue(
+      name,
+      selector = null,
+      defaultValue = ''
+    ) {
+
+
+      if(!selector) {
+
+
+        selector =
+
+          '[name="' +
+
+          name +
+
+          '"]';
+
+
       }
+
+
+      var field = contentEl.querySelector(
+
+        selector
+
+      );
+
+
+      if(!field) {
+
+        return defaultValue;
+
+      }
+
+
+      return field.value !== undefined
+
+        ? field.value
+
+        : defaultValue;
+
+
     }
 
-    // ── Access: captura checkboxes marcados de tipos de usuário ──────────────
-    const accessInputs = contentEl
-      ? contentEl.querySelectorAll('input[name="tbl_sys_menu_item_access"]:checked')
-      : [];
-    const accessValues = Array.from(accessInputs).map(el => el.value);
 
-    // ── Dados base do item ────────────────────────────────────────────────────
-    const itemData = {
-      tbl_sys_menu_item_ID:        id,
-      tbl_sys_menu_item_title:     findVal('tbl_sys_menu_item_title'),
-      tbl_sys_menu_item_status:    findVal('tbl_sys_menu_item_status', 'select'),
-      tbl_sys_menu_item_index:     findVal('tbl_sys_menu_item_index'),
-      tbl_sys_menu_item_class:     findVal('tbl_sys_menu_item_class'),
-      tbl_sys_menu_item_type:      findVal('tbl_sys_menu_item_type', 'select'),
-      tbl_sys_route_ID:            findVal('tbl_sys_route_ID', 'select') || 0,
-      tbl_sys_menu_item_link:      findVal('tbl_sys_menu_item_link'),
-      tbl_sys_menu_item_props:     propsProcessado,
-      tbl_sys_menu_item_icon:      iconeProcessado,
-      tbl_sys_menu_item_admin:     findVal('tbl_sys_menu_item_admin', 'select'),
-      tbl_sys_menu_item_access:    accessValues,
-      tbl_sys_menu_item_parent_id: parentId,
-      tbl_sys_menu_item_ordem:     order
+    /*
+    |--------------------------------------------------------------------------
+    | Propriedades
+    |--------------------------------------------------------------------------
+    */
+
+    var props = {};
+
+
+    var propsContainer = contentEl.querySelector(
+
+      isSubmenu === true
+
+        ? '.menu-item-props-subs'
+
+        : '.menu-item-props'
+
+    );
+
+
+    if(propsContainer) {
+
+
+      propsContainer
+
+        .querySelectorAll(
+
+          '.menu-item-props-item'
+
+        )
+
+        .forEach(function(propItem) {
+
+
+          var keyInput = propItem.querySelector(
+
+            'input[id*="-key-"]'
+
+          );
+
+
+          var valueInput = propItem.querySelector(
+
+            'input[id*="-value-"]'
+
+          );
+
+
+          var propKey = keyInput
+
+            ? String(
+
+                keyInput.value
+
+                || ''
+
+              ).trim()
+
+            : '';
+
+
+          if(propKey === '') {
+
+            return;
+
+          }
+
+
+          props[propKey] = valueInput
+
+            ? String(
+
+                valueInput.value
+
+                || ''
+
+              )
+
+            : '';
+
+
+        });
+
+
+    }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Permissões de acesso
+    |--------------------------------------------------------------------------
+    */
+
+    var accessValues = Array.from(
+
+      contentEl.querySelectorAll(
+
+        'input[name="tbl_sys_menu_item_access"]:checked'
+
+      )
+
+    ).map(function(field) {
+
+
+      return String(
+
+        field.value
+
+      );
+
+
+    });
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Ícone
+    |--------------------------------------------------------------------------
+    |
+    | Submenus não utilizam ícone.
+    |
+    */
+
+    var iconValue = '';
+
+
+    if(isSubmenu !== true) {
+
+
+      iconValue = AutomatorMenuNormalizeIconValue(
+
+        findValue(
+
+          'tbl_sys_menu_item_icon',
+
+          'input[type="hidden"][name="tbl_sys_menu_item_icon"]',
+
+          ''
+
+        )
+
+      );
+
+
+    }
+
+
+    var routeID = findValue(
+
+      'tbl_sys_route_ID',
+
+      'select[name="tbl_sys_route_ID"]',
+
+      0
+
+    );
+
+
+    routeID = parseInt(
+
+      routeID,
+
+      10
+
+    );
+
+
+    if(
+
+      !Number.isInteger(
+
+        routeID
+
+      ) ||
+
+      routeID <= 0
+
+    ) {
+
+
+      routeID = null;
+
+
+    }
+
+
+    var itemData = {
+
+      tbl_sys_menu_item_ID:
+
+        id,
+
+      tbl_sys_menu_item_title:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_title'
+
+          )
+
+          || ''
+
+        ).trim(),
+
+      tbl_sys_menu_item_status:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_status',
+
+            'select[name="tbl_sys_menu_item_status"]',
+
+            'ativo'
+
+          )
+
+          || 'ativo'
+
+        ).trim(),
+
+      tbl_sys_menu_item_index:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_index'
+
+          )
+
+          || ''
+
+        ).trim(),
+
+      tbl_sys_menu_item_class:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_class'
+
+          )
+
+          || ''
+
+        ).trim(),
+
+      tbl_sys_menu_item_type:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_type',
+
+            'select[name="tbl_sys_menu_item_type"]',
+
+            'route'
+
+          )
+
+          || 'route'
+
+        ).trim(),
+
+      tbl_sys_route_ID:
+
+        routeID,
+
+      tbl_sys_menu_item_link:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_link'
+
+          )
+
+          || ''
+
+        ).trim(),
+
+      tbl_sys_menu_item_props:
+
+        props,
+
+      tbl_sys_menu_item_icon:
+
+        iconValue,
+
+      tbl_sys_menu_item_admin:
+
+        String(
+
+          findValue(
+
+            'tbl_sys_menu_item_admin',
+
+            'select[name="tbl_sys_menu_item_admin"]',
+
+            0
+
+          )
+
+        ),
+
+      tbl_sys_menu_item_access:
+
+        accessValues,
+
+      tbl_sys_menu_item_parent_id:
+
+        parentId === null
+
+          ? 0
+
+          : parentId,
+
+      tbl_sys_menu_item_ordem:
+
+        parseInt(
+
+          order,
+
+          10
+
+        ),
+
     };
 
-    // ── Campos condicionais: só existem no DOM quando deleteON == true no PHP ─
-    const lockedEl = contentEl
-      ? contentEl.querySelector(`select[name="tbl_sys_menu_item_locked"]`)
-      : null;
-    if (lockedEl) {
-      itemData.tbl_sys_menu_item_locked = lockedEl.value;
+
+    var lockedEl = contentEl.querySelector(
+
+      'select[name="tbl_sys_menu_item_locked"]'
+
+    );
+
+
+    if(lockedEl) {
+
+
+      itemData.tbl_sys_menu_item_locked =
+
+        String(
+
+          lockedEl.value
+
+        );
+
+
     }
+
 
     return itemData;
+
 
   }
 

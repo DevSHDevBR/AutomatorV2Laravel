@@ -981,6 +981,24 @@
           ],
           [
 
+            'tbl_sys_route_name'       => 'admin-api-menus-store',
+            'tbl_sys_route_title'      => 'API - Menu STORE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'storeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_menus" form="admin-menus"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-administracao',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
             'tbl_sys_route_name'       => 'admin-api-menus-update',
             'tbl_sys_route_title'      => 'API - Menu UPDATE',
             'tbl_sys_route_api'        => true,

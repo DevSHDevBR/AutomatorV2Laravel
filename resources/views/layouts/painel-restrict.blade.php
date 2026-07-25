@@ -43,7 +43,7 @@
     <link data-automator-editor-asset="fontawesome" rel="stylesheet" href="{{ asset('assets/vendor/fontawesome/all.min.css') }}" />
     <link data-automator-editor-asset="bootstrap" data-automator-editor-href="{{ asset('assets/system/bootstrap.min.css') }}" hidden />
     <link rel="stylesheet" href="{{ asset('assets/system/painel-style.css') }}">
-    <link rel="stylesheet" href="{{ asset('assets/system/painel-restrict-style.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/system/painel-restrict-style.css') }}?data=<?php echo md5(date('YmdHis')); ?>">
 
   </head>
   <body>

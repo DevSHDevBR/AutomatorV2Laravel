@@ -13,12 +13,38 @@
     --card-bg: #ffffff;
 }
 
-body {
-    min-height: 100vh;
-    background: var(--body-bg);
+
+html {
+
+    width: 100%;
+
+    max-width: 100%;
+
     overflow-x: hidden;
-    font-family: Arial, Helvetica, sans-serif;
+
 }
+
+
+body {
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    min-height: 100vh;
+
+    margin: 0;
+
+    background: var(--body-bg);
+
+    overflow-x: hidden;
+
+    font-family: Arial, Helvetica, sans-serif;
+
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -85,31 +111,31 @@ body {
 
 .sidebar-btn {
 
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
 
 }
 
 .sidebar-btn > button {
-  width: 100%;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: var(--sidebar-text);
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: 600;
-  transition: background .2s ease, color .2s ease;
+    width: 100%;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--sidebar-text);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    transition: background .2s ease, color .2s ease;
 }
 
 .sidebar-btn > button:hover {
@@ -148,7 +174,9 @@ body {
 }
 
 .sidebar-link,
-.sidebar-btn { margin-bottom: 5px; }
+.sidebar-btn {
+    margin-bottom: 5px;
+}
 
 .sidebar-btn i,
 .sidebar-link i,
@@ -190,6 +218,7 @@ body {
     background: rgba(37, 99, 235, .16);
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | Botão Fixo do Menu Desktop
@@ -225,132 +254,552 @@ body {
 */
 
 .app-main {
+
+    box-sizing: border-box;
+
+    width: calc(
+        100vw -
+        var(--sidebar-width)
+    );
+
+    min-width: 0;
+
+    max-width: none;
+
     min-height: 100vh;
+
     margin-left: var(--sidebar-width);
-    transition: margin-left .25s ease;
+
+    overflow-x: clip;
+
+    transition:
+        width .25s ease,
+        margin-left .25s ease;
+
 }
+
 
 .app-topbar {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
     height: var(--topbar-height);
+
     background: #ffffff;
+
     border-bottom: 1px solid #e5e7eb;
+
     display: flex;
+
     align-items: center;
+
     justify-content: flex-end;
+
     padding: 0 18px;
+
     position: sticky;
+
     top: 0;
+
     z-index: 1030;
-    box-shadow: 0 2px 8px rgba(15,23,42,.06);
+
+    overflow: visible;
+
+    box-shadow: 0 2px 8px rgba(
+        15,
+        23,
+        42,
+        .06
+    );
+
 }
 
+
+.app-topbar > * {
+
+    min-width: 0;
+
+}
+
+
 .app-topbar .dropdown-menu {
-  padding-bottom: 0px !important;
-  padding-top: 0px !important;
+
+    padding-bottom: 0 !important;
+
+    padding-top: 0 !important;
+
 }
 
 
 .app-topbar .dropdown-menu > li:first-child .dropdown-item {
 
-  border-top-right-radius: 6px;
-  border-top-left-radius: 6px;
+    border-top-right-radius: 6px;
+
+    border-top-left-radius: 6px;
+
 }
+
 
 .app-topbar .dropdown-menu > li:last-child .dropdown-item {
 
-  border-bottom-right-radius: 6px;
-  border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+
+    border-bottom-left-radius: 6px;
+
 }
 
+
 .app-topbar .dropdown-divider {
-  margin: 0px !important;
+
+    margin: 0 !important;
+
 }
 
 
 .btn-header-painel {
-  width: 100%;
-  padding: var(--bs-dropdown-item-padding-y) var(--bs-dropdown-item-padding-x) !important;
-  clear: both;
-  color: var(--bs-dropdown-link-color);
-  text-align: inherit;
-  white-space: nowrap;
-  border-radius: var(--bs-dropdown-item-border-radius,0);
-  background-color: #0000;
-  border: 0;
-  font-weight: 400;
-  text-decoration: none;
-  display: block;
-  min-height: 40px;
+
+    width: 100%;
+
+    padding:
+        var(--bs-dropdown-item-padding-y)
+        var(--bs-dropdown-item-padding-x)
+        !important;
+
+    clear: both;
+
+    color: var(--bs-dropdown-link-color);
+
+    text-align: inherit;
+
+    white-space: nowrap;
+
+    border-radius:
+        var(
+            --bs-dropdown-item-border-radius,
+            0
+        );
+
+    background-color: transparent;
+
+    border: 0;
+
+    font-weight: 400;
+
+    text-decoration: none;
+
+    display: block;
+
+    min-height: 40px;
+
 }
 
+
 .mobile-sidebar-button {
+
     display: none;
+
+    flex: 0 0 auto;
+
     margin-right: auto;
+
 }
+
 
 .notifications-dropdown-button,
 .user-dropdown-button {
+
     border: 1px solid #d1d5db;
+
     background: #ffffff;
+
     color: #111827;
+
     padding: 8px 12px;
+
     border-radius: 10px;
+
     display: flex;
+
     align-items: center;
+
     gap: 12px;
+
 }
+
 
 .user-avatar {
+
     width: 34px;
+
     height: 34px;
+
     min-width: 34px;
+
     border-radius: 50%;
+
     background: #3b82f6;
+
     color: #ffffff;
+
     display: flex;
+
     align-items: center;
+
     justify-content: center;
+
     font-weight: 700;
+
 }
+
 
 .user-info {
+
+    min-width: 0;
+
     text-align: left;
+
     line-height: 1.1;
+
 }
+
 
 .user-name {
+
     font-size: 14px;
+
     font-weight: 700;
+
     display: block;
+
 }
+
 
 .user-role {
+
     font-size: 12px;
+
     color: #6b7280;
+
     display: block;
+
     margin-top: 3px;
+
 }
+
 
 .app-content {
+
+    box-sizing: border-box;
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
     padding: 32px 24px;
+
+    overflow-x: clip;
+
 }
+
+
+.app-content > * {
+
+    min-width: 0;
+
+    max-width: 100%;
+
+}
+
 
 .page-card {
+
+    box-sizing: border-box;
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
     background: var(--card-bg);
+
     border-radius: 10px;
-    box-shadow: 0 2px 12px rgba(15,23,42,.08);
-    /*overflow: hidden;*/
+
+    box-shadow: 0 2px 12px rgba(
+        15,
+        23,
+        42,
+        .08
+    );
+
 }
+
 
 .page-card-header {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
     padding: 26px 24px;
+
     background: #f8fafc;
+
     border-bottom: 1px solid #e5e7eb;
+
 }
 
+
 .page-card-body {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
     padding: 24px;
+
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| Paginação responsiva
+|--------------------------------------------------------------------------
+*/
+
+.automator-pagination-wrapper {
+
+    box-sizing: border-box;
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+}
+
+
+.automator-pagination-wrapper,
+.automator-pagination-wrapper * {
+
+    box-sizing: border-box;
+
+}
+
+
+.automator-pagination-wrapper .page-card-body {
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+}
+
+
+.automator-pagination-wrapper > .page-card-body > .row {
+
+    min-width: 0;
+
+}
+
+
+.automator-pagination-wrapper
+> .page-card-body
+> .row:not(.automator-pagination-table-row):not(.automator-pagination-links-row) {
+
+    max-width: none;
+
+}
+
+
+.automator-pagination-wrapper form {
+
+    min-width: 0;
+
+    max-width: 100%;
+
+}
+
+
+.automator-pagination-table-row {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    margin-right: 0;
+
+    margin-left: 0;
+
+}
+
+
+.automator-pagination-table-column {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    padding-right: 0;
+
+    padding-left: 0;
+
+}
+
+
+.automator-pagination-delete-form {
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    overflow: visible;
+
+}
+
+
+.automator-pagination-table-responsive {
+
+    box-sizing: border-box;
+
+    display: block;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    overflow-x: auto;
+
+    overflow-y: hidden;
+
+    scrollbar-width: thin;
+
+    overscroll-behavior-x: contain;
+
+    -webkit-overflow-scrolling: touch;
+
+}
+
+
+.automator-pagination-table {
+
+    width: max-content;
+
+    min-width: 100%;
+
+    max-width: none;
+
+    margin-bottom: 0;
+
+}
+
+
+.automator-pagination-table th,
+.automator-pagination-table td {
+
+    max-width: none;
+
+}
+
+
+.automator-pagination-links-row {
+
+    box-sizing: border-box;
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    margin-right: 0;
+
+    margin-left: 0;
+
+}
+
+
+.automator-pagination-links-row > * {
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    padding-right: 0;
+
+    padding-left: 0;
+
+}
+
+
+.automator-pagination-links-row nav {
+
+    width: 100%;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    gap: 12px;
+
+}
+
+
+.automator-pagination-links-row .pagination {
+
+    max-width: 100%;
+
+    margin-bottom: 0;
+
+    padding-left: 0;
+
+    flex-wrap: wrap;
+
+    justify-content: center;
+
+    gap: 4px;
+
+}
+
 
 /*
 |--------------------------------------------------------------------------
@@ -364,12 +813,20 @@ body.sidebar-collapsed .app-sidebar {
 
 body.sidebar-collapsed .app-sidebar .sidebar-link > span,
 body.sidebar-collapsed .app-sidebar .sidebar-btn > button > span {
-    /*visibility: hidden;*/
     display: none;
 }
 
 body.sidebar-collapsed .app-main {
+
+    width: calc(
+        100vw -
+        var(--sidebar-collapsed-width)
+    );
+
+    max-width: none;
+
     margin-left: var(--sidebar-collapsed-width);
+
 }
 
 body.sidebar-collapsed .sidebar-toggle-desktop {
@@ -412,6 +869,7 @@ body.sidebar-collapsed .collapse.show {
     display: none;
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | Mobile
@@ -419,35 +877,414 @@ body.sidebar-collapsed .collapse.show {
 */
 
 @media (max-width: 991.98px) {
-    .app-sidebar {
-        display: none;
+
+    html,
+    body {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        overflow-x: clip;
+
     }
 
-    .sidebar-toggle-desktop {
+
+    .app-sidebar {
+
         display: none;
+
+    }
+
+
+    .sidebar-toggle-desktop {
+
+        display: none;
+
     }
 
 
     .app-main,
     body.sidebar-collapsed .app-main {
+
+        box-sizing: border-box;
+
+        width: 100vw;
+
+        min-width: 0;
+
+        max-width: 100vw;
+
         margin-left: 0;
+
+        overflow-x: clip;
+
     }
 
-    /*.app-main {
-        margin-left: 0;
-    }*/
+
+    .app-topbar {
+
+        box-sizing: border-box;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        padding-right: 10px;
+
+        padding-left: 10px;
+
+    }
+
+
+    .app-topbar > .d-flex {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        gap: 8px !important;
+
+    }
+
+
+    .app-topbar .flex-fill {
+
+        min-width: 0;
+
+        overflow: hidden;
+
+        text-overflow: ellipsis;
+
+        white-space: nowrap;
+
+    }
+
 
     .mobile-sidebar-button {
+
         display: inline-flex;
+
+        flex: 0 0 auto;
+
+        margin-right: 8px !important;
+
     }
+
+
+    .notifications-dropdown-button,
+    .user-dropdown-button {
+
+        flex: 0 0 auto;
+
+        padding: 8px 10px;
+
+    }
+
 
     .app-content {
+
+        box-sizing: border-box;
+
+        display: block;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
         padding: 20px 14px;
+
+        overflow-x: clip;
+
     }
 
-    .user-info {
-        display: none;
+
+    .app-content > * {
+
+        min-width: 0;
+
+        max-width: 100%;
+
     }
+
+
+    .page-card {
+
+        box-sizing: border-box;
+
+        display: block;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .page-card-body {
+
+        box-sizing: border-box;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        padding: 18px 14px;
+
+    }
+
+
+    .automator-pagination-wrapper {
+
+        box-sizing: border-box;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        overflow: hidden;
+
+    }
+
+
+    .automator-pagination-wrapper
+    > .page-card-body
+    > .row {
+
+        width: auto;
+
+        min-width: 0;
+
+    }
+
+
+    .automator-pagination-wrapper
+    > .page-card-body
+    > .row
+    > [class*="col-"] {
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-wrapper
+    form.row {
+
+        width: auto;
+
+        min-width: 0;
+
+    }
+
+
+    .automator-pagination-wrapper
+    input.form-control,
+    .automator-pagination-wrapper
+    select.form-select {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-wrapper
+    .dropdown-menu {
+
+        max-width: calc(
+            100vw -
+            48px
+        );
+
+    }
+
+
+    .automator-pagination-wrapper
+    .d-flex.flex-wrap {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-wrapper
+    .d-flex.flex-wrap > .btn,
+    .automator-pagination-wrapper
+    .d-flex.flex-wrap > a {
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-wrapper
+    #automator-pagination-delete-selected {
+
+        width: 100%;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-table-row {
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        max-width: 100% !important;
+
+        margin-right: 0 !important;
+
+        margin-left: 0 !important;
+
+    }
+
+
+    .automator-pagination-table-column {
+
+        width: 100% !important;
+
+        min-width: 0 !important;
+
+        max-width: 100% !important;
+
+        padding-right: 0 !important;
+
+        padding-left: 0 !important;
+
+    }
+
+
+    .automator-pagination-table-responsive {
+
+        display: block;
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        border-radius: 6px;
+
+        overflow-x: auto !important;
+
+        overflow-y: hidden !important;
+
+        overscroll-behavior-x: contain;
+
+        -webkit-overflow-scrolling: touch;
+
+    }
+
+
+    .automator-pagination-table {
+
+        width: max-content;
+
+        min-width: 100%;
+
+        max-width: none;
+
+    }
+
+
+    .automator-pagination-links-row {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        margin-right: 0;
+
+        margin-left: 0;
+
+    }
+
+
+    .automator-pagination-links-row nav {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        flex-wrap: wrap;
+
+    }
+
+
+    .automator-pagination-links-row
+    .d-flex.flex-fill {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+    }
+
+
+    .automator-pagination-links-row
+    .pagination {
+
+        width: 100%;
+
+        min-width: 0;
+
+        max-width: 100%;
+
+        margin-bottom: 0;
+
+        padding-left: 0;
+
+        overflow: visible;
+
+        flex-wrap: wrap;
+
+        justify-content: center;
+
+    }
+
+
+    .user-info {
+
+        display: none;
+
+    }
+
 }
 
 
@@ -476,6 +1313,7 @@ body.sidebar-collapsed .collapse.show {
     padding: 0;
 }
 
+
 /*
 |--------------------------------------------------------------------------
 | Exemplo de tabela/conteúdo
@@ -493,11 +1331,10 @@ body.sidebar-collapsed .collapse.show {
 }
 
 
-
-
 .offcanvas-no-transition {
     transition: none !important;
 }
+
 
 /*
 |--------------------------------------------------------------------------
@@ -623,24 +1460,467 @@ body.sidebar-collapsed .collapse.show {
 
 #notifications-list {
 
-  height:     100%;
-  max-height: 180px;
-  overflow-y: auto;
-  width: 100%;
+    height: 100%;
+
+    max-height: 180px;
+
+    overflow-y: auto;
+
+    width: 100%;
+
 }
+
 
 #notifications ul.dropdown-menu {
 
-  min-width: 300px;
-  max-width: calc(100% - 40px);
+    min-width: 300px;
+
+    max-width: calc(100% - 40px);
 
 }
 
 
-#notifications .notifications-dropdown-button:after { display: none; }
+#notifications .notifications-dropdown-button:after {
+
+    display: none;
+
+}
 
 
 #notifications li#notifications-list > ul.list-group li.list-group-item-secondary:hover {
 
-  background-color: rgba(43, 47, 50, .3);
+    background-color: rgba(43, 47, 50, .3);
+
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Correção definitiva de largura responsiva
+|--------------------------------------------------------------------------
+|
+| Mantém o layout desktop existente e impede que elementos flex, linhas do
+| Bootstrap e tabelas aumentem a largura do documento no mobile.
+|
+*/
+
+html,
+body {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden !important;
+}
+
+.app-main {
+    box-sizing: border-box;
+    min-width: 0;
+}
+
+.app-topbar,
+.app-content,
+.page-card,
+.page-card-body,
+.automator-pagination-wrapper {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Topbar
+|--------------------------------------------------------------------------
+|
+| O botão mobile é o primeiro filho da topbar. O segundo filho possuía w-100,
+| fazendo a soma:
+|
+| largura do botão + 100% da topbar
+|
+| A largura desse segundo filho passa a ser somente o espaço restante.
+|
+*/
+
+.app-topbar > .d-flex {
+    flex: 1 1 0;
+    width: auto !important;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.app-topbar > .d-flex > .flex-fill {
+    flex: 1 1 0 !important;
+    width: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.app-topbar > .d-flex > .dropdown {
+    flex: 0 0 auto;
+    min-width: 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Estrutura da paginação
+|--------------------------------------------------------------------------
+*/
+
+.automator-pagination-wrapper > .page-card-body {
+    min-width: 0;
+    overflow: hidden;
+}
+
+.automator-pagination-wrapper > .page-card-body > .row {
+    min-width: 0;
+}
+
+.automator-pagination-wrapper > .page-card-body > .row > * {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.automator-pagination-wrapper form {
+    min-width: 0;
+    max-width: 100%;
+}
+
+.automator-pagination-wrapper .automator-pagination-delete-form,
+.automator-pagination-wrapper form.col-12,
+.automator-pagination-wrapper div.col-12 {
+    min-width: 0;
+    max-width: 100%;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Compatibilidade com as duas versões do Blade da paginação
+|--------------------------------------------------------------------------
+|
+| Suporta:
+|
+| .table-responsive
+| .automator-pagination-table-responsive
+|
+| e:
+|
+| table
+| .automator-pagination-table
+|
+*/
+
+.automator-pagination-wrapper .table-responsive,
+.automator-pagination-wrapper .automator-pagination-table-responsive {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: thin;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+}
+
+.automator-pagination-wrapper .table-responsive > table,
+.automator-pagination-wrapper .automator-pagination-table-responsive > table,
+.automator-pagination-wrapper .automator-pagination-table {
+    width: max-content;
+    min-width: 100%;
+    max-width: none;
+    margin-bottom: 0;
+}
+
+.automator-pagination-wrapper .table-responsive > table th,
+.automator-pagination-wrapper .table-responsive > table td,
+.automator-pagination-wrapper .automator-pagination-table th,
+.automator-pagination-wrapper .automator-pagination-table td {
+    max-width: none;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Desktop
+|--------------------------------------------------------------------------
+|
+| A largura reservada para a sidebar passa a existir somente no desktop.
+|
+*/
+
+@media (min-width: 992px) {
+
+    .app-main {
+        width: calc(100% - var(--sidebar-width));
+        max-width: calc(100% - var(--sidebar-width));
+        margin-left: var(--sidebar-width);
+    }
+
+    body.sidebar-collapsed .app-main {
+        width: calc(100% - var(--sidebar-collapsed-width));
+        max-width: calc(100% - var(--sidebar-collapsed-width));
+        margin-left: var(--sidebar-collapsed-width);
+    }
+
+}
+
+/*
+|--------------------------------------------------------------------------
+| Mobile
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 991.98px) {
+
+    html,
+    body {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        overflow-x: hidden !important;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Remove completamente qualquer cálculo desktop residual
+    |--------------------------------------------------------------------------
+    */
+
+    .app-main,
+    body.sidebar-collapsed .app-main {
+        box-sizing: border-box;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+        overflow-x: hidden !important;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Topbar
+    |--------------------------------------------------------------------------
+    */
+
+    .app-topbar {
+        box-sizing: border-box;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding-right: 10px;
+        padding-left: 10px;
+    }
+
+    .app-topbar > .mobile-sidebar-button {
+        flex: 0 0 auto;
+        margin-right: 8px !important;
+    }
+
+    .app-topbar > .d-flex {
+        flex: 1 1 0;
+        width: 0 !important;
+        min-width: 0;
+        max-width: 100%;
+        gap: 8px !important;
+    }
+
+    .app-topbar > .d-flex > .flex-fill {
+        flex: 1 1 0 !important;
+        width: 0;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .app-topbar > .d-flex > .dropdown {
+        flex: 0 0 auto;
+        min-width: 0;
+    }
+
+    .notifications-dropdown-button,
+    .user-dropdown-button {
+        flex: 0 0 auto;
+        padding: 8px 10px;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conteúdo
+    |--------------------------------------------------------------------------
+    */
+
+    .app-content {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+        padding: 20px 14px;
+        overflow-x: hidden;
+    }
+
+    .app-content > * {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .page-card,
+    .page-card-body,
+    .automator-pagination-wrapper {
+        box-sizing: border-box;
+        display: block;
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .page-card-body {
+        padding: 18px 14px;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Rows e colunas Bootstrap
+    |--------------------------------------------------------------------------
+    |
+    | As rows mantêm seus gutters para filtros e botões, mas não podem impor
+    | uma largura mínima ao wrapper.
+    |
+    */
+
+    .automator-pagination-wrapper
+    > .page-card-body
+    > .row {
+        width: auto;
+        min-width: 0;
+        max-width: none;
+    }
+
+    .automator-pagination-wrapper
+    > .page-card-body
+    > .row
+    > [class*="col-"] {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .automator-pagination-wrapper form.row {
+        width: auto;
+        min-width: 0;
+        max-width: none;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Linha da tabela sem gutters negativos
+    |--------------------------------------------------------------------------
+    */
+
+    .automator-pagination-wrapper
+    .automator-pagination-table-row,
+    .automator-pagination-wrapper
+    .automator-pagination-links-row {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-right: 0 !important;
+        margin-left: 0 !important;
+    }
+
+    .automator-pagination-wrapper
+    .automator-pagination-table-column {
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        padding-right: 0 !important;
+        padding-left: 0 !important;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Tabela
+    |--------------------------------------------------------------------------
+    */
+
+    .automator-pagination-wrapper .table-responsive,
+    .automator-pagination-wrapper
+    .automator-pagination-table-responsive {
+        display: block;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        border-radius: 6px;
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        overscroll-behavior-x: contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .automator-pagination-wrapper .table-responsive > table,
+    .automator-pagination-wrapper
+    .automator-pagination-table-responsive > table,
+    .automator-pagination-wrapper
+    .automator-pagination-table {
+        width: max-content;
+        min-width: 100%;
+        max-width: none;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Campos e ações
+    |--------------------------------------------------------------------------
+    */
+
+    .automator-pagination-wrapper input.form-control,
+    .automator-pagination-wrapper select.form-select {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .automator-pagination-wrapper .dropdown-menu {
+        max-width: calc(100vw - 48px);
+    }
+
+    .automator-pagination-wrapper .d-flex.flex-wrap {
+        width: 100%;
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .automator-pagination-wrapper .d-flex.flex-wrap > .btn,
+    .automator-pagination-wrapper .d-flex.flex-wrap > a {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .automator-pagination-wrapper
+    #automator-pagination-delete-selected {
+        width: 100%;
+        max-width: 100%;
+    }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Links da paginação
+    |--------------------------------------------------------------------------
+    */
+
+    .automator-pagination-wrapper nav {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .automator-pagination-wrapper .pagination {
+        min-width: 0;
+        max-width: 100%;
+        padding-left: 0;
+        flex-wrap: wrap;
+    }
+
 }

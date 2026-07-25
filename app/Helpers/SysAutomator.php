@@ -8342,6 +8342,29 @@
     }
 
 
+    public static function SysAutomatorNavHasMenu($navID = '') {
+      
+
+      $retorno = false;
+
+      $query = SysMenu::where('tbl_sys_nav_ID', $navID)->get();
+      if($query) {
+
+        $nav = $query->toArray();
+        if(count($nav) >= 1) {
+
+          $retorno = true;
+          
+        }
+
+      }
+
+      return $retorno;
+
+
+    }
+
+
 
 
   }

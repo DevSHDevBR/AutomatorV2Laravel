@@ -3885,6 +3885,120 @@
 
 
 
+        // MENUS - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-menus',
+            'tbl_sys_form_title'    => 'Menus',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Criar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Nome do menu',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-7",
+                  "maxlenght" => 255,
+                  "minlenght" => 2,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID do Menu',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_index',
+                'tbl_sys_forms_field_index'    => 'index',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-5",
+                  "maxlenght" => 255,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Classes do Menu',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_class',
+                'tbl_sys_forms_field_index'    => 'class',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-6",
+                  "maxlenght" => 255,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Bloqueado',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_locked',
+                'tbl_sys_forms_field_index'    => 'locked',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    true  => "Sim",
+                    false => "Não"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1]
+              
+              ],
+
+            ]
+
+          ],
+
+        // MENUS - END
+
+
+
       ];
 
       foreach ($formularios as $formulario) {
