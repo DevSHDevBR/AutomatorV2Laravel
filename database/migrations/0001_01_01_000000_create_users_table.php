@@ -26,6 +26,7 @@
         $table->enum('tbl_user_status', ['ativo', 'inativo'])->default('ativo');
         $table->boolean('tbl_user_blocked')->default(false);
         $table->boolean('tbl_user_actived')->default(false);
+        $table->boolean('tbl_user_locked')->default(false);
         $table->timestamp('tbl_user_created_at')->useCurrent();
         $table->timestamp('tbl_user_updated_at')->nullable()->useCurrentOnUpdate();
         $table->timestamp('tbl_user_deleted_at')->nullable()->index();

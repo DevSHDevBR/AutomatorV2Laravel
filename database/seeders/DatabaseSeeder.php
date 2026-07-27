@@ -20,12 +20,12 @@
 
         SysFunctionsSeeder::class,
         SysTranslationsSeeder::class,
-        SysConfigsSeeder::class,
         UsersTypesSeeder::class,
         UsersSeeder::class,
         UsersTypesRelsSeeder::class,
         SysFieldTypesGroupsSeeder::class,
         SysFieldTypesSeeder::class,
+        SysConfigsSeeder::class,
         SysRoutesSeeder::class,
         SysNavsSeeder::class,
         SysMenusSeeder::class,

@@ -21,9 +21,13 @@
 
     protected $fillable = [
 
+      'tbl_sys_field_type_ID',
       'tbl_sys_config_name',
       'tbl_sys_config_description',
-      'tbl_sys_config_value'
+      'tbl_sys_config_default',
+      'tbl_sys_config_value',
+      'tbl_sys_config_props',
+      'tbl_sys_config_required',
 
     ];
     

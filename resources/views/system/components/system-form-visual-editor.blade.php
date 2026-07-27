@@ -444,144 +444,154 @@
 
 <header id="automator-editor-header">
 
-  <div class="d-flex align-items-center">
+  <div class="row w-100">
 
-    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] ?? 'Adicionar campo' !!}" data-bs-trigger="hover">
-      <button type="button" class="btn btn-primary automator-editor-actions-btn" data-automator-left-tab="inserter" onclick="SysAutomatorFormEditor.switchLeftTab('inserter')">
-        <i class="fas fa-plus"></i>
-      </button>
-    </span>
+    <div class="col-12 order-2 col-md-3 order-md-1 mt-3">
+      <div class="d-flex  justify-content-center justify-content-md-start">
 
-    <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['structure'] ?? 'Estrutura' !!}" data-bs-trigger="hover">
-      <button type="button" class="btn btn-secondary automator-editor-actions-btn" data-automator-left-tab="structure" onclick="SysAutomatorFormEditor.switchLeftTab('structure')">
-        <i class="fas fa-list"></i>
-      </button>
-    </span>
+        <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['add-block'] ?? 'Adicionar campo' !!}" data-bs-trigger="hover">
+          <button type="button" class="btn btn-primary automator-editor-actions-btn" data-automator-left-tab="inserter" onclick="SysAutomatorFormEditor.switchLeftTab('inserter')">
+            <i class="fas fa-plus"></i>
+          </button>
+        </span>
 
-    <span class="dropdown me-2" data-bs-placement="top" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] ?? 'Resolução' !!}" data-bs-trigger="hover">
-      <button id="automator-editor-header-viewport-btn" type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-        <i class="fas fa-desktop me-1"></i>
-        <span id="automator-editor-header-viewport-label">Auto</span>
-      </button>
+        <span class="me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-title="{!! $texts['structure'] ?? 'Estrutura' !!}" data-bs-trigger="hover">
+          <button type="button" class="btn btn-secondary automator-editor-actions-btn" data-automator-left-tab="structure" onclick="SysAutomatorFormEditor.switchLeftTab('structure')">
+            <i class="fas fa-list"></i>
+          </button>
+        </span>
 
-      <ul class="dropdown-menu">
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('auto')">Auto</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xs')">XS - 375px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('sm')">SM - 576px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('md')">MD - 768px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('lg')">LG - 992px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xl')">XL - 1200px</button></li>
-        <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xxl')">XXL - 1400px</button></li>
-      </ul>
-    </span>
+        <span class="dropdown me-2" data-bs-placement="top" data-bs-toggle="tooltip" data-bs-title="{!! $texts['resolutions'] ?? 'Resolução' !!}" data-bs-trigger="hover">
+          <button id="automator-editor-header-viewport-btn" type="button" class="btn btn-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            <i class="fas fa-desktop me-1"></i>
+            <span id="automator-editor-header-viewport-label">Auto</span>
+          </button>
 
-  </div>
+          <ul class="dropdown-menu">
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('auto')">Auto</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xs')">XS - 375px</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('sm')">SM - 576px</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('md')">MD - 768px</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('lg')">LG - 992px</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xl')">XL - 1200px</button></li>
+            <li><button class="dropdown-item" type="button" onclick="SysAutomatorFormEditor.setViewportMode('xxl')">XXL - 1400px</button></li>
+          </ul>
+        </span>
 
-  @if(isset($header['content']))
+      </div>
+    </div>
 
-    <div id="automator-editor-header-center" class="text-center my-2">
+    <div class="col-12 order-1 col-md-6 order-md-2">
+      @if(isset($header['content']))
 
-      @if(($header['type'] ?? '') == 'form-input')
+        <div id="automator-editor-header-center" class="text-center my-2">
 
-        @php
-          $haveSlug = (
-            isset($header['content']['have-slug']) &&
-            is_array($header['content']['have-slug']) &&
-            isset($header['content']['have-slug']['enabled']) &&
-            $header['content']['have-slug']['enabled'] == true
-          );
-        @endphp
+          @if(($header['type'] ?? '') == 'form-input')
 
-        @if($haveSlug == true)
+            @php
+              $haveSlug = (
+                isset($header['content']['have-slug']) &&
+                is_array($header['content']['have-slug']) &&
+                isset($header['content']['have-slug']['enabled']) &&
+                $header['content']['have-slug']['enabled'] == true
+              );
+            @endphp
 
-          <div class="input-group">
+            @if($haveSlug == true)
 
-            <div class="form-floating">
+              <div class="input-group">
 
-              <input
-                type="{!! $header['content']['type'] ?? 'text' !!}"
-                value="{!! $header['content']['value'] ?? '' !!}"
-                class="form-control border border-secondary border-end-0 bg-light"
-                id="{!! $header['content']['id'] ?? '' !!}"
-                name="{!! $header['content']['name'] ?? '' !!}"
-                placeholder="{!! $header['content']['label'] ?? '' !!}"
-                autocomplete="off"
-                onkeyup="if(SysAutomatorFormEditor.syncHeaderInputSlug){ SysAutomatorFormEditor.syncHeaderInputSlug(this); }"
-                data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] ?? '' !!}"
-                {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
-              />
+                <div class="form-floating">
 
-              <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
+                  <input
+                    type="{!! $header['content']['type'] ?? 'text' !!}"
+                    value="{!! $header['content']['value'] ?? '' !!}"
+                    class="form-control border border-secondary border-end-0 bg-light"
+                    id="{!! $header['content']['id'] ?? '' !!}"
+                    name="{!! $header['content']['name'] ?? '' !!}"
+                    placeholder="{!! $header['content']['label'] ?? '' !!}"
+                    autocomplete="off"
+                    onkeyup="if(SysAutomatorFormEditor.syncHeaderInputSlug){ SysAutomatorFormEditor.syncHeaderInputSlug(this); }"
+                    data-automator-sync-slug-field="{!! $header['content']['have-slug']['field'] ?? '' !!}"
+                    {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
+                  />
 
-            </div>
+                  <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
 
-            <span class="input-group-text p-0 d-inline-block" style="border-top: 0px; border-bottom: 0px;">
+                </div>
 
-              <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] ?? '' !!}-sync" autocomplete="off" />
-              <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] ?? '' !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">
-                {!! $header['content']['have-slug']['label'] ?? 'Sincronizar' !!}
-              </label>
+                <span class="input-group-text p-0 d-inline-block" style="border-top: 0px; border-bottom: 0px;">
 
-            </span>
+                  <input type="checkbox" class="btn-check" id="{!! $header['content']['id'] ?? '' !!}-sync" autocomplete="off" />
+                  <label class="btn btn-outline-secondary border-secondary h-100 d-flex align-items-center" for="{!! $header['content']['id'] ?? '' !!}-sync" style="border-top-left-radius: 0px; border-bottom-left-radius: 0px;">
+                    {!! $header['content']['have-slug']['label'] ?? 'Sincronizar' !!}
+                  </label>
 
-          </div>
+                </span>
 
-        @else
+              </div>
 
-          <div class="form-floating">
+            @else
 
-            <input
-              type="{!! $header['content']['type'] ?? 'text' !!}"
-              class="form-control border border-secondary bg-light"
-              id="{!! $header['content']['id'] ?? '' !!}"
-              name="{!! $header['content']['name'] ?? '' !!}"
-              placeholder="{!! $header['content']['label'] ?? '' !!}"
-              autocomplete="off"
-              value="{!! $header['content']['value'] ?? '' !!}"
-              {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
-            />
+              <div class="form-floating">
 
-            <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
+                <input
+                  type="{!! $header['content']['type'] ?? 'text' !!}"
+                  class="form-control border border-secondary bg-light"
+                  id="{!! $header['content']['id'] ?? '' !!}"
+                  name="{!! $header['content']['name'] ?? '' !!}"
+                  placeholder="{!! $header['content']['label'] ?? '' !!}"
+                  autocomplete="off"
+                  value="{!! $header['content']['value'] ?? '' !!}"
+                  {!! ((isset($header['content']['required']) && $header['content']['required'] == true) ? ' required' : '') !!}
+                />
 
-          </div>
+                <label for="{!! $header['content']['id'] ?? '' !!}">{!! $header['content']['label'] ?? '' !!}</label>
 
-        @endif
+              </div>
+
+            @endif
+
+          @else
+
+            {!! $header['content'] !!}
+
+          @endif
+
+        </div>
 
       @else
 
-        {!! $header['content'] !!}
+        <div id="automator-editor-header-center" class="text-center">
+          <span class="small fw-bold text-muted">{!! $texts['editor'] ?? 'Editor de Formulários' !!}</span>
+        </div>
 
       @endif
-
     </div>
 
-  @else
+    <div class="col-12 order-3 col-md-3 order-md-3 my-3">
+      <div class="d-flex justify-content-center justify-content-md-end">
 
-    <div id="automator-editor-header-center" class="text-center">
-      <span class="small fw-bold text-muted">{!! $texts['editor'] ?? 'Editor de Formulários' !!}</span>
+        <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="Pré Visualizar">
+          <button id="automator-editor-header-preview-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.togglePreviewMode()">
+            <i class="fas fa-eye"></i>
+          </button>
+        </span>
+
+        <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="{!! $texts['proprieties'] ?? 'Propriedades' !!}">
+          <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.toggleSidebar('right')">
+            <i class="fas fa-sitemap"></i>
+          </button>
+        </span>
+
+        <span class="d-inline-block">
+          <button id="automator-editor-header-save-btn" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorSaveFormEditor()">
+            {!! $texts['save'] ?? 'Salvar' !!}
+          </button>
+        </span>
+
+      </div>
     </div>
-
-  @endif
-
-  <div class="d-flex align-items-center">
-
-    <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="Pré Visualizar">
-      <button id="automator-editor-header-preview-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.togglePreviewMode()">
-        <i class="fas fa-eye"></i>
-      </button>
-    </span>
-
-    <span class="d-inline-block me-2" data-bs-placement="bottom" data-bs-toggle="tooltip" data-bs-trigger="hover" data-bs-title="{!! $texts['proprieties'] ?? 'Propriedades' !!}">
-      <button id="automator-editor-header-configs-btn" type="button" class="btn btn-secondary" onclick="SysAutomatorFormEditor.toggleSidebar('right')">
-        <i class="fas fa-sitemap"></i>
-      </button>
-    </span>
-
-    <span class="d-inline-block">
-      <button id="automator-editor-header-save-btn" type="button" class="btn btn-primary px-3" style="height: 38px;" onclick="SysAutomatorSaveFormEditor()">
-        {!! $texts['save'] ?? 'Salvar' !!}
-      </button>
-    </span>
 
   </div>
 

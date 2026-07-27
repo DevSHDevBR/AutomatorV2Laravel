@@ -1174,7 +1174,7 @@ function AutomatorPaginationDeleteValidatedCallback2(context = {}) {
     dataType: 'json',
     success: function(response) {
 
-      console.log(response);
+      
       var responseTitle   = response.title || '';
       var responseMessage = response.message || '';
       if(response.status == true || response.status == 'true' || response.status == 1 || response.status == '1') {
@@ -1886,7 +1886,7 @@ function AutomatorPaginationSubmitDelete(btn = null) {
         resetActionStatusOnCancel: true,
         resetActionStatusOnSuccess: false,
         successCallback: function(context) {
-          AutomatorPaginationDeleteValidatedCallback2(context);
+          AutomatorPaginationDeleteValidatedCallback(context);
         }
       });
 

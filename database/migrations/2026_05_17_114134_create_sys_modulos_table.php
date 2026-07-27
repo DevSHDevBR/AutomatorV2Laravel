@@ -23,6 +23,7 @@
         $table->string('tbl_sys_modulo_name', 255)->unique();
         $table->string('tbl_sys_modulo_title', 255);
         $table->text('tbl_sys_modulo_description')->nullable();
+        $table->string('tbl_sys_modulo_version', 25);
         $table->boolean('tbl_sys_modulo_locked')->default(false);
         $table->enum('tbl_sys_modulo_status', ['ativo', 'inativo'])->default('ativo');
         $table->timestamp('tbl_sys_modulo_created_at')->useCurrent();

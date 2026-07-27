@@ -22,6 +22,7 @@
     protected $fillable = [
 
       'tbl_sys_modulo_name',
+      'tbl_sys_modulo_version',
       'tbl_sys_modulo_title',
       'tbl_sys_modulo_description',
       'tbl_sys_modulo_locked',

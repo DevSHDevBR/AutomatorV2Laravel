@@ -19,9 +19,17 @@
       Schema::create('tbl_sys_configs', function (Blueprint $table) {
 
         $table->id('tbl_sys_config_ID');
+
+        $table->foreignId('tbl_sys_field_type_ID')
+              ->constrained('tbl_sys_field_types', 'tbl_sys_field_type_ID')
+              ->cascadeOnDelete();
+
         $table->string('tbl_sys_config_name', 255)->unique();
         $table->text('tbl_sys_config_description')->nullable();
+        $table->text('tbl_sys_config_default')->nullable();
         $table->text('tbl_sys_config_value')->nullable();
+        $table->text('tbl_sys_config_props')->nullable();
+        $table->boolean('tbl_sys_config_required')->default(false);
         $table->timestamp('tbl_sys_config_created_at')->useCurrent();
         $table->timestamp('tbl_sys_config_updated_at')->nullable()->useCurrentOnUpdate();
 

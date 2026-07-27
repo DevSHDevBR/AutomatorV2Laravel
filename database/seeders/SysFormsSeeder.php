@@ -461,7 +461,7 @@
 
               [
 
-                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('editor', 'tbl_sys_field_type_ID'),
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Conteúdo',
                 'tbl_sys_forms_field_name'     => 'tbl_sys_route_content',
                 'tbl_sys_forms_field_index'    => 'content',
@@ -3996,6 +3996,189 @@
           ],
 
         // MENUS - END
+
+
+
+        // MODULOS - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-modulos',
+            'tbl_sys_form_title'    => 'Módulos',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode(["type" => "int"]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Pacote do módulo',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_name',
+                'tbl_sys_forms_field_index'    => 'name',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-4",
+                  "maxlenght" => 255,
+                  "unique"        => [
+
+                    "table"  => "tbl_users",
+                    "column" => "tbl_user_name"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Nome do módulo',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-5",
+                  "maxlenght" => 255,
+                  "minlenght" => 2,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Versão do módulo',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_version',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '1',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-3",
+                  "maxlenght" => 255,
+                  "minlenght" => 1,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Descrição',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_description',
+                'tbl_sys_forms_field_index'    => 'description',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "rows" => 4
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Status',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_status',
+                'tbl_sys_forms_field_index'    => 'class',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    "ativo"   => "Ativo",
+                    "inativo" => "Inativo"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Bloqueado',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_locked',
+                'tbl_sys_forms_field_index'    => 'locked',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    true  => "Sim",
+                    false => "Não"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1]
+              
+              ],
+
+            ]
+
+          ],
+
+        // MODULOS - END
 
 
 

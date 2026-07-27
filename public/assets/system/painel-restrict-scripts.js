@@ -5151,6 +5151,13 @@ function AutomatorCreateViewModal(payload, options) {
 
       AutomatorEditorAutoRender(modalEl);
 
+      if(
+        typeof AutomatorModuleInstallUploadInit === 'function' &&
+        modalEl.querySelector('[data-automator-module-upload]')
+      ) {
+        AutomatorModuleInstallUploadInit(modalEl);
+      }
+
       if(typeof callback === 'function') {
 
         window.AutomatorPaginationCurrentModalView = {
@@ -5397,6 +5404,259 @@ function AutomatorCreateViewModal(payload, options) {
 
   });
 
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| Upload de módulo: interface e progresso do XMLHttpRequest
+|--------------------------------------------------------------------------
+*/
+
+function AutomatorModuleInstallUploadInit(modalEl) {
+
+  var root = modalEl && modalEl.querySelector('[data-automator-module-upload]');
+
+  if(!root || root.dataset.initialized === 'true') {
+    return;
+  }
+
+  root.dataset.initialized = 'true';
+
+  var input = root.querySelector('[data-module-upload-input]');
+  var dropzone = root.querySelector('[data-module-upload-dropzone]');
+  var progressWrap = root.querySelector('[data-module-upload-progress-wrap]');
+  var progress = root.querySelector('[data-module-upload-progress]');
+  var percent = root.querySelector('[data-module-upload-percent]');
+  var name = root.querySelector('[data-module-upload-name]');
+  var error = root.querySelector('[data-module-upload-error]');
+  var selected = root.querySelector('[data-module-upload-selected]');
+  var uploadURL = root.getAttribute('data-upload-url') || '';
+
+  function showError(message) {
+    error.textContent = message;
+    error.classList.remove('d-none');
+    progressWrap.classList.add('d-none');
+    dropzone.classList.remove('d-none');
+  }
+
+  function clearError() {
+    error.textContent = '';
+    error.classList.add('d-none');
+  }
+
+  function updateProgress(value) {
+    value = Math.max(0, Math.min(100, value));
+    progress.style.width = value + '%';
+    progress.setAttribute('aria-valuenow', value);
+    percent.textContent = value + '%';
+  }
+
+  function selectFile(file) {
+    clearError();
+
+    if(!file) {
+      return;
+    }
+
+    if(!/\.zip$/i.test(file.name)) {
+      showError('Selecione um arquivo no formato ZIP.');
+      input.value = '';
+      return;
+    }
+
+    name.textContent = file.name;
+    selected.value = file.name;
+    selected.dispatchEvent(new Event('change', { bubbles: true }));
+    dropzone.classList.add('d-none');
+    progressWrap.classList.remove('d-none');
+    updateProgress(0);
+
+    if(uploadURL === '') {
+      showError('A rota de upload de módulos não foi encontrada.');
+      return;
+    }
+
+    var formData = new FormData();
+    formData.append('file', file);
+
+    var request = new XMLHttpRequest();
+    request.open('POST', uploadURL, true);
+
+    var token = document.querySelector('meta[name="csrf-token"]');
+
+    if(token && token.content) {
+      request.setRequestHeader('X-CSRF-TOKEN', token.content);
+    }
+
+    request.upload.addEventListener('progress', function(event) {
+      if(event.lengthComputable) {
+        updateProgress(Math.round((event.loaded / event.total) * 100));
+      }
+    });
+
+    request.addEventListener('load', function() {
+
+      var response = null;
+
+      try {
+        response = JSON.parse(request.responseText || '{}');
+      } catch(error) {
+        response = null;
+      }
+
+      if(
+        request.status >= 200 &&
+        request.status < 300 &&
+        response &&
+        response.status === true &&
+        response.data
+      ) {
+
+        var moduleData = response.data;
+
+        updateProgress(100);
+
+        AutomatorPageLoader('show', function() {
+
+          root.setAttribute('data-automator-form-changed', 'false');
+          root.setAttribute('data-automator-initial-state', AutomatorFormSerializeCurrentState(root));
+
+          modalEl.addEventListener('hidden.bs.modal', function() {
+
+            AutomatorPaginationCreateModalForm(
+              'modal-md',
+              moduleData.isUpdate === true
+                ? 'Atualizar Módulo'
+                : 'Adicionar Módulo',
+              moduleData.formID,
+              moduleData.isUpdate === true
+                ? 'get'
+                : '',
+              moduleData.isUpdate === true
+                ? moduleData.moduleID
+                : null,
+              function() {
+
+                var currentForm = AutomatorPaginationCreateModalFormCallBack([
+                  {
+                    method: 'POST',
+                    action: 'add',
+                    tbl_sys_modulo_ID: moduleData.moduleID || '',
+                    module_package_file: moduleData.packageFileName || ''
+                  }
+                ]);
+
+                if(!currentForm || !currentForm.formEl) {
+                  return;
+                }
+
+                var formEl = currentForm.formEl;
+
+                formEl.setAttribute('action', moduleData.installURL || '');
+
+                [
+                  ['tbl_sys_modulo_name', moduleData.moduleName],
+                  ['tbl_sys_modulo_version', moduleData.version],
+                  ['tbl_sys_modulo_description', moduleData.description],
+                  ['tbl_sys_modulo_title', moduleData.title]
+                ].forEach(function(fieldData) {
+
+                  var field = formEl.querySelector('[name="' + fieldData[0] + '"]');
+
+                  if(field) {
+                    field.value = fieldData[1] || '';
+                  }
+
+                });
+
+                [
+                  'tbl_sys_modulo_name',
+                  'tbl_sys_modulo_version',
+                  'tbl_sys_modulo_description'
+                ].forEach(function(fieldName) {
+
+                  var field = formEl.querySelector('[name="' + fieldName + '"]');
+
+                  if(field) {
+                    field.readOnly = true;
+                  }
+
+                });
+
+                var lockedField = formEl.querySelector('[name="tbl_sys_menu_locked"]');
+
+                if(lockedField) {
+                  lockedField.disabled = true;
+                }
+
+                formEl.setAttribute('data-automator-initial-state', AutomatorFormSerializeCurrentState(formEl));
+                formEl.setAttribute('data-automator-form-changed', 'false');
+
+              }
+            );
+
+          }, { once: true });
+
+          var closeButton = modalEl.querySelector('.js-automator-view-modal-close');
+
+          if(closeButton) {
+            closeButton.click();
+          }
+
+        });
+
+        return;
+
+      }
+
+      if(request.status >= 200 && request.status < 300) {
+        updateProgress(100);
+        return;
+      }
+
+      showError('Não foi possível enviar o arquivo. Tente novamente.');
+    });
+
+    request.addEventListener('error', function() {
+      showError('Não foi possível enviar o arquivo. Verifique sua conexão e tente novamente.');
+    });
+
+    request.send(formData);
+  }
+
+  dropzone.addEventListener('click', function() {
+    input.click();
+  });
+
+  dropzone.addEventListener('keydown', function(event) {
+    if(event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      input.click();
+    }
+  });
+
+  input.addEventListener('change', function() {
+    selectFile(input.files[0]);
+  });
+
+  ['dragenter', 'dragover'].forEach(function(eventName) {
+    dropzone.addEventListener(eventName, function(event) {
+      event.preventDefault();
+      dropzone.classList.add('is-dragover');
+    });
+  });
+
+  ['dragleave', 'drop'].forEach(function(eventName) {
+    dropzone.addEventListener(eventName, function(event) {
+      event.preventDefault();
+      dropzone.classList.remove('is-dragover');
+    });
+  });
+
+  dropzone.addEventListener('drop', function(event) {
+    selectFile(event.dataTransfer.files[0]);
+  });
 }
 
 

@@ -18,6 +18,7 @@
   use App\Models\SysFunction;
   use App\Models\SysRoute;
   use App\Models\SysForm;
+  use App\Models\SysConfig;
   use App\Models\SysFormsAccess;
   use App\Models\User;
   use App\Models\UsersType;
@@ -3245,38 +3246,6 @@
 
       return SysAutomator::SysAutomatoRenderRouteContent($slug, [], 'restrict');
 
-      // $routeName = str_replace('page-', '', $slug);
-
-
-      // $route = SysRoute::where('tbl_sys_route_name', $routeName)->first()->toArray();
-
-      // $content = SysAutomator::SysAutomatorRenderSystemPageShortcode(
-      //   $route['tbl_sys_route_content'],
-      //   [
-      //     'title' => $route['tbl_sys_route_title'],
-      //     'pageName' => $route['tbl_sys_route_name']
-      //   ],
-      //   'pages.404'
-      // );
-
-      // return view('layouts.painel-restrict', [
-
-      //   'content' => $content,
-      //   'title'   => $route['tbl_sys_route_title'],
-      //   'page'    => $route['tbl_sys_route_name'],
-
-      // ]);
-      // dd($route['tbl_sys_route_content']);
-      
-      // return view('layouts.painel-restrict', [
-
-      //   'contentView' => '',
-      //   'contentData' => [],
-      //   'title'       => $route['tbl_sys_route_title'],
-      //   'page'        => $route['tbl_sys_route_name']
-        
-      // ]);
-
       
 
     }
@@ -3599,6 +3568,15 @@
 
           'view'   => 'system.modals.admin-routes-apis-access',
           'title'  => SysAutomator::SysAutomatorGetTranslateWord('Permissões da Rota'),
+          'dados'  => $dados,
+          'footer' => null,
+
+        ],
+
+        'system-install-modulos' => [
+
+          'view'   => 'system.modals.system-install-modulos',
+          'title'  => SysAutomator::SysAutomatorGetTranslateWord('Instalar Módulo'),
           'dados'  => $dados,
           'footer' => null,
 
@@ -6535,6 +6513,18 @@
 
       ]);
 
+
+    }
+
+
+
+    public function configs(Request $request) {
+
+      $slug = $request->route('pageSlug');
+
+      $configs = SysConfig::get()->toArray();
+
+      return SysAutomator::SysAutomatoRenderRouteContent($slug, ['configs' => $configs], 'restrict');
 
     }
 
