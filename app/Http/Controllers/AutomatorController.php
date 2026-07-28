@@ -4151,4 +4151,17 @@
 
 
 
+    public static function viewPage(Request $request) {
+
+
+      $slug = $request->route('pageSlug');
+
+
+      return SysAutomator::SysAutomatoRenderRouteContent($slug, []);
+
+
+    }
+
+
+
   }

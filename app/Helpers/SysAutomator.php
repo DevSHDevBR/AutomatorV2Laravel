@@ -178,284 +178,568 @@
     }
 
 
+    public static function SysAutomatorRegisterDynamicRoutes($routes = [], $args = [])
+    {
 
-    public static function SysAutomatorRegisterDynamicRoutes($routes = [], $args = []) {
-
-
-      if (!is_array($routes) || count($routes) <= 0) {
-
-        return;
-
-      }
-
-
-      $urlPrefix = isset($args['urlPrefix']) ? $args['urlPrefix'] : '';
-
-      $adminPrefix = isset($args['adminPrefix']) ? $args['adminPrefix'] : '';
-
-      $routeNamePrefix = isset($args['routeNamePrefix']) ? $args['routeNamePrefix'] : 'page.';
-
-      $pageSlugPrefix = isset($args['pageSlugPrefix']) ? $args['pageSlugPrefix'] : 'page-';
-
-      $restrictMiddleware = isset($args['restrictMiddleware']) ? $args['restrictMiddleware'] : 'route.access';
-
-      $useRestrictMiddleware = isset($args['useRestrictMiddleware']) ? $args['useRestrictMiddleware'] : true;
-
-      $onlyAdminRoutes = isset($args['onlyAdminRoutes']) ? $args['onlyAdminRoutes'] : false;
-
-      $useAdminPrefix = isset($args['useAdminPrefix']) ? $args['useAdminPrefix'] : true;
-
-      $defaultRouteArgs = isset($args['defaultRouteArgs']) ? $args['defaultRouteArgs'] : [SystemController::class, 'pageNotFound'];
-
-      $invalidRouteResponse = isset($args['invalidRouteResponse']) ? $args['invalidRouteResponse'] : 'web';
-
-      $removeNamePrefixes = isset($args['removeNamePrefixes']) ? $args['removeNamePrefixes'] : [
-
-        'admin-api-',
-        'api-',
-        'admin-',
-
-      ];
-
-
-      $allowedMethods = [
-
-        'get',
-        'post',
-        'put',
-        'patch',
-        'delete',
-        'options',
-
-      ];
-
-
-      foreach ($routes as $route) {
-
-
-        if ($onlyAdminRoutes == true && $route['tbl_sys_route_admin'] != true) {
-
-          continue;
-
+        if (!is_array($routes) || empty($routes)) {
+            return;
         }
 
-
-        $routeArgs = $defaultRouteArgs;
-
-
-        if ($invalidRouteResponse == 'json') {
-
-          $routeArgs = function () {
-
-            return response()->json([
-
-              'status'  => false,
-              'message' => 'Endpoint não encontrado ou controller inválido.',
-
-            ], 404);
-
-          };
-
-        }
-
-
-        if (($route['tbl_sys_route_controller'] != '') && ($route['tbl_sys_route_method'] != '')) {
-
-          if (self::SysAutomatorMethodExists($route['tbl_sys_route_controller'], $route['tbl_sys_route_method']) == true) {
-
-            $controllerClass = self::SysAutomatorGetControllerClass($route['tbl_sys_route_controller']);
-
-            $routeArgs = [$controllerClass, $route['tbl_sys_route_method']];
-
-          }
-
-        }
-
-
-        $method = strtolower($route['tbl_sys_route_type']);
-
-        if (!in_array($method, $allowedMethods)) {
-
-          $method = 'get';
-
-        }
-
-
-        $url = '';
-
-
-        if ($urlPrefix != '') {
-
-          $url .= '/' . trim($urlPrefix, '/');
-
-        }
-
-
-        if ($useAdminPrefix == true && $route['tbl_sys_route_admin'] == true && $adminPrefix != '') {
-
-          $url .= '/' . trim($adminPrefix, '/');
-
-        }
-
+        $urlPrefix              = $args['urlPrefix'] ?? '';
+        $adminPrefix            = $args['adminPrefix'] ?? '';
+        $routeNamePrefix        = $args['routeNamePrefix'] ?? 'page.';
+        $pageSlugPrefix         = $args['pageSlugPrefix'] ?? 'page-';
+        $restrictMiddleware     = $args['restrictMiddleware'] ?? 'route.access';
+        $useRestrictMiddleware  = $args['useRestrictMiddleware'] ?? true;
+        $onlyAdminRoutes        = $args['onlyAdminRoutes'] ?? false;
+        $useAdminPrefix         = $args['useAdminPrefix'] ?? true;
+        $defaultRouteArgs       = $args['defaultRouteArgs'] ?? [SystemController::class, 'pageNotFound'];
+        $invalidRouteResponse   = $args['invalidRouteResponse'] ?? 'web';
 
         /*
         |--------------------------------------------------------------------------
-        | Prefixo por rota pai
+        | Compatibilidade
         |--------------------------------------------------------------------------
-        |
-        | Se a rota possuir tbl_sys_route_parent_id, a URL da rota pai será usada
-        | como prefixo antes da rota atual.
-        |
-        | Exemplo:
-        | Pai:
-        | name = admin-usuarios
-        | permalink = usuarios
-        |
-        | Filho:
-        | name = admin-usuarios-form
-        | permalink = form
-        |
-        | Resultado:
-        | /usuarios/form
-        |
-        | Se o pai não possuir permalink, será utilizado o name tratado removendo
-        | prefixos como admin-, api- e admin-api-.
-        |
         */
 
-        $parentRouteID = isset($route['tbl_sys_route_parent_id']) ? $route['tbl_sys_route_parent_id'] : null;
+        $routeScope = $args['routeScope'] ?? null;
 
-        if ($parentRouteID !== null && $parentRouteID !== '' && $parentRouteID != 0) {
+        if ($routeScope === null) {
 
+            if ($onlyAdminRoutes === true) {
+                $routeScope = 'admin';
+            } else {
+                $routeScope = 'all';
+            }
 
-          $parentRoutes = [];
+        }
 
-          $currentParentID = $parentRouteID;
+        $removeNamePrefixes = $args['removeNamePrefixes'] ?? [
+            'admin-api-',
+            'api-',
+            'admin-',
+        ];
 
-          $checkedParentRoutes = [];
+        $allowedMethods = [
+            'get',
+            'post',
+            'put',
+            'patch',
+            'delete',
+            'options',
+        ];
 
+        foreach ($routes as $route) {
 
-          while ($currentParentID !== null && $currentParentID !== '' && $currentParentID != 0) {
+            /*
+            |--------------------------------------------------------------------------
+            | Escopo das rotas
+            |--------------------------------------------------------------------------
+            */
 
+            switch ($routeScope) {
 
-            if (in_array($currentParentID, $checkedParentRoutes)) {
+                case 'admin':
 
-              break;
+                    if (empty($route['tbl_sys_route_admin'])) {
+                        continue;
+                    }
+
+                break;
+
+                case 'public':
+
+                    if (!empty($route['tbl_sys_route_admin'])) {
+                        continue;
+                    }
+
+                break;
 
             }
 
+            $routeArgs = $defaultRouteArgs;
 
-            $checkedParentRoutes[] = $currentParentID;
+            if ($invalidRouteResponse == 'json') {
 
+                $routeArgs = function () {
 
-            $SysParentRoute = SysRoute::where('tbl_sys_route_ID', $currentParentID)->first();
+                    return response()->json([
+                        'status'  => false,
+                        'message' => 'Endpoint não encontrado ou controller inválido.',
+                    ], 404);
 
-
-            if ($SysParentRoute === null) {
-
-              break;
+                };
 
             }
 
+            if (
+                !empty($route['tbl_sys_route_controller']) &&
+                !empty($route['tbl_sys_route_method'])
+            ) {
 
-            array_unshift($parentRoutes, $SysParentRoute);
+                if (
+                    self::SysAutomatorMethodExists(
+                        $route['tbl_sys_route_controller'],
+                        $route['tbl_sys_route_method']
+                    )
+                ) {
 
+                    $controllerClass = self::SysAutomatorGetControllerClass(
+                        $route['tbl_sys_route_controller']
+                    );
 
-            $currentParentID = $SysParentRoute->tbl_sys_route_parent_id;
+                    $routeArgs = [
+                        $controllerClass,
+                        $route['tbl_sys_route_method']
+                    ];
 
+                }
 
-          }
+            }
 
+            $method = strtolower($route['tbl_sys_route_type']);
 
-          if (count($parentRoutes) >= 1) {
+            if (!in_array($method, $allowedMethods)) {
+                $method = 'get';
+            }
 
-            foreach ($parentRoutes as $parentRoute) {
+            $url = '';
 
+            if ($urlPrefix != '') {
+                $url .= '/' . trim($urlPrefix, '/');
+            }
 
-              if ($parentRoute->tbl_sys_route_permalink != '') {
+            if (
+                $useAdminPrefix &&
+                !empty($route['tbl_sys_route_admin']) &&
+                $adminPrefix != ''
+            ) {
 
-                $url .= '/' . trim($parentRoute->tbl_sys_route_permalink, '/');
+                $url .= '/' . trim($adminPrefix, '/');
 
-              } else {
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rotas Pai
+            |--------------------------------------------------------------------------
+            */
+
+            $parentRouteID = $route['tbl_sys_route_parent_id'] ?? null;
+
+            if (!empty($parentRouteID)) {
+
+                $parentRoutes = [];
+                $checkedParentRoutes = [];
+                $currentParentID = $parentRouteID;
+
+                while (!empty($currentParentID)) {
+
+                    if (in_array($currentParentID, $checkedParentRoutes)) {
+                        break;
+                    }
+
+                    $checkedParentRoutes[] = $currentParentID;
+
+                    $parentRoute = SysRoute::where(
+                        'tbl_sys_route_ID',
+                        $currentParentID
+                    )->first();
+
+                    if (!$parentRoute) {
+                        break;
+                    }
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | IMPORTANTE
+                    |--------------------------------------------------------------------------
+                    | Não utiliza pais administrativos quando a rota atual
+                    | é pública.
+                    */
+
+                    if (
+                        empty($route['tbl_sys_route_admin']) &&
+                        !empty($parentRoute->tbl_sys_route_admin)
+                    ) {
+
+                        break;
+
+                    }
+
+                    array_unshift($parentRoutes, $parentRoute);
+
+                    $currentParentID = $parentRoute->tbl_sys_route_parent_id;
+
+                }
+
+                foreach ($parentRoutes as $parentRoute) {
+
+                    if (!empty($parentRoute->tbl_sys_route_permalink)) {
+
+                        $url .= '/' . trim(
+                            $parentRoute->tbl_sys_route_permalink,
+                            '/'
+                        );
+
+                    } else {
+
+                        $url .= '/' . trim(
+
+                            str_replace(
+                                $removeNamePrefixes,
+                                '',
+                                $parentRoute->tbl_sys_route_name
+                            ),
+
+                            '/'
+
+                        );
+
+                    }
+
+                }
+
+            }
+
+            if (!empty($route['tbl_sys_route_permalink'])) {
+
+                $url .= '/' . trim(
+                    $route['tbl_sys_route_permalink'],
+                    '/'
+                );
+
+            } else {
 
                 $url .= '/' . trim(
 
-                  str_replace(
+                    str_replace(
+                        $removeNamePrefixes,
+                        '',
+                        $route['tbl_sys_route_name']
+                    ),
 
-                    $removeNamePrefixes,
-                    '',
-                    $parentRoute->tbl_sys_route_name
-
-                  ),
-
-                  '/'
+                    '/'
 
                 );
 
-              }
+            }
 
+            if (!empty($route['tbl_sys_route_args'])) {
+
+                $url .= '/' . trim(
+                    $route['tbl_sys_route_args'],
+                    '/'
+                );
 
             }
 
-          }
+            $url = '/' . trim($url, '/');
 
+            $routeBuilder = Route::$method($url, $routeArgs)
+                ->defaults(
+                    'pageSlug',
+                    $pageSlugPrefix . $route['tbl_sys_route_name']
+                )
+                ->defaults(
+                    'sysRouteName',
+                    $route['tbl_sys_route_name']
+                )
+                ->name(
+                    $routeNamePrefix . $route['tbl_sys_route_name']
+                );
 
-        }
+            if (
+                $useRestrictMiddleware &&
+                ($route['tbl_sys_route_area'] ?? '') == 'restrict'
+            ) {
 
+                $routeBuilder->middleware($restrictMiddleware);
 
-        if ($route['tbl_sys_route_permalink'] != '') {
-
-          $url .= '/' . trim($route['tbl_sys_route_permalink'], '/');
-
-        } else {
-
-          $url .= '/' . trim(
-
-            str_replace(
-
-              $removeNamePrefixes,
-              '',
-              $route['tbl_sys_route_name']
-
-            ),
-
-            '/'
-
-          );
+            }
 
         }
-
-
-        if ($route['tbl_sys_route_args'] != '') {
-
-          $url .= '/' . trim($route['tbl_sys_route_args'], '/');
-
-        }
-
-
-        $url = '/' . trim($url, '/');
-
-        // echo '<pre>';
-        // echo $url;
-        // echo '</pre>';
-
-        $routeBuilder = Route::$method($url, $routeArgs)
-          ->defaults('pageSlug', $pageSlugPrefix . $route['tbl_sys_route_name'])
-          ->defaults('sysRouteName', $route['tbl_sys_route_name'])
-          ->name($routeNamePrefix . $route['tbl_sys_route_name']);
-
-
-        if ($useRestrictMiddleware == true && $route['tbl_sys_route_area'] == 'restrict') {
-
-          $routeBuilder->middleware($restrictMiddleware);
-
-        }
-
-
-      }
-
 
     }
+    // public static function SysAutomatorRegisterDynamicRoutes($routes = [], $args = []) {
+
+
+    //   if (!is_array($routes) || count($routes) <= 0) {
+
+    //     return;
+
+    //   }
+
+
+    //   $urlPrefix = isset($args['urlPrefix']) ? $args['urlPrefix'] : '';
+
+    //   $adminPrefix = isset($args['adminPrefix']) ? $args['adminPrefix'] : '';
+
+    //   $routeNamePrefix = isset($args['routeNamePrefix']) ? $args['routeNamePrefix'] : 'page.';
+
+    //   $pageSlugPrefix = isset($args['pageSlugPrefix']) ? $args['pageSlugPrefix'] : 'page-';
+
+    //   $restrictMiddleware = isset($args['restrictMiddleware']) ? $args['restrictMiddleware'] : 'route.access';
+
+    //   $useRestrictMiddleware = isset($args['useRestrictMiddleware']) ? $args['useRestrictMiddleware'] : true;
+
+    //   $onlyAdminRoutes = isset($args['onlyAdminRoutes']) ? $args['onlyAdminRoutes'] : false;
+
+    //   $useAdminPrefix = isset($args['useAdminPrefix']) ? $args['useAdminPrefix'] : true;
+
+    //   $defaultRouteArgs = isset($args['defaultRouteArgs']) ? $args['defaultRouteArgs'] : [SystemController::class, 'pageNotFound'];
+
+    //   $invalidRouteResponse = isset($args['invalidRouteResponse']) ? $args['invalidRouteResponse'] : 'web';
+
+    //   $removeNamePrefixes = isset($args['removeNamePrefixes']) ? $args['removeNamePrefixes'] : [
+
+    //     'admin-api-',
+    //     'api-',
+    //     'admin-',
+
+    //   ];
+
+
+    //   $allowedMethods = [
+
+    //     'get',
+    //     'post',
+    //     'put',
+    //     'patch',
+    //     'delete',
+    //     'options',
+
+    //   ];
+
+    //   foreach ($routes as $route) {
+
+
+    //     if ($onlyAdminRoutes == true && $route['tbl_sys_route_admin'] != true) {
+
+    //       continue;
+
+    //     }
+
+
+    //     $routeArgs = $defaultRouteArgs;
+
+    //     // echo '<pre>';
+    //     // var_dump($route);
+    //     // echo '</pre>';
+    //     // echo '<br />';
+    //     // echo '<br />';
+    //     if ($invalidRouteResponse == 'json') {
+
+    //       $routeArgs = function () {
+
+    //         return response()->json([
+
+    //           'status'  => false,
+    //           'message' => 'Endpoint não encontrado ou controller inválido.',
+
+    //         ], 404);
+
+    //       };
+
+    //     }
+
+    //     if (($route['tbl_sys_route_controller'] != '') && ($route['tbl_sys_route_method'] != '')) {
+
+    //       if (self::SysAutomatorMethodExists($route['tbl_sys_route_controller'], $route['tbl_sys_route_method']) == true) {
+
+    //         $controllerClass = self::SysAutomatorGetControllerClass($route['tbl_sys_route_controller']);
+
+    //         $routeArgs = [$controllerClass, $route['tbl_sys_route_method']];
+
+    //       }
+
+    //     }
+
+
+    //     $method = strtolower($route['tbl_sys_route_type']);
+
+    //     if (!in_array($method, $allowedMethods)) {
+
+    //       $method = 'get';
+
+    //     }
+
+
+    //     $url = '';
+
+
+    //     if ($urlPrefix != '') {
+
+    //       $url .= '/' . trim($urlPrefix, '/');
+
+    //     }
+
+
+    //     if ($useAdminPrefix == true && $route['tbl_sys_route_admin'] == true && $adminPrefix != '') {
+
+    //       $url .= '/' . trim($adminPrefix, '/');
+
+    //     }
+
+
+    //     /*
+    //     |--------------------------------------------------------------------------
+    //     | Prefixo por rota pai
+    //     |--------------------------------------------------------------------------
+    //     |
+    //     | Se a rota possuir tbl_sys_route_parent_id, a URL da rota pai será usada
+    //     | como prefixo antes da rota atual.
+    //     |
+    //     | Exemplo:
+    //     | Pai:
+    //     | name = admin-usuarios
+    //     | permalink = usuarios
+    //     |
+    //     | Filho:
+    //     | name = admin-usuarios-form
+    //     | permalink = form
+    //     |
+    //     | Resultado:
+    //     | /usuarios/form
+    //     |
+    //     | Se o pai não possuir permalink, será utilizado o name tratado removendo
+    //     | prefixos como admin-, api- e admin-api-.
+    //     |
+    //     */
+
+    //     $parentRouteID = isset($route['tbl_sys_route_parent_id']) ? $route['tbl_sys_route_parent_id'] : null;
+
+    //     if ($parentRouteID !== null && $parentRouteID !== '' && $parentRouteID != 0) {
+
+
+    //       $parentRoutes = [];
+
+    //       $currentParentID = $parentRouteID;
+
+    //       $checkedParentRoutes = [];
+
+
+    //       while ($currentParentID !== null && $currentParentID !== '' && $currentParentID != 0) {
+
+
+    //         if (in_array($currentParentID, $checkedParentRoutes)) {
+
+    //           break;
+
+    //         }
+
+
+    //         $checkedParentRoutes[] = $currentParentID;
+
+
+    //         $SysParentRoute = SysRoute::where('tbl_sys_route_ID', $currentParentID)->first();
+
+
+    //         if ($SysParentRoute === null) {
+
+    //           break;
+
+    //         }
+
+
+    //         array_unshift($parentRoutes, $SysParentRoute);
+
+
+    //         $currentParentID = $SysParentRoute->tbl_sys_route_parent_id;
+
+
+    //       }
+
+
+    //       if (count($parentRoutes) >= 1) {
+
+    //         foreach ($parentRoutes as $parentRoute) {
+
+
+    //           if ($parentRoute->tbl_sys_route_permalink != '') {
+
+    //             $url .= '/' . trim($parentRoute->tbl_sys_route_permalink, '/');
+
+    //           } else {
+
+    //             $url .= '/' . trim(
+
+    //               str_replace(
+
+    //                 $removeNamePrefixes,
+    //                 '',
+    //                 $parentRoute->tbl_sys_route_name
+
+    //               ),
+
+    //               '/'
+
+    //             );
+
+    //           }
+
+
+    //         }
+
+    //       }
+
+
+    //     }
+
+
+    //     if ($route['tbl_sys_route_permalink'] != '') {
+
+    //       $url .= '/' . trim($route['tbl_sys_route_permalink'], '/');
+
+    //     } else {
+
+    //       $url .= '/' . trim(
+
+    //         str_replace(
+
+    //           $removeNamePrefixes,
+    //           '',
+    //           $route['tbl_sys_route_name']
+
+    //         ),
+
+    //         '/'
+
+    //       );
+
+    //     }
+
+
+    //     if ($route['tbl_sys_route_args'] != '') {
+
+    //       $url .= '/' . trim($route['tbl_sys_route_args'], '/');
+
+    //     }
+
+
+    //     $url = '/' . trim($url, '/');
+
+    //     // echo '<pre>';
+    //     // echo $url;
+    //     // echo '</pre>';
+
+    //     $routeBuilder = Route::$method($url, $routeArgs)
+    //       ->defaults('pageSlug', $pageSlugPrefix . $route['tbl_sys_route_name'])
+    //       ->defaults('sysRouteName', $route['tbl_sys_route_name'])
+    //       ->name($routeNamePrefix . $route['tbl_sys_route_name']);
+
+
+    //     if ($useRestrictMiddleware == true && $route['tbl_sys_route_area'] == 'restrict') {
+
+    //       $routeBuilder->middleware($restrictMiddleware);
+
+    //     }
+
+
+    //   }
+
+
+    // }
 
 
 
@@ -2551,6 +2835,19 @@
       if($route['tbl_sys_route_area'] == 'restrict') {
 
         return view('layouts.painel-restrict', [
+
+          'content' => $conteudo,
+          'title'   => $route['tbl_sys_route_title'],
+          'page'    => $route['tbl_sys_route_name']
+
+        ]);
+
+      }
+
+
+      if( ($route['tbl_sys_route_admin'] == false) || $route['tbl_sys_route_admin'] == 0 ) {
+
+        return view('layouts.public', [
 
           'content' => $conteudo,
           'title'   => $route['tbl_sys_route_title'],

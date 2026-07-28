@@ -3756,7 +3756,7 @@
                   'name'     => 'tbl_sys_route_controller',
                   'class'    => 'form-floating mb-3',
                   'label'    => SysAutomator::SysAutomatorGetTranslateWord('Controller'),
-                  'value'    => '',
+                  'value'    => 'AutomatorController',
                   'required' => false
 
                 ],
@@ -3766,7 +3766,7 @@
                   'name'     => 'tbl_sys_route_method',
                   'class'    => 'form-floating mb-3',
                   'label'    => SysAutomator::SysAutomatorGetTranslateWord('Method'),
-                  'value'    => '',
+                  'value'    => 'viewPage',
                   'required' => false
 
                 ],

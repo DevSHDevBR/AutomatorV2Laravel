@@ -142,7 +142,7 @@
     | Registro das rotas WEB
     |--------------------------------------------------------------------------
     */
-
+    
     SysAutomator::SysAutomatorRegisterDynamicRoutes($routes, [
 
       'urlPrefix'             => '',
