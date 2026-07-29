@@ -3,7 +3,7 @@
   <input type="hidden"
     id="{{ $field_id }}"
     name="{{ $field_name }}"
-    value="{{ $field_value }}"
+    value="{!! SysAutomator::SysAutomatorResolveSysFunctionsValue($field_value) !!}"
     class="{{ $field_class }}"
     data-automator-field="true"
     data-automator-field-name="{{ $field_name }}"

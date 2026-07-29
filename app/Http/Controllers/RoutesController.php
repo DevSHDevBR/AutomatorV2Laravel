@@ -53,7 +53,6 @@
 
       $route = SysRoute::where('tbl_sys_route_ID', $id)->first();
 
-
       if($route === null) {
 
         return response()->json([

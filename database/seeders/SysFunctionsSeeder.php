@@ -117,6 +117,27 @@
 
       ]);
 
+      SysFunction::Create([
+
+        'tbl_sys_function_type'   => 'custom',
+        'tbl_sys_function_name'   => 'sysGetTableListWithOrder',
+        'tbl_sys_function_fn'     => 'AutomatorGetTableListWithOrder',
+        'tbl_sys_function_params' => "",
+        'tbl_sys_function_props'  => "",
+
+      ]);
+
+
+      SysFunction::Create([
+
+        'tbl_sys_function_type'   => 'custom',
+        'tbl_sys_function_name'   => 'sysGetTableOrderValue',
+        'tbl_sys_function_fn'     => 'AutomatorGetTableOrderValue',
+        'tbl_sys_function_params' => "{ 'table': true }",
+        'tbl_sys_function_props'  => "{ 'table': @SysFunctions['sysGetTableListWithOrder'] }",
+
+      ]);
+
 
     }
   

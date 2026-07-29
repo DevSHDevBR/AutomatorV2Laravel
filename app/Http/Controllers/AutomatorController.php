@@ -202,7 +202,7 @@
 
 
 
-    private function getAutomatorModelClassByName($model) {
+    private function getAutomatorModelClassByName($model, $module = null) {
 
 
       if($model === null || $model === '') {
@@ -215,28 +215,96 @@
       $model = trim($model);
       $model = ltrim($model, '\\');
 
+      if ($module !== null && $module !== '') {
+
+          $this->loadModuleClass($module, $model);
+
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Descobre automaticamente o namespace da Model
+      |--------------------------------------------------------------------------
+      */
 
       if(strpos($model, '\\') === false) {
 
-        $modelClass = 'App\\Models\\' . $model;
+          if($module !== null && $module !== '') {
+
+              $modelClass = ucfirst($module) . '\\Models\\' . $model;
+
+          } else {
+
+              $modelClass = 'App\\Models\\' . $model;
+
+          }
 
       } else {
 
-        $modelClass = $model;
+          $modelClass = ltrim($model, '\\');
+
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Permite Models do sistema e também de módulos
+      |--------------------------------------------------------------------------
+      */
+
+      $allowedNamespaces = [
+          'App\\Models\\',
+      ];
+
+      if($module !== null && $module !== '') {
+
+          $allowedNamespaces[] = ucfirst($module) . '\\Models\\';
+
+      }
+
+      $validNamespace = false;
+
+      foreach($allowedNamespaces as $namespace) {
+
+          if(strpos($modelClass, $namespace) === 0) {
+
+              $validNamespace = true;
+              break;
+
+          }
+
+      }
+
+      if(!$validNamespace) {
+
+          return null;
 
       }
 
 
-      if(strpos($modelClass, 'App\\Models\\') !== 0) {
+      /*
+      |--------------------------------------------------------------------------
+      | Tenta carregar a classe do módulo caso ainda não exista
+      |--------------------------------------------------------------------------
+      */
 
-        return null;
+      if(!class_exists($modelClass) && $module !== null && $module !== '') {
+
+          $this->loadModuleClass(
+              $module,
+              'Models\\'.$model
+          );
 
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | Verifica novamente após o carregamento
+      |--------------------------------------------------------------------------
+      */
 
       if(!class_exists($modelClass)) {
 
-        return null;
+          return null;
 
       }
 
@@ -400,7 +468,7 @@
 
       $model = $attributes['model'] ?? null;
 
-      $modelClass = $this->getAutomatorModelClassByName($model);
+      $modelClass = $this->getAutomatorModelClassByName($model, ($attributes['module'] ?? null));
 
 
       if($modelClass === null) {
@@ -1500,6 +1568,73 @@
 
     }
 
+    private function loadModuleClass($module, $model)
+    {
+        $module = strtolower($module);
+
+        $file = storage_path(
+            'app/modulos/installed/'
+            .$module
+            .'/Models/'
+            .$model
+            .'.php'
+        );
+
+        if (file_exists($file)) {
+
+            require_once $file;
+
+            return true;
+        }
+
+        return false;
+    }
+    // private function loadModuleClass($module, $model)
+    // {
+    //     $module = strtolower($module);
+
+    //     $file = storage_path(
+    //         'app/modulos/'
+    //         .$module
+    //         .'/Models/'
+    //         .$model
+    //         .'.php'
+    //     );
+
+    //     if(file_exists($file)) {
+
+    //         require_once $file;
+
+    //         return true;
+    //     }
+
+    //     return false;
+    // }
+    // private function loadModuleClass($module, $class)
+    // {
+    //     $module = strtolower($module);
+
+    //     $file = storage_path(
+    //         'app/modulos/'
+    //         .$module.'/'
+    //         .str_replace('\\', '/', $class)
+    //         .'.php'
+    //     );
+
+    //     if(file_exists($file)) {
+
+    //         require_once $file;
+
+    //         return class_exists(
+    //             ucfirst($module).'\\'.$class,
+    //             false
+    //         );
+
+    //     }
+
+    //     return false;
+    // }
+
 
 
     public function storeData(Request $request, $shortcodeParams = []) {
@@ -1552,7 +1687,7 @@
 
       if(isset($attributes['model']) && $attributes['model'] !== '') {
 
-        $modelClass = $this->getAutomatorModelClassByName($attributes['model']);
+        $modelClass = $this->getAutomatorModelClassByName($attributes['model'], ($attributes['module'] ?? null));
 
       }
 
@@ -1709,6 +1844,9 @@
             return response()->json([
 
               'status'  => false,
+              'attrs'   => $attributes,
+              'model'   => $modelClass,
+              'relation'   => $syncRelationships,
               'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
               'message' => 'Nenhuma Model foi encontrada para sincronizar os relacionamentos.'
 
@@ -1955,7 +2093,7 @@
 
       if(isset($attributes['model']) && $attributes['model'] !== '') {
 
-        $modelClass = $this->getAutomatorModelClassByName($attributes['model']);
+        $modelClass = $this->getAutomatorModelClassByName($attributes['model'], ($attributes['module'] ?? null));
 
       }
 
@@ -4160,6 +4298,93 @@
       return SysAutomator::SysAutomatoRenderRouteContent($slug, []);
 
 
+    }
+
+
+    // public static function AutomatorGetTableColumns($table='')
+    // {
+    //   // code...
+    // }
+
+
+    public static function AutomatorGetTableListWithOrder(): array
+    {
+
+        $retorno = [];
+
+        // Recupera todas as tabelas do banco
+        $tables = DB::select('SHOW TABLES');
+
+        foreach ($tables as $table) {
+
+            // Nome da tabela (independente do nome da coluna retornada pelo MySQL)
+            $tableName = array_values((array) $table)[0];
+
+            // Lista todas as colunas
+            $columns = Schema::getColumnListing($tableName);
+
+            foreach ($columns as $column) {
+
+                if (
+                    str_ends_with($column, '_ordem') ||
+                    str_ends_with($column, '_order')
+                ) {
+
+                    $retorno[] = [
+                        'table' => $tableName,
+                        'field' => $column,
+                    ];
+
+                    // Só precisa da primeira coluna de ordem encontrada
+                    break;
+                }
+
+            }
+
+        }
+
+        return $retorno;
+
+    }
+
+
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Retorna as colunas disponíveis na tabela de rotas
+    |--------------------------------------------------------------------------
+    */
+
+    public static function AutomatorGetTableOrderValue(string $table): int {
+
+      // Obtém todas as colunas da tabela
+      $columns = Schema::getColumnListing($table);
+
+      // Procura uma coluna terminada em "_ordem" ou "_order"
+      $orderField = null;
+
+      foreach ($columns as $column) {
+
+          if (
+              str_ends_with($column, '_ordem') ||
+              str_ends_with($column, '_order')
+          ) {
+              $orderField = $column;
+              break;
+          }
+
+      }
+
+      // Caso a tabela não possua uma coluna de ordenação
+      if ($orderField === null) {
+          return 1;
+      }
+
+      // Obtém o maior valor existente
+      $ultimoValor = DB::table($table)->max($orderField);
+
+      return ((int) $ultimoValor) + 1;
     }
 
 

@@ -242,7 +242,7 @@
                 case 'admin':
 
                     if (empty($route['tbl_sys_route_admin'])) {
-                        continue;
+                        continue 2;
                     }
 
                 break;
@@ -250,7 +250,7 @@
                 case 'public':
 
                     if (!empty($route['tbl_sys_route_admin'])) {
-                        continue;
+                        continue 2;
                     }
 
                 break;
@@ -3451,6 +3451,9 @@
       $retorno = '';
 
       $navData = self::SysAutomatorGetNavMenuItens($navName);
+      // echo '<pre>';
+      // var_dump($navData);
+      // echo '</pre>'
 
       if(count($navData) >= 1) {
 

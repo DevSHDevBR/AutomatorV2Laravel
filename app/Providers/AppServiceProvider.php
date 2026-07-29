@@ -11,6 +11,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+
+      // \App\Helpers\SysModuloAutoloader::registrar();
         //
     }
 
