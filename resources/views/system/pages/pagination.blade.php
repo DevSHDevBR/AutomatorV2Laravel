@@ -16,7 +16,14 @@
   $delRoles       = [];
   $cols           = 0;
 
-  $_defaultSort = ['col' => $index, 'direction' => 'asc'];
+  $_defaultSort = [
+    'col'       => $sort ?? $default_sort ?? $index,
+    'direction' => strtolower((string) ($direction ?? $default_direction ?? 'asc')),
+  ];
+
+  if(!in_array($_defaultSort['direction'], ['asc', 'desc'], true)) {
+    $_defaultSort['direction'] = 'asc';
+  }
 
   $deleteMessageConfirmDefault = 'Para realizar esta ação é necessário que seja realizado a confirmação de segurança informando sua senha. Esta ação é necessária pois é possivel que algumas informações não poderam ser restauradas depois.';
   $deleteMessageConfirm        = $messages['delete-message-confirm'] ?? $deleteMessageConfirmDefault;
@@ -64,39 +71,75 @@
     };
 
   };
+  $checkActionRoles = function($item, $roles = []) use (&$checkActionRoles, $getItemValue, $compareValue) {
 
-  $checkActionRoles = function($item, $roles = []) use ($getItemValue, $compareValue) {
+    if(empty($roles) || !is_array($roles)) {
+      return true;
+    }
 
-    if(!is_array($roles) || count($roles) <= 0) {
+    $relation = strtoupper($roles['relation'] ?? 'OR');
+
+    unset($roles['relation']);
+
+    $results = [];
+
+    foreach($roles as $role) {
+
+      if(!is_array($role)) {
+        continue;
+      }
+
+      // Grupo (relation)
+      if(isset($role['relation'])) {
+
+        $results[] = $checkActionRoles($item, $role);
+        continue;
+
+      }
+
+      // Condição simples
+      $roleKey = $role['key'] ?? null;
+      $roleArg = $role['compare'] ?? '==';
+      $roleVal = $role['value'] ?? null;
+
+      $itemVal = $getItemValue($item, $roleKey);
+
+      $results[] = $compareValue(
+        $itemVal,
+        $roleArg,
+        $roleVal
+      );
+
+    }
+
+    
+    if(empty($results)) {
+        return true;
+    }
+
+    if($relation === 'AND') {
+
+      foreach($results as $result) {
+        if(!$result) {
+          return false;
+        }
+      }
 
       return true;
 
     }
 
-    foreach($roles as $role) {
-
-      if(!is_array($role)) {
-
-        continue;
-
-      }
-
-      $roleKey = $role['key'] ?? null;
-      $roleArg = $role['compare'] ?? '==';
-      $roleVal = $role['value'] ?? null;
-      $itemVal = $getItemValue($item, $roleKey);
-
-      if($compareValue($itemVal, $roleArg, $roleVal)) {
-
+    // OR
+    foreach($results as $result) {
+      if($result) {
         return true;
-
       }
-
     }
 
     return false;
 
   };
+  
 
   $renderIcon = function($icon = null) {
 
@@ -1240,9 +1283,9 @@
                       $fieldType     = $config['field_type'] ?? [];
                       $headerClasses = $getColumnClass($config, 'header');
 
-                      $isSorted = ( (request('sort') !== null) ? (request('sort') == $col) : ($_defaultSort['col'] == $col) );
+                      $isSorted = ($_defaultSort['col'] == $col);
 
-                      $nextDirection = ( (request('direction') !== null) ? request('direction') : $_defaultSort['direction'] );
+                      $currentDirection = $_defaultSort['direction'];
                     
                     @endphp
 
@@ -1254,7 +1297,7 @@
 
                         <span class="me-1">{!! SysAutomator::SysAutomatorGetTranslateWord($config['label'] ?? $col) !!}</span>
 
-                        @if($isSorted && $nextDirection == 'asc')
+                        @if($isSorted && $currentDirection == 'asc')
 
                           <a class="p-1" style="color: #0a58ca; text-decoration: none !important;">
 
@@ -1272,7 +1315,7 @@
 
                         @endif
 
-                        @if($isSorted && request('direction') == 'desc')
+                        @if($isSorted && $currentDirection == 'desc')
                           
                           <a class="p-1" style="color: #0a58ca; text-decoration: none !important;">
 
@@ -1481,6 +1524,115 @@
 
                     @if(!empty($list_actions))
 
+                      @php
+
+                        $checkActionRules = function($item, $rules) {
+
+                            if(!is_array($rules) || count($rules) <= 0) {
+                                return false;
+                            }
+
+                            $relation = strtoupper($rules['relation'] ?? 'OR');
+
+                            unset($rules['relation']);
+
+                            $results = [];
+
+                            foreach($rules as $rule) {
+
+                                if(!is_array($rule)) {
+                                    continue;
+                                }
+
+                                $key     = $rule['key'] ?? null;
+                                $compare = $rule['compare'] ?? '==';
+                                $value   = $rule['value'] ?? null;
+
+                                if($key === null) {
+                                    continue;
+                                }
+
+                                $current = is_array($item)
+                                    ? ($item[$key] ?? null)
+                                    : ($item->$key ?? null);
+
+                                switch($compare) {
+
+                                    case '=':
+                                    case '==':
+                                        $results[] = ($current == $value);
+                                    break;
+
+                                    case '!=':
+                                    case '<>':
+                                        $results[] = ($current != $value);
+                                    break;
+
+                                    case '>':
+                                        $results[] = ($current > $value);
+                                    break;
+
+                                    case '>=':
+                                        $results[] = ($current >= $value);
+                                    break;
+
+                                    case '<':
+                                        $results[] = ($current < $value);
+                                    break;
+
+                                    case '<=':
+                                        $results[] = ($current <= $value);
+                                    break;
+
+                                    case 'in':
+                                        $results[] = in_array($current, (array)$value);
+                                    break;
+
+                                    case 'not in':
+                                        $results[] = !in_array($current, (array)$value);
+                                    break;
+
+                                    default:
+                                        $results[] = ($current == $value);
+                                    break;
+
+                                }
+
+                            }
+
+                            if(empty($results)) {
+                                return false;
+                            }
+
+                            if($relation == 'AND') {
+
+                                foreach($results as $result) {
+
+                                    if(!$result) {
+                                        return false;
+                                    }
+
+                                }
+
+                                return true;
+
+                            }
+
+                            foreach($results as $result) {
+
+                                if($result) {
+                                    return true;
+                                }
+
+                            }
+
+                            return false;
+
+                        };
+
+                      @endphp
+
+
                       <td class="text-end text-nowrap">
 
                         <div class="d-none d-md-flex justify-content-end gap-2">
@@ -1489,40 +1641,52 @@
 
                             @php
 
-                              $actAdd  = true;
+                              $actAdd  = false;
                               $actOn   = true;
                               $listAct = null;
 
-
                               if(isset($listAction['action'])) {
 
-                                $actAdd  = false;
-                                $listAct = $actions[$listAction['action']] ?? null;
+                                  $listAct = $actions[$listAction['action']] ?? null;
 
+                                  if(
+                                      is_array($listAct) &&
+                                      isset($listAct['route']) &&
+                                      SysAutomator::SysAutomatorCheckUserAccess($listAct['route'])
+                                  ) {
 
-                                if(
+                                      $actAdd = true;
 
-                                  is_array($listAct) &&
-                                  isset($listAct['route']) &&
-                                  SysAutomator::SysAutomatorCheckUserAccess($listAct['route'])
-                                
-                                ) {
+                                      $actOn = $checkActionRoles(
+                                          $item,
+                                          $listAct['roles'] ?? []
+                                      );
 
-                                  $actAdd = true;
-                                  $actOn  = $checkActionRoles($item, $listAct['roles'] ?? []);
+                                      if(
+                                          $checkActionRules(
+                                              $item,
+                                              $listAct['hidden'] ?? []
+                                          )
+                                      ) {
 
-                                }
+                                          $actAdd = false;
+
+                                      }
+
+                                  }
 
                               }
 
 
-                              $listType       = $listAction['type'] ?? 'button';
-                              $listActionName = $listAction['action'] ?? '';
-                              $isDeleteAction = ($listActionName === 'delete');
-                              $listID         = ($listAction['id'] ?? 'btn-action') . '-' . $itemID;
-                              $listClass      = ($listAction['class'] ?? '') . ' btn btn-sm d-inline-flex align-items-center py-2 text-center';
-                              $listIcon       = $renderIcon($listAction['icon'] ?? null);
-                              $listText       = SysAutomator::SysAutomatorGetTranslateWord($listAction['text'] ?? '');
+                              $listType            = $listAction['type'] ?? 'button';
+                              $listActionName      = $listAction['action'] ?? '';
+                              $isDeleteAction      = ($listActionName === 'delete');
+                              $isActivateAction    = ($listActionName === 'activate');
+                              $isDesactivateAction = ($listActionName === 'desactivate');
+                              $listID              = ($listAction['id'] ?? 'btn-action') . '-' . $itemID;
+                              $listClass           = ($listAction['class'] ?? '') . ' btn btn-sm d-inline-flex align-items-center py-2 text-center';
+                              $listIcon            = $renderIcon($listAction['icon'] ?? null);
+                              $listText            = SysAutomator::SysAutomatorGetTranslateWord($listAction['text'] ?? '');
 
                               $listOnclick = isset($listAction['onclick'])
 
@@ -1555,6 +1719,18 @@
 
                               }
 
+                              if($isActivateAction) {
+
+                                $listClass .= ' js-automator-pagination-activate-item';
+
+                              }
+
+                              if($isDesactivateAction) {
+
+                                $listClass .= ' js-automator-pagination-desactivate-item';
+
+                              }
+
                             @endphp
 
                             @if($actAdd)
@@ -1578,6 +1754,18 @@
                                       data-original-onclick="{!! e($listOnclick) !!}"
                                       data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['delete'], true) !!}"
                                       onclick="return AutomatorPaginationConfirmDeleteItem(this)"
+
+                                    @elseif($isActivateAction)
+
+                                      data-original-onclick="{!! e($listOnclick) !!}"
+                                      data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['activate'], true) !!}"
+                                      onclick="return AutomatorPaginationConfirmActivateItem(this)"
+
+                                    @elseif($isDesactivateAction)
+
+                                      data-original-onclick="{!! e($listOnclick) !!}"
+                                      data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['desactivate'], true) !!}"
+                                      onclick="return AutomatorPaginationConfirmDesactivateItem(this)"
 
                                     @elseif($listOnclick !== '')
 
@@ -1639,6 +1827,116 @@
                             </button>
                             <ul class="dropdown-menu">
                               
+                              @php
+
+                                $checkActionHidden = function($item, $rules) {
+
+                                    if(!is_array($rules) || count($rules) <= 0) {
+                                        return false;
+                                    }
+
+                                    $relation = strtoupper($rules['relation'] ?? 'OR');
+
+                                    unset($rules['relation']);
+
+                                    $results = [];
+
+                                    foreach($rules as $rule) {
+
+                                        if(!is_array($rule)) {
+                                            continue;
+                                        }
+
+                                        $key     = $rule['key'] ?? null;
+                                        $compare = $rule['compare'] ?? '==';
+                                        $value   = $rule['value'] ?? null;
+
+                                        if($key === null) {
+                                            continue;
+                                        }
+
+                                        $current = null;
+
+                                        if(is_array($item)) {
+                                            $current = $item[$key] ?? null;
+                                        } else {
+                                            $current = $item->$key ?? null;
+                                        }
+
+                                        switch($compare) {
+
+                                            case '=':
+                                            case '==':
+                                                $results[] = ($current == $value);
+                                            break;
+
+                                            case '!=':
+                                            case '<>':
+                                                $results[] = ($current != $value);
+                                            break;
+
+                                            case '>':
+                                                $results[] = ($current > $value);
+                                            break;
+
+                                            case '>=':
+                                                $results[] = ($current >= $value);
+                                            break;
+
+                                            case '<':
+                                                $results[] = ($current < $value);
+                                            break;
+
+                                            case '<=':
+                                                $results[] = ($current <= $value);
+                                            break;
+
+                                            case 'in':
+                                                $results[] = in_array($current, (array)$value);
+                                            break;
+
+                                            case 'not in':
+                                                $results[] = !in_array($current, (array)$value);
+                                            break;
+
+                                            default:
+                                                $results[] = ($current == $value);
+                                            break;
+
+                                        }
+
+                                    }
+
+                                    if(count($results) == 0) {
+                                        return false;
+                                    }
+
+                                    if($relation == 'AND') {
+
+                                        foreach($results as $result) {
+
+                                            if(!$result) {
+                                                return false;
+                                            }
+
+                                        }
+
+                                        return true;
+
+                                    }
+
+                                    foreach($results as $result) {
+
+                                        if($result) {
+                                            return true;
+                                        }
+
+                                    }
+
+                                    return false;
+
+                                };
+                              @endphp
                               @foreach($list_actions as $listAction)
 
                                 @php
@@ -1655,28 +1953,40 @@
 
 
                                     if(
-
-                                      is_array($listAct) &&
-                                      isset($listAct['route']) &&
-                                      SysAutomator::SysAutomatorCheckUserAccess($listAct['route'])
-                                    
+                                        is_array($listAct) &&
+                                        isset($listAct['route']) &&
+                                        SysAutomator::SysAutomatorCheckUserAccess($listAct['route'])
                                     ) {
 
-                                      $actAdd = true;
-                                      $actOn  = $checkActionRoles($item, $listAct['roles'] ?? []);
+                                        $actAdd = true;
+                                        $actOn  = $checkActionRoles($item, $listAct['roles'] ?? []);
+
+                                        // AGORA verifica se deve esconder
+                                        if(
+                                            $checkActionRules(
+                                                $item,
+                                                $listAct['hidden'] ?? []
+                                            )
+                                        ) {
+
+                                            $actAdd = false;
+
+                                        }
 
                                     }
 
-                                  }
+                                }
 
 
-                                  $listType       = $listAction['type'] ?? 'button';
-                                  $listActionName = $listAction['action'] ?? '';
-                                  $isDeleteAction = ($listActionName === 'delete');
-                                  $listID         = ($listAction['id'] ?? 'btn-action') . '-' . $itemID;
-                                  $listClass      = ( str_replace(['btn-primary', 'btn-warning', 'btn-danger', 'text-white'], '', ($listAction['class'] ?? '')) ) . ' btn btn-sm d-inline-flex align-items-center py-2 text-center';
-                                  $listIcon       = $renderIcon($listAction['icon'] ?? null);
-                                  $listText       = SysAutomator::SysAutomatorGetTranslateWord($listAction['text'] ?? '');
+                                  $listType            = $listAction['type'] ?? 'button';
+                                  $listActionName      = $listAction['action'] ?? '';
+                                  $isDeleteAction      = ($listActionName === 'delete');
+                                  $isActivateAction    = ($listActionName === 'activate');
+                                  $isDesactivateAction = ($listActionName === 'desactivate');
+                                  $listID              = ($listAction['id'] ?? 'btn-action') . '-' . $itemID;
+                                  $listClass           = ( str_replace(['btn-primary', 'btn-warning', 'btn-danger', 'text-white'], '', ($listAction['class'] ?? '')) ) . ' btn btn-sm d-inline-flex align-items-center py-2 text-center';
+                                  $listIcon            = $renderIcon($listAction['icon'] ?? null);
+                                  $listText            = SysAutomator::SysAutomatorGetTranslateWord($listAction['text'] ?? '');
 
                                   $listOnclick = isset($listAction['onclick'])
 
@@ -1703,13 +2013,45 @@
                                     : '#';
 
 
-                                  if($isDeleteAction) {
+                                  $actionHidden = false;
 
-                                    $listClass .= ' js-automator-pagination-delete-item';
+                                  if(is_array($listAct)) {
+
+                                      $actionHidden = $checkActionHidden(
+                                          $item,
+                                          $listAct['hidden'] ?? []
+                                      );
+
+                                  }
+
+                                  if($actionHidden) {
+
+                                      $actAdd = false;
+
+                                  } else {
+
+                                      if($isDeleteAction) {
+
+                                          $listClass .= ' js-automator-pagination-delete-item';
+
+                                      }
+
+                                      if($isActivateAction) {
+
+                                          $listClass .= ' js-automator-pagination-activate-item';
+
+                                      }
+
+                                      if($isDesactivateAction) {
+
+                                          $listClass .= ' js-automator-pagination-desactivate-item';
+
+                                      }
 
                                   }
 
                                 @endphp
+
 
                                 @if($actAdd)
 
@@ -1733,6 +2075,18 @@
                                             data-original-onclick="{!! e($listOnclick) !!}"
                                             data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['delete'], true) !!}"
                                             onclick="return AutomatorPaginationConfirmDeleteItem(this)"
+
+                                          @elseif($isActivateAction)
+
+                                            data-original-onclick="{!! e($listOnclick) !!}"
+                                            data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['activate'], true) !!}"
+                                            onclick="return AutomatorPaginationConfirmActivateItem(this)"
+
+                                          @elseif($isDesactivateAction)
+
+                                            data-original-onclick="{!! e($listOnclick) !!}"
+                                            data-original-href="{!! SysAutomator::SysAutomatorGetRouteLinkByName($actions['desactivate'], true) !!}"
+                                            onclick="return AutomatorPaginationConfirmDesactivateItem(this)"
 
                                           @elseif($listOnclick !== '')
 

@@ -697,6 +697,43 @@
 
           ],
 
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-routes-apis-active',
+            'tbl_sys_route_title'      => "API - API's ACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'activeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="active-data" table="tbl_sys_routes" index="tbl_sys_route_ID" status="tbl_sys_route_status"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-administracao',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-routes-apis-desactive',
+            'tbl_sys_route_title'      => "API - API's DESACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'desactiveData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="desactive-data" table="tbl_sys_routes" index="tbl_sys_route_ID" status="tbl_sys_route_status"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-administracao',
+            'user_types'               => [1, 2]
+
+          ],
+
 
         // ROTAS / API's - END
 
@@ -1195,6 +1232,43 @@
 
           ],
 
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-users-types-active',
+            'tbl_sys_route_title'      => "API - Tipo de Usuário's ACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'activeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="active-data" table="tbl_users_types" index="tbl_users_type_ID" status="tbl_users_type_status"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-usuarios',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-users-types-desactive',
+            'tbl_sys_route_title'      => "API - Tipo de Usuário's DESACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'desactiveData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="desactive-data" table="tbl_users_types" index="tbl_users_type_ID" status="tbl_users_type_status"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-usuarios',
+            'user_types'               => [1, 2]
+
+          ],
+
 
         // TIPOS DE USUARIOS - END
 
@@ -1288,6 +1362,43 @@
             'tbl_sys_route_method'     => 'deleteUser',
             'tbl_sys_route_args'       => '',
             'tbl_sys_route_content'    => '',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-usuarios',
+            'user_types'               => [1, 2]
+
+          ],
+
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-users-active',
+            'tbl_sys_route_title'      => "API - Usuário's ACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'activeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="active-data" table="tbl_users" index="tbl_user_ID" status="tbl_user_status"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-usuarios',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-users-desactive',
+            'tbl_sys_route_title'      => "API - Usuário's DESACTIVE",
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'desactiveData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="desactive-data" table="tbl_users" index="tbl_user_ID" status="tbl_user_status"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-usuarios',
@@ -1668,10 +1779,10 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'POST',
-            'tbl_sys_route_controller' => 'AutomatorController',
-            'tbl_sys_route_method'     => 'updateData',
+            'tbl_sys_route_controller' => 'ModulosController',
+            'tbl_sys_route_method'     => 'updateModulo',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_modulos" index="tbl_sys_modulo_ID"]',
+            'tbl_sys_route_content'    => '',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-automator',
@@ -1686,10 +1797,46 @@
             'tbl_sys_route_admin'      => true,
             'tbl_sys_route_locked'     => true,
             'tbl_sys_route_type'       => 'POST',
-            'tbl_sys_route_controller' => 'AutomatorController',
-            'tbl_sys_route_method'     => 'deleteData',
+            'tbl_sys_route_controller' => 'ModulosController',
+            'tbl_sys_route_method'     => 'deleteModulo',
             'tbl_sys_route_args'       => '',
-            'tbl_sys_route_content'    => '[automator function="delete-data" table="tbl_sys_modulos" index="tbl_sys_modulo_ID"]',
+            'tbl_sys_route_content'    => '',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-modulos-active',
+            'tbl_sys_route_title'      => 'API - Módulos ACTIVE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'activeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="active-data" table="tbl_sys_modulos" index="tbl_sys_modulo_ID" status="tbl_sys_modulo_status" callSuccess="App\Http\Controllers\ModulosController;activateModule"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-modulos-desactive',
+            'tbl_sys_route_title'      => 'API - Módulos DESACTIVE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'desactiveData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="desactive-data" table="tbl_sys_modulos" index="tbl_sys_modulo_ID" status="tbl_sys_modulo_status" callSuccess="App\Http\Controllers\ModulosController;desactivateModule"]',
             'tbl_sys_route_area'       => 'restrict',
             'tbl_sys_route_status'     => 'ativo',
             'tbl_sys_route_parent_id'  => 'admin-automator',
@@ -1951,6 +2098,106 @@
 
 
         // AUTOMATOR => PAGINATIONS - END
+
+
+
+        // AUTOMATOR => VIEWS - START
+
+
+          [
+
+            'tbl_sys_route_name'       => 'admin-views',
+            'tbl_sys_route_title'      => 'Gerenciar Views',
+            'tbl_sys_route_permalink'  => 'gerenciar-views',
+            'tbl_sys_route_api'        => false,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'GET',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getFunction',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '<code>[automator function="pagination" name="admin-VIEWS-pagination"]</code>',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-views-get',
+            'tbl_sys_route_title'      => 'API - Views GET',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'GET',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'getData',
+            'tbl_sys_route_args'       => '{id?}',
+            'tbl_sys_route_content'    => '[automator function="get-data" table="tbl_sys_views" index="tbl_sys_view_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-views-store',
+            'tbl_sys_route_title'      => 'API - Views STORE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'storeData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="store-data" table="tbl_sys_views" form="admin-views"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-views-update',
+            'tbl_sys_route_title'      => 'API - Views UPDATE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'updateData',
+            'tbl_sys_route_args'       => '{id?}',
+            'tbl_sys_route_content'    => '[automator function="update-data" table="tbl_sys_views" form="admin-views" index="tbl_sys_view_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+          [
+
+            'tbl_sys_route_name'       => 'admin-api-views-delete',
+            'tbl_sys_route_title'      => 'API - Views DELETE',
+            'tbl_sys_route_api'        => true,
+            'tbl_sys_route_admin'      => true,
+            'tbl_sys_route_locked'     => true,
+            'tbl_sys_route_type'       => 'POST',
+            'tbl_sys_route_controller' => 'AutomatorController',
+            'tbl_sys_route_method'     => 'deleteData',
+            'tbl_sys_route_args'       => '',
+            'tbl_sys_route_content'    => '[automator function="delete-data" table="tbl_sys_views" index="tbl_sys_view_ID"]',
+            'tbl_sys_route_area'       => 'restrict',
+            'tbl_sys_route_status'     => 'ativo',
+            'tbl_sys_route_parent_id'  => 'admin-automator',
+            'user_types'               => [1, 2]
+
+          ],
+
+
+        // AUTOMATOR => VIEWS - END
 
 
 

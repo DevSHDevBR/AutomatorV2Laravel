@@ -525,6 +525,27 @@
 
         ],
 
+        [
+          
+          'tbl_sys_menu_ID'             => 1,
+          'tbl_sys_menu_item_index'     => '',
+          'tbl_sys_menu_item_icon'      => '',
+          'tbl_sys_menu_item_class'     => 'sidebar-submenu-link',
+          'tbl_sys_menu_item_title'     => 'Views',
+          'tbl_sys_menu_item_type'      => 'route',
+          'tbl_sys_route_ID'            => SysRoute::getRouteIDByName('admin-views'),
+          'tbl_sys_menu_item_link'      => '',
+          'tbl_sys_menu_item_props'     => '',
+          'tbl_sys_menu_item_status'    => 'ativo',
+          'tbl_sys_menu_item_parent_id' => 19,
+          'tbl_sys_menu_item_locked'    => true,
+          'tbl_sys_menu_item_admin'     => true,
+          'tbl_sys_menu_item_ordem'     => 24,
+          'user_rules'                  => [1],
+          'user_types'                  => [1, 2]
+
+        ],
+
 
         [
           
@@ -541,7 +562,7 @@
           'tbl_sys_menu_item_parent_id' => 19,
           'tbl_sys_menu_item_locked'    => true,
           'tbl_sys_menu_item_admin'     => true,
-          'tbl_sys_menu_item_ordem'     => 24,
+          'tbl_sys_menu_item_ordem'     => 25,
           'user_rules'                  => [1],
           'user_types'                  => [1]
 
@@ -562,7 +583,7 @@
           'tbl_sys_menu_item_parent_id' => 19,
           'tbl_sys_menu_item_locked'    => true,
           'tbl_sys_menu_item_admin'     => true,
-          'tbl_sys_menu_item_ordem'     => 25,
+          'tbl_sys_menu_item_ordem'     => 26,
           'user_rules'                  => [1],
           'user_types'                  => [1]
 
@@ -586,7 +607,7 @@
           'tbl_sys_menu_item_parent_id' => 0,
           'tbl_sys_menu_item_locked'    => true,
           'tbl_sys_menu_item_admin'     => true,
-          'tbl_sys_menu_item_ordem'     => 26,
+          'tbl_sys_menu_item_ordem'     => 27,
           'user_rules'                  => [1],
           'user_types'                  => [1, 2]
 
@@ -606,7 +627,7 @@
           'tbl_sys_menu_item_parent_id' => 0,
           'tbl_sys_menu_item_locked'    => true,
           'tbl_sys_menu_item_admin'     => true,
-          'tbl_sys_menu_item_ordem'     => 27,
+          'tbl_sys_menu_item_ordem'     => 28,
           'user_rules'                  => [1, 2],
           'user_types'                  => [1, 2, 3, 4]
 

@@ -8,6 +8,7 @@
   use Illuminate\Validation\ValidationException;
   use Illuminate\Support\Facades\View;
   use Illuminate\Support\Facades\DB;
+  use Illuminate\Support\Facades\Storage;
   use Illuminate\Support\Str;
 
   use App\Helpers\SysAutomator;
@@ -1270,17 +1271,9 @@
       }
 
 
-      return asset(
+      return SysAutomator::SysAutomatorGetPublicUploadURL(
 
-        trim(
-
-          $directory,
-
-          '/'
-
-        ) .
-
-        '/' .
+        $directory,
 
         $fileName
 
@@ -1650,13 +1643,7 @@
         $extension;
 
 
-      $storedFilePath =
-
-        $absoluteDirectory .
-
-        DIRECTORY_SEPARATOR .
-
-        $fileName;
+      $storedFilePath = $directory . '/' . $fileName;
 
 
       try {
@@ -1668,13 +1655,26 @@
         |--------------------------------------------------------------------------
         */
 
-        $uploadedFile->move(
+        $storedPath = Storage::disk('public')->putFileAs(
 
-          $absoluteDirectory,
+          $directory,
+
+          $uploadedFile,
 
           $fileName
 
         );
+
+
+        if($storedPath !== $storedFilePath) {
+
+          throw new \RuntimeException(
+
+            'Não foi possível armazenar o arquivo enviado.'
+
+          );
+
+        }
 
 
         /*
@@ -1753,7 +1753,7 @@
 
         if(
 
-          is_file(
+          Storage::disk('public')->exists(
 
             $storedFilePath
 
@@ -1761,7 +1761,7 @@
 
         ) {
 
-          @unlink(
+          Storage::disk('public')->delete(
 
             $storedFilePath
 

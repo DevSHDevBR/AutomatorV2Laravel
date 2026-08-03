@@ -5525,7 +5525,7 @@ function AutomatorModuleInstallUploadInit(modalEl) {
           modalEl.addEventListener('hidden.bs.modal', function() {
 
             AutomatorPaginationCreateModalForm(
-              'modal-md',
+              'modal-fullscreen-md-down modal-lg',
               moduleData.isUpdate === true
                 ? 'Atualizar Módulo'
                 : 'Adicionar Módulo',
@@ -5584,7 +5584,19 @@ function AutomatorModuleInstallUploadInit(modalEl) {
 
                 });
 
-                var lockedField = formEl.querySelector('[name="tbl_sys_menu_locked"]');
+                var statusField = formEl.querySelector('[name="tbl_sys_modulo_status"]');
+
+                if (statusField) {
+
+                  var optionInativo = statusField.querySelector('option[value="inativo"]');
+
+                  if (optionInativo) {
+                    optionInativo.disabled = true;
+                  }
+
+                }
+
+                var lockedField = formEl.querySelector('[name="tbl_sys_modulo_locked"]');
 
                 if(lockedField) {
                   lockedField.disabled = true;
@@ -5615,7 +5627,26 @@ function AutomatorModuleInstallUploadInit(modalEl) {
         return;
       }
 
-      showError('Não foi possível enviar o arquivo. Tente novamente.');
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-install-module-alert',
+        'center',
+        'middle',
+        true,
+        true,
+        'Falha',
+        response.message,
+        null,
+        false,
+        function() {
+          root.setAttribute('data-automator-form-changed', 'false');
+          root.setAttribute('data-automator-initial-state', AutomatorFormSerializeCurrentState(root));
+          error.classList.add('d-none');
+          progressWrap.classList.add('d-none');
+          dropzone.classList.remove('d-none');
+        },
+        3000
+      );
+      // showError('Não foi possível enviar o arquivo. Tente novamente.');
     });
 
     request.addEventListener('error', function() {
@@ -8662,3 +8693,24 @@ $(function() {
 
 
 });
+
+
+
+function AutomatorChangeCheckboxAccessFields(el, container, inputs) {
+
+
+  var valor = $(el).val();
+
+  if(valor == 'restrict') {
+
+    $(container).removeClass('d-none');
+
+  } else {
+    
+    $(inputs).prop('checked', false);
+    $(container).addClass('d-none');
+
+  }
+
+
+}

@@ -115,7 +115,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -135,7 +135,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Área de navegação'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Área de navegação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-navs') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -328,7 +328,65 @@
 
                     ]
                   
-                  ]
+                  ],
+                  'activate' => [
+
+                    'route'  => 'admin-api-routes-apis-active',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+                      
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+                  'desactivate' => [
+
+                    'route'  => 'admin-api-routes-apis-desactive',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
 
                 ])
               
@@ -346,7 +404,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Nova API'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis') . ");",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Nova API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis') . ");",
 
                     ]
 
@@ -366,7 +424,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar API'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -377,7 +435,27 @@
                     'class'   => 'btn-warning text-white',
                     'icon'    => 'lock',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Permissões da Rota de API'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões da API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões da API') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-apis-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'activate',
+                    'id'      => 'btn-activate-routes-apis',
+                    'class'   => 'btn-success',
+                    'icon'    => 'check',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Ativar Rota de API'),
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'desactivate',
+                    'id'      => 'btn-desactivate-routes-apis',
+                    'class'   => 'btn-secondary',
+                    'icon'    => 'times',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Desativar Rota de API'),
 
                   ],
                   [
@@ -568,7 +646,65 @@
 
                     ]
                   
-                  ]
+                  ],
+                  'activate' => [
+
+                    'route'  => 'admin-api-routes-active',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+                      
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+                  'desactivate' => [
+
+                    'route'  => 'admin-api-routes-desactive',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_route_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
 
                 ])
               
@@ -617,7 +753,27 @@
                     'class'   => 'btn-warning text-white',
                     'icon'    => 'lock',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Permissões da Página'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões da Página') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-xl', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões da Página') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-routes-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'activate',
+                    'id'      => 'btn-activate-route',
+                    'class'   => 'btn-success',
+                    'icon'    => 'check',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Ativar Página'),
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'desactivate',
+                    'id'      => 'btn-desactivate-route',
+                    'class'   => 'btn-secondary',
+                    'icon'    => 'times',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Desativar Página'),
 
                   ],
                   [
@@ -794,7 +950,66 @@
 
                     ]
                   
-                  ]
+                  ],
+                  'activate' => [
+
+                    'route'  => 'admin-api-users-types-active',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_users_type_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+                      
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_users_type_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+                  'desactivate' => [
+
+                    'route'  => 'admin-api-users-types-desactive',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_users_type_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_users_type_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+
 
                 ])
               
@@ -812,7 +1027,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de usuário'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -832,7 +1047,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -843,7 +1058,27 @@
                     'class'   => 'btn-warning text-white',
                     'icon'    => 'lock',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Permissões do Tipo de usuário'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões do Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Permissões do Tipo de usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-types-access') . ", 'access', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'accessEdit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'activate',
+                    'id'      => 'btn-activate-user-type',
+                    'class'   => 'btn-success',
+                    'icon'    => 'check',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Ativar Tipo de Usuário'),
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'desactivate',
+                    'id'      => 'btn-desactivate-user-type',
+                    'class'   => 'btn-secondary',
+                    'icon'    => 'times',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Desativar Tipo de Usuário'),
 
                   ],
                   [
@@ -992,7 +1227,65 @@
 
                     ]
                   
-                  ]
+                  ],
+                  'activate' => [
+
+                    'route'  => 'admin-api-users-active',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_users_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+                      
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_users_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+                  'desactivate' => [
+
+                    'route'  => 'admin-api-users-desactive',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_users_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_users_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ],
+
+                    ]
+                  
+                  ],
 
                 ])
               
@@ -1010,7 +1303,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -1030,7 +1323,27 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-edit') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Usuário') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-users-edit') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'activate',
+                    'id'      => 'btn-activate-user',
+                    'class'   => 'btn-success',
+                    'icon'    => 'check',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Ativar Usuário'),
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'desactivate',
+                    'id'      => 'btn-desactivate-user',
+                    'class'   => 'btn-secondary',
+                    'icon'    => 'times',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Desativar Usuário'),
 
                   ],
                   [
@@ -1200,7 +1513,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Nova Notificação'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -1220,7 +1533,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Notificação'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-notifications') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -1393,7 +1706,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de campo'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de campo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-fields') . ");",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de campo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-fields') . ");",
 
                     ]
 
@@ -1413,7 +1726,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de campo'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de campo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-fields') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de campo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-fields') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -1543,6 +1856,14 @@
                     'show'   => false,
                     'roles'  => [
 
+                      'relation' => 'AND',
+                      [
+
+                        'key'     => 'tbl_sys_modulo_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
                       [
 
                         'key'     => 'tbl_sys_modulo_locked',
@@ -1553,7 +1874,65 @@
 
                     ]
                   
-                  ]
+                  ],
+                  'activate' => [
+
+                    'route'  => 'admin-api-modulos-active',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_modulo_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+                      
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_modulo_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ]
+                  
+                  ],
+                  'desactivate' => [
+
+                    'route'  => 'admin-api-modulos-desactive',
+                    'params' => [],
+                    'show'   => false,
+                    'hidden' => [
+
+                      [
+
+                        'key'     => 'tbl_sys_modulo_status',
+                        'compare' => '==',
+                        'value'   => 'inativo'
+                      
+                      ],
+
+                    ],
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_modulo_status',
+                        'compare' => '==',
+                        'value'   => 'ativo'
+                      
+                      ],
+
+                    ]
+                  
+                  ],
 
                 ])
               
@@ -1571,7 +1950,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Adicionar Módulo'),
-                      'onclick' => "AutomatorCreateViewModal({ view: 'system-install-modulos'}, { size: 'modal-md', backdrop: true, keyboard: false, callback: function(response, modalEl) { AutomatorModuleInstallUploadInit(modalEl); } });",
+                      'onclick' => "AutomatorCreateViewModal({ view: 'system-install-modulos'}, { size: 'modal-fullscreen-md-down modal-lg', backdrop: true, keyboard: false, callback: function(response, modalEl) { AutomatorModuleInstallUploadInit(modalEl); } });",
                       // 'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Adicionar Módulo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-modulos') . ");",
 
                     ]
@@ -1592,7 +1971,27 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Módulo'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Módulo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-modulos') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Módulo') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-modulos') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'activate',
+                    'id'      => 'btn-activate-modulo',
+                    'class'   => 'btn-success',
+                    'icon'    => 'check',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Ativar Módulo'),
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'desactivate',
+                    'id'      => 'btn-desactivate-modulo',
+                    'class'   => 'btn-secondary',
+                    'icon'    => 'times',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Desativar Módulo'),
 
                   ],
                   [
@@ -2143,7 +2542,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Shortcode'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Novo Shortcode') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-shortcodes') . ");",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Novo Shortcode') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-shortcodes') . ");",
 
                     ]
 
@@ -2163,7 +2562,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Shortcode'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Shortcode') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-shortcodes') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Shortcode') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-shortcodes') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -2312,7 +2711,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'eye',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Visualizar Notificação'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Visualizar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-user-notification') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Visualizar Notificação') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-user-notification') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
 
@@ -2468,7 +2867,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de mídia'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -2488,7 +2887,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de mídia'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Tipo de mídia') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-galeria-uploads-types') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -2646,7 +3045,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Novo Idioma'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Novo Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -2666,7 +3065,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Idioma'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Idioma') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-languages') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
                   [
@@ -2806,7 +3205,7 @@
                       'class'   => 'btn btn-success',
                       'icon'    => 'plus',
                       'text'    => SysAutomator::SysAutomatorGetTranslateWord('Nova Função'),
-                      'onclick' => "AutomatorPaginationCreateModalForm('modal-md','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Nova Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
 
                     ]
 
@@ -2826,7 +3225,7 @@
                     'class'   => 'btn-primary',
                     'icon'    => 'pencil',
                     'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar Função'),
-                    'onclick' => "AutomatorPaginationCreateModalForm('modal-md', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar Função') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-functions') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
 
                   ],
 
@@ -2899,6 +3298,207 @@
           ],
 
         // FUNCTIONS - END
+
+
+
+        // VIEWS - START
+
+          [
+
+            'tbl_sys_pagination_name'   => 'admin-views-pagination',
+            'tbl_sys_pagination_route'  => 'admin-views',
+            'tbl_sys_pagination_title'  => SysAutomator::SysAutomatorGetTranslateWord('Paginação de Views'),
+            'tbl_sys_pagination_table'  => 'tbl_sys_views',
+            'tbl_sys_pagination_index'  => 'tbl_sys_view_ID',
+            'tbl_sys_pagination_locked' => true,
+            'pagination_args'           => [
+              
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'page_name',
+                'tbl_sys_paginations_arg_value' => "@SysFunctions('sysGetCurrentRouteData', ['data' => 'tbl_sys_route_name'])"
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'per_page',
+                'tbl_sys_paginations_arg_value' => 15
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  'get' => [
+
+                    'route'  => 'admin-api-views-get',
+                    'params' => ['id' => "#ID#"],
+                    'show'   => true,
+
+                  ],
+                  'add' => [
+
+                    'route'  => 'admin-api-views-store',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'edit' => [
+
+                    'route'  => 'admin-api-views-update',
+                    'params' => [],
+                    'show'   => true,
+
+                  ],
+                  'delete' => [
+
+                    'route'  => 'admin-api-views-delete',
+                    'params' => [],
+                    'show'   => false,
+                    'roles'  => [
+
+                      [
+
+                        'key'     => 'tbl_sys_view_locked',
+                        'compare' => '==',
+                        'value'   => false
+                      
+                      ]
+
+                    ]
+                  
+                  ]
+
+                ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'header_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                    [
+
+                      'type'    => 'button',
+                      'action'  => 'add',
+                      'id'      => 'btn-add-view',
+                      'class'   => 'btn btn-success',
+                      'icon'    => 'plus',
+                      'text'    => SysAutomator::SysAutomatorGetTranslateWord('Nova View'),
+                      'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg','" . SysAutomator::SysAutomatorGetTranslateWord('Nova View') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-views') . ", '', null, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'add' }]); });",
+
+                    ]
+
+                  ])
+              
+              ],
+              [
+
+                'tbl_sys_paginations_arg_name'  => 'list_actions',
+                'tbl_sys_paginations_arg_value' => json_encode([
+
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'edit',
+                    'id'      => 'btn-edit-view',
+                    'class'   => 'btn-primary',
+                    'icon'    => 'pencil',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Editar View'),
+                    'onclick' => "AutomatorPaginationCreateModalForm('modal-fullscreen-md-down modal-lg', '" . SysAutomator::SysAutomatorGetTranslateWord('Editar View') . "', " . SysAutomator::SysAutomatorGetFormIDByName('admin-views') . ", 'get', {id}, function(response, modalEl, modal, recordData) { AutomatorPaginationCreateModalFormCallBack([{ method: 'POST', action: 'edit' }]); });",
+
+                  ],
+                  [
+
+                    'type'    => 'button',
+                    'action'  => 'delete',
+                    'id'      => 'btn-delete-view',
+                    'class'   => 'btn-danger',
+                    'icon'    => 'trash',
+                    'text'    => SysAutomator::SysAutomatorGetTranslateWord('Excluir View'),
+                    'onclick' => '',
+
+                  ]
+
+                ])
+              
+              ],
+
+            ],
+            'pagination_cols'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('number', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_view_ID',
+                'tbl_sys_paginations_col_title'  => 'ID',
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_view_name',
+                'tbl_sys_paginations_col_title'  => SysAutomator::SysAutomatorGetTranslateWord('Type'),
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_view_title',
+                'tbl_sys_paginations_col_title'  => SysAutomator::SysAutomatorGetTranslateWord('Nome'),
+                'tbl_sys_paginations_col_header' => '',
+                'tbl_sys_paginations_col_body'   => '',
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => '',
+                'tbl_sys_paginations_col_search' => true,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ],
+              [
+                
+                'tbl_sys_field_type_ID'          => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_paginations_col_name'   => 'tbl_sys_view_status',
+                'tbl_sys_paginations_col_title'  => SysAutomator::SysAutomatorGetTranslateWord('Status'),
+                'tbl_sys_paginations_col_header' => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_body'   => json_encode(['class' => 'text-center']),
+                'tbl_sys_paginations_col_props'  => '',
+                'tbl_sys_paginations_col_attrs'  => json_encode([
+
+                  'replaced' => [
+
+                    'ativo'   => '<span class="badge text-bg-success">' . SysAutomator::SysAutomatorGetTranslateWord('Ativo') . '</span>',
+                    'inativo' => '<span class="badge text-bg-danger">' . SysAutomator::SysAutomatorGetTranslateWord('Inativo') . '</span>'
+                  
+                  ]
+                  
+                ]),
+                'tbl_sys_paginations_col_search' => false,
+                'tbl_sys_paginations_col_sort'   => true,
+                'cols_access'                    => [1, 2]
+
+              ]
+
+            ],
+
+          ],
+
+        // VIEWS - END
 
 
       ];

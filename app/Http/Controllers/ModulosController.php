@@ -9,12 +9,14 @@
   use Illuminate\Support\Facades\File;
   use Illuminate\Support\Facades\Artisan;
   use Illuminate\Support\Facades\Log;
+  use Illuminate\Support\Facades\Schema;
 
 
   use App\Helpers\SysAutomator;
 
 
   use App\Models\SysModulo;
+  use App\Models\SysModulosRel;
   use App\Models\SysForm;
 
 
@@ -463,8 +465,17 @@
         ]);
 
 
-        DB::transaction(function() use ($module) {
-          $module->save();
+        DB::transaction(function () use ($module, $composerConfig) {
+
+            $module->save();
+
+            SysModulosRel::where(
+                'tbl_sys_modulo_rel_name',
+                $composerConfig['id']
+            )->update([
+                'tbl_sys_modulo_ID' => $module->tbl_sys_modulo_ID
+            ]);
+
         });
 
 
@@ -522,280 +533,563 @@
 
     }
 
-    // public function installModulo(Request $request) {
 
 
-    //   if(Auth::check() !== true || Auth::id() === null) {
+    public function updateModulo(Request $request) {
+
+      if (!Auth::check() || Auth::id() === null) {
+          return response()->json([
+              'status'  => false,
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                  'Sua sessão expirou. Faça o login novamente para continuar.'
+              )
+          ], 401);
+      }
 
-    //     return response()->json([
+      $validatedData = $request->validate([
 
-    //       'status'  => false,
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Sua sessão expirou. Faça o login novamente para continuar.')
+          'tbl_sys_modulo_ID'          => ['required', 'integer'],
+          'tbl_sys_modulo_name'        => ['required', 'string', 'max:255'],
+          'tbl_sys_modulo_version'     => ['required', 'string', 'max:25'],
+          'tbl_sys_modulo_title'       => ['required', 'string', 'min:2', 'max:255'],
+          'tbl_sys_modulo_description' => ['nullable', 'string'],
+          'tbl_sys_modulo_status'      => ['required', 'in:ativo,inativo'],
 
-    //     ], 401);
+      ]);
 
-    //   }
+      $module = SysModulo::findOrFail($validatedData['tbl_sys_modulo_ID']);
+
+      $moduleDirectory = storage_path(
+          'app/modulos/installed/' .
+          $module->tbl_sys_modulo_name
+      );
+
+      $composerConfig = $this->getModuloComposerConfig($moduleDirectory);
+
+      DB::transaction(function () use (
+          $module,
+          $validatedData,
+          $composerConfig,
+          $moduleDirectory
+      ) {
 
+          $statusAnterior = $module->tbl_sys_modulo_status;
 
-    //   $validatedData = $request->validate([
+          $module->fill([
+              'tbl_sys_modulo_title'       => $validatedData['tbl_sys_modulo_title'],
+              'tbl_sys_modulo_description' => $validatedData['tbl_sys_modulo_description'],
+              'tbl_sys_modulo_status'      => $validatedData['tbl_sys_modulo_status'],
+          ]);
 
-    //     'tbl_sys_modulo_ID'          => ['nullable', 'integer'],
-    //     'tbl_sys_modulo_name'        => ['required', 'string', 'max:255'],
-    //     'tbl_sys_modulo_version'     => ['required', 'string', 'max:25'],
-    //     'tbl_sys_modulo_title'       => ['required', 'string', 'min:2', 'max:255'],
-    //     'tbl_sys_modulo_description' => ['nullable', 'string'],
-    //     'tbl_sys_modulo_status'      => ['required', 'in:ativo,inativo'],
-    //     'module_package_file'        => ['required', 'string', 'max:255']
+          $module->save();
 
-    //   ]);
+          /*
+          |--------------------------------------------------------------------------
+          | Desativar módulo
+          |--------------------------------------------------------------------------
+          */
 
+          if (
+              $statusAnterior != 'inativo' &&
+              $validatedData['tbl_sys_modulo_status'] == 'inativo'
+          ) {
 
-    //   $packageFileName = basename($validatedData['module_package_file']);
+              $rels = SysModulosRel::where(
+                      'tbl_sys_modulo_ID',
+                      $module->tbl_sys_modulo_ID
+                  )
+                  ->orderByDesc('tbl_sys_modulo_rel_ID')
+                  ->get();
 
+              foreach ($rels as $rel) {
 
-    //   if($packageFileName !== $validatedData['module_package_file']) {
+                  DB::table($rel->tbl_sys_modulo_rel_table)
+                      ->where(
+                          $rel->tbl_sys_modulo_rel_column,
+                          $rel->tbl_sys_modulo_rel_value
+                      )
+                      ->delete();
 
-    //     return response()->json([
+                  $rel->delete();
+              }
+          }
 
-    //       'status'  => false,
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('O pacote do módulo informado não é válido.')
+          /*
+          |--------------------------------------------------------------------------
+          | Ativar módulo
+          |--------------------------------------------------------------------------
+          */
 
-    //     ], 422);
+          if (
+              $statusAnterior == 'inativo' &&
+              $validatedData['tbl_sys_modulo_status'] == 'ativo'
+          ) {
 
-    //   }
+              $this->executarSeedersModulo(
+                  $moduleDirectory,
+                  $composerConfig
+              );
 
+          }
 
-    //   $packagePath = storage_path('app/modulos/packages/' . $packageFileName);
-    //   $packageData = $this->getModuloPackageData($packagePath);
+      });
 
+      return response()->json([
+          'status' => true,
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+              'Módulo atualizado com sucesso.'
+          )
+      ]);
+    }
 
-    //   if(
-    //     $packageData === null ||
-    //     $packageData['name'] !== $validatedData['tbl_sys_modulo_name'] ||
-    //     $packageData['version'] !== $validatedData['tbl_sys_modulo_version']
-    //   ) {
 
-    //     return response()->json([
+    public function activateModule($moduleID) {
 
-    //       'status'  => false,
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Os dados do módulo não correspondem ao pacote enviado.')
+      $module = SysModulo::findOrFail($moduleID);
 
-    //     ], 422);
+      $moduleDirectory = storage_path(
+          'app/modulos/installed/' .
+          $module->tbl_sys_modulo_name
+      );
 
-    //   }
+      $composerConfig = $this->getModuloComposerConfig($moduleDirectory);
 
+      $this->executarSeedersModulo(
+          $moduleDirectory,
+          $composerConfig
+      );
 
-    //   $module = null;
-    //   $moduleID = $validatedData['tbl_sys_modulo_ID'] ?? null;
+      SysModulosRel::where(
+          'tbl_sys_modulo_rel_name',
+          $composerConfig['id']
+      )->update([
+          'tbl_sys_modulo_ID' => $module->tbl_sys_modulo_ID
+      ]);
 
+    }
 
-    //   if($moduleID !== null) {
-    //     $module = SysModulo::where('tbl_sys_modulo_ID', $moduleID)->first();
 
+    public function desactivateModule($moduleID) {
 
-    //     if(
-    //       $module === null ||
-    //       $module->tbl_sys_modulo_name !== $packageData['name']
-    //     ) {
+      $module = SysModulo::findOrFail($moduleID);
 
-    //       return response()->json([
+      $moduleDirectory = storage_path(
+          'app/modulos/installed/' .
+          $module->tbl_sys_modulo_name
+      );
 
-    //         'status'  => false,
-    //         'message' => SysAutomator::SysAutomatorGetTranslateWord('O módulo que será atualizado não foi encontrado.')
+      $composerConfig = $this->getModuloComposerConfig($moduleDirectory);
 
-    //       ], 404);
+      $rels = SysModulosRel::where(
+              'tbl_sys_modulo_ID',
+              $module->tbl_sys_modulo_ID
+          )
+          ->orderByDesc('tbl_sys_modulo_rel_ID')
+          ->get();
 
-    //     }
+      foreach ($rels as $rel) {
 
-    //   } else {
+          DB::table($rel->tbl_sys_modulo_rel_table)
+              ->where(
+                  $rel->tbl_sys_modulo_rel_column,
+                  $rel->tbl_sys_modulo_rel_value
+              )
+              ->delete();
 
-    //     $module = SysModulo::where('tbl_sys_modulo_name', $packageData['name'])->first();
+          $rel->delete();
+      }
 
+    }
 
-    //     if($module !== null) {
 
-    //       return response()->json([
 
-    //         'status'  => false,
-    //         'message' => SysAutomator::SysAutomatorGetTranslateWord('Este módulo já existe e deve ser atualizado.')
+    public function deleteModulo(Request $request)
+    {
+        if (!Auth::check() || Auth::id() === null) {
 
-    //       ], 422);
+            return response()->json([
+                'status'  => false,
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                    'Sua sessão expirou. Faça o login novamente para continuar.'
+                )
+            ], 401);
 
-    //     }
+        }
 
+        $validatedData = $request->validate([
+            'id' => ['required', 'integer']
+        ]);
 
-    //     $module = new SysModulo();
+        $module = SysModulo::find($validatedData['id']);
 
-    //   }
+        if (!$module) {
 
+            return response()->json([
+                'status'  => false,
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                    'Módulo não encontrado.'
+                )
+            ], 404);
 
-    //   $installedDirectory = storage_path('app/modulos/installed');
-    //   $temporaryDirectory = $installedDirectory . DIRECTORY_SEPARATOR . '.temporary-' . $packageData['name'] . '-' . uniqid();
-    //   $moduleDirectory = $installedDirectory . DIRECTORY_SEPARATOR . $packageData['name'];
-    //   $backupDirectory = $installedDirectory . DIRECTORY_SEPARATOR . '.backup-' . $packageData['name'] . '-' . uniqid();
-    //   $moduleDirectoryMoved = false;
-    //   $composerConfig = null;
-    //   $migrationsExecutadas = false;
+        }
 
+        /*
+        |--------------------------------------------------------------------------
+        | Apenas módulos inativos podem ser excluídos
+        |--------------------------------------------------------------------------
+        */
 
-    //   try {
+        if ($module->tbl_sys_modulo_status !== 'inativo') {
 
-    //     File::ensureDirectoryExists($installedDirectory);
+            return response()->json([
+                'status'  => false,
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                    'Somente módulos inativos podem ser excluídos.'
+                )
+            ], 422);
 
+        }
 
-    //     $zip = new \ZipArchive();
+        $moduleDirectory = storage_path(
+            'app/modulos/installed/' .
+            $module->tbl_sys_modulo_name
+        );
 
+        $backupDirectory = storage_path(
+            'app/modulos/backups/' .
+            $module->tbl_sys_modulo_name .
+            '-' .
+            uniqid()
+        );
 
-    //     if($zip->open($packagePath) !== true) {
-    //       throw new \RuntimeException('Não foi possível abrir o pacote do módulo.');
-    //     }
+        $packagePath = storage_path(
+            'app/modulos/packages/' .
+            $module->tbl_sys_modulo_name .
+            '-' .
+            $module->tbl_sys_modulo_version .
+            '.zip'
+        );
 
+        $composerConfig = $this->getModuloComposerConfig($moduleDirectory);
 
-    //     File::ensureDirectoryExists($temporaryDirectory);
+        try {
 
+            /*
+            |--------------------------------------------------------------------------
+            | Backup da pasta do módulo
+            |--------------------------------------------------------------------------
+            */
 
-    //     if($zip->extractTo($temporaryDirectory) !== true) {
-    //       $zip->close();
-    //       throw new \RuntimeException('Não foi possível extrair o pacote do módulo.');
-    //     }
+            if (File::isDirectory($moduleDirectory)) {
 
+                File::ensureDirectoryExists(dirname($backupDirectory));
 
-    //     $zip->close();
+                if (!File::copyDirectory($moduleDirectory, $backupDirectory)) {
 
+                    throw new RuntimeException(
+                        'Não foi possível criar o backup do módulo.'
+                    );
 
-    //     $composerDirectory = trim(dirname($packageData['composerPath']), '.');
-    //     $extractedDirectory = $temporaryDirectory;
+                }
 
+            }
 
-    //     if($composerDirectory !== '') {
-    //       $extractedDirectory .= DIRECTORY_SEPARATOR . str_replace('/', DIRECTORY_SEPARATOR, $composerDirectory);
-    //     }
+            /*
+            |--------------------------------------------------------------------------
+            | Remove registros do sistema
+            |--------------------------------------------------------------------------
+            */
 
+            DB::transaction(function () use ($module) {
 
-    //     if(!File::isDirectory($extractedDirectory)) {
-    //       throw new \RuntimeException('A estrutura extraída do módulo não é válida.');
-    //     }
+                $rels = SysModulosRel::where(
+                    'tbl_sys_modulo_ID',
+                    $module->tbl_sys_modulo_ID
+                )
+                ->orderByDesc('tbl_sys_modulo_rel_ID')
+                ->get();
 
+                foreach ($rels as $rel) {
 
-    //     // if(File::isDirectory($moduleDirectory)) {
-    //     //   File::moveDirectory($moduleDirectory, $backupDirectory);
-    //     //   $moduleDirectoryMoved = true;
-    //     // }
+                    if (
+                        Schema::hasTable($rel->tbl_sys_modulo_rel_table) &&
+                        Schema::hasColumn(
+                            $rel->tbl_sys_modulo_rel_table,
+                            $rel->tbl_sys_modulo_rel_column
+                        )
+                    ) {
 
+                        DB::table($rel->tbl_sys_modulo_rel_table)
+                            ->where(
+                                $rel->tbl_sys_modulo_rel_column,
+                                $rel->tbl_sys_modulo_rel_value
+                            )
+                            ->delete();
 
-    //     File::moveDirectory($extractedDirectory, $moduleDirectory);
+                    }
 
-    //     if(File::isDirectory($moduleDirectory)) {
+                }
 
-    //         if(!File::moveDirectory($moduleDirectory, $backupDirectory)) {
+                SysModulosRel::where(
+                    'tbl_sys_modulo_ID',
+                    $module->tbl_sys_modulo_ID
+                )->delete();
 
-    //             throw new \RuntimeException(
-    //                 'Não foi possível criar o backup do módulo existente.'
-    //             );
+                $module->delete();
 
-    //         }
+            });
+            
+            /*
+            |--------------------------------------------------------------------------
+            | Remove as tabelas do módulo
+            |--------------------------------------------------------------------------
+            |
+            | Deve ficar FORA da transaction, pois DROP TABLE faz commit implícito
+            | no MySQL.
+            |
+            */
 
-    //         $moduleDirectoryMoved = true;
+            if ($composerConfig !== null) {
 
-    //     }
+                $this->removerTabelasModulo(
+                    $moduleDirectory,
+                    $composerConfig
+                );
 
+            }
 
-    //     if(!File::moveDirectory($extractedDirectory, $moduleDirectory)) {
+            /*
+            |--------------------------------------------------------------------------
+            | Remove ZIP
+            |--------------------------------------------------------------------------
+            */
 
-    //         throw new \RuntimeException(
-    //             'Não foi possível mover o módulo para o diretório definitivo.'
-    //         );
+            if (File::exists($packagePath)) {
 
-    //     }
+                File::delete($packagePath);
 
-    //     $moduleDirectoryMoved = true;
+            }
 
+            /*
+            |--------------------------------------------------------------------------
+            | Remove diretório do módulo
+            |--------------------------------------------------------------------------
+            */
 
-    //     if(File::isDirectory($temporaryDirectory)) {
-    //       File::deleteDirectory($temporaryDirectory);
-    //     }
+            if (File::isDirectory($moduleDirectory)) {
 
-    //     $composerConfig = $this->getModuloComposerConfig($moduleDirectory);
+                File::deleteDirectory($moduleDirectory);
 
+            }
 
-    //     if($composerConfig === null) {
-    //       throw new \RuntimeException('Não foi possível ler o composer.json do módulo instalado.');
-    //     }
+            /*
+            |--------------------------------------------------------------------------
+            | Remove backup
+            |--------------------------------------------------------------------------
+            */
 
+            if (File::isDirectory($backupDirectory)) {
 
-    //     $this->executarMigrationsModulo($moduleDirectory, $composerConfig);
-    //     $migrationsExecutadas = true;
+                File::deleteDirectory($backupDirectory);
 
+            }
 
-    //     $this->executarSeedersModulo($moduleDirectory, $composerConfig);
+            return response()->json([
 
+                'status'  => true,
+                'title'   => 'Sucesso',
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                    'Módulo excluído com sucesso.'
+                )
 
-    //     $module->fill([
+            ]);
 
-    //       'tbl_sys_modulo_name'        => $packageData['name'],
-    //       'tbl_sys_modulo_version'     => $packageData['version'],
-    //       'tbl_sys_modulo_title'       => $validatedData['tbl_sys_modulo_title'],
-    //       'tbl_sys_modulo_description' => $validatedData['tbl_sys_modulo_description'] ?? '',
-    //       'tbl_sys_modulo_status'      => $validatedData['tbl_sys_modulo_status']
+        } catch (\Throwable $exception) {
 
-    //     ]);
+            /*
+            |--------------------------------------------------------------------------
+            | Restaura a pasta do módulo
+            |--------------------------------------------------------------------------
+            */
 
+            if (
+                File::isDirectory($backupDirectory) &&
+                !File::isDirectory($moduleDirectory)
+            ) {
 
-    //     DB::transaction(function() use ($module) {
-    //       $module->save();
-    //     });
+                File::copyDirectory(
+                    $backupDirectory,
+                    $moduleDirectory
+                );
 
+            }
 
-    //     if($moduleDirectoryMoved === true && File::isDirectory($backupDirectory)) {
-    //       File::deleteDirectory($backupDirectory);
-    //     }
+            /*
+            |--------------------------------------------------------------------------
+            | Remove backup
+            |--------------------------------------------------------------------------
+            */
 
-    //   } catch(\Throwable $exception) {
+            if (
+                File::isDirectory($backupDirectory) &&
+                File::isDirectory($moduleDirectory)
+            ) {
 
-    //     if($migrationsExecutadas === true && $composerConfig !== null) {
-    //       $this->reverterMigrationsModulo($moduleDirectory, $composerConfig);
-        
-    //     }
+                File::deleteDirectory($backupDirectory);
 
+            }
 
-    //     if(File::isDirectory($temporaryDirectory)) {
-    //       File::deleteDirectory($temporaryDirectory);
-    //     }
+            return response()->json([
 
+                'status'    => false,
+                'message'   => SysAutomator::SysAutomatorGetTranslateWord(
+                    'Não foi possível excluir o módulo.'
+                ),
+                'exception' => $exception->getMessage(),
+                'file'      => $exception->getFile(),
+                'line'      => $exception->getLine(),
+                'trace'     => $exception->getTraceAsString(),
 
-    //     if($moduleDirectoryMoved === true && File::isDirectory($moduleDirectory)) {
-    //       File::deleteDirectory($moduleDirectory);
-    //     }
+            ], 500);
 
+        }
+    }
 
-    //     if($moduleDirectoryMoved === true && File::isDirectory($backupDirectory)) {
-    //       File::moveDirectory($backupDirectory, $moduleDirectory);
-    //     }
 
+    private function removerTabelasModulo(
+        string $moduleDirectory,
+        array $composerConfig
+    ): void {
 
-    //     return response()->json([
+        $directories = $this->resolverCaminhosModulo(
+            $moduleDirectory,
+            $composerConfig,
+            'migrations'
+        );
 
-    //       'status'  => false,
-    //       'migrations' => $migrationsExecutadas,
-    //       'composer' => $composerConfig,
-    //       'directory' => $moduleDirectoryMoved,
-    //       'exception' => $exception,
-    //       'message' => SysAutomator::SysAutomatorGetTranslateWord('Não foi possível concluir a instalação do módulo.')
+        Schema::disableForeignKeyConstraints();
 
-    //     ], 500);
+        try {
 
-    //   }
+            foreach ($directories as $directory) {
 
+                if (!File::isDirectory($directory)) {
+                    continue;
+                }
 
-    //   return response()->json([
+                /*
+                |--------------------------------------------------------------------------
+                | Ordem inversa das migrations
+                |--------------------------------------------------------------------------
+                */
 
-    //     'status'  => true,
-    //     'message' => SysAutomator::SysAutomatorGetTranslateWord('Módulo instalado com sucesso.'),
-    //     'id'      => $module->getKey()
+                $files = collect(File::files($directory))
+                    ->sortByDesc(function ($file) {
+                        return $file->getFilename();
+                    });
 
-    //   ]);
+                foreach ($files as $file) {
 
-    // }
+                    $content = File::get($file->getRealPath());
+
+                    /*
+                    |--------------------------------------------------------------------------
+                    | Procura por:
+                    | Schema::create('nome_tabela', function (...)
+                    |--------------------------------------------------------------------------
+                    */
+
+                    if (!preg_match(
+                        "/Schema::create\s*\(\s*['\"]([^'\"]+)['\"]\s*,\s*function/i",
+                        $content,
+                        $matches
+                    )) {
+                        continue;
+                    }
+
+                    $table = $matches[1];
+
+                    if (!Schema::hasTable($table)) {
+                        continue;
+                    }
+
+                    DB::statement(
+                        'DROP TABLE IF EXISTS `' .
+                        str_replace('`', '``', $table) .
+                        '`'
+                    );
+
+                }
+
+            }
+
+        } finally {
+
+            Schema::enableForeignKeyConstraints();
+
+        }
+
+    }
+
+
+
+    private function executarDownMigrationsModulo(
+        string $moduleDirectory,
+        array $composerConfig
+    ): void {
+
+        $directories = $this->resolverCaminhosModulo(
+            $moduleDirectory,
+            $composerConfig,
+            'migrations'
+        );
+
+        foreach ($directories as $directory) {
+
+            if (!File::isDirectory($directory)) {
+                continue;
+            }
+
+            $files = collect(File::files($directory))
+                ->sortByDesc(function ($file) {
+                    return $file->getFilename();
+                });
+
+            foreach ($files as $file) {
+
+                try {
+
+                    // Carrega uma nova instância da migration
+                    $migration = require $file->getRealPath();
+
+                    if (
+                        !is_object($migration) ||
+                        !method_exists($migration, 'down')
+                    ) {
+                        continue;
+                    }
+
+                    $migration->down();
+
+                } catch (\Throwable $exception) {
+
+                    throw new \RuntimeException(
+                        'Erro ao executar down() da migration "' .
+                        $file->getFilename() .
+                        '": ' .
+                        $exception->getMessage(),
+                        0,
+                        $exception
+                    );
+
+                }
+
+            }
+
+        }
+
+    }
+
 
 
     private function getModuloComposerConfig(string $moduleDirectory): ?array {
@@ -839,8 +1133,48 @@
     }
 
 
-    private function executarMigrationsModulo(string $moduleDirectory, array $composerConfig): void
+    private function createModuloRel(
+        $moduleName,
+        $table,
+        $column,
+        $value
+    ) {
+
+        DB::table('tbl_sys_modulos_rels')->insert([
+
+            'tbl_sys_modulo_ID'          => null,
+
+            'tbl_sys_modulo_rel_name'    => $moduleName,
+
+            'tbl_sys_modulo_rel_table'   => $table,
+
+            'tbl_sys_modulo_rel_column'  => $column,
+
+            'tbl_sys_modulo_rel_value'   => $value,
+
+        ]);
+
+    }
+
+
+    private function executarMigrationsModulo(
+        string $moduleDirectory,
+        array $composerConfig
+    ): void
     {
+
+        $moduleName = $composerConfig['id'] ?? null;
+
+
+        if(!$moduleName) {
+
+            throw new RuntimeException(
+                'O módulo não possui identificador no composer.json.'
+            );
+
+        }
+
+
         $migrationsDirectories = $this->resolverCaminhosModulo(
             $moduleDirectory,
             $composerConfig,
@@ -865,44 +1199,188 @@
             ]);
 
 
-            if(Artisan::output()) {
+            Log::info(
+                'Migrations módulo executadas: ' . $migrationsDirectory
+            );
 
-                Log::info(
-                    "Migrations módulo executadas: ".$migrationsDirectory
+
+            $files = File::files($migrationsDirectory);
+
+
+            foreach($files as $file) {
+
+
+                $migrationName = pathinfo(
+                    $file->getFilename(),
+                    PATHINFO_FILENAME
                 );
+
+
+                $migrationExists = DB::table('migrations')
+                    ->where(
+                        'migration',
+                        $migrationName
+                    )
+                    ->exists();
+
+
+                if($migrationExists) {
+
+
+                    $this->createModuloRel(
+
+                        $moduleName,
+
+                        'migrations',
+
+                        'migration',
+
+                        $migrationName
+
+                    );
+
+
+                }
+
+
+            }
+
+
+        }
+
+
+    }
+
+    // private function executarMigrationsModulo(string $moduleDirectory, array $composerConfig): void
+    // {
+
+
+    //     $migrationsDirectories = $this->resolverCaminhosModulo(
+    //         $moduleDirectory,
+    //         $composerConfig,
+    //         'migrations'
+    //     );
+
+
+    //     foreach($migrationsDirectories as $migrationsDirectory) {
+
+
+    //         if(!is_dir($migrationsDirectory)) {
+    //             continue;
+    //         }
+
+
+    //         Artisan::call('migrate', [
+
+    //             '--path'     => $migrationsDirectory,
+    //             '--realpath' => true,
+    //             '--force'    => true
+
+    //         ]);
+
+
+    //         if(Artisan::output()) {
+
+    //             Log::info(
+    //                 "Migrations módulo executadas: ".$migrationsDirectory
+    //             );
+
+    //         }
+
+    //     }
+    // }
+
+
+    private function reverterMigrationsModulo(string $moduleDirectory, array $composerConfig): void
+    {
+        $migrationsDirectories = $this->resolverCaminhosModulo(
+            $moduleDirectory,
+            $composerConfig,
+            'migrations'
+        );
+
+        foreach ($migrationsDirectories as $migrationsDirectory) {
+
+            if (!File::isDirectory($migrationsDirectory)) {
+                continue;
+            }
+
+            try {
+
+                Artisan::call('migrate:rollback', [
+
+                    '--path'     => $migrationsDirectory,
+                    '--realpath' => true,
+                    '--force'    => true,
+
+                ]);
+
+                $output = Artisan::output();
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Opcional: registrar log para depuração
+                |--------------------------------------------------------------------------
+                */
+
+                Log::info('Rollback migration módulo executado', [
+
+                    'path'   => $migrationsDirectory,
+                    'output' => $output,
+
+                ]);
+
+
+            } catch (\Throwable $exception) {
+
+
+                Log::error('Falha no rollback da migration do módulo', [
+
+                    'path'  => $migrationsDirectory,
+                    'error' => $exception->getMessage(),
+
+                ]);
+
+
+                /*
+                |--------------------------------------------------------------------------
+                | Não interrompe os demais rollbacks
+                |--------------------------------------------------------------------------
+                */
+
+                continue;
 
             }
 
         }
-    }
-
-
-
-    private function reverterMigrationsModulo(string $moduleDirectory, array $composerConfig): void {
-
-      $migrationsDirectories = $this->resolverCaminhosModulo($moduleDirectory, $composerConfig, 'migrations');
-
-      foreach($migrationsDirectories as $migrationsDirectory) {
-
-        try {
-
-          Artisan::call('migrate:rollback', [
-
-            '--path'     => $migrationsDirectory,
-            '--realpath' => true,
-            '--force'    => true
-
-          ]);
-
-        } catch(\Throwable $exception) {
-
-          // Best-effort: apenas tenta desfazer o máximo possível, sem interromper o processo de rollback geral.
-
-        }
-
-      }
 
     }
+    // private function reverterMigrationsModulo(string $moduleDirectory, array $composerConfig): void {
+
+    //   $migrationsDirectories = $this->resolverCaminhosModulo($moduleDirectory, $composerConfig, 'migrations');
+
+    //   foreach($migrationsDirectories as $migrationsDirectory) {
+
+    //     try {
+
+    //       Artisan::call('migrate:rollback', [
+
+    //         '--path'     => $migrationsDirectory,
+    //         '--realpath' => true,
+    //         '--force'    => true
+
+    //       ]);
+
+    //     } catch(\Throwable $exception) {
+
+    //       // Best-effort: apenas tenta desfazer o máximo possível, sem interromper o processo de rollback geral.
+
+    //     }
+
+    //   }
+
+    // }
 
 
     private function getModulePrefix(array $composerConfig): string {

@@ -24,6 +24,7 @@
       'tbl_sys_form_title',
       'tbl_sys_form_cancel',
       'tbl_sys_form_submit',
+      'tbl_sys_form_result',
       'tbl_sys_form_method',
       'tbl_sys_form_route',
       'tbl_sys_form_modal',

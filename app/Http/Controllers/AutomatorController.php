@@ -103,6 +103,84 @@
 
 
 
+    private function loadModuleClasses(string $module): void
+    {
+
+        $module = ucfirst(trim($module));
+
+
+        $modulePath = storage_path("app/modulos/installed/" . strtolower($module) . "/Models");
+
+
+        if(!is_dir($modulePath)) {
+
+            return;
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Primeiro passo:
+        | Lista todos os arquivos PHP das Models
+        |--------------------------------------------------------------------------
+        */
+
+        $modelFiles = [];
+
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator(
+                $modulePath,
+                \RecursiveDirectoryIterator::SKIP_DOTS
+            )
+        );
+
+
+        foreach($iterator as $file) {
+
+
+            if(!$file->isFile()) {
+
+                continue;
+
+            }
+
+
+            if($file->getExtension() !== 'php') {
+
+                continue;
+
+            }
+
+
+            $modelFiles[] = $file->getPathname();
+
+        }
+
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Segundo passo:
+        | Agora carrega todos os arquivos encontrados
+        |--------------------------------------------------------------------------
+        */
+
+        foreach($modelFiles as $file) {
+
+
+            require_once $file;
+
+
+        }
+
+
+    }
+
+
+
+
     private function getAutomatorModelClassByTable($table) {
 
 
@@ -215,11 +293,36 @@
       $model = trim($model);
       $model = ltrim($model, '\\');
 
+
       if ($module !== null && $module !== '') {
+
+          /*
+           |---------------------------------------------------------
+           | Carrega todas as classes do módulo
+           |---------------------------------------------------------
+           |
+           | Evita problemas de relacionamento entre Models
+           | pertencentes ao mesmo módulo.
+           |
+           */
+
+          $this->loadModuleClasses($module);
+
+          /*
+           |---------------------------------------------------------
+           | Mantém o comportamento atual
+           |---------------------------------------------------------
+           */
 
           $this->loadModuleClass($module, $model);
 
       }
+
+      // if ($module !== null && $module !== '') {
+
+      //     $this->loadModuleClass($module, $model);
+
+      // }
 
       /*
       |--------------------------------------------------------------------------
@@ -229,19 +332,15 @@
 
       if(strpos($model, '\\') === false) {
 
-          if($module !== null && $module !== '') {
+        if($module !== null && $module !== '') {
 
-              $modelClass = ucfirst($module) . '\\Models\\' . $model;
+            $modelClass = ucfirst($module) . '\\Models\\' . $model;
 
-          } else {
+        } else {
 
-              $modelClass = 'App\\Models\\' . $model;
+            $modelClass = 'App\\Models\\' . $model;
 
-          }
-
-      } else {
-
-          $modelClass = ltrim($model, '\\');
+        }
 
       }
 
@@ -287,12 +386,18 @@
       |--------------------------------------------------------------------------
       */
 
-      if(!class_exists($modelClass) && $module !== null && $module !== '') {
+      if ($module !== null && $module !== '') {
 
-          $this->loadModuleClass(
-              $module,
-              'Models\\'.$model
-          );
+          $this->loadModuleClasses($module);
+
+          $modelClass = ucfirst($module) . '\\Models\\' . $model;
+
+
+          if(class_exists($modelClass)) {
+
+              return $modelClass;
+
+          }
 
       }
 
@@ -887,6 +992,8 @@
         | pagination  => pagination
         | get-data    => getData
         | store-data  => storeData
+        | active-data  => activeData
+        | desactive-data  => desaactiveData
         | update-data => updateData
         | delete-data => deleteData
         |
@@ -915,6 +1022,8 @@
           'storeData',
           'updateData',
           'deleteData',
+          'activeData',
+          'desactiveData',
 
         ];
 
@@ -1642,6 +1751,20 @@
 
       $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
+      /*
+      |--------------------------------------------------------------------------
+      | Carrega todas as classes do módulo antes de utilizar qualquer Model
+      |--------------------------------------------------------------------------
+      */
+
+      if(!empty($attributes['module'])) {
+
+          $this->loadModuleClasses(
+              $attributes['module']
+          );
+
+      }
+
       $table = $attributes['table'] ?? null;
 
 
@@ -1961,6 +2084,8 @@
 
           'status'  => false,
           'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
+          'error'   => $e,
+          'attrs'   => $attributes,
           'message' => $e->getMessage()
 
         ], 500);
@@ -2072,6 +2197,22 @@
 
 
       $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Carrega Models do módulo antes de localizar a Model
+      |--------------------------------------------------------------------------
+      */
+
+      if (
+          !empty($attributes['module']) &&
+          method_exists($this, 'loadModuleClasses')
+      ) {
+
+          $this->loadModuleClasses($attributes['module']);
+
+      }
+
 
       $table = $attributes['table'] ?? null;
       $index = $attributes['index'] ?? null;
@@ -2615,90 +2756,149 @@
       ]);
 
     }
-    // public function deleteData(Request $request, $shortcodeParams = []) {
-
-    //   $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
 
 
-    //   $table = $attributes['table'] ?? null;
-    //   $index = $attributes['index'] ?? null;
-    //   $id    = $request->input('id') ?? null;
+
+    public function activeData(Request $request, $shortcodeParams = []) {
+
+      $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
+
+      $table       = $attributes['table'] ?? null;
+      $index       = $attributes['index'] ?? null;
+      $callSuccess = $attributes['callSuccess'] ?? null;
+      $callError   = $attributes['callError'] ?? null;
+      $id    = $request->input('id') ?? null;
+
+      if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'Tabela inválida.'
+        ], 400);
+
+      }
+
+      if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'Índice inválido.'
+        ], 400);
+
+      }
+
+      if($id === null || $id === '') {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'ID não informado.'
+        ], 400);
+
+      }
 
 
-    //   if($table === null || $table === '' || !Schema::hasTable($table)) {
+      $actived = DB::table($table)->where($index, $id)->update([$attributes['status'] => 'ativo']);
 
-    //     return response()->json([
+      if(!$actived) {
 
-    //       'status'  => false,
-    //       'message' => 'Tabela inválida.'
+        return response()->json([
+          'status'  => false,
+          'title'   => 'Erro',
+          'message' => 'Nenhum registro foi excluído.'
+        ]);
 
-    //     ], 400);
+      }
 
-    //   }
+      if($callSuccess != null) {
 
+        $success = explode(';', $callSuccess);
+        if(SysAutomator::SysAutomatorMethodExists($success[0], $success[1]) == true) {
 
-    //   if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+          app($success[0])->{$success[1]}($id);
 
-    //     return response()->json([
+        }
 
-    //       'status'  => false,
-    //       'message' => 'Índice inválido.'
+      }
 
-    //     ], 400);
-
-    //   }
-
-
-    //   if($id === null || $id === '') {
-
-    //     return response()->json([
-
-    //       'status'  => false,
-    //       'message' => 'ID não informado.'
-
-    //     ], 400);
-
-    //   }
-
-    //   if(!is_array($id)) {
-
-    //     DB::table($table)->where($index, $id)->delete();
-
-    //   } else {
-
-    //     $total = count($id);
-    //     if($total >= 1) {
-
-    //       foreach ($id as $item) {
-
-    //         DB::table($table)->where($index, $item)->delete();
-
-    //       }
-
-    //     } else {
-
-    //       return response()->json([
-
-    //         'status'  => false,
-    //         'message' => 'ID não informado.'
-
-    //       ], 400);
-
-    //     }
-
-    //   }
+      return response()->json([
+        'status'  => true,
+        'title'   => 'Sucesso',
+        'message' => 'Registro ativado com sucesso.'
+      ]);
 
 
-    //   return response()->json([
-
-    //     'status'  => true,
-    //     'title'   => 'Sucesso',
-    //     'message' => 'Registro removido com sucesso.'
-
-    //   ]);
+    }
 
 
-    // }
+    public function desactiveData(Request $request, $shortcodeParams = []) {
+
+      $attributes = $this->getAutomatorRouteAttributes($request, $shortcodeParams);
+
+      $table = $attributes['table'] ?? null;
+      $index = $attributes['index'] ?? null;
+      $callSuccess = $attributes['callSuccess'] ?? null;
+      $id    = $request->input('id') ?? null;
+
+      if($table === null || $table === '' || !Schema::hasTable($table)) {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'Tabela inválida.'
+        ], 400);
+
+      }
+
+      if($index === null || $index === '' || !Schema::hasColumn($table, $index)) {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'Índice inválido.'
+        ], 400);
+
+      }
+
+      if($id === null || $id === '') {
+
+        return response()->json([
+          'status'  => false,
+          'message' => 'ID não informado.'
+        ], 400);
+
+      }
+
+
+      $desactived = DB::table($table)->where($index, $id)->update([$attributes['status'] => 'inativo']);
+
+      if(!$desactived) {
+
+        return response()->json([
+          'status'  => false,
+          'title'   => 'Erro',
+          'message' => 'Nenhum registro foi excluído.'
+        ]);
+
+      }
+
+      if($callSuccess != null) {
+
+        $success = explode(';', $callSuccess);
+        if(SysAutomator::SysAutomatorMethodExists($success[0], $success[1]) == true) {
+
+          app($success[0])->{$success[1]}($id);
+
+        }
+
+      }
+
+      return response()->json([
+        'status'  => true,
+        'title'   => 'Sucesso',
+        'message' => 'Registro inativo com sucesso.'
+      ]);
+
+
+    }
+   
 
 
     /*
@@ -4387,6 +4587,64 @@
       return ((int) $ultimoValor) + 1;
     }
 
+
+
+    
+
+    public function AutomatorGetCurrentItemValue($table, $field, $current = null)
+    {
+
+        if (
+            empty($table) ||
+            empty($field) ||
+            empty($current) ||
+            !Schema::hasTable($table)
+        ) {
+
+            return '';
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Descobre automaticamente a chave primária da tabela
+        |--------------------------------------------------------------------------
+        */
+
+        $primaryKey = collect(
+            DB::select("SHOW KEYS FROM `{$table}` WHERE Key_name = 'PRIMARY'")
+        )->pluck('Column_name')->first();
+
+
+        if (empty($primaryKey)) {
+
+            return '';
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Busca o registro e retorna o valor do campo solicitado
+        |--------------------------------------------------------------------------
+        */
+
+        $item = DB::table($table)
+            ->where($primaryKey, $current)
+            ->first();
+
+
+        if (!$item) {
+
+            return '';
+
+        }
+
+
+        return $item->{$field} ?? '';
+
+    }
 
 
   }

@@ -116,49 +116,107 @@
 
         foreach($columnFilters as $filterValue => $filterProps) {
 
-          if((string) $itemColumnValue !== (string) $filterValue) {
+            if(!is_array($filterProps)) {
 
-            continue;
+                continue;
 
-          }
+            }
 
-          if(!is_array($filterProps)) {
+            /*
+            |--------------------------------------------------------------------------
+            | Regra de comparação
+            |--------------------------------------------------------------------------
+            */
 
-            continue;
+            $compare = trim($filterProps['compare'] ?? '=');
 
-          }
+            $match = false;
 
-          if(isset($filterProps['class']) && $filterProps['class'] != '') {
+            switch($compare) {
 
-            $filterData['class'] = trim($filterData['class'] . ' ' . $filterProps['class']);
+                case '=':
+                case '==':
 
-          }
+                    $match = ((string)$itemColumnValue === (string)$filterValue);
 
-          if(isset($filterProps['remove']) && $automatorRelationIsTruthy($filterProps['remove'])) {
+                break;
 
-            $filterData['remove'] = true;
+                case '!=':
+                case '<>':
 
-          }
+                    $match = ((string)$itemColumnValue !== (string)$filterValue);
 
-          if(isset($filterProps['disabled']) && $automatorRelationIsTruthy($filterProps['disabled'])) {
+                break;
 
-            $filterData['disabled'] = true;
+                case '>':
 
-          }
+                    $match = ($itemColumnValue > $filterValue);
 
-          if(isset($filterProps['readonly']) && $automatorRelationIsTruthy($filterProps['readonly'])) {
+                break;
 
-            $filterData['readonly'] = true;
+                case '>=':
 
-          }
+                    $match = ($itemColumnValue >= $filterValue);
 
-          if(isset($filterProps['tooltip']) && $filterProps['tooltip'] != '') {
+                break;
 
-            $filterData['tooltip'] = [
-              'title' => $filterProps['tooltip']
-            ];
+                case '<':
 
-          }
+                    $match = ($itemColumnValue < $filterValue);
+
+                break;
+
+                case '<=':
+
+                    $match = ($itemColumnValue <= $filterValue);
+
+                break;
+
+                default:
+
+                    $match = ((string)$itemColumnValue === (string)$filterValue);
+
+                break;
+
+            }
+
+            if(!$match) {
+
+                continue;
+
+            }
+
+            if(isset($filterProps['class']) && $filterProps['class'] != '') {
+
+                $filterData['class'] = trim($filterData['class'].' '.$filterProps['class']);
+
+            }
+
+            if(isset($filterProps['remove']) && $automatorRelationIsTruthy($filterProps['remove'])) {
+
+                $filterData['remove'] = true;
+
+            }
+
+            if(isset($filterProps['disabled']) && $automatorRelationIsTruthy($filterProps['disabled'])) {
+
+                $filterData['disabled'] = true;
+
+            }
+
+            if(isset($filterProps['readonly']) && $automatorRelationIsTruthy($filterProps['readonly'])) {
+
+                $filterData['readonly'] = true;
+
+            }
+
+            if(isset($filterProps['tooltip']) && $filterProps['tooltip'] != '') {
+
+                $filterData['tooltip'] = [
+                    'title' => $filterProps['tooltip']
+                ];
+
+            }
 
         }
 
@@ -176,6 +234,7 @@
       $relationTable = $relation['table'] ?? '';
       $relationValue = $relation['value'] ?? '';
       $relationLabel = $relation['label'] ?? '';
+      $relationSame  = $relation['sameValue'] ?? true;
 
       if($relationTable != '' && $relationValue != '' && $relationLabel != '') {
 
@@ -278,6 +337,8 @@
 
     }
 
+
+
   @endphp
   
   @if($relationType == 'hidden')
@@ -296,6 +357,7 @@
     />
 
   @else
+
     <div class="mb-3 {{ $props['wrapper_class'] ?? 'col-12' }}">
 
       @if($relationType == 'select')

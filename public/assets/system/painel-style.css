@@ -909,3 +909,9 @@
 .automator-hidden {
     display: none !important;
 }
+
+
+
+.table-responsive.overflow-visible {
+  overflow: visible;
+}

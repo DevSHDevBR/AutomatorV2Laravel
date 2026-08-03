@@ -139,6 +139,17 @@
       ]);
 
 
+      SysFunction::Create([
+
+        'tbl_sys_function_type'   => 'custom',
+        'tbl_sys_function_name'   => 'sysGetCurrentItemData',
+        'tbl_sys_function_fn'     => 'AutomatorGetCurrentItemValue',
+        'tbl_sys_function_params' => "{ 'table': true, 'field': true, current: false }",
+        'tbl_sys_function_props'  => "{ 'table': @SysFunctions['sysGetTableList'] }",
+
+      ]);
+
+
     }
   
 

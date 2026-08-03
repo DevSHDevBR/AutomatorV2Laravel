@@ -11,6 +11,8 @@
   use Illuminate\Support\Facades\Hash;
   use Illuminate\Support\Facades\DB;
   use Illuminate\Support\Facades\Schema;
+  use Illuminate\Support\Facades\Storage;
+  use Illuminate\Support\Str;
 
   use App\Http\Controllers\AutomatorController;
   use App\Helpers\SysAutomator;
@@ -22,6 +24,8 @@
   use App\Models\SysFormsAccess;
   use App\Models\User;
   use App\Models\UsersType;
+  use App\Models\SysUploadsTemp;
+  use App\Models\SysUploadsType;
 
 
 
@@ -999,6 +1003,1102 @@
           'status'  => false,
           'message' => SysAutomator::SysAutomatorGetTranslateWord(
             'Ação ainda não implementada.'
+          ),
+
+        ], 400);
+
+
+      } elseif($acao == 'upload-temporario') {
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Autenticação
+        |--------------------------------------------------------------------------
+        */
+
+        if(
+          Auth::check() !== true ||
+          Auth::user() === null
+        ) {
+
+          return response()->json([
+
+            'status'          => false,
+            'authenticated'   => false,
+            'session_expired' => true,
+
+            'message' => SysAutomator::SysAutomatorGetTranslateWord(
+              'Sua sessão expirou. Faça o login novamente para continuar.'
+            ),
+
+            'login_url' => SysAutomator::SysAutomatorGetRouteLinkByName(
+              'admin-login',
+              [],
+              true
+            ),
+
+          ], 401);
+
+        }
+
+
+        $action = trim(
+
+          (string) $request->input(
+
+            'action',
+
+            ''
+
+          )
+
+        );
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Upload temporário
+        |--------------------------------------------------------------------------
+        */
+
+        if($action === 'upload') {
+
+
+          try {
+
+
+            $request->validate([
+
+              'arquivo' => [
+
+                'required',
+                'file',
+                'max:20480',
+
+              ],
+
+            ], [
+
+              'arquivo.required' => SysAutomator::SysAutomatorGetTranslateWord(
+                'Nenhum arquivo foi enviado.'
+              ),
+
+              'arquivo.file' => SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo enviado é inválido.'
+              ),
+
+              'arquivo.max' => SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo não pode ultrapassar 20 MB.'
+              ),
+
+            ]);
+
+
+            $uploadedFile = $request->file(
+
+              'arquivo'
+
+            );
+
+
+            if(
+              $uploadedFile === null ||
+              $uploadedFile->isValid() !== true
+            ) {
+
+              return response()->json([
+
+                'status' => false,
+
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                  'O arquivo enviado é inválido.'
+                ),
+
+              ], 422);
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Nome original, extensão e MIME real
+            |--------------------------------------------------------------------------
+            */
+
+            $originalName = trim(
+
+              (string) $uploadedFile->getClientOriginalName()
+
+            );
+
+
+            $extension = strtolower(
+
+              trim(
+
+                (string) $uploadedFile->getClientOriginalExtension()
+
+              )
+
+            );
+
+
+            $mimeType = strtolower(
+
+              trim(
+
+                (string) $uploadedFile->getMimeType()
+
+              )
+
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Localiza o tipo cadastrado
+            |--------------------------------------------------------------------------
+            |
+            | A primeira consulta utiliza MIME + extensão.
+            |
+            | Isso é importante porque JPG e JPEG, por exemplo, possuem o mesmo MIME:
+            |
+            | image/jpeg
+            |
+            */
+
+            $uploadType = SysUploadsType::where(
+
+              'tbl_sys_uploads_type_mine',
+
+              str_replace('.', '', $mimeType)
+
+            )
+              ->where(
+
+                'tbl_sys_uploads_type_name',
+
+                str_replace('.', '', $extension)
+
+              )
+              ->first();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fallback pela extensão
+            |--------------------------------------------------------------------------
+            |
+            | Alguns servidores retornam MIME alternativo para ZIP, RAR, CSV,
+            | arquivos do Office e outros formatos.
+            |
+            */
+
+            if(!$uploadType) {
+
+              $uploadType = SysUploadsType::where(
+
+                'tbl_sys_uploads_type_name',
+
+                str_replace('.', '', $extension)
+
+              )->first();
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fallback somente pelo MIME
+            |--------------------------------------------------------------------------
+            */
+
+            if(!$uploadType) {
+
+              $uploadType = SysUploadsType::where(
+
+                'tbl_sys_uploads_type_mine',
+
+                str_replace('.', '', $mimeType)
+
+              )->first();
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Bloqueia tipos não cadastrados
+            |--------------------------------------------------------------------------
+            */
+
+            if(!$uploadType) {
+
+              return response()->json([
+
+                'status' => false,
+
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                  'O tipo do arquivo enviado não está cadastrado no sistema.'
+                ),
+
+                'file_type' => [
+
+                  'extension' => str_replace('.', '', $extension),
+                  'mime_type' => str_replace('.', '', $mimeType),
+
+                ],
+
+              ], 422);
+
+            }
+
+
+            $uploadTypeID = (int) $uploadType
+              ->tbl_sys_uploads_type_ID;
+
+
+            $disk = 'public';
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Pasta temporária
+            |--------------------------------------------------------------------------
+            */
+
+            $temporaryDirectory = implode(
+
+              '/',
+
+              [
+
+                'uploads',
+                'temporarios',
+                now()->format('Y'),
+                now()->format('m'),
+
+              ]
+
+            );
+
+
+            $originalBaseName = pathinfo(
+
+              $originalName,
+
+              PATHINFO_FILENAME
+
+            );
+
+
+            $safeName = Str::slug(
+
+              $originalBaseName
+
+            );
+
+
+            if($safeName === '') {
+
+              $safeName = 'arquivo';
+
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Nome único na pasta temporária
+            |--------------------------------------------------------------------------
+            */
+
+            do {
+
+
+              $storedName =
+
+                $safeName
+
+                . '-'
+
+                . Str::uuid()->toString()
+
+                . (
+
+                  $extension !== ''
+
+                    ? '.' . $extension
+
+                    : ''
+
+                );
+
+
+              $temporaryPath =
+
+                trim(
+
+                  $temporaryDirectory,
+
+                  '/'
+
+                )
+
+                . '/'
+
+                . $storedName;
+
+
+            } while(
+
+              Storage::disk($disk)->exists(
+
+                $temporaryPath
+
+              )
+
+            );
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Salva o arquivo temporário
+            |--------------------------------------------------------------------------
+            */
+
+            $storedPath = $uploadedFile->storeAs(
+
+              $temporaryDirectory,
+
+              $storedName,
+
+              $disk
+
+            );
+
+
+            if(
+              $storedPath === false ||
+              $storedPath === null ||
+              trim((string) $storedPath) === ''
+            ) {
+
+              return response()->json([
+
+                'status' => false,
+
+                'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                  'Não foi possível salvar o arquivo temporário.'
+                ),
+
+              ], 500);
+
+            }
+
+
+            DB::beginTransaction();
+
+
+            try {
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Cadastra o arquivo temporário
+              |--------------------------------------------------------------------------
+              */
+
+              $temporaryUpload = SysUploadsTemp::create([
+
+                /*
+                |--------------------------------------------------------------------------
+                | ID encontrado automaticamente pelo MIME/extensão
+                |--------------------------------------------------------------------------
+                */
+
+                'tbl_sys_uploads_type_ID' =>
+                  $uploadTypeID,
+
+                /*
+                |--------------------------------------------------------------------------
+                | Nome único do arquivo
+                |--------------------------------------------------------------------------
+                */
+
+                'tbl_sys_upload_temp_file' =>
+                  $storedName,
+
+                /*
+                |--------------------------------------------------------------------------
+                | Diretório do arquivo
+                |--------------------------------------------------------------------------
+                */
+
+                'tbl_sys_upload_temp_directory' =>
+                  $temporaryDirectory,
+
+                /*
+                |--------------------------------------------------------------------------
+                | Usuário proprietário
+                |--------------------------------------------------------------------------
+                */
+
+                'tbl_user_ID' =>
+                  Auth::id(),
+
+              ]);
+
+
+              DB::commit();
+
+
+            } catch(\Throwable $exception) {
+
+
+              DB::rollBack();
+
+
+              /*
+              |--------------------------------------------------------------------------
+              | Evita arquivo órfão se o insert falhar
+              |--------------------------------------------------------------------------
+              */
+
+              if(
+                Storage::disk($disk)->exists(
+                  $storedPath
+                )
+              ) {
+
+                Storage::disk($disk)->delete(
+                  $storedPath
+                );
+
+              }
+
+
+              throw $exception;
+
+
+            }
+
+
+            return response()->json([
+
+              'status' => true,
+
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                'Arquivo enviado com sucesso.'
+              ),
+
+              'file' => [
+
+                'temp_id' =>
+                  $temporaryUpload->tbl_sys_upload_temp_ID,
+
+                'type_id' =>
+                  $uploadTypeID,
+
+                'type_name' =>
+                  $uploadType->tbl_sys_uploads_type_name,
+
+                'type_title' =>
+                  $uploadType->tbl_sys_uploads_type_title,
+
+                'original_name' =>
+                  $originalName,
+
+                'name' =>
+                  $originalName,
+
+                'stored_name' =>
+                  $storedName,
+
+                'directory' =>
+                  $temporaryDirectory,
+
+                'path' =>
+                  $storedPath,
+
+                'url' => Storage::disk(
+                  $disk
+                )->url(
+                  $storedPath
+                ),
+
+                'disk' =>
+                  $disk,
+
+                'extension' =>
+                  $extension,
+
+                'mime_type' =>
+                  $mimeType,
+
+                'size' => (int) (
+                  $uploadedFile->getSize() ?: 0
+                ),
+
+                'temporary' =>
+                  true,
+
+              ],
+
+            ], 200);
+
+
+          } catch(ValidationException $exception) {
+
+
+            return response()->json([
+
+              'status' => false,
+
+              'message' => $exception
+                ->validator
+                ->errors()
+                ->first(),
+
+              'errors' => $exception->errors(),
+
+            ], 422);
+
+
+          } catch(\Throwable $exception) {
+
+
+            report(
+
+              $exception
+
+            );
+
+
+            return response()->json([
+
+              'status' => false,
+
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                'Não foi possível realizar o upload do arquivo.'
+              ),
+
+            ], 500);
+
+
+          }
+
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Exclusão do arquivo temporário
+        |--------------------------------------------------------------------------
+        */
+
+        if($action === 'remove-file') {
+
+
+          $request->merge([
+
+            'temp_id' => $request->input(
+
+              'id'
+
+            ),
+
+          ]);
+
+
+          $action = 'delete';
+
+
+        }
+
+
+        if($action === 'delete') {
+
+
+          $request->validate([
+
+            'temp_id' => [
+
+              'required',
+              'integer',
+
+            ],
+
+          ], [
+
+            'temp_id.required' =>
+              'O arquivo temporário não foi informado.',
+
+            'temp_id.integer' =>
+              'O arquivo temporário informado é inválido.',
+
+          ]);
+
+
+          $temporaryUpload = SysUploadsTemp::where(
+
+            'tbl_sys_upload_temp_ID',
+
+            (int) $request->input('temp_id')
+
+          )
+            ->where(
+
+              'tbl_user_ID',
+
+              Auth::id()
+
+            )
+            ->first();
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Exclusão idempotente
+          |--------------------------------------------------------------------------
+          */
+
+          if(!$temporaryUpload) {
+
+            return response()->json([
+
+              'status' => true,
+
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo temporário já foi removido.'
+              ),
+
+            ]);
+
+          }
+
+
+          $directory = trim(
+
+            (string) $temporaryUpload
+              ->tbl_sys_upload_temp_directory,
+
+            '/'
+
+          );
+
+
+          $fileName = basename(
+
+            (string) $temporaryUpload
+              ->tbl_sys_upload_temp_file
+
+          );
+
+
+          $temporaryPath =
+
+            $directory
+
+            . '/'
+
+            . $fileName;
+
+
+          DB::beginTransaction();
+
+
+          try {
+
+
+            $temporaryUpload->delete();
+
+
+            if(
+              Storage::disk('public')->exists(
+                $temporaryPath
+              )
+            ) {
+
+              Storage::disk('public')->delete(
+                $temporaryPath
+              );
+
+            }
+
+
+            DB::commit();
+
+
+          } catch(\Throwable $exception) {
+
+
+            DB::rollBack();
+
+            throw $exception;
+
+
+          }
+
+
+          return response()->json([
+
+            'status' => true,
+
+            'message' => SysAutomator::SysAutomatorGetTranslateWord(
+              'Arquivo temporário excluído com sucesso.'
+            ),
+
+          ]);
+
+
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Promoção para arquivo definitivo
+        |--------------------------------------------------------------------------
+        */
+
+        if($action === 'finalize') {
+
+
+          $request->validate([
+
+            'temp_id' => [
+
+              'required',
+              'integer',
+
+            ],
+
+          ], [
+
+            'temp_id.required' =>
+              'O arquivo temporário não foi informado.',
+
+            'temp_id.integer' =>
+              'O arquivo temporário informado é inválido.',
+
+          ]);
+
+
+          $temporaryUpload = SysUploadsTemp::where(
+
+            'tbl_sys_upload_temp_ID',
+
+            (int) $request->input('temp_id')
+
+          )
+            ->where(
+
+              'tbl_user_ID',
+
+              Auth::id()
+
+            )
+            ->first();
+
+
+          if(!$temporaryUpload) {
+
+            return response()->json([
+
+              'status' => false,
+
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo temporário não foi encontrado.'
+              ),
+
+            ], 404);
+
+          }
+
+
+          $disk = 'public';
+
+
+          $temporaryDirectory = trim(
+
+            (string) $temporaryUpload
+              ->tbl_sys_upload_temp_directory,
+
+            '/'
+
+          );
+
+
+          $storedName = basename(
+
+            (string) $temporaryUpload
+              ->tbl_sys_upload_temp_file
+
+          );
+
+
+          $temporaryPath =
+
+            $temporaryDirectory
+
+            . '/'
+
+            . $storedName;
+
+
+          if(
+            !Storage::disk($disk)->exists(
+              $temporaryPath
+            )
+          ) {
+
+            $temporaryUpload->delete();
+
+
+            return response()->json([
+
+              'status' => false,
+
+              'message' => SysAutomator::SysAutomatorGetTranslateWord(
+                'O arquivo temporário não existe mais.'
+              ),
+
+            ], 404);
+
+          }
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Pasta definitiva
+          |--------------------------------------------------------------------------
+          */
+
+          $finalDirectory = implode(
+
+            '/',
+
+            [
+
+              'uploads',
+              now()->format('Y'),
+              now()->format('m'),
+
+            ]
+
+          );
+
+
+          /*
+          |--------------------------------------------------------------------------
+          | Evita colisão na pasta definitiva
+          |--------------------------------------------------------------------------
+          */
+
+          $finalName = $storedName;
+
+
+          if(
+            Storage::disk($disk)->exists(
+
+              $finalDirectory
+
+              . '/'
+
+              . $finalName
+
+            )
+          ) {
+
+
+            $extension = pathinfo(
+
+              $storedName,
+
+              PATHINFO_EXTENSION
+
+            );
+
+
+            $baseName = pathinfo(
+
+              $storedName,
+
+              PATHINFO_FILENAME
+
+            );
+
+
+            $finalName =
+
+              $baseName
+
+              . '-'
+
+              . Str::uuid()->toString()
+
+              . (
+
+                $extension !== ''
+
+                  ? '.' . $extension
+
+                  : ''
+
+              );
+
+
+          }
+
+
+          $finalPath =
+
+            $finalDirectory
+
+            . '/'
+
+            . $finalName;
+
+
+          DB::beginTransaction();
+
+
+          try {
+
+
+            $moved = Storage::disk(
+
+              $disk
+
+            )->move(
+
+              $temporaryPath,
+
+              $finalPath
+
+            );
+
+
+            if($moved !== true) {
+
+              throw new \RuntimeException(
+                'Não foi possível mover o arquivo para a pasta definitiva.'
+              );
+
+            }
+
+
+            $temporaryUpload->delete();
+
+
+            DB::commit();
+
+
+          } catch(\Throwable $exception) {
+
+
+            DB::rollBack();
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Tenta restaurar se o banco falhar após mover
+            |--------------------------------------------------------------------------
+            */
+
+            if(
+              Storage::disk($disk)->exists(
+                $finalPath
+              ) &&
+              !Storage::disk($disk)->exists(
+                $temporaryPath
+              )
+            ) {
+
+              Storage::disk($disk)->move(
+
+                $finalPath,
+
+                $temporaryPath
+
+              );
+
+            }
+
+
+            throw $exception;
+
+
+          }
+
+
+          return response()->json([
+
+            'status' => true,
+
+            'message' => SysAutomator::SysAutomatorGetTranslateWord(
+              'Arquivo movido para a pasta definitiva.'
+            ),
+
+            'file' => [
+
+              'temp_id' =>
+                null,
+
+              'type_id' => (int) $temporaryUpload
+                ->tbl_sys_uploads_type_ID,
+
+              'name' =>
+                $finalName,
+
+              'stored_name' =>
+                $finalName,
+
+              'directory' =>
+                $finalDirectory,
+
+              'path' =>
+                $finalPath,
+
+              'url' => Storage::disk(
+                $disk
+              )->url(
+                $finalPath
+              ),
+
+              'disk' =>
+                $disk,
+
+              'extension' => strtolower(
+
+                pathinfo(
+
+                  $finalName,
+
+                  PATHINFO_EXTENSION
+
+                )
+
+              ),
+
+              'temporary' =>
+                false,
+
+            ],
+
+          ]);
+
+
+        }
+
+
+        return response()->json([
+
+          'status' => false,
+
+          'message' => SysAutomator::SysAutomatorGetTranslateWord(
+            'Ação de upload inválida.'
           ),
 
         ], 400);
@@ -3248,276 +4348,6 @@
       return SysAutomator::SysAutomatoRenderRouteContent($slug, [], 'restrict');
 
       
-
-    }
-
-
-
-    public function myAccount(Request $request) {
-
-
-      $slug = $request->route('pageSlug');
-
-      $routeName = str_replace('page-', '', $slug);
-
-
-      $route = SysRoute::where('tbl_sys_route_name', $routeName)->first()->toArray();
-
-      if(!Auth::check()) {
-
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
-        return redirect()->route('page.admin-login')->with('status', 'Sessão expirada!');
-
-      } else {
-
-        $_user = Auth::user();
-
-        $currentUser = [
-
-          'tbl_user_ID'    => $_user->tbl_user_ID,
-          'tbl_user_name'  => $_user->tbl_user_name,
-          'tbl_user_email' => $_user->tbl_user_email,
-        
-        ];
-
-
-        return SysAutomator::SysAutomatoRenderRouteContent2($slug, ['currentUser' => $currentUser], 'restrict');
-
-      }
-
-    }
-
-
-
-    public function myAccountAPI(Request $request) {
-
-
-      $retorno = [
-
-        'status'  => false,
-        'title'   => SysAutomator::SysAutomatorGetTranslateWord('ERRO'),
-        'message' => SysAutomator::SysAutomatorGetTranslateWord('Solicitação inválida!'),
-        'logout'  => false
-      ];
-
-
-      if(Auth::check()) {
-
-        $_user = Auth::user();
-
-        $id       = $request->input('tbl_user_ID');
-        $name     = $request->input('tbl_user_name');
-        $email    = $request->input('tbl_user_email');
-        $pass     = $request->input('tbl_user_password');
-        $confirm  = $request->input('tbl_user_confirm_password');
-
-        if(isset($id) && $id != null) {
-
-          if($id == $_user->tbl_user_ID) {
-
-            if(isset($name) && $name != '') {
-
-              if(strlen($name) >= 5) {
-
-                if(strlen($name) <= 255) {
-
-                  if(isset($email) && $email != '') {
-
-                    if(strlen($email) >= 8) {
-
-                      if(strlen($email) <= 255) {
-
-                        $continuar = true;
-                        if($email != $_user->tbl_user_email) {
-
-                          $continuar = false;
-                          $search = User::where('tbl_user_email', $email)->first();
-                          if($search) {
-
-                            $search = ( (array) $search );
-                            if(count($search) <= 0) {
-
-                              $continuar = true;
-
-                            } else {
-
-                              $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O valor informado no campo 'E-mail' ja está sendo utilizado por outro usuário!");
-
-                            }
-
-                          } else {
-
-                            $continuar = true;
-
-                          }
-
-                        }
-
-                        if($continuar == true) {
-
-                          if(strlen($pass) <= 0 ) {
-                            
-                            $passwd = false;
-
-                          } else {
-
-                            $passwd    = true;
-                            $continuar = false;
-
-                            if(strlen($pass) >= 8) {
-
-                              if(strlen($pass) <= 255) {
-
-                                if(isset($confirm) && $confirm != '') {
-
-                                  if(strlen($confirm) >= 8) {
-
-                                    if(strlen($confirm) <= 255) {
-
-                                      if($pass == $confirm) {
-
-                                        $continuar = true;
-
-                                      } else {
-
-                                        $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O valor do campo 'Nova senha' deve ser igual ao valor do campo 'Confirmar Nova senha'!");
-
-                                      }
-
-                                    } else {
-
-                                      $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Confirmar Nova senha' deve ser menor que 255 caracteres!");
-
-                                    }
-
-                                  } else {
-
-                                    $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Confirmar Nova senha' deve ser maior que 7 caracteres!");
-
-                                  }
-
-                                } else {
-
-                                  $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Confirmar Nova senha' é obrigatório quando o campo 'Nova senha' é preenchido!");
-
-                                }
-
-                              } else {
-
-                                $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Nova senha' deve ser menor que 255 caracteres!");
-
-                              }
-
-                            } else {
-
-                              $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Nova senha' deve ser maior que 7 caracteres!");
-
-                            }
-
-                          }
-
-                          if($continuar == true) {
-
-                            $update = [];
-                            if($passwd == true) {
-
-                              if($retorno['logout'] == false) {
-
-                                $retorno['logout'] = true;
-
-                              }
-
-                              $pass = Hash::make($pass);
-                              $update['tbl_user_password'] = $pass;
-
-                            }
-
-                            if($_user->tbl_user_email != $email) {
-                              
-                              $update['tbl_user_email'] = $email;
-
-                              if($retorno['logout'] == false) {
-
-                                $retorno['logout'] = true;
-
-                              }
-
-                            }
-
-                            if($_user->tbl_user_name != $name) {
-
-                              $update['tbl_user_name'] = $name;
-
-                            }
-
-
-                            $UserUpdate = User::where('tbl_user_id', $id)->update($update);
-                            if($UserUpdate) {
-
-                              $retorno['status']   = true;
-                              $retorno['title']    = SysAutomator::SysAutomatorGetTranslateWord('SUCESSO');
-                              $retorno['message']  = SysAutomator::SysAutomatorGetTranslateWord('Dados atualizado com sucesso!');
-
-
-                            } else {
-
-                              $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("Falha ao atualizar os dados de sua conta!");
-
-                            }
-
-                          }
-                          
-
-                        }
-
-                      } else {
-
-                        $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'E-mail' deve ser menor que 255 caracteres!");
-
-                      }
-
-                    } else {
-
-                      $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'E-mail' deve ser maior que 11 caracteres!");
-
-                    }
-
-                  } else {
-
-                    $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'E-mail' é obrigatório!");
-
-                  }
-
-                } else {
-
-                  $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Nome' deve ser menor que 255 caracteres!");
-
-                }
-
-              } else {
-
-                $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Nome' deve ser maior que 7 caracteres!");
-
-              }
-
-            } else {
-
-              $retorno['message'] = SysAutomator::SysAutomatorGetTranslateWord("O campo 'Nome' é obrigatório!");
-
-            }
-
-          }
-
-        }
-
-      }
-
-      return response()->json($retorno);
-
-      // return $response;
 
     }
 

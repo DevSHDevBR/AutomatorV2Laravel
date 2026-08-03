@@ -26,6 +26,7 @@
   use App\Models\SysShortcode;
   use App\Models\SysNotification;
   use App\Models\SysFunction;
+  use App\Models\SysView;
   
 
   use Illuminate\Support\Facades\View;
@@ -34,6 +35,7 @@
   use Illuminate\Support\Facades\DB;
   use Illuminate\Support\Facades\Session;
   use Illuminate\Support\Facades\Schema;
+  use Illuminate\Support\Facades\Storage;
   use Illuminate\Support\Carbon;
   use Illuminate\Http\Request;
   
@@ -45,6 +47,48 @@
 
 
   class SysAutomator {
+
+
+
+    public static function SysAutomatorGetPublicUploadURL(
+      $directory,
+      $fileName,
+      $access = 'public'
+    ): string {
+
+
+      if($access !== 'public') {
+
+        return '';
+
+      }
+
+
+      $directory = trim((string) $directory, '/');
+      $fileName = basename((string) $fileName);
+
+
+      if($directory === '' || $fileName === '') {
+
+        return '';
+
+      }
+
+
+      $path = $directory . '/' . $fileName;
+
+
+      if(Storage::disk('public')->exists($path)) {
+
+        return Storage::disk('public')->url($path);
+
+      }
+
+
+      return asset($path);
+
+
+    }
 
 
 
@@ -70,6 +114,67 @@
       if (class_exists($controllerWithNamespace)) {
 
         return $controllerWithNamespace;
+
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Controllers de módulos instalados
+      |--------------------------------------------------------------------------
+      */
+
+      if(
+        strpos($controller, '\\') === false &&
+        preg_match('/^[A-Za-z0-9_]+$/', $controller)
+      ) {
+
+        $controllerFiles = glob(
+
+          storage_path(
+
+            'app/modulos/installed/*/Controllers/' . $controller . '.php'
+
+          )
+
+        );
+
+
+        if(is_array($controllerFiles)) {
+
+          foreach($controllerFiles as $controllerFile) {
+
+            $modulePath = dirname(
+
+              dirname($controllerFile)
+
+            );
+
+            $modelsPath = $modulePath . '/Models';
+
+
+            if(is_dir($modelsPath)) {
+
+              foreach(glob($modelsPath . '/*.php') as $modelFile) {
+
+                require_once $modelFile;
+
+              }
+
+            }
+
+
+            require_once $controllerFile;
+
+          }
+
+        }
+
+
+        if(class_exists($controllerWithNamespace)) {
+
+          return $controllerWithNamespace;
+
+        }
 
       }
 
@@ -740,6 +845,31 @@
 
 
     // }
+
+
+    public static function SysAutomatorGetSysView($viewName) {
+
+      $retorno = '';
+
+      $view = SysView::where('tbl_sys_view_name', $viewName)->get();
+      if($view) {
+
+        $view = $view->toArray();
+
+        $arquivo = str_replace(['\\', '/'], '.', $view['tbl_sys_view_directory']) . '.' . $view['tbl_sys_view_file'];
+        $exists = self::SysAutomatorViewExists($arquivo);
+        if($exists != false) {
+
+          $retorno = $arquivo;
+
+        }
+
+      }
+
+      return $retorno;
+
+
+    }
 
 
 
@@ -5645,6 +5775,20 @@
       );
 
 
+      $direction = strtolower(
+
+        trim((string) $direction)
+
+      );
+
+
+      if(!in_array($direction, ['asc', 'desc'], true)) {
+
+        $direction = 'asc';
+
+      }
+
+
       if($sort) {
 
 
@@ -7195,7 +7339,7 @@
         'modal'             => $args['modal'] ?? null,
         'action_urls'       => $args['action_urls'] ?? [],
         'default_sort'      => $args['default_sort'] ?? ($args['order_by'] ?? null),
-        'default_direction' => $args['default_direction'] ?? ($args['order_direction'] ?? 'asc'),
+        'default_direction' => $args['default_direction'] ?? ($args['order_direction'] ?? ($args['direction'] ?? 'asc')),
         'where'             => $args['where'] ?? null,
         'with_where'        => $args['with_where'] ?? null,
         'columns'           => [],
@@ -8660,6 +8804,77 @@
       }
 
       return $retorno;
+
+
+    }
+
+
+    public static function SysAutomatorGetFormFieldsRules($formID): array {
+
+
+      $rules = [];
+
+
+      if($formID === null || $formID === '') {
+
+        return $rules;
+
+      }
+
+
+      if(!Schema::hasTable('tbl_sys_forms_fields')) {
+
+        return $rules;
+
+      }
+
+
+      $formFields = DB::table('tbl_sys_forms_fields')
+                      ->where('tbl_sys_form_ID', $formID)
+                      ->get();
+
+
+      foreach($formFields as $formField) {
+
+        $formField = (array) $formField;
+
+        $fieldName = $formField['tbl_sys_forms_field_name'] ?? null;
+
+
+        if($fieldName === null || $fieldName === '') {
+
+          continue;
+
+        }
+
+
+        $props = [];
+
+        if(isset($formField['tbl_sys_forms_field_props']) && $formField['tbl_sys_forms_field_props'] !== '') {
+
+          $decodedProps = json_decode($formField['tbl_sys_forms_field_props'], true);
+
+          if(is_array($decodedProps)) {
+
+            $props = $decodedProps;
+
+          }
+
+        }
+
+
+        $rules[$fieldName] = [
+
+          'title'    => $formField['tbl_sys_forms_field_title'] ?? $fieldName,
+          'required' => (bool) ($formField['tbl_sys_forms_field_required'] ?? false),
+          'props'    => $props
+
+        ];
+
+      }
+
+
+      return $rules;
 
 
     }

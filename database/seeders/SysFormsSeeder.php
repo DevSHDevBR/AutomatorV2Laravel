@@ -37,6 +37,38 @@
             'tbl_sys_form_submit'   => 'Salvar',
             'tbl_sys_form_route'    => 'admin-api-minha-conta',
             'tbl_sys_form_method'   => 'POST',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'Os novos dados de sua conta foram registrados com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Falha ao tentar registrar os novos dados de sua conta.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'Os dados de sua conta foram atualizados com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Falha ao tentar atualizar os dados de sua conta.',
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => false,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -183,6 +215,37 @@
             'tbl_sys_form_title'    => "API's",
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Rota de API foi criada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova Rota de API.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "A Rota de API foi atualizada com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar a Rota de API.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -548,6 +611,37 @@
             'tbl_sys_form_title'    => 'Permissões das Rotas de API',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'As novas Permissões de acesso a Rota de API foram criadas com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar as novas Permissões de acesso da Rota de api.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "As Permissões da Rota de API foram atualizadas com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar as Permissões da Rota de API.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -721,6 +815,37 @@
             'tbl_sys_form_title'    => 'Páginas',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Página foi criada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova Página.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "A Página foi atualizada com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar a página",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1089,6 +1214,37 @@
             'tbl_sys_form_title'    => 'Permissões das Rotas de Páginas',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'As novas Permissões da Página foram criadas com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar as novas Permissões da Página.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "As Permissões da Página foram atualizadas com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "As Permissões da Página não puderam ser atualizadas.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1221,6 +1377,37 @@
             'tbl_sys_form_title'    => 'Áreas de navegação',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Área de Navegação foi criada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova Área de Navegação.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "A Área de Navegação foi atualizada com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar a Área de Navegação.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1365,6 +1552,38 @@
             'tbl_sys_form_title'    => 'Tipos de usuários',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Tipo de usuário foi criado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Tipo de usuário.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "O Tipo de usuário foi atualizado com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar o Tipo de usuário.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1505,6 +1724,38 @@
             'tbl_sys_form_title'    => 'Permissões dos tipos de usuários',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'As novas Permissões do Tipo de usuário foram criadas com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar as novas Permissões do Tipo de usuário.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "As Permissões do Tipo de usuário foram atualizadas com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar as Permissões do Tipo de usuário.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1649,6 +1900,38 @@
             'tbl_sys_form_title'    => 'Usuários',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Usuário foi criada com sucesso',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Usuário.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Usuário foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Usuário.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -1922,6 +2205,38 @@
             'tbl_sys_form_title'    => 'Usuários',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Usuário foi criada com sucesso',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Usuário.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Usuário foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Usuário.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -2201,6 +2516,38 @@
             'tbl_sys_form_title'    => 'Notificações',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Enviar',
+            'tbl_sys_form_result'   => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Notificação foi criada com sucesso',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova Notificação.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados da Notificação foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados da Notificação.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -2369,6 +2716,38 @@
             'tbl_sys_form_title'    => 'Shortcodes',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Shortcode foi criado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Shortcode.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Shortcode foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Shortcode.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -2551,6 +2930,38 @@
             'tbl_sys_form_title'    => 'Abrir View Modal',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Gerar Código',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Código foi gerado com sucesso.',
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel gerar o novo Código.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Código foram atualizados com sucesso.",
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Código.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => false,
@@ -2802,6 +3213,38 @@
             'tbl_sys_form_title'    => 'Abrir Formulário Modal',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Gerar Código',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Código foi gerado com sucesso.',
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel gerar o novo Código.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Código foram atualizados com sucesso.",
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Código.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => false,
@@ -3222,6 +3665,280 @@
 
 
 
+        // OPEN PREVIEW MODAL - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-open-preview-modal',
+            'tbl_sys_form_title'    => 'Abrir Preview Modal',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Gerar Código',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Código foi gerado com sucesso.',
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel gerar o novo Código.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Código foram atualizados com sucesso.",
+                  'reload' => false
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Código.",
+                  'reload' => false
+                ],
+              ]
+            ]),
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => false,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Mostrar URL',
+                'tbl_sys_forms_field_name'     => 'url',
+                'tbl_sys_forms_field_index'    => 'url',
+                'tbl_sys_forms_field_default'  => true,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-3",
+
+                  "choices"=>[
+
+                    true  => "Sim",
+                    false => "Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+
+              ],
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Método de Carregamento',
+                'tbl_sys_forms_field_name'     => 'loadMethod',
+                'tbl_sys_forms_field_index'    => 'loadMethod',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => 'GET',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-4",
+
+                  "choices" => [
+
+                    "GET"  => "GET",
+                    "POST" => "POST"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1,2] 
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('relation', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Rota de Carregamento',
+                'tbl_sys_forms_field_name'     => 'loadRoute',
+                'tbl_sys_forms_field_index'    => 'loadRoute',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class" => "col-12 col-md-5",
+
+                  "type" => "select",
+
+                  "relation" => [
+
+                    "table" => "tbl_sys_routes",
+
+                    "value" => "tbl_sys_route_name",
+
+                    "label" => "tbl_sys_route_title",
+                    "filters" => [
+
+                      "tbl_sys_route_api" => [
+
+                        "false" => [
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+                        ],
+                        false   => [
+                          "class"    => "",
+                          "disabled" => true,
+                          "remove"   => true
+                        ],
+                      
+                      ]
+
+                    ],
+                    "where" => [
+
+                      "tbl_sys_route_api" => true,
+
+                    ]
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Tamanho',
+                'tbl_sys_forms_field_name'     => 'size',
+                'tbl_sys_forms_field_index'    => 'size',
+                'tbl_sys_forms_field_default'  => 'lg',
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    "sm"         => "Small",
+                    "md"         => "Medium",
+                    "lg"         => "Large",
+                    "xl"         => "Extra Large",
+                    "fullscreen" => "Tela inteira"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+
+              ],
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Backdrop',
+                'tbl_sys_forms_field_name'     => 'backdrop',
+                'tbl_sys_forms_field_index'    => 'backdrop',
+                'tbl_sys_forms_field_default'  => true,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-4",
+
+                  "choices"=>[
+
+                    true  => "Sim",
+                    false => "Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2]
+
+              ],
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Fechar com ESC',
+                'tbl_sys_forms_field_name'     => 'keyboard',
+                'tbl_sys_forms_field_index'    => 'keyboard',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    true  => "Sim",
+                    false => "Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1, 2]
+
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Conteúdo Rolável',
+                'tbl_sys_forms_field_name'     => 'scrollable',
+                'tbl_sys_forms_field_index'    => 'scrollable',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+
+                  "wrapper_class"=>"col-12 col-md-6",
+
+                  "choices"=>[
+
+                    true  => "Sim",
+                    false => "Não"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1, 2]
+
+              ],
+
+            ]
+
+          ],
+
+        // OPEN PREVIEW MODAL - END
+
+
+
         // VISUALIZAR NOTIFICAÇÕES - START
 
           [
@@ -3230,6 +3947,38 @@
             'tbl_sys_form_title'    => 'Visualizar Notificação',
             'tbl_sys_form_cancel'   => 'Fechar',
             'tbl_sys_form_submit'   => 'Atualizar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Notificação foi gerada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel gerar a nova Notificação.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados da Notificação foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados da Notificação.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => false,
@@ -3401,6 +4150,38 @@
             'tbl_sys_form_title'    => 'Tipos de mídia',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Tipo de mídia foi registrado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel cadastrar o novo Tipo de mídia.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Tipo de mídia foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Nao fói possivel atualizar os dados do Tipo de mídia.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -3581,6 +4362,38 @@
             'tbl_sys_form_title'    => 'Idiomas',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Idioma foi criado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Idioma.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Idioma foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Idioma.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -3718,6 +4531,38 @@
             'tbl_sys_form_title'    => 'Funções',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova Função foi criada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova Função.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados da Função foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados da Função.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -3893,6 +4738,38 @@
             'tbl_sys_form_title'    => 'Menus',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Criar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Menu foi criado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Menu.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Menu foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Menu.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -4007,6 +4884,38 @@
             'tbl_sys_form_title'    => 'Módulos',
             'tbl_sys_form_cancel'   => 'Cancelar',
             'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'O novo Módulo foi criado com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar o novo Módulo.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados do Módulo foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados do Módulo.",
+                  'reload' => false
+                ],
+              ]
+            ]),
             'tbl_sys_form_modal'    => true,
             'tbl_sys_form_admin'    => true,
             'tbl_sys_form_validate' => true,
@@ -4044,8 +4953,8 @@
                   "maxlenght" => 255,
                   "unique"        => [
 
-                    "table"  => "tbl_users",
-                    "column" => "tbl_user_name"
+                    "table"  => "tbl_sys_modulos",
+                    "column" => "tbl_sys_modulo_name"
 
                   ]
 
@@ -4085,7 +4994,7 @@
                 'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Versão do módulo',
                 'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_version',
-                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_index'    => 'version',
                 'tbl_sys_forms_field_class'    => '',
                 'tbl_sys_forms_field_default'  => '1',
                 'tbl_sys_forms_field_props'    => json_encode([
@@ -4126,7 +5035,7 @@
                 'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Status',
                 'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_status',
-                'tbl_sys_forms_field_index'    => 'class',
+                'tbl_sys_forms_field_index'    => 'status',
                 'tbl_sys_forms_field_class'    => '',
                 'tbl_sys_forms_field_default'  => '',
                 'tbl_sys_forms_field_props'    => json_encode([
@@ -4151,7 +5060,7 @@
 
                 'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
                 'tbl_sys_forms_field_title'    => 'Bloqueado',
-                'tbl_sys_forms_field_name'     => 'tbl_sys_menu_locked',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_modulo_locked',
                 'tbl_sys_forms_field_index'    => 'locked',
                 'tbl_sys_forms_field_class'    => '',
                 'tbl_sys_forms_field_default'  => false,
@@ -4179,6 +5088,243 @@
           ],
 
         // MODULOS - END
+
+
+
+        // VIEWS - START
+
+          [
+
+            'tbl_sys_form_name'     => 'admin-views',
+            'tbl_sys_form_title'    => 'Views',
+            'tbl_sys_form_cancel'   => 'Cancelar',
+            'tbl_sys_form_submit'   => 'Salvar',
+            'tbl_sys_form_result'  => json_encode([
+
+              'insert' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => 'A nova View foi criada com sucesso.',
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => 'Não foi possivel criar a nova View.',
+                  'reload' => false
+                ],
+
+              ],
+              'update' => [
+                'success' => [
+
+                  'title'  => 'SUCESSO!',
+                  'text'   => "Os dados da View foram atualizados com sucesso.",
+                  'reload' => true
+                ],
+                'fail' => [
+
+                  'title'  => 'ERRO!',
+                  'text'   => "Não foi possivel atualizar os dados da View.",
+                  'reload' => false
+                ],
+              ]
+            ]),
+            'tbl_sys_form_modal'    => true,
+            'tbl_sys_form_admin'    => true,
+            'tbl_sys_form_validate' => true,
+            'tbl_sys_form_locked'   => true,
+            'form_access'           => [1, 2],
+            'form_fields'           => [
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('hidden', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'ID',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_ID',
+                'tbl_sys_forms_field_index'    => 'id',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode(["type" => "int"]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 1,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('slug', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Name da View',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_name',
+                'tbl_sys_forms_field_index'    => 'name',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-5",
+                  "maxlenght" => 255,
+                  "unique"        => [
+
+                    "table"  => "tbl_sys_views",
+                    "column" => "tbl_sys_view_name"
+
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 2,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Titulo da View',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_title',
+                'tbl_sys_forms_field_index'    => 'title',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-7",
+                  "maxlenght" => 255,
+                  "minlenght" => 2,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 3,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('textarea', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Descrição',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_description',
+                'tbl_sys_forms_field_index'    => 'description',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "rows" => 4
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 4,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Diretório da View',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_directory',
+                'tbl_sys_forms_field_index'    => 'directory',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '1',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-7",
+                  "maxlenght" => 255,
+                  "minlenght" => 1,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 5,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('text', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Arquivo da View',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_file',
+                'tbl_sys_forms_field_index'    => 'file',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '1',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-5",
+                  "maxlenght" => 255,
+                  "minlenght" => 1,
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => true,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 6,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Status',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_status',
+                'tbl_sys_forms_field_index'    => 'status',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => '',
+                'tbl_sys_forms_field_props'    => json_encode([
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    "ativo"   => "Ativo",
+                    "inativo" => "Inativo"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 7,
+                'field_access'                 => [1, 2]
+              
+              ],
+
+              [
+
+                'tbl_sys_field_type_ID'        => SysFieldType::getFieldTypeDataByName('select', 'tbl_sys_field_type_ID'),
+                'tbl_sys_forms_field_title'    => 'Bloqueado',
+                'tbl_sys_forms_field_name'     => 'tbl_sys_view_locked',
+                'tbl_sys_forms_field_index'    => 'locked',
+                'tbl_sys_forms_field_class'    => '',
+                'tbl_sys_forms_field_default'  => false,
+                'tbl_sys_forms_field_props'    => json_encode([
+                  
+                  "wrapper_class" => "col-12 col-md-6",
+                  "choices"       => [
+
+                    true  => "Sim",
+                    false => "Não"
+                  
+                  ]
+
+                ]),
+                'tbl_sys_forms_field_attrs'    => '',
+                'tbl_sys_forms_field_required' => false,
+                'tbl_sys_forms_field_locked'   => true,
+                'tbl_sys_forms_field_ordem'    => 8,
+                'field_access'                 => [1]
+              
+              ],
+
+            ]
+
+          ],
+
+        // VIEWS - END
 
 
 

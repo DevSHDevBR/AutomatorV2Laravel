@@ -1351,6 +1351,205 @@ function AutomatorPaginationDeleteValidatedCallback(context = {}) {
 }
 
 
+function AutomatorPaginationDesactivateValidatedCallback(context = {}) {
+
+  console.log('Confirmação de senha validada para desativação:', context);
+
+
+  $.ajax({
+    url: context.original_href,
+    type: 'POST',
+    data: {
+      id: context.items
+    },
+    headers: {
+      'X-CSRF-TOKEN': AutomatorGetCSRFToken(),
+      'Accept': 'application/json'
+    },
+    dataType: 'json',
+    success: function(response) {
+
+      var responseTitle   = response.title || '';
+      var responseMessage = response.message || '';
+      if(response.status == true || response.status == 'true' || response.status == 1 || response.status == '1') {
+
+        $('#page-loader').css('z-index', '');
+        AutomatorPageLoader('hide', function() {
+
+          AutomatorCreateAutoCloseToastAlert(
+            'automator-success-message',
+            'center',
+            'middle',
+            true,
+            true,
+            responseTitle,
+            responseMessage,
+            function() {
+
+              AutomatorSetActionStatus(false, function() {
+                location.reload();
+              });
+
+            },
+            false,
+            null,
+            3000
+          );
+
+        });
+
+      }
+
+    },
+    error: function(xhr) {
+
+      var responseTitle   = 'Erro';
+      var responseMessage = 'Não foi possível completar sua Solicitação.';
+
+      if(xhr.responseJSON && xhr.responseJSON.title) {
+        responseTitle = xhr.responseJSON.title;
+      }
+
+      if(xhr.responseJSON && xhr.responseJSON.message) {
+        responseMessage = xhr.responseJSON.message;
+      } else if(xhr.responseText) {
+        responseMessage = xhr.responseText;
+      }
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-security-confirmation-request-error',
+        'center',
+        'middle',
+        true,
+        true,
+        responseTitle,
+        responseMessage,
+        function() {
+
+          $('#page-loader').css('z-index', '');
+
+          AutomatorPageLoader('hide', function() {
+
+            AutomatorSetActionStatus(false);
+
+          });
+
+        },
+        false,
+        null,
+        5000
+      );
+
+    }
+
+  });
+
+  return true;
+
+}
+
+
+
+
+
+function AutomatorPaginationActivateValidatedCallback(context = {}) {
+
+  console.log('Confirmação de senha validada para ativação:', context);
+
+
+  $.ajax({
+    url: context.original_href,
+    type: 'POST',
+    data: {
+      id: context.items
+    },
+    headers: {
+      'X-CSRF-TOKEN': AutomatorGetCSRFToken(),
+      'Accept': 'application/json'
+    },
+    dataType: 'json',
+    success: function(response) {
+
+      var responseTitle   = response.title || '';
+      var responseMessage = response.message || '';
+      if(response.status == true || response.status == 'true' || response.status == 1 || response.status == '1') {
+
+        $('#page-loader').css('z-index', '');
+        AutomatorPageLoader('hide', function() {
+
+          AutomatorCreateAutoCloseToastAlert(
+            'automator-success-message',
+            'center',
+            'middle',
+            true,
+            true,
+            responseTitle,
+            responseMessage,
+            function() {
+
+              AutomatorSetActionStatus(false, function() {
+                location.reload();
+              });
+
+            },
+            false,
+            null,
+            3000
+          );
+
+        });
+
+      }
+
+    },
+    error: function(xhr) {
+
+      var responseTitle   = 'Erro';
+      var responseMessage = 'Não foi possível completar sua Solicitação.';
+
+      if(xhr.responseJSON && xhr.responseJSON.title) {
+        responseTitle = xhr.responseJSON.title;
+      }
+
+      if(xhr.responseJSON && xhr.responseJSON.message) {
+        responseMessage = xhr.responseJSON.message;
+      } else if(xhr.responseText) {
+        responseMessage = xhr.responseText;
+      }
+
+      AutomatorCreateAutoCloseToastAlert(
+        'automator-security-confirmation-request-error',
+        'center',
+        'middle',
+        true,
+        true,
+        responseTitle,
+        responseMessage,
+        function() {
+
+          $('#page-loader').css('z-index', '');
+
+          AutomatorPageLoader('hide', function() {
+
+            AutomatorSetActionStatus(false);
+
+          });
+
+        },
+        false,
+        null,
+        5000
+      );
+
+    }
+
+  });
+
+  return true;
+
+}
+
+
 
 function AutomatorSecurityConfirmationDestroy(modalEl, callback = null) {
 
@@ -1793,6 +1992,93 @@ function AutomatorCreateSecurityConfirmationModal(context = {}) {
     password: passwordEl,
     context: context
   };
+
+}
+
+
+function AutomatorPaginationConfirmActivateItem(btn) {
+
+  if(!btn) {
+    return false;
+  }
+
+  AutomatorGetActionStatus(function() {
+
+    AutomatorSetActionStatus(true, function() {
+
+      var wrapper = AutomatorPaginationGetWrapper(btn);
+      var message = btn.getAttribute('data-activate-message-confirm');
+
+      if(!message && wrapper) {
+        message = wrapper.getAttribute('data-activate-message-confirm');
+      }
+
+      AutomatorCreateSecurityConfirmationModal({
+        type: 'pagination-activate-item',
+        button: btn,
+        wrapper: wrapper,
+        items: btn.getAttribute('data-automator-item-id'),
+        original_onclick: btn.getAttribute('data-original-onclick') || '',
+        original_href: btn.getAttribute('data-original-href') || '',
+        message: message,
+        skipSuccessToast: true,
+        resetActionStatusOnCancel: true,
+        resetActionStatusOnSuccess: false,
+        successCallback: function(context) {
+          AutomatorPaginationActivateValidatedCallback(context);
+          // AutomatorPaginationDeleteValidatedCallback(context);
+        }
+      });
+
+    });
+
+  });
+
+  return false;
+
+}
+
+
+
+function AutomatorPaginationConfirmDesactivateItem(btn) {
+
+  if(!btn) {
+    return false;
+  }
+
+  AutomatorGetActionStatus(function() {
+
+    AutomatorSetActionStatus(true, function() {
+
+      var wrapper = AutomatorPaginationGetWrapper(btn);
+      var message = btn.getAttribute('data-desactivate-message-confirm');
+
+      if(!message && wrapper) {
+        message = wrapper.getAttribute('data-desactivate-message-confirm');
+      }
+
+      AutomatorCreateSecurityConfirmationModal({
+        type: 'pagination-activate-item',
+        button: btn,
+        wrapper: wrapper,
+        items: btn.getAttribute('data-automator-item-id'),
+        original_onclick: btn.getAttribute('data-original-onclick') || '',
+        original_href: btn.getAttribute('data-original-href') || '',
+        message: message,
+        skipSuccessToast: true,
+        resetActionStatusOnCancel: true,
+        resetActionStatusOnSuccess: false,
+        successCallback: function(context) {
+          AutomatorPaginationDesactivateValidatedCallback(context);
+          // AutomatorPaginationDeleteValidatedCallback(context);
+        }
+      });
+
+    });
+
+  });
+
+  return false;
 
 }
 
@@ -2859,6 +3145,31 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
 
         /*
         |--------------------------------------------------------------------------
+        | Editor JSON
+        |--------------------------------------------------------------------------
+        |
+        | O modal recebe os dados depois que seu HTML já foi inserido. A API do
+        | componente atualiza o hidden e reconstrói a árvore com o valor recebido.
+        |
+        */
+
+        if(
+          field.matches('[data-automator-json-value="true"]') &&
+          typeof window.AutomatorJsonEditorSetValue === 'function'
+        ) {
+
+          window.AutomatorJsonEditorSetValue(
+            field,
+            value !== null && value !== undefined ? value : {},
+            false
+          );
+
+          return;
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
         | ICON PICKER
         |--------------------------------------------------------------------------
         |
@@ -3511,7 +3822,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
 
   }
 
-  function AutomatorPaginationModalCreateForm(response, recordData = {}) {
+  function AutomatorPaginationModalCreateForm(response, recordData = {}, size = 'modal-lg modal-dialog-centered modal-dialog-scrollable') {
 
     var modalID = 'automator-pagination-form-modal-' + Date.now() + '-' + Math.floor(Math.random() * 999999);
 
@@ -3523,7 +3834,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
     var modalHTML = '';
 
     modalHTML += '<div class="modal fade automator-pagination-form-modal" id="' + modalID + '" tabindex="-1" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">';
-      modalHTML += '<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">';
+      modalHTML += '<div class="modal-dialog ' + size + '">';
         modalHTML += '<div class="modal-content">';
 
           modalHTML += '<div class="modal-header">';
@@ -3694,7 +4005,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
 
   }
 
-  function AutomatorPaginationModalGetRecordData(response) {
+  function AutomatorPaginationModalGetRecordData(response, size = 'modal-lg modal-dialog-centered modal-dialog-scrollable') {
 
     var hasAction = (acao !== null && acao !== undefined && acao !== '');
     var hasID     = (id !== null && id !== undefined && id !== '');
@@ -3702,7 +4013,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
     if(hasAction == false || hasID == false) {
 
       AutomatorPageLoader('hide', function() {
-        AutomatorPaginationModalCreateForm(response, {});
+        AutomatorPaginationModalCreateForm(response, {}, size);
       });
 
       return;
@@ -3743,7 +4054,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
           }
 
           AutomatorPageLoader('hide', function() {
-            AutomatorPaginationModalCreateForm(response, recordData);
+            AutomatorPaginationModalCreateForm(response, recordData, size);
           });
 
         } else {
@@ -3803,7 +4114,7 @@ function AutomatorPaginationCreateModalForm(size, titulo, formulario, acao = '',
           success: function(response) {
 
             if(response.status == true) {
-              AutomatorPaginationModalGetRecordData(response);
+              AutomatorPaginationModalGetRecordData(response, size);
             } else {
 
               var message = 'Solicitação inválida!';
@@ -4024,6 +4335,14 @@ function AutomatorInitSystemAjaxForms() {
   });
 
   return true;
+
+}
+
+
+
+function AutomatorPaginationCreateModalFormCallBackRemoveSelectOption(selectName, optionValue) {
+
+  $("select[name='" + selectName + "']").find("option[value='" + optionValue + "']").remove();
 
 }
 
@@ -8438,6 +8757,242 @@ $(document).ready(function() {
   }
 
 
+  /*
+  |--------------------------------------------------------------------------
+  | Converte a notação legada usada pelos Seeders em uma estrutura editável
+  |--------------------------------------------------------------------------
+  |
+  | Além de JSON, registros antigos usam aspas simples, chaves sem aspas e
+  | referências como @SysFunctions['nome']. O parser é deliberadamente restrito
+  | a dados e não executa JavaScript.
+  |
+  */
+
+  function AutomatorJsonEditorParseLegacyValue(value = '') {
+
+    const source = String(value).trim();
+    let position = 0;
+
+    function skipWhitespace() {
+      while(position < source.length && /\s/.test(source[position])) {
+        position++;
+      }
+    }
+
+    function parseQuotedString() {
+
+      const quote = source[position++];
+      let result = '';
+
+      while(position < source.length) {
+
+        const character = source[position++];
+
+        if(character === '\\') {
+
+          if(position >= source.length) {
+            throw new Error('Escape incompleto.');
+          }
+
+          const escapedCharacter = source[position++];
+          const escapedValues = {
+            n: '\n',
+            r: '\r',
+            t: '\t',
+            b: '\b',
+            f: '\f',
+          };
+
+          result += Object.prototype.hasOwnProperty.call(
+            escapedValues,
+            escapedCharacter
+          ) ? escapedValues[escapedCharacter] : escapedCharacter;
+
+          continue;
+        }
+
+        if(character === quote) {
+          return result;
+        }
+
+        result += character;
+      }
+
+      throw new Error('Texto sem fechamento.');
+    }
+
+    function parseBareToken(stopCharacters) {
+
+      const start = position;
+      let bracketDepth = 0;
+      let quote = '';
+
+      while(position < source.length) {
+
+        const character = source[position];
+
+        if(quote !== '') {
+
+          if(character === '\\') {
+            position += 2;
+            continue;
+          }
+
+          position++;
+
+          if(character === quote) {
+            quote = '';
+          }
+
+          continue;
+        }
+
+        if(character === "'" || character === '"') {
+          quote = character;
+          position++;
+          continue;
+        }
+
+        if(character === '[' || character === '(') {
+          bracketDepth++;
+          position++;
+          continue;
+        }
+
+        if((character === ']' || character === ')') && bracketDepth > 0) {
+          bracketDepth--;
+          position++;
+          continue;
+        }
+
+        if(bracketDepth === 0 && stopCharacters.indexOf(character) !== -1) {
+          break;
+        }
+
+        position++;
+      }
+
+      return source.substring(start, position).trim();
+    }
+
+    function normalizeBareValue(token) {
+
+      if(token === 'true') return true;
+      if(token === 'false') return false;
+      if(token === 'null') return null;
+
+      if(token !== '' && /^-?(?:\d+\.?\d*|\.\d+)(?:e[+-]?\d+)?$/i.test(token)) {
+        return Number(token);
+      }
+
+      if(token === '') {
+        throw new Error('Valor vazio.');
+      }
+
+      return token;
+    }
+
+    function parseValue() {
+
+      skipWhitespace();
+
+      if(source[position] === '{') return parseObject();
+      if(source[position] === '[') return parseArray();
+
+      if(source[position] === "'" || source[position] === '"') {
+        return parseQuotedString();
+      }
+
+      return normalizeBareValue(parseBareToken(',}]'));
+    }
+
+    function parseObject() {
+
+      const result = {};
+      position++;
+      skipWhitespace();
+
+      if(source[position] === '}') {
+        position++;
+        return result;
+      }
+
+      while(position < source.length) {
+
+        skipWhitespace();
+
+        const key = source[position] === "'" || source[position] === '"'
+          ? parseQuotedString()
+          : parseBareToken(':');
+
+        skipWhitespace();
+
+        if(key === '' || source[position] !== ':') {
+          throw new Error('Propriedade inválida.');
+        }
+
+        position++;
+        result[key] = parseValue();
+        skipWhitespace();
+
+        if(source[position] === '}') {
+          position++;
+          return result;
+        }
+
+        if(source[position] !== ',') {
+          throw new Error('Separador inválido.');
+        }
+
+        position++;
+      }
+
+      throw new Error('Objeto sem fechamento.');
+    }
+
+    function parseArray() {
+
+      const result = [];
+      position++;
+      skipWhitespace();
+
+      if(source[position] === ']') {
+        position++;
+        return result;
+      }
+
+      while(position < source.length) {
+
+        result.push(parseValue());
+        skipWhitespace();
+
+        if(source[position] === ']') {
+          position++;
+          return result;
+        }
+
+        if(source[position] !== ',') {
+          throw new Error('Separador inválido.');
+        }
+
+        position++;
+      }
+
+      throw new Error('Array sem fechamento.');
+    }
+
+    const result = parseValue();
+    skipWhitespace();
+
+    if(position !== source.length) {
+      throw new Error('Conteúdo adicional inválido.');
+    }
+
+    return result;
+  }
+
+
+
   function AutomatorJsonEditorParseValue(
     value = '',
     editor = null
@@ -8501,11 +9056,21 @@ $(document).ready(function() {
 
     } catch(error) {
 
-      return {
+      try {
 
-        value: String(value),
+        return AutomatorJsonEditorParseLegacyValue(
+          String(value)
+        );
 
-      };
+      } catch(legacyError) {
+
+        return {
+
+          value: String(value),
+
+        };
+
+      }
 
     }
 
@@ -17991,3 +18556,568 @@ if(
 
 
 })(jQuery);
+
+document.addEventListener('show.bs.dropdown', function (e) {
+  const toggle = e.target;
+  if (!toggle.closest('.table-responsive')) return;
+
+  // só move se o toggle estiver visível (ou seja, estamos no breakpoint mobile)
+  if (toggle.offsetParent === null) return;
+
+  const menu = toggle.parentElement.querySelector('.dropdown-menu');
+  if (!menu) return;
+
+  menu._originalNextSibling = menu.nextSibling;
+  menu._originalParentNode = menu.parentNode;
+  toggle._movedMenu = menu;
+
+  document.body.appendChild(menu);
+  menu.style.position = 'fixed';
+  menu.style.zIndex = 3000;
+
+  const rect = toggle.getBoundingClientRect();
+  const menuWidth = menu.offsetWidth;
+  menu.style.top = rect.bottom + 'px';
+  menu.style.left = Math.max(8, rect.right - menuWidth) + 'px';
+});
+
+document.addEventListener('hide.bs.dropdown', function (e) {
+  const toggle = e.target;
+  const menu = toggle._movedMenu;
+  if (!menu) return;
+
+  menu._originalParentNode.insertBefore(menu, menu._originalNextSibling);
+  menu.style.position = '';
+  menu.style.top = '';
+  menu.style.left = '';
+  menu.style.zIndex = '';
+  toggle._movedMenu = null;
+});
+
+// Fecha o dropdown se a tela for redimensionada para desktop (ou qualquer resize)
+// enquanto o menu ainda estiver aberto e "teleportado" para o body.
+window.addEventListener('resize', function () {
+  document.querySelectorAll('.btn-group.dropstart, .btn-group.dropdown').forEach(function (group) {
+    const toggle = group.querySelector('[data-bs-toggle="dropdown"]');
+    if (toggle && toggle._movedMenu) {
+      const instance = bootstrap.Dropdown.getOrCreateInstance(toggle);
+      instance.hide();
+    }
+  });
+});
+
+
+function AutomatorFileInputSendFile(
+  button,
+  inputID
+) {
+
+  if(!button || !inputID) {
+    return false;
+  }
+
+  var fileInput = document.getElementById(inputID);
+
+  if(!fileInput) {
+    return false;
+  }
+
+  fileInput.dataset.automatorFileGlobalUpload = 'true';
+  fileInput.click();
+
+  return true;
+}
+
+
+function AutomatorFileSelectLibFile(
+  button,
+  fieldID
+) {
+
+  return false;
+}
+
+
+function AutomatorFileRenderExistingPreview(container) {
+
+  var hiddenInput = container.querySelector('[data-file-hidden]');
+  var preview = container.querySelector('[data-file-preview]');
+  var actions = container.querySelector('[data-file-actions]');
+
+  if(!hiddenInput || !preview || hiddenInput.value.trim() === '') {
+    return;
+  }
+
+  var selectedFile = null;
+
+  try {
+    selectedFile = JSON.parse(hiddenInput.value);
+  } catch(error) {
+    return;
+  }
+
+  var fileURL = selectedFile.url || selectedFile.path || '';
+
+  if(fileURL === '') {
+    return;
+  }
+
+  var extension = String(
+    selectedFile.extension ||
+    selectedFile.name || ''
+  ).split('.').pop().toLowerCase();
+
+  var square = document.createElement('div');
+
+  square.className = 'border rounded d-flex align-items-center justify-content-center overflow-hidden bg-light mx-auto';
+  square.style.width = '110px';
+  square.style.height = '110px';
+  square.style.backgroundSize = 'contain';
+  square.style.backgroundPosition = 'center';
+  square.style.backgroundRepeat = 'no-repeat';
+
+  if(['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'avif'].includes(extension)) {
+    square.style.backgroundImage = 'url("' + fileURL.replace(/"/g, '%22') + '")';
+  } else {
+    square.innerHTML = '<i class="fa fa-file-o fa-3x text-secondary"></i>';
+  }
+
+  preview.innerHTML = '';
+  preview.appendChild(square);
+
+  if(actions) {
+    actions.classList.remove('d-none');
+  }
+}
+
+
+document.addEventListener('shown.bs.modal', function(event) {
+
+  event.target.querySelectorAll('[data-automator-file-upload]').forEach(function(container) {
+    AutomatorFileRenderExistingPreview(container);
+  });
+
+});
+
+
+function AutomatorViewSelectedFile(
+  button,
+  fieldID
+) {
+
+  var hiddenInput = document.getElementById(fieldID);
+
+  if(!hiddenInput || hiddenInput.value.trim() === '') {
+    return false;
+  }
+
+  var selectedFile = null;
+
+  try {
+    selectedFile = JSON.parse(hiddenInput.value);
+  } catch(error) {
+    return false;
+  }
+
+  var fileURL = selectedFile.url || selectedFile.path || '';
+
+  if(fileURL === '') {
+    return false;
+  }
+
+  var fileWindow = window.open(fileURL, '_blank');
+
+  if(fileWindow) {
+    fileWindow.opener = null;
+  }
+
+  return true;
+}
+
+
+function AutomatorDeleteSelectedFile(
+  button,
+  fieldID
+) {
+
+  var hiddenInput = document.getElementById(fieldID);
+
+  if(!hiddenInput || hiddenInput.value.trim() === '') {
+    return false;
+  }
+
+  var container = hiddenInput.closest('[data-automator-file-upload]');
+
+  if(!container) {
+    return false;
+  }
+
+  var fileInput = container.querySelector('[data-file-input]');
+  var preview = container.querySelector('[data-file-preview]');
+  var actions = container.querySelector('[data-file-actions]');
+  var uploadURL = fileInput ? fileInput.getAttribute('data-upload-url') : '';
+  var selectedFile = null;
+
+  if(uploadURL === '') {
+    return false;
+  }
+
+  try {
+    selectedFile = JSON.parse(hiddenInput.value);
+  } catch(error) {
+    return false;
+  }
+
+  var temporaryFileID = selectedFile.temp_id || '';
+
+  if(temporaryFileID === '') {
+
+    hiddenInput.value = '';
+    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+    hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    if(preview) {
+      preview.innerHTML = '<div class="border rounded d-flex align-items-center justify-content-center overflow-hidden bg-light mx-auto text-center h-100 mx-auto">Nenhum arquivo selecionado</div>';
+    }
+
+    if(actions) {
+      window.jQuery(actions).stop(true, true).fadeOut(150, function() {
+        actions.classList.add('d-none');
+      });
+    }
+
+    return false;
+  }
+
+  if(button) {
+    button.disabled = true;
+  }
+
+  var formData = new FormData();
+  formData.append('acao', 'upload-temporario');
+  formData.append('action', 'remove-file');
+  formData.append('id', temporaryFileID);
+
+  var request = new XMLHttpRequest();
+
+  request.open('POST', uploadURL, true);
+  request.setRequestHeader('Accept', 'application/json');
+  request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+  var csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+  if(csrfToken && csrfToken.content) {
+    request.setRequestHeader('X-CSRF-TOKEN', csrfToken.content);
+  }
+
+  request.addEventListener('load', function() {
+
+    var response = null;
+
+    try {
+      response = JSON.parse(request.responseText || '{}');
+    } catch(error) {
+      response = null;
+    }
+
+    if(
+      request.status < 200 ||
+      request.status >= 300 ||
+      !response ||
+      response.status !== true
+    ) {
+      if(button) {
+        button.disabled = false;
+      }
+
+      return;
+    }
+
+    hiddenInput.value = '';
+    hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+    hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    if(preview) {
+      preview.innerHTML = '<div class="border rounded d-flex align-items-center justify-content-center overflow-hidden bg-light mx-auto text-center h-100 mx-auto">Nenhum arquivo selecionado</div>';
+    }
+
+    if(actions) {
+      window.jQuery(actions).stop(true, true).fadeOut(150, function() {
+        actions.classList.add('d-none');
+      });
+    }
+  });
+
+  request.addEventListener('error', function() {
+
+    if(button) {
+      button.disabled = false;
+    }
+  });
+
+  request.send(formData);
+
+  return true;
+}
+
+
+document.addEventListener(
+  'change',
+  function(event) {
+
+    var fileInput = event.target;
+
+    if(
+      !(fileInput instanceof HTMLInputElement) ||
+      fileInput.matches('[data-file-input]') === false ||
+      fileInput.dataset.automatorFileGlobalUpload !== 'true'
+    ) {
+      return;
+    }
+
+    fileInput.dataset.automatorFileGlobalUpload = 'processing';
+
+    var file = fileInput.files && fileInput.files.length >= 1
+      ? fileInput.files[0]
+      : null;
+
+    if(!file) {
+      return;
+    }
+
+    var container = fileInput.closest('[data-automator-file-upload]');
+
+    if(!container) {
+      return;
+    }
+
+    var uploadURL = fileInput.getAttribute('data-upload-url') || '';
+    var progress = container.querySelector('[data-file-progress]');
+    var progressBar = container.querySelector('[data-file-progress-bar]');
+    var preview = container.querySelector('[data-file-preview]');
+    var fileRow = container.querySelector('#automator-file-row');
+    var hiddenInput = container.querySelector('[data-file-hidden]');
+    var message = container.querySelector('[data-file-message]');
+    var actions = container.querySelector('[data-file-actions]');
+
+    if(uploadURL === '') {
+      return;
+    }
+
+    var setProgress = function(value) {
+
+      value = Math.max(0, Math.min(100, Number(value) || 0));
+
+      if(progressBar) {
+        progressBar.style.width = value + '%';
+        progressBar.textContent = value + '%';
+        progressBar.setAttribute('aria-valuenow', String(value));
+      }
+    };
+
+    var showFileRow = function() {
+
+      if(fileRow) {
+        window.jQuery(fileRow).stop(true, true).fadeIn(150);
+      }
+    };
+
+    var showMessage = function(text, type) {
+
+      if(!message) {
+        return;
+      }
+
+      message.className =
+        'small text-center py-3 w-100 ' +
+        (type === 'success' ? 'text-success' : 'text-danger');
+
+      message.textContent = text;
+
+      window.jQuery(message)
+        .stop(true, true)
+        .hide()
+        .removeClass('d-none')
+        .fadeIn(150);
+
+    };
+
+    var resetUpload = function(messageText) {
+
+      fileInput.value = '';
+
+      showMessage(
+        messageText || 'Não foi possível enviar o arquivo.',
+        'error'
+      );
+
+      window.setTimeout(function() {
+
+        if(progress) {
+          window.jQuery(progress).stop(true, true).fadeOut(150);
+        }
+
+        if(message) {
+          window.jQuery(message).stop(true, true).fadeOut(150);
+        }
+
+        showFileRow();
+
+      }, 3000);
+    };
+
+    if(preview) {
+      window.jQuery(preview).stop(true, true).fadeOut(150);
+    }
+
+    if(actions) {
+      window.jQuery(actions).stop(true, true).fadeOut(150);
+    }
+
+    window.jQuery(fileRow).stop(true, true).fadeOut(150, function() {
+
+      if(progress) {
+        window.jQuery(progress)
+          .stop(true, true)
+          .hide()
+          .removeClass('d-none')
+          .fadeIn(150);
+      }
+
+      setProgress(0);
+
+      var formData = new FormData();
+      formData.append('acao', 'upload-temporario');
+      formData.append('action', 'upload');
+      formData.append('arquivo', file);
+
+      var uploadTypeID = fileInput.getAttribute('data-upload-type-id') || '';
+
+      if(uploadTypeID !== '') {
+        formData.append('upload_type_id', uploadTypeID);
+      }
+
+      var request = new XMLHttpRequest();
+
+      request.open('POST', uploadURL, true);
+      request.setRequestHeader('Accept', 'application/json');
+      request.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+      var csrfToken = document.querySelector('meta[name="csrf-token"]');
+
+      if(csrfToken && csrfToken.content) {
+        request.setRequestHeader('X-CSRF-TOKEN', csrfToken.content);
+      }
+
+      request.upload.addEventListener('progress', function(uploadEvent) {
+
+        if(uploadEvent.lengthComputable) {
+          setProgress(Math.round((uploadEvent.loaded / uploadEvent.total) * 100));
+        }
+
+      });
+
+      request.addEventListener('load', function() {
+
+        var response = null;
+
+        try {
+          response = JSON.parse(request.responseText || '{}');
+        } catch(error) {
+          response = null;
+        }
+
+        if(
+          request.status < 200 ||
+          request.status >= 300 ||
+          !response ||
+          response.status !== true ||
+          !response.file
+        ) {
+          resetUpload(
+            response && response.message
+              ? response.message
+              : 'Não foi possível enviar o arquivo.'
+          );
+          return;
+        }
+
+        var resultFile = response.file;
+        var fileURL = resultFile.url || resultFile.path || '';
+        var extension = String(resultFile.extension || resultFile.type_name || '').toLowerCase();
+        var mimeType = String(resultFile.mime_type || '').toLowerCase();
+        var square = document.createElement('div');
+
+        square.className = 'border rounded d-flex align-items-center justify-content-center overflow-hidden bg-light';
+        square.style.width = '110px';
+        square.style.height = '110px';
+        square.style.backgroundSize = 'cover';
+        square.style.backgroundPosition = 'center';
+
+        if(
+          mimeType.indexOf('image/') === 0 ||
+          ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg', 'bmp', 'avif'].includes(extension)
+        ) {
+          square.style.backgroundImage = 'url("' + fileURL.replace(/"/g, '%22') + '")';
+        } else {
+          square.innerHTML = '<i class="fa fa-file-o fa-3x text-secondary"></i>';
+        }
+
+        if(hiddenInput) {
+          hiddenInput.value = JSON.stringify(resultFile);
+          hiddenInput.dispatchEvent(new Event('input', { bubbles: true }));
+          hiddenInput.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+
+        if(preview) {
+          preview.innerHTML = '';
+          preview.appendChild(square);
+        }
+
+        setProgress(100);
+
+        showMessage(
+          response.message || 'Arquivo enviado com sucesso.',
+          'success'
+        );
+
+        window.setTimeout(function() {
+
+          if(progress) {
+            window.jQuery(progress).stop(true, true).fadeOut(150);
+          }
+
+          if(message) {
+            window.jQuery(message).stop(true, true).fadeOut(150);
+          }
+
+          if(preview) {
+            window.jQuery(preview)
+              .stop(true, true)
+              .removeClass('d-none')
+              .fadeIn(150);
+          }
+
+          if(actions) {
+            window.jQuery(actions)
+              .stop(true, true)
+              .removeClass('d-none')
+              .fadeIn(150);
+          }
+
+          showFileRow();
+
+        }, 3000);
+
+      });
+
+      request.addEventListener('error', function() {
+        resetUpload('Não foi possível conectar ao servidor.');
+      });
+      request.send(formData);
+
+    });
+
+  },
+  true
+);
